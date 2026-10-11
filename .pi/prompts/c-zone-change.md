@@ -1,11 +1,20 @@
 ---
 task: {{TASK_ID}}
+template: c-zone-change
 zone: C
 model: {{MODEL}}
 thinking: {{THINKING}}
-tools: read,bash,edit,write
+tools: default
 owner_decision: {{OWNER_DECISION_ID}}
 allow_done: false
+ship: publish
+allowed_paths:
+  - {{C_ZONE_PATH}}
+  - tests/{{RELATED_TEST_PATH}}
+  - docs/requirements/{{REQUIREMENT_FILE}}.md
+  - tasks/{{TASK_FILE}}.yaml
+  - docs/task_register.md
+  - docs/task_register_completed.md
 read_paths:
   - AGENTS.md
   - .agents/skills/ship-change/SKILL.md
@@ -19,11 +28,7 @@ read_paths:
 
 ## 允许改的路径
 
-- {{C_ZONE_PATH}}
-- tests/{{RELATED_TEST_PATH}}
-- docs/requirements/{{REQUIREMENT_FILE}}.md
-- tasks/{{TASK_FILE}}.yaml
-- docs/task_register.md 与 docs/task_register_completed.md（只能由 `.venv/Scripts/python.exe tools/tasks.py render` 生成）
+见 front matter 的 `allowed_paths`；docs/task_register.md 与 docs/task_register_completed.md 只能由 `.venv/Scripts/python.exe tools/tasks.py render` 生成。
 
 ## 步骤
 

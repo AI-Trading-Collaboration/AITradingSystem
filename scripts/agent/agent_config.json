@@ -1,0 +1,22 @@
+{
+  "runs_root": "D:\\Work\\AITradingSystem_agent_runs",
+  "models": {
+    "local": "local-model-service/qwen3.8-flash-next-iq3_s",
+    "cloud": "openai/gpt-5.5"
+  },
+  "daily_windows_jst": [
+    {
+      "start": "09:20",
+      "end": "10:30",
+      "note": "placeholder for OPS-082 09:30 JST daily trigger; revise after measured daily-run duration"
+    },
+    {
+      "start": "17:20",
+      "end": "18:30",
+      "note": "placeholder for OPS-082 17:30 JST daily trigger; revise after measured daily-run duration"
+    }
+  ],
+  "scheduled_task_name": "AITradingSystem pi agent",
+  "agent_clone": "D:\\Work\\AITradingSystem_agent",
+  "queue_file": "D:\\Work\\AITradingSystem_agent_runs\\queue\\request.json"
+}

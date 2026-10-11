@@ -1,11 +1,14 @@
 ---
 task: {{TASK_ID}}
+template: readonly-check
 zone: A
 model: {{MODEL}}
 thinking: {{THINKING}}
-tools: read,bash
+tools: readonly
 owner_decision: {{OWNER_DECISION_OR_NONE}}
 allow_done: false
+ship: none
+allowed_paths: []
 read_paths:
   - {{PATH_TO_READ}}
 ---
@@ -17,7 +20,7 @@ read_paths:
 
 ## 允许改的路径
 
-不允许改任何路径；只读。
+见 front matter 的 `allowed_paths`；本模板为只读，列表为空。
 
 ## 步骤
 

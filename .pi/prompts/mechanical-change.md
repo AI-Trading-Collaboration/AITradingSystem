@@ -1,11 +1,17 @@
 ---
 task: {{TASK_ID}}
+template: mechanical-change
 zone: B
 model: {{MODEL}}
 thinking: {{THINKING}}
-tools: read,bash,edit,write
+tools: default
 owner_decision: none
 allow_done: false
+ship: publish
+allowed_paths:
+  - {{PATH_1}}
+  - {{PATH_2}}
+  - tests/{{TEST_PATH}}
 read_paths:
   - .agents/skills/ship-change/SKILL.md
   - {{PRIMARY_FILE}}
@@ -18,9 +24,7 @@ read_paths:
 
 ## 允许改的路径
 
-- {{PATH_1}}
-- {{PATH_2}}
-- tests/{{TEST_PATH}}
+见 front matter 的 `allowed_paths`。
 
 ## 步骤
 

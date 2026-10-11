@@ -1,11 +1,18 @@
 ---
 task: {{TASK_ID}}
+template: records-change
 zone: A
 model: {{MODEL}}
 thinking: {{THINKING}}
-tools: read,bash,edit,write
+tools: default
 owner_decision: {{OWNER_DECISION_OR_NONE}}
 allow_done: {{ALLOW_DONE}}
+ship: publish
+allowed_paths:
+  - tasks/{{TASK_FILE}}.yaml
+  - docs/requirements/{{REQUIREMENT_FILE}}.md
+  - docs/task_register.md
+  - docs/task_register_completed.md
 read_paths:
   - .agents/skills/task-records/SKILL.md
   - {{RELATED_REQUIREMENT_OR_TASK}}
@@ -18,10 +25,7 @@ read_paths:
 
 ## 允许改的路径
 
-- tasks/{{TASK_FILE}}.yaml
-- docs/requirements/{{REQUIREMENT_FILE}}.md
-- docs/task_register.md 与 docs/task_register_completed.md（只能由 `.venv/Scripts/python.exe tools/tasks.py render` 生成）
-- {{其他仅记录类路径}}
+见 front matter 的 `allowed_paths`；docs/task_register.md 与 docs/task_register_completed.md 只能由 `.venv/Scripts/python.exe tools/tasks.py render` 生成。
 
 ## 步骤
 

@@ -1,0 +1,321 @@
+# ruff: noqa: E501
+"""Mechanical acceptance checks for pi agent runs.
+
+The script reads git state and run artifacts, writes checks.json, and never imports code from the
+candidate branch.
+"""
+
+from __future__ import annotations
+
+import argparse
+import fnmatch
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+SCHEMA = "aits.pi.accept-checks/0"
+OWNER_RE = re.compile(r"Owner-Decision:\s*(owner_decision:[^\s]+)")
+GATE_RE = re.compile(r"Gate:\s*tree\s+([0-9a-f]{40})", re.I)
+
+
+def run_git(repo: Path, args: list[str], ok: tuple[int, ...] = (0,)) -> subprocess.CompletedProcess[str]:
+    res = subprocess.run(["git", *args], cwd=repo, capture_output=True, text=True, timeout=60)
+    if res.returncode not in ok:
+        raise RuntimeError(f"git {' '.join(args)} failed: {res.stderr}")
+    return res
+
+
+def git_lines(repo: Path, args: list[str], ok: tuple[int, ...] = (0,)) -> list[str]:
+    out = run_git(repo, args, ok).stdout
+    return [line for line in out.splitlines() if line]
+
+
+def load_brief(run_dir: Path) -> dict[str, Any]:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import brief  # type: ignore
+
+    return brief.parse_file(run_dir / "brief.md")
+
+
+def parse_policy(text: str) -> dict[str, Any]:
+    zones: dict[str, list[str]] = {"A": [], "C": []}
+    exclusions: list[str] = []
+    section: str | None = None
+    zone: str | None = None
+    for raw in text.splitlines():
+        line = raw.rstrip()
+        stripped = line.strip()
+        if stripped.startswith("tree_clean_exclusions:"):
+            section = "exclusions"
+            zone = None
+            continue
+        if stripped.startswith("zones:"):
+            section = "zones"
+            continue
+        if section == "exclusions" and stripped.startswith("- "):
+            exclusions.append(stripped[2:].strip().strip('"'))
+            continue
+        m = re.match(r"^\s{2}([AC]):\s*$", line)
+        if section == "zones" and m:
+            zone = m.group(1)
+            continue
+        if section == "zones" and zone in zones and stripped.startswith("- "):
+            zones[zone].append(stripped[2:].strip().strip('"'))
+    return {"zones": zones, "tree_clean_exclusions": exclusions}
+
+
+def norm(path: str) -> str:
+    return path.replace("\\", "/").strip("/")
+
+
+def match_any(path: str, patterns: list[str]) -> bool:
+    p = norm(path)
+    for pat in patterns:
+        pat = norm(pat)
+        if pat.endswith("/**"):
+            root = pat[:-3].rstrip("/")
+            if p == root or p.startswith(root + "/"):
+                return True
+        elif "*" in pat or "?" in pat:
+            if fnmatch.fnmatch(p, pat):
+                return True
+        elif p == pat:
+            return True
+    return False
+
+
+def zone_for(path: str, policy: dict[str, Any]) -> str:
+    if match_any(path, policy["zones"].get("C", [])):
+        return "C"
+    if match_any(path, policy["zones"].get("A", [])):
+        return "A"
+    return "B"
+
+
+def changed_files(repo: Path, base: str, head: str) -> list[str]:
+    files = set(git_lines(repo, ["diff", "--name-only", f"{base}...{head}"], ok=(0,)))
+    files.update(git_lines(repo, ["diff", "--name-only"], ok=(0,)))
+    files.update(git_lines(repo, ["diff", "--cached", "--name-only"], ok=(0,)))
+    files.update(git_lines(repo, ["ls-files", "--others", "--exclude-standard"], ok=(0,)))
+    return sorted(norm(f) for f in files if f)
+
+
+def diff_text(repo: Path, base: str, head: str) -> str:
+    parts = [run_git(repo, ["diff", f"{base}...{head}"], ok=(0,)).stdout]
+    wd = run_git(repo, ["diff"], ok=(0,)).stdout
+    cached = run_git(repo, ["diff", "--cached"], ok=(0,)).stdout
+    untracked_parts = []
+    for path in git_lines(repo, ["ls-files", "--others", "--exclude-standard"], ok=(0,)):
+        untracked_parts.append(run_git(repo, ["diff", "--no-index", "--", "NUL", path], ok=(0, 1)).stdout)
+    return "\n".join([*parts, wd, cached, *untracked_parts])
+
+
+def check_allowed(files: list[str], allowed: list[str]) -> tuple[bool, str]:
+    bad = [f for f in files if not match_any(f, allowed)]
+    return (not bad, "all changes are within allowed_paths" if not bad else "out of scope: " + ", ".join(bad))
+
+
+def check_zones(files: list[str], policy: dict[str, Any], brief: dict[str, Any]) -> tuple[bool, str, dict[str, list[str]]]:
+    zones = {"A": [], "B": [], "C": []}
+    for f in files:
+        zones[zone_for(f, policy)].append(f)
+    c_files = zones["C"]
+    ok = not c_files or (brief.get("zone") == "C" and str(brief.get("owner_decision", "")).startswith("owner_decision:"))
+    detail = "; ".join(f"{z}:{len(v)}" for z, v in zones.items())
+    if c_files and not ok:
+        detail += " C-zone files require zone C and owner_decision: " + ", ".join(c_files)
+    return ok, detail, zones
+
+
+def check_exclusions_and_views(files: list[str], policy: dict[str, Any]) -> tuple[bool, str]:
+    bad = [f for f in files if f in [norm(x) for x in policy.get("tree_clean_exclusions", [])]]
+    rendered = {"docs/task_register.md", "docs/task_register_completed.md"}
+    touched_rendered = rendered.intersection(files)
+    touched_tasks = [f for f in files if fnmatch.fnmatch(f, "tasks/*.yaml")]
+    problems = []
+    if bad:
+        problems.append("tree_clean_exclusions touched: " + ", ".join(bad))
+    if touched_rendered and not touched_tasks:
+        problems.append("task rendered views changed without tasks/*.yaml")
+    return (not problems, "; ".join(problems) or "no excluded files or orphan task views")
+
+
+def check_test_weakening(diff: str) -> tuple[bool, str]:
+    in_test = False
+    removed_bad: list[str] = []
+    added_bad: list[str] = []
+    tolerance: list[str] = []
+    current = ""
+    removed_assert_by_file: dict[str, int] = {}
+    added_assert_by_file: dict[str, int] = {}
+    for line in diff.splitlines():
+        if line.startswith("diff --git "):
+            current = line
+            in_test = bool(re.search(r" b/(tests/|.*\.test\.ts$)", line))
+            continue
+        if not in_test:
+            continue
+        body = line[1:] if line[:1] in "+-" else line
+        if line.startswith("-") and re.search(r"def test_|async def test_|\bit\(", body):
+            removed_bad.append(current)
+        if line.startswith("-") and re.search(r"\bassert\b", body):
+            removed_assert_by_file[current] = removed_assert_by_file.get(current, 0) + 1
+        if line.startswith("+") and re.search(r"\bassert\b", body):
+            added_assert_by_file[current] = added_assert_by_file.get(current, 0) + 1
+        if line.startswith("+") and re.search(r"@pytest\.mark\.(skip|xfail)|\.skip\(|\bskip\(", body):
+            added_bad.append(current)
+        if line[:1] in "+-" and re.search(r"approx\(|\babs=|\brel=|\batol\b|\brtol\b", body):
+            tolerance.append(body.strip()[:120])
+    for file_key, count in removed_assert_by_file.items():
+        if added_assert_by_file.get(file_key, 0) < count:
+            removed_bad.append(file_key)
+    problems = []
+    if removed_bad:
+        problems.append(f"removed asserts/tests in {len(set(removed_bad))} diff(s)")
+    if added_bad:
+        problems.append(f"added skip/xfail in {len(set(added_bad))} diff(s)")
+    if tolerance:
+        problems.append("tolerance changes: " + "; ".join(tolerance[:6]))
+    return (not (removed_bad or added_bad), "; ".join(problems) or "no test weakening patterns")
+
+
+def file_at(repo: Path, rev: str, path: str) -> str | None:
+    res = subprocess.run(["git", "show", f"{rev}:{path}"], cwd=repo, capture_output=True, text=True, timeout=30)
+    if res.returncode != 0:
+        return None
+    return res.stdout
+
+
+def parse_status_notes(text: str | None) -> tuple[str | None, str]:
+    if not text:
+        return None, ""
+    status = None
+    notes_lines: list[str] = []
+    in_notes = False
+    for line in text.splitlines():
+        if line.startswith("status:"):
+            status = line.split(":", 1)[1].strip().strip('"')
+        if line.startswith("notes:"):
+            in_notes = True
+            notes_lines.append(line)
+            continue
+        if in_notes:
+            if line and not line.startswith(" "):
+                in_notes = False
+            else:
+                notes_lines.append(line)
+    return status, "\n".join(notes_lines)
+
+
+def check_tasks(repo: Path, base: str, head: str, files: list[str], allow_done: bool) -> tuple[bool, str]:
+    problems: list[str] = []
+    for f in files:
+        if not fnmatch.fnmatch(f, "tasks/*.yaml"):
+            continue
+        old = file_at(repo, base, f)
+        new = file_at(repo, head, f) or (repo / f).read_text(encoding="utf-8")
+        old_status, old_notes = parse_status_notes(old)
+        new_status, new_notes = parse_status_notes(new)
+        if not allow_done and new_status == "DONE" and old_status != "DONE":
+            problems.append(f"{f} status changed to DONE while allow_done=false")
+        if old_notes and new_notes and not new_notes.startswith(old_notes):
+            problems.append(f"{f} notes were not append-only")
+    return (not problems, "; ".join(problems) or "task notes/status rules passed")
+
+
+def check_report(run_dir: Path) -> tuple[bool, str]:
+    path = run_dir / "report.json"
+    if not path.exists():
+        return True, "report.json not present"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    blocked = data.get("blocked") or []
+    rules = sorted({str(b.get("rule") or b.get("reason") or b.get("tool") or "unknown") for b in blocked})
+    oos = data.get("out_of_scope_files") or []
+    detail = f"blocked={len(blocked)} rules={','.join(rules) if rules else '-'} out_of_scope={len(oos)}"
+    if oos:
+        detail += " files=" + ", ".join(map(str, oos))
+    return (not oos, detail)
+
+
+def check_equivalence(run_dir: Path) -> tuple[bool, str]:
+    brief_text = (run_dir / "brief.md").read_text(encoding="utf-8")
+    m = re.search(r"^##\s*等价检查.*?\n(.*?)(?=^##\s|\Z)", brief_text, re.S | re.M)
+    section = m.group(1).strip() if m else "不适用"
+    if section.startswith("不适用"):
+        return True, "equivalence check not applicable"
+    path = run_dir / "equivalence.json"
+    if not path.exists():
+        return False, "equivalence.json is required"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return (data.get("ok") is True, "equivalence.json ok=true" if data.get("ok") is True else "equivalence.json ok is not true")
+
+
+def check_gate(repo: Path, head: str, brief: dict[str, Any]) -> tuple[bool, str]:
+    sha = run_git(repo, ["rev-parse", head]).stdout.strip()
+    msg = run_git(repo, ["log", "-1", "--format=%B", sha]).stdout
+    tree = run_git(repo, ["rev-parse", f"{sha}^{{tree}}"]).stdout.strip()
+    m = GATE_RE.search(msg)
+    problems: list[str] = []
+    if not m:
+        problems.append("missing Gate trailer")
+    elif m.group(1) != tree:
+        problems.append(f"Gate tree {m.group(1)} != commit tree {tree}")
+    if brief.get("zone") == "C":
+        owner = OWNER_RE.search(msg)
+        if not owner:
+            problems.append("missing Owner-Decision trailer")
+        else:
+            res = subprocess.run(["git", "grep", "-F", "-e", owner.group(1), "main", "--", "docs/requirements"], cwd=repo, text=True, capture_output=True, timeout=30)
+            if res.returncode != 0:
+                problems.append("Owner-Decision id not found in main docs/requirements")
+    return (not problems, "; ".join(problems) or "gate trailers passed")
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description="Run mechanical acceptance checks for a pi agent run.")
+    ap.add_argument("--repo", type=Path, required=True)
+    ap.add_argument("--run-dir", type=Path, required=True)
+    ap.add_argument("--head", required=True)
+    ap.add_argument("--base", default="main")
+    ap.add_argument("--gate", action="store_true")
+    args = ap.parse_args(argv)
+
+    repo = args.repo.resolve()
+    run_dir = args.run_dir.resolve()
+    brief = load_brief(run_dir)
+    policy = parse_policy(run_git(repo, ["show", f"{args.base}:config/gov008_ship.yaml"]).stdout)
+    files = changed_files(repo, args.base, args.head)
+    diff = diff_text(repo, args.base, args.head)
+    head_sha = run_git(repo, ["rev-parse", args.head]).stdout.strip()
+
+    checks: list[dict[str, Any]] = []
+    ok, detail = check_allowed(files, list(brief.get("allowed_paths") or []))
+    checks.append({"name": "changes within allowed_paths", "ok": ok, "detail": detail})
+    ok, detail, zones = check_zones(files, policy, brief)
+    checks.append({"name": "file zones match brief", "ok": ok, "detail": detail, "zones": zones})
+    ok, detail = check_exclusions_and_views(files, policy)
+    checks.append({"name": "exclusions and task views", "ok": ok, "detail": detail})
+    ok, detail = check_test_weakening(diff)
+    checks.append({"name": "tests not weakened", "ok": ok, "detail": detail})
+    ok, detail = check_tasks(repo, args.base, args.head, files, bool(brief.get("allow_done")))
+    checks.append({"name": "task notes append-only and allow_done", "ok": ok, "detail": detail})
+    ok, detail = check_report(run_dir)
+    checks.append({"name": "run report", "ok": ok, "detail": detail})
+    ok, detail = check_equivalence(run_dir)
+    checks.append({"name": "equivalence artifact", "ok": ok, "detail": detail})
+    if args.gate:
+        ok, detail = check_gate(repo, args.head, brief)
+        checks.append({"name": "gate trailers", "ok": ok, "detail": detail})
+
+    result = {"schema": SCHEMA, "head": head_sha, "checks": checks}
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "checks.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 0 if all(c["ok"] for c in checks) else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

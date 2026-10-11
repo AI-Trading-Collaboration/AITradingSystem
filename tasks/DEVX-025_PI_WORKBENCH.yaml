@@ -6,4 +6,4 @@ status: IN_PROGRESS
 next_owner: Claude 验收
 next_step: 01 守卫加固、append-note、任务单模板；02 启动脚本与看板；03 ship 拆分（C 区）
 acceptance: 试跑暴露的偏差各有测试证明被拦；受限账户脚本经审阅；ship 拆分后门禁只跑一次
-notes: production_effect=none；broker_action=none；requirement=docs/requirements/DEVX-025_Pi_Workbench.md
+notes: production_effect=none；broker_action=none；requirement=docs/requirements/DEVX-025_Pi_Workbench.md；运行 02 增加 brief 解析器、pi 启动/受限账户脚本、机械验收脚本和 runs 看板；production_effect=none；broker_action=none。

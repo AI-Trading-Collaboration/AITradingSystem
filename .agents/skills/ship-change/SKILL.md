@@ -38,6 +38,8 @@ The repository rules are in `AGENTS.md`; this skill is the step order. Use the p
 
 ## 4. Ship
 
+pi 的运行由远程会话用 `scripts/agent/run-brief.ps1` 启动，验收的机械部分用 `scripts/agent/accept_checks.py`。
+
 ```powershell
 .venv/Scripts/python.exe tools/gov008/ship.py --repo . --dry-run            # zones, gate commands, problems
 .venv/Scripts/python.exe tools/gov008/ship.py --repo . --execute --push     # gate (~10 min for zone B/C), then main and origin
