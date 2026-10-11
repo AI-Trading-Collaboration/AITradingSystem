@@ -170,6 +170,8 @@ pi 就绪清单：AGENTS.md 中性且 ≤150 行；有一条 `ship` 命令；存
    S2 事务；删除用脚本按名单执行并跑新门。
 7. **时间盒与停止条件**：每阶段有时间盒与退出条件，超时先缩范围而不是延期；P2 末做一次校准检查点，更新后续估计。
 8. **并行轨道：恢复日常运行**：不挂在关键路径上。查明日报停在 7 月的原因，用最简调度恢复；OPS-082 的范围随新设计重定义。
+   （2026-10-11 更正：生产日报并非停在 7 月。运行副本最后一次 daily PASS 为 as_of 2026-09-04，之后因旧 checkout 门
+   `LEASE_ARBITER_MIGRATION_REQUIRED` 停止；"7 月"来自开发 checkout 的缓存与 DQ 回执，开发 checkout 不运行日报。见第 12 节。）
 9. **宿主约束**：长任务期间屏幕不休眠（owner 设置）；大批量文件操作错开 Defender 扫描峰值；删除块执行时不并行跑重测试。
 
 ## 9. 引导（Bootstrap）问题与路线
@@ -244,7 +246,12 @@ owner 可调整）：
   写中文摘要（无 LLM，通知只写文件），17:30 rescue 作为同一计划任务的第二个触发时间，终止恢复改为校验运行副本工作区干净且
   HEAD 可从 `origin/main` 到达（取代 deployment receipt）；`owner_decision:GOV-008:2026-10-11:research_after_migration`——
   研究策略调整（含付费源停订后的替代）推迟到工程迁移结束后讨论，付费源停订期间 ordinary daily 全链 PASS 不是 OPS-082 的完成
-  条件，本次只做工程验证。其余挂起任务的处置按第 21 节建议执行（见第 21 节之后的"2026-10-11 owner 决定与处置结果"）。
+  条件，本次只做工程验证。其余挂起任务的处置按第 21 节建议执行（见第 21.1 节"2026-10-11 owner 决定与处置结果"）。
+- 2026-10-11 更正（第 20.7 节与第 8 节第 8 条）：20.7 记录的 2026-10-09 `daily_default.v1` DQ FAIL 回执（评估窗口止于
+  2026-07-23）来自**开发 checkout** `D:\Work\AITradingSystem`，开发 checkout 不运行日报，它的缓存与 DQ 回执不代表生产日报状态。
+  生产日报在运行副本 `D:\Work\AITradingSystem_ops_runtime`：最后一次 daily PASS 为 as_of 2026-09-04；之后运行副本停在
+  detached `6498d0300`（9/10），daily-run 一直被旧 checkout 门（`LEASE_ARBITER_MIGRATION_REQUIRED`）挡住。这一缺口由 OPS-082
+  处理（新调度、运行副本升级到已 ship 的 main）。DEVX-024 的 next_owner 已去掉"处理 DQ FAIL"一项。
 
 ## 13. P2 spike 结果（2026-10-10，代码在 `tools/gov008/`、`config/gov008_ship.yaml`、`core/provenance.py`）
 
@@ -689,6 +696,33 @@ DEVX-019、DEVX-020、DEVX-021、DEVX-022、DEVX-023、GOV-007、OPS-077、OPS-0
 
 收尾已发布：`ba41ae637`（ship 门禁 7,932 通过、0 失败；第一次 ship 在推进 main 前 `git fetch` 遇到网络瞬断被拒绝，main 未动，重试成功）。
 
+### 21.1 2026-10-11 owner 决定与处置结果
+
+owner 在 Codex 应用里暂停了 automation `aitradingsystem-pit`，并在聊天中要求"其他按照你的默认决策推进"（2026-10-11）。
+据此记录 `owner_decision:OPS-082:2026-10-11:deterministic_scheduler_v1` 与
+`owner_decision:GOV-008:2026-10-11:research_after_migration`（全文见 OPS-082 需求文档第 2 节），上表其余建议按默认执行。
+每个任务的原 next_step 原文保留在新文字之后，notes 只追加。
+
+| 任务 | 原状态 | 新状态 | 处置 |
+|---|---|---|---|
+| RISK-012 | IN_PROGRESS | DEFERRED | next_owner = Project Owner；退出条件：工程迁移结束后与 owner 讨论研究策略；原下一步依赖的 formal/Full/release promotion 已删除 |
+| TRADING-2560（Composer 前瞻观察） | IN_PROGRESS | DEFERRED | 同上（`research_after_migration`） |
+| TRADING-2564（长期研究能力） | IN_PROGRESS | DEFERRED | 同上 |
+| OPS-070、OPS-072、OPS-074 | DEFERRED | VALIDATING | 验收改为"OPS-082 新调度下、付费数据源恢复后的第一次 ordinary daily 全链"；原验收保留在 notes |
+| OPS-073、OPS-079 | DEFERRED | VALIDATING | 同上；恢复路径已不依赖 deployment receipt（OPS-082 决定 e） |
+| OPS-078 | DEFERRED | 待定 | 计划并入 OPS-082 后 DROPPED（17:30 rescue 为同一计划任务的第二个触发时间）；随 OPS-082 记录一起处理 |
+| OPS-082 | PROPOSED → IN_PROGRESS | 待定 | 工程验证结果与预期不符（付费源仍可用，第一次计划任务运行即 ordinary daily 全链 PASS），状态等 owner 决定 |
+| DATA-GOV-002、ARCH-004、GOV-006 | DEFERRED | DEFERRED | 退出条件改为"工程迁移结束后复核" |
+| ARCH-004G5、ARCH-004H | PROPOSED | DEFERRED | 同上 |
+| DEVX-001 | DEFERRED | DROPPED | 临时工作区规则已在 AGENTS.md |
+| OPS-080（补登） | 无任务记录 | DEFERRED（P1） | 保全位置：ref `refs/aits/source-preservation/ops080-v2-source-20260921-v1`（需求文档只在该 ref 里）、worktree `D:\Work\AITradingSystem_ops080_input_closure`（92 个未提交路径）、`D:\Work\AITradingSystem_backups\2026-09-23\`；退出条件：迁移后按采集协议 v3 评估是否还需要 |
+| DEVX-024 | BASELINE_DONE | BASELINE_DONE | next_owner 去掉"处理 DQ FAIL"；更正见第 12 节 |
+
+根目录 `IMPLEMENTATION_NOTES.md`（ETF P0 实施说明，2026-05-31）与 `requirements.md`（需求文档索引，2026-06-16）：
+`src`、`tests`、`config`、`scripts`、`tools` 中没有按路径、文本或字节哈希引用它们（两个文件的 SHA-256 在 src/tests/config/
+scripts/tools/registry/inputs/research/docs 中均未出现），README 也没有链接；只有一份已完成的 ETF 需求文档与已完成任务视图在正文里
+提到 `IMPLEMENTATION_NOTES.md`。两个文件原样（字节不变）移到 `docs/archive/`。
+
 ### 20.1 owner 决定：pi 由 owner 安装并登录（2026-10-10，聊天）
 
 `owner_decision:GOV-008:2026-10-10:pi_install_by_owner`：owner 自己用官方脚本安装 pi，并在 pi 里完成 `/login` 与 `/trust`；
@@ -789,6 +823,7 @@ owner 要求在本机模型服务里加入 Strata 模型供本项目使用，选
 `daily_default.v1` DQ 回执为 FAIL：评估窗口只到 2026-07-23，请求到 2026-10-09，阻断项为 `prices_stale`、`rates_stale`、
 `prices_requested_window_coverage_missing`、`prices_non_market_session_date`、`download_manifest_requested_window_mismatch`，
 `consumer_cutover_allowed=false`。也就是说缓存行情自 2026-07-23 后未刷新。gpt-5.5 与 Qwen 27B 的试跑只看了计划，没有检查 DQ 回执。
+（2026-10-11 更正：以上是开发 checkout 的缓存与回执，开发 checkout 不运行日报；生产日报状态见第 12 节同日更正。）
 
 **结论**：128k 上下文解决了 20.6 记录的溢出与大文件限制，本地模型可以承担更大范围的阅读任务。判断类改动仍需审阅把关。
 
