@@ -87,6 +87,20 @@ def test_validation_failures(tmp_path: Path, capsys: pytest.CaptureFixture[str],
     assert message in capsys.readouterr().err
 
 
+@pytest.mark.parametrize("thinking", ["high", "xhigh"])
+def test_thinking_high_and_xhigh_are_valid(tmp_path: Path, thinking: str) -> None:
+    repo = make_repo(tmp_path)
+    assert brief.validate(brief.parse_text(text(thinking=thinking)), repo) == []
+
+
+def test_invalid_thinking_is_rejected(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    repo = make_repo(tmp_path)
+    p = tmp_path / "brief.md"
+    p.write_text(text(thinking="turbo"), encoding="utf-8")
+    assert brief.show(p, repo) == 2
+    assert "thinking must be one of" in capsys.readouterr().err
+
+
 def test_required_fields_duplicate_keys_and_run_prefix(tmp_path: Path) -> None:
     repo = make_repo(tmp_path)
     data = brief.parse_text(text(task=""))

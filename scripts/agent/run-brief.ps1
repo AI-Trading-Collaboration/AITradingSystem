@@ -7,6 +7,7 @@ param(
     [string]$Repo = (Resolve-Path ".").Path,
     [string]$Now,
     [int]$TimeoutSeconds = 7200,
+    [int]$PickupSeconds = 120,
     [string]$ConfigPath
 )
 
@@ -74,18 +75,28 @@ if ($Fix) {
 }
 
 $modelKey = [string]$brief.model
-$modelId = [string]$config.models.$modelKey
+$effectiveKey = $modelKey
 $acceptancePath = Join-Path $runDir "acceptance.json"
 $rejectedCount = 0
 if (Test-Path -LiteralPath $acceptancePath) { $acc = Read-JsonFile $acceptancePath; $rejectedCount = @($acc.reviews | Where-Object { $_.verdict -eq "rejected" }).Count }
-if ($Fix -and $rejectedCount -ge 2) { $modelId = [string]$config.models.cloud }
 $lastExit = $null
 if (Test-Path -LiteralPath $attemptRoot) {
     $last = Get-ChildItem -LiteralPath $attemptRoot -Directory | Sort-Object Name -Descending | Select-Object -First 1
     if ($last -and (Test-Path -LiteralPath (Join-Path $last.FullName "exit.json"))) { $lastExit = Read-JsonFile (Join-Path $last.FullName "exit.json") }
 }
-if ($Fix -and $modelKey -eq "local" -and $lastExit -and $lastExit.stopReason -eq "error") { $modelId = [string]$config.models.cloud }
-$modelArg = if ($brief.thinking -and $brief.thinking -ne "default") { $modelId + ":" + [string]$brief.thinking } else { $modelId }
+if ($Fix) {
+    # Model routing (DEVX-025 section 7): after one local error or one rejection, the fix runs on the cloud model.
+    $lastFailed = (-not $lastExit) -or (-not $lastExit.stopReason) -or ($lastExit.stopReason -eq "error") -or ($lastExit.stopReason -eq "aborted")
+    if ($rejectedCount -ge 2) { $effectiveKey = "cloud" }
+    if ($modelKey -eq "local" -and ($rejectedCount -ge 1 -or $lastFailed)) { $effectiveKey = "cloud" }
+}
+$modelId = [string]$config.models.$effectiveKey
+$thinking = [string]$brief.thinking
+if ((-not $thinking) -or $thinking -eq "default") {
+    $thinking = ""
+    if ($config.default_thinking -and $config.default_thinking.$effectiveKey) { $thinking = [string]$config.default_thinking.$effectiveKey }
+}
+$modelArg = if ($thinking) { $modelId + ":" + $thinking } else { $modelId }
 
 $envMap = [ordered]@{ AITS_PI_RUN_DIR=$runDir; AITS_PI_RUN=[string]$brief.run; AITS_PI_TASK=[string]$brief.task; AITS_PI_ZONE=[string]$brief.zone; AITS_PI_ALLOWED_PATHS=([string[]]$brief.allowed_paths -join ";") }
 if ($brief.zone -eq "C") { $envMap.AITS_PI_OWNER_DECISION = [string]$brief.owner_decision }
@@ -101,6 +112,7 @@ if ($DryRun) {
     Write-Host $piPreview
     Write-Host "RunDir=$runDir"
     Write-Host "Attempt=$attempt Purpose=$purpose Direct=$Direct"
+    Write-Host "ModelKey=$modelKey EffectiveModel=$effectiveKey Rejected=$rejectedCount"
     foreach ($k in $envMap.Keys) { Write-Host ("{0}={1}" -f $k, $envMap[$k]) }
     exit 0
 }
@@ -125,7 +137,35 @@ if ($Direct) {
     if (Test-Path -LiteralPath $queueFile) { Write-Host "拒绝入队：队列文件已存在，上一请求可能尚未被取走：$queueFile"; exit 2 }
     New-Item -ItemType Directory -Force -Path (Split-Path -Parent $queueFile) | Out-Null
     Write-JsonNoBom $queueFile $request
-    schtasks /Run /TN ([string]$config.scheduled_task_name) | Out-Null
+    $taskName = [string]$config.scheduled_task_name
+    $oldEap = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $runOut = (& schtasks.exe /Run /TN $taskName 2>&1 | Out-String).Trim()
+        $runCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $oldEap
+    }
+    Write-Host ("schtasks /Run exit {0}: {1}" -f $runCode, $runOut)
+    if ($runCode -ne 0) {
+        Remove-Item -LiteralPath $queueFile -Force -ErrorAction SilentlyContinue
+        Write-Host "拒绝继续：计划任务启动失败，已删除本次写入的队列文件。"
+        exit 2
+    }
+    $pickupDeadline = (Get-Date).AddSeconds($PickupSeconds)
+    while ((Get-Date) -lt $pickupDeadline -and (Test-Path -LiteralPath $queueFile)) { Start-Sleep -Seconds 2 }
+    if (Test-Path -LiteralPath $queueFile) {
+        $ErrorActionPreference = "Continue"
+        try {
+            $queryOut = (& schtasks.exe /Query /TN $taskName /V /FO LIST 2>&1 | Out-String)
+        } finally {
+            $ErrorActionPreference = $oldEap
+        }
+        $queryOut -split "`r?`n" | Where-Object { $_ -match "^(Status|Last Run Time|Last Result):" } | ForEach-Object { Write-Host $_.Trim() }
+        Remove-Item -LiteralPath $queueFile -Force -ErrorAction SilentlyContinue
+        Write-Host ("拒绝继续：计划任务在 {0} 秒内没有取走请求，已删除队列文件。" -f $PickupSeconds)
+        exit 2
+    }
     $exitPath = Join-Path (Join-Path (Join-Path $runDir "attempts") $attempt) "exit.json"
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     while ((Get-Date) -lt $deadline -and -not (Test-Path -LiteralPath $exitPath)) { Start-Sleep -Seconds 5 }

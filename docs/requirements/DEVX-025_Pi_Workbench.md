@@ -14,6 +14,12 @@ owner_decision:DEVX-025:2026-10-11:manual_agent_task_exception —— 2026-10-11
 
 owner_decision:DEVX-025:2026-10-11:tighten_d_work_acl —— 2026-10-11 owner（Baker）在项目线程的决定卡片上，对问题"收紧 D:\Work 的权限，去掉'所有登录用户'的修改和读取吗？"选择了"收紧"（选项后果："D:\Work 只留管理员、SYSTEM 和你的账户；aits-agent 只拿到自己的三个目录，以及仓库 .git 的只读权限。"）。对追问"你现在还在 D:\Work 里用 Codex 吗？"回答"还用"，所以 CodexSandboxUsers 组保留 D:\Work 的修改权限。D:\Work 本身由 owner 用管理员身份手工收紧；运行 05 让安装脚本给受限账户的三个目录关闭继承。
 
+owner_decision:DEVX-025:2026-10-11:model_routing —— 2026-10-11 owner（Baker）在项目线程里提出 pi 的云端调用统一走 OpenAI 订阅登录（不用 API key），云端模型用 gpt-6.1-sol；在决定卡片上，对问题"选定 pi 云端模型 gpt-6.1-sol 的默认推理强度"选择了"high"（选项后果："所有云端运行都用高强度，更稳，但更慢，额度消耗也更快。"）；对第 7 节的本地、云端分工约定回复"好的，先这样约定"。在运行 08 执行。
+
+owner_decision:DEVX-025:2026-10-11:agent_read_base_python —— 2026-10-11 owner（Baker）在项目线程的决定卡片上，对问题"允许 aits-agent 读取你用户目录里的 Python 安装吗？"选择了"授权读取"（选项后果："给 aits-agent 这一个目录的只读权限，你运行一条命令就好，随时可以撤销；它仍然读不到你用户目录的其他部分。"）。owner 当天已手工授权；运行 08 让安装脚本对 agent venv 的底层 Python 目录做同样的授权。
+
+owner_decision:DEVX-025:2026-10-11:agent_task_launch —— 2026-10-11 owner（Baker）在项目线程的决定卡片上，对问题"以后由我直接启动受限账户的计划任务吗？"选择了"让我启动"（选项后果："我把请求放进队列后，自己运行 schtasks 启动这个任务，你不用每次动手。"）。授权只覆盖用 `schtasks /Run` 启动"AITradingSystem pi agent"这一个任务，不包括修改、新建或删除任务。
+
 ## 3. 分三次运行的步骤与验收
 
 ### 运行 01：守卫加固、append-note、任务单模板
@@ -117,6 +123,24 @@ owner_decision:DEVX-025:2026-10-11:tighten_d_work_acl —— 2026-10-11 owner（
 - `ship.py --dry-run` 显示本次为 B 区。
 - owner 在 1b 重新运行安装脚本时，pi 目录的权限检查不再抛错。
 
+### 运行 08：模型配置、任务启动检查和小修
+
+步骤：
+
+1. 云端模型改为订阅登录的 `openai/gpt-6.1-sol`，在 `agent_config.json` 配置默认推理强度 high。
+2. `agent-run.ps1` 启动 pi 时从子进程环境去掉所有 `*_API_KEY`，不改用户和系统环境变量，订阅凭据不可用时不回退到环境 API key。
+3. `run-brief.ps1 -Fix` 在本地出错、aborted、没有回复或一次退回后自动升级云端；默认推理强度按有效模型读取，任务单显式值优先。
+4. 队列模式保留 `schtasks /Run` 输出和退出码，并检查请求在 `PickupSeconds` 内被取走；启动失败或未取走时删除本次队列文件并退出 2。
+5. `brief.py` 校验 thinking 的合法取值，拒绝无效推理强度。
+6. `accept_checks.py` 按 YAML 解析后的 status/notes 比较，允许仅引号形式改变的追加，拒绝改写、删空和非映射任务文件。
+7. 安装脚本要求账户密码，并按 owner 授权给 agent venv 的底层 Python 目录只读和执行权限；只通过 `-WhatIf`/`-CheckOnly` 验证，不执行安装完整模式。
+
+验收：
+
+- 新旧测试通过（含 pi 进程里没有 `*_API_KEY` 的用例）；没有 PowerShell 时按现有辅助函数跳过。
+- `ship.py --dry-run` 显示本次为 B 区，不执行 gate 或发布。
+- 用真实配置 DryRun 时，云端任务单的模型参数是 `openai/gpt-6.1-sol:high`，本地默认值不追加 thinking 冒号。
+
 ## 4. 开放问题
 
 - 已决定：受限账户的手动计划任务作为 periodic-operations“不要注册第二个计划任务”规则的唯一例外（`owner_decision:DEVX-025:2026-10-11:manual_agent_task_exception`），运行 05 已登记。
@@ -138,6 +162,25 @@ owner_decision:DEVX-025:2026-10-11:tighten_d_work_acl —— 2026-10-11 owner（
 - 2026-10-11：运行 05 发布（main d3c1f8d40），owner 收紧 D:\Work。运行 06：安装脚本只认 Windows PowerShell 5.1，计划任务固定使用管理员安装的只读 pi，并允许 owner 不提权启动；agent-run 每次显式信任工作目录，保证受限账户下守卫照常加载。
 - 2026-10-11：运行 06 发布（main 17fda1f49）。1b 第一次运行安装脚本时，权限检查遇到 Program Files 目录上的"所有应用程序包"条目抛错，脚本在建账户之前停下，没有改动。运行 07：权限检查改为直接按 SID 读取。
 
+- 2026-10-11：运行 07 发布（main f328dd127）。1b：owner 以管理员身份完成安装脚本、封住 D 盘其他目录、以 aits-agent 用订阅登录 pi；只读核对确认 aits-agent 读不到 owner 的用户目录和 D 盘其他目录。核对时发现三处问题，都已处理：计划任务的启动请求返回 SUCCESS，但任务没有运行，原因是 aits-agent 没有"作为批处理作业登录"权利（任务日志错误 0x80070569），owner 已手工添加，任务已能以 aits-agent 启动；agent venv 的底层 Python 在 owner 的用户目录里，aits-agent 读不到，owner 已授权读取；pi 1.1.0 的订阅登录凭据在 `openai` 下面，模型要写 `openai/…`，不是 `openai-codex/…`。owner 授权 Claude 直接启动这个计划任务。GOV-008-01（第一次用本地模型）发布（main fa0ab59d6）。运行 08：模型配置和约定、pi 进程去掉 API key 环境变量、任务启动检查、notes 按解析值比较、安装脚本小修。
+
 ## 6. 运行影响边界
 
 production_effect=none；broker_action=none。本需求只改变开发工作台和任务记录工具，不改变投资逻辑、数据流、评分、回测或交易边界。
+
+## 7. 模型选择约定
+
+依据 `owner_decision:DEVX-025:2026-10-11:model_routing`。Claude 写任务单时按下面的规则填 `model` 和 `thinking`。
+
+- 云端模型是 `openai/gpt-6.1-sol`，走 owner 的 ChatGPT 订阅登录，不用 API key。默认推理强度 high（`agent_config.json` 的 `default_thinking.cloud`），任务单可以单独指定。
+- 计费方式由 pi 用的凭据决定，和 provider 名字无关：每个账户的 pi 都只用 `/login` 里的 Sign in with ChatGPT 登录 `openai`，不在 pi 里保存 API key；登录后在交互界面发一句话，确认底部状态栏显示 `(sub)`。`agent-run.ps1` 启动 pi 时去掉所有名字以 `_API_KEY` 结尾的环境变量，所以订阅凭据不可用时运行直接报错，不会改走按量计费。
+- 用本地模型（`model: local`），要同时满足三条：
+  - A 区，或者 B 区里的机械改动：记录和文档、任务卡、搬移、重命名、删除、跑检查和测试、小范围只读调查；
+  - 改动是确定的：由 Claude 事先测好的脚本或逐条改动清单完成，并且有预期的 tree 哈希或明确的检查结果；
+  - 要读的文件和测试输出不多，本地模型的上下文装得下。
+- 用云端模型（`model: cloud`）：pi 要自己写或改代码、写或改测试、排查原因、做设计判断、跨多个文件重构、读大段日志；所有 C 区改动（另外仍需 owner decision）。
+- 升级：本地模型出错（stopReason 为 error 或 aborted，或者没有回复），或者结果被退回一次，修正运行直接换云端，不在本地反复重试。`run-brief.ps1 -Fix` 按这条自动切换。
+- 订阅额度用完时等额度恢复；改用 API key 之前先问 owner。
+- 两种模型的审核、门禁、发布标准完全相同。
+- 跑满大约 10 次之后，按模型复盘一次：一次通过率、返工轮数、越界改动、工具错误和耗时，再决定要不要放宽本地模型的范围。和 DEVX-028（pi 运行回放审查）一起做。
+- 本地模型的输入不出机器。靠近凭据或券商配置的只读调查，本地模型能胜任时优先用本地。

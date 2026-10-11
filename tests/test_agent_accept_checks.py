@@ -204,6 +204,31 @@ def test_task_notes_must_be_append_only_and_done_forbidden(tmp_path: Path) -> No
     assert not check_map(run_dir)["task notes append-only and allow_done"]["ok"]
 
 
+@pytest.mark.parametrize(
+    ("old", "new", "ok", "detail"),
+    [
+        ("status: IN_PROGRESS\nnotes: 'a: b'\n", "status: IN_PROGRESS\nnotes: 'a: b；c'\n", True, "task notes/status rules passed"),
+        (None, "status: IN_PROGRESS\nnotes: 'old；x: y'\n", True, "task notes/status rules passed"),
+        (None, "status: IN_PROGRESS\nnotes: 'changed: old'\n", False, "notes were not append-only"),
+        (None, "status: IN_PROGRESS\nnotes: ''\n", False, "notes were not append-only"),
+        (None, "- just\n- a list\n", False, "is not a YAML mapping"),
+    ],
+    ids=["quoted-append", "plain-to-quoted", "rewrite", "clear", "not-mapping"],
+)
+def test_task_notes_compare_parsed_yaml_values(tmp_path: Path, old: str | None, new: str, ok: bool, detail: str) -> None:
+    repo, run_dir = init_repo(tmp_path)
+    if old is not None:
+        git(repo, "switch", "main")
+        commit_change(repo, "tasks/DEVX.yaml", old, "quoted base notes")
+        git(repo, "switch", "-C", "work", "main")
+    commit_change(repo, "tasks/DEVX.yaml", new)
+    res = run_checks(repo, run_dir)
+    assert res.returncode == (0 if ok else 1), res.stdout + res.stderr
+    check = check_map(run_dir)["task notes append-only and allow_done"]
+    assert check["ok"] is ok
+    assert detail in check["detail"]
+
+
 def test_report_missing_fails(tmp_path: Path) -> None:
     repo, run_dir = init_repo(tmp_path)
     (run_dir / "report.json").unlink()

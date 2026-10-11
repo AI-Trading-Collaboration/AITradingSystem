@@ -29,6 +29,7 @@ FIELDS = {
 }
 LIST_FIELDS = {"allowed_paths", "read_paths"}
 OWNER_RE = re.compile(r"^owner_decision:[A-Za-z0-9_.-]+:\d{4}-\d{2}-\d{2}:[A-Za-z0-9_.-]+$")
+THINKING_LEVELS = ("default", "off", "minimal", "low", "medium", "high", "xhigh", "max")
 
 
 class BriefError(ValueError):
@@ -123,6 +124,8 @@ def validate(data: dict[str, Any], repo: Path) -> list[str]:
         errors.append("model must be local or cloud")
     if data.get("tools") not in {"default", "readonly"}:
         errors.append("tools must be default or readonly")
+    if data.get("thinking") not in THINKING_LEVELS:
+        errors.append("thinking must be one of: " + ", ".join(THINKING_LEVELS))
     if data.get("ship") not in {"publish", "none"}:
         errors.append("ship must be publish or none")
     if not isinstance(data.get("allow_done"), bool):

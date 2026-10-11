@@ -138,6 +138,8 @@ try {
     $psi.UseShellExecute = $false
     $psi.RedirectStandardInput = $true; $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
     @($psi.Environment.Keys) | Where-Object { $_ -like "AITS_PI_*" } | ForEach-Object { [void]$psi.Environment.Remove($_) }
+    # Cloud runs use the owner's subscription login only (DEVX-025 section 7): no API key from the environment reaches pi.
+    @($psi.Environment.Keys) | Where-Object { $_ -like "*_API_KEY" } | ForEach-Object { [void]$psi.Environment.Remove($_) }
     foreach ($key in $AitsEnv.Keys) { $psi.Environment[$key] = [string]$AitsEnv[$key] }
     $oldInputEncoding = [Console]::InputEncoding
     [Console]::InputEncoding = $Utf8NoBom

@@ -106,6 +106,10 @@ if (-not $user) {
     if ($PSCmdlet.ShouldProcess($UserName, "create local standard user")) { New-LocalUser -Name $UserName -Password $password -PasswordNeverExpires | Out-Null }
 } else { Write-Host "User $UserName already exists; skipping creation." }
 if ($user) { $agentSid = $user.Sid.Value } elseif ($preview) { $agentSid = "<SID of $UserName>" } else { $agentSid = (Get-LocalUser -Name $UserName).Sid.Value }
+$userNow = if ($preview) { $user } else { Get-LocalUser -Name $UserName }
+if ((-not $userNow) -or (-not $userNow.PasswordRequired)) {
+    if ($PSCmdlet.ShouldProcess($UserName, "require a password (net user /passwordreq:yes)")) { net user $UserName /passwordreq:yes | Out-Null; Check-Native "net user passwordreq" }
+}
 
 foreach ($dir in @($AgentClone, $AgentWorktree, $RunsRoot, (Split-Path -Parent $QueueFile))) {
     if ($PSCmdlet.ShouldProcess($dir, "create directory")) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
@@ -139,6 +143,9 @@ $sourceCfg = Join-Path $Repo ".venv\pyvenv.cfg"
 $venvHome = $null
 if (Test-Path -LiteralPath $sourceCfg) { foreach ($line in Get-Content -LiteralPath $sourceCfg) { if ($line -match '^home\s*=\s*(.+)$') { $venvHome = $Matches[1].Trim() } } }
 $basePython = if ($venvHome) { Join-Path $venvHome "python.exe" } else { "python" }
+if ($venvHome) {
+    if ($PSCmdlet.ShouldProcess($venvHome, "grant $UserName read and execute on the base Python")) { icacls $venvHome /grant "*${agentSid}:(OI)(CI)RX" | Out-Null; Check-Native "icacls base python" }
+}
 $agentPython = Join-Path $AgentClone ".venv\Scripts\python.exe"
 if (-not (Test-Path -LiteralPath $agentPython)) {
     if ($PSCmdlet.ShouldProcess($AgentClone, "create venv")) { & $basePython -m venv (Join-Path $AgentClone ".venv"); Check-Native "python -m venv" }

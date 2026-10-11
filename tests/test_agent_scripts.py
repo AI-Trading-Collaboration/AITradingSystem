@@ -35,15 +35,15 @@ def test_powershell_scripts_parse(path: Path) -> None:
     assert done.returncode == 0, done.stdout + done.stderr
 
 
-def write_brief(path: Path, *, valid: bool = True) -> None:
+def write_brief(path: Path, *, valid: bool = True, model: str = "local", thinking: str = "default") -> None:
     path.write_text(
         f"""---
 task: DEVX-1
 run: {'DEVX-1-01' if valid else 'OTHER-01'}
 template: mechanical-change
 zone: {'B' if valid else 'D'}
-model: local
-thinking: default
+model: {model}
+thinking: {thinking}
 tools: default
 owner_decision: none
 allow_done: false
@@ -63,7 +63,7 @@ read_paths: []
 
 
 def write_config(path: Path, runs_root: Path) -> None:
-    path.write_text(json.dumps({"runs_root": str(runs_root), "models": {"local": "local/model", "cloud": "openai/gpt-5.5"}, "daily_windows_jst": [{"start": "09:20", "end": "10:30"}], "scheduled_task_name": "nope", "agent_clone": str(ROOT), "queue_file": str(runs_root / "queue/request.json")}), encoding="utf-8")
+    path.write_text(json.dumps({"runs_root": str(runs_root), "models": {"local": "local/model", "cloud": "openai/gpt-5.5"}, "default_thinking": {"cloud": "high"}, "daily_windows_jst": [{"start": "09:20", "end": "10:30"}], "scheduled_task_name": "nope", "agent_clone": str(ROOT), "queue_file": str(runs_root / "queue/request.json")}), encoding="utf-8")
 
 
 def run_brief(ps: str, brief: Path, config: Path, *extra: str) -> subprocess.CompletedProcess[str]:
@@ -107,6 +107,50 @@ def test_run_brief_fix_model_upgrade_and_existing_attempts(tmp_path: Path) -> No
     done = run_brief(ps, brief, config, "-Fix", str(fix), "-DryRun", "-Now", "2026-10-11T12:00:00+09:00")
     assert done.returncode == 0, done.stdout + done.stderr
     assert "openai/gpt-5.5" in done.stdout and "--session" in done.stdout and "Attempt=02" in done.stdout
+
+
+def test_run_brief_cloud_default_thinking_and_explicit_override(tmp_path: Path) -> None:
+    ps = powershell(); brief = tmp_path / "brief.md"; config = tmp_path / "config.json"
+    write_config(config, tmp_path / "runs")
+    for model, thinking, expected in [
+        ("cloud", "default", "--model openai/gpt-5.5:high"),
+        ("cloud", "medium", "--model openai/gpt-5.5:medium"),
+        ("local", "default", "--model local/model "),
+    ]:
+        write_brief(brief, model=model, thinking=thinking)
+        done = run_brief(ps, brief, config, "-DryRun", "-Direct", "-Now", "2026-10-11T12:00:00+09:00")
+        assert done.returncode == 0, done.stdout + done.stderr
+        assert expected in done.stdout
+        if model == "local":
+            assert "local/model:" not in done.stdout
+    assert not (tmp_path / "runs").exists()
+
+
+def test_run_brief_fix_local_after_one_rejection_uses_cloud_high(tmp_path: Path) -> None:
+    ps = powershell(); brief = tmp_path / "brief.md"; fix = tmp_path / "fix.md"; config = tmp_path / "config.json"; runs = tmp_path / "runs"
+    write_brief(brief); fix.write_text("fix", encoding="utf-8"); write_config(config, runs)
+    run_dir = runs / "DEVX-1-01"; (run_dir / "attempts/01").mkdir(parents=True); (run_dir / "session").mkdir()
+    (run_dir / "session/s.jsonl").write_text("", encoding="utf-8")
+    (run_dir / "attempts/01/exit.json").write_text(json.dumps({"stopReason": "stop", "exit_code": 0}), encoding="utf-8")
+    for reviews, expected, effective in [
+        ([{"verdict": "rejected"}], "--model openai/gpt-5.5:high", "cloud"),
+        ([], "--model local/model ", "local"),
+    ]:
+        (run_dir / "acceptance.json").write_text(json.dumps({"reviews": reviews}), encoding="utf-8")
+        done = run_brief(ps, brief, config, "-Fix", str(fix), "-DryRun", "-Now", "2026-10-11T12:00:00+09:00")
+        assert done.returncode == 0, done.stdout + done.stderr
+        assert expected in done.stdout
+        assert f"EffectiveModel={effective}" in done.stdout
+
+
+def test_run_brief_queue_mode_reports_schtasks_failure(tmp_path: Path) -> None:
+    ps = powershell(); brief = tmp_path / "brief.md"; config = tmp_path / "config.json"; runs = tmp_path / "runs"
+    write_brief(brief); write_config(config, runs)
+    done = run_brief(ps, brief, config, "-Now", "2026-10-11T12:00:00+09:00", "-TimeoutSeconds", "30", "-PickupSeconds", "5")
+    assert done.returncode == 2, done.stdout + done.stderr
+    assert "schtasks /Run exit" in done.stdout
+    assert "计划任务启动失败" in done.stdout
+    assert not (runs / "queue/request.json").exists()
 
 
 def write_fake_pi(path: Path) -> None:
@@ -160,6 +204,27 @@ def test_agent_run_executes_fake_pi_direct_and_request_modes(tmp_path: Path) -> 
     done = subprocess.run([ps, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ROOT / "scripts/agent/agent-run.ps1"), "-RequestFile", str(req), "-PiCommand", str(fake)], text=True, capture_output=True, timeout=60, env=env)
     assert done.returncode == 0, done.stdout + done.stderr
     assert not req.exists() and (run2 / "attempts/01/request.json").exists()
+
+
+FAKE_PI_ENV_PY = """import json, os, sys
+if '--export' in sys.argv:
+    sys.exit(0)
+sys.stdin.buffer.read()
+keys = sorted(k for k in os.environ if k.upper().endswith('_API_KEY'))
+open(os.environ['FAKE_PI_CAPTURE'], 'w', encoding='utf-8').write(json.dumps({'api_keys': keys, 'keep': os.environ.get('AITS_TEST_KEEP')}))
+print(json.dumps({'type': 'message_end', 'message': {'role': 'assistant', 'stopReason': 'stop', 'content': 'ok'}}))
+sys.exit(0)
+"""
+
+
+def test_agent_run_removes_api_key_env_from_pi(tmp_path: Path) -> None:
+    ps = powershell(); fake = tmp_path / "fake_pi.py"; fake.write_text(FAKE_PI_ENV_PY, encoding="utf-8")
+    prompt = tmp_path / "p.md"; prompt.write_text("x", encoding="utf-8"); capture = tmp_path / "cap.json"
+    env = os.environ.copy()
+    env.update({"FAKE_PI_CAPTURE": str(capture), "PYTHON": sys.executable, "OPENAI_API_KEY": "leak", "FMP_API_KEY": "leak", "AITS_TEST_KEEP": "kept"})
+    done = subprocess.run([ps, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ROOT / "scripts/agent/agent-run.ps1"), "-Repo", str(ROOT), "-RunDir", str(tmp_path / "run"), "-Attempt", "01", "-PromptFile", str(prompt), "-ModelId", "fake/model", "-PiCommand", str(fake)], text=True, capture_output=True, timeout=60, env=env)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert json.loads(capture.read_text(encoding="utf-8")) == {"api_keys": [], "keep": "kept"}
 
 
 FAKE_PI_LAUNCHER_JS = """const fs = require('fs');
@@ -389,10 +454,13 @@ def ps_command(ps: str, command: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run([ps, "-NoProfile", "-Command", command], text=True, capture_output=True, timeout=60)
 
 
-def run_setup_whatif(ps: str, tmp_path: Path, *, pi_command: Path) -> subprocess.CompletedProcess[str]:
+def run_setup_whatif(ps: str, tmp_path: Path, *, pi_command: Path, base_python_home: Path | None = None) -> subprocess.CompletedProcess[str]:
     work = tmp_path / "work"; repo = tmp_path / "repo"
     agent = tmp_path / "agent"; wt = tmp_path / "wt"; runs = tmp_path / "runs"
     work.mkdir(); repo.mkdir()
+    if base_python_home is not None:
+        (repo / ".venv").mkdir()
+        (repo / ".venv/pyvenv.cfg").write_text(f"home = {base_python_home}\n", encoding="ascii")
     return subprocess.run(
         [
             ps,
@@ -450,6 +518,21 @@ def test_setup_whatif_changes_nothing(tmp_path: Path) -> None:
     flattened = output.replace("\r", "").replace("\n", "")
     assert '-PiCommand "' + str(pi_command) in flattened
     assert "pi command: " in output
+
+
+def test_setup_whatif_shows_password_and_base_python_steps(tmp_path: Path) -> None:
+    ps = powershell(); pi_dir = tmp_path / "aits pi"; pi_dir.mkdir(); pi_command = pi_dir / "pi.cmd"; pi_command.write_text("", encoding="ascii")
+    basepy = tmp_path / "basepy"; basepy.mkdir()
+    before = subprocess.run(["icacls", str(basepy)], check=True, text=True, capture_output=True, timeout=60).stdout
+    done = run_setup_whatif(ps, tmp_path, pi_command=pi_command, base_python_home=basepy)
+    output = done.stdout + done.stderr
+    if "Full setup stopped because CheckOnly found problems" in output:
+        pytest.skip("WhatIf CheckOnly found problems on this machine: " + output)
+    assert done.returncode == 0, output
+    assert "require a password" in output
+    assert "grant aits-whatif-test read and execute on the base Python" in output
+    after = subprocess.run(["icacls", str(basepy)], check=True, text=True, capture_output=True, timeout=60).stdout
+    assert after == before
 
 
 def test_setup_whatif_reports_missing_pi(tmp_path: Path) -> None:

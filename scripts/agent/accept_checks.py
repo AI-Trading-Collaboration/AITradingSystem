@@ -15,6 +15,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 SCHEMA = "aits.pi.accept-checks/0"
 GATE_RE = re.compile(
     r"^zone=(?P<zone>[ABC]) tree=(?P<tree>[0-9a-f]{12,40}) commands=(?P<commands>\d+) "
@@ -280,25 +282,19 @@ def file_at(repo: Path, rev: str, path: str) -> str | None:
     return res.stdout
 
 
-def parse_status_notes(text: str | None) -> tuple[str | None, str]:
+def parse_task_fields(text: str | None) -> tuple[str | None, str] | None:
+    """Return (status, notes) from a task YAML file; None when the text is not a YAML mapping."""
     if not text:
         return None, ""
-    status = None
-    notes_lines: list[str] = []
-    in_notes = False
-    for line in text.splitlines():
-        if line.startswith("status:"):
-            status = line.split(":", 1)[1].strip().strip('"')
-        if line.startswith("notes:"):
-            in_notes = True
-            notes_lines.append(line)
-            continue
-        if in_notes:
-            if line and not line.startswith(" "):
-                in_notes = False
-            else:
-                notes_lines.append(line)
-    return status, "\n".join(notes_lines)
+    try:
+        data = yaml.safe_load(text)
+    except yaml.YAMLError:
+        return None
+    if not isinstance(data, dict):
+        return None
+    status = data.get("status")
+    notes = data.get("notes")
+    return (None if status is None else str(status)), ("" if notes is None else str(notes))
 
 
 def check_tasks(repo: Path, base: str, head: str, files: list[str], allow_done: bool) -> tuple[bool, str]:
@@ -308,11 +304,16 @@ def check_tasks(repo: Path, base: str, head: str, files: list[str], allow_done: 
             continue
         old = file_at(repo, base, f)
         new = file_at(repo, head, f) or (repo / f).read_text(encoding="utf-8")
-        old_status, old_notes = parse_status_notes(old)
-        new_status, new_notes = parse_status_notes(new)
+        old_fields = parse_task_fields(old)
+        new_fields = parse_task_fields(new)
+        if old_fields is None or new_fields is None:
+            problems.append(f"{f} is not a YAML mapping")
+            continue
+        old_status, old_notes = old_fields
+        new_status, new_notes = new_fields
         if not allow_done and new_status == "DONE" and old_status != "DONE":
             problems.append(f"{f} status changed to DONE while allow_done=false")
-        if old_notes and new_notes and not new_notes.startswith(old_notes):
+        if old_notes and not new_notes.startswith(old_notes):
             problems.append(f"{f} notes were not append-only")
     return (not problems, "; ".join(problems) or "task notes/status rules passed")
 
