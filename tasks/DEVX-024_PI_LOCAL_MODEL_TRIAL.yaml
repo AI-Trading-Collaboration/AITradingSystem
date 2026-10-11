@@ -2,8 +2,8 @@ schema_version: task.v1
 id: DEVX-024_PI_LOCAL_MODEL_TRIAL
 area: Developer workflow / pi 接入本地模型（降低成本）
 priority: P2
-status: BASELINE_DONE
-next_owner: Claude Code coordinator；Project Owner（是否值得为 32k 上下文调整服务）
-next_step: 验收已满足（2 个真实任务含 1 次 ship）。遗留：用 KV cache 量化或去掉草稿模型测试 32k 上下文的显存与速度；让 ship 的门禁输出更短以减少溢出；用一个中等规模的代码任务试本地模型的适用边界
+status: IN_PROGRESS
+next_owner: Claude Code coordinator；Project Owner（处理试跑发现的 DQ FAIL：缓存行情自 2026-07-23 未刷新）
+next_step: 本地模型已换成 Strata + Qwen3.8-Flash-Next IQ3_S（128k 上下文，GOV-008 需求文档第 20.7 节）。下一步：用一个中等规模的代码任务（含 ship）试 Strata 的适用边界，并与 Qwen 27B / gpt-5.5 记录对比
 acceptance: 本地模型在 pi 下完成至少 2 个真实任务（含 1 个走完 ship）；记录与 gpt-5.5 试跑的对比；明确适用范围与限制
-notes: production_effect=none；broker_action=none；owner 2026-10-11 聊天要求；配置在仓库外（~/.pi/agent、~/.local-model-service），细节见 GOV-008 需求文档第 20.5 节；本地试跑 1（2026-10-11，只读每日计划检查，Qwen3.8-27B 本地，16k 上下文）：成功，32 s，5 次工具调用，0 报错，花费 0；结论与 gpt-5.5 试跑一致（2026-10-09 交易日、27 步、环境变量齐全、无阻断）；偏差：未先读运维手册，运行了不带排除 pathspec 的 git status；本地试跑 2（2026-10-11，记录类改动并 ship）：成功，main = a01ea1eb4，门禁 7,930 通过；ship 门禁输出约 1.1 万 token 导致 16k 上下文溢出，pi 自动压缩后正确收尾；结论与限制见 GOV-008 需求文档第 20.6 节
+notes: production_effect=none；broker_action=none；owner 2026-10-11 聊天要求；配置在仓库外（~/.pi/agent、~/.local-model-service），细节见 GOV-008 需求文档第 20.5 节；本地试跑 1（2026-10-11，只读每日计划检查，Qwen3.8-27B 本地，16k 上下文）：成功，32 s，5 次工具调用，0 报错，花费 0；结论与 gpt-5.5 试跑一致（2026-10-09 交易日、27 步、环境变量齐全、无阻断）；偏差：未先读运维手册，运行了不带排除 pathspec 的 git status；本地试跑 2（2026-10-11，记录类改动并 ship）：成功，main = a01ea1eb4，门禁 7,930 通过；ship 门禁输出约 1.1 万 token 导致 16k 上下文溢出，pi 自动压缩后正确收尾；结论与限制见 GOV-008 需求文档第 20.6 节；Strata 试跑 1（2026-10-11，只读每日计划检查，Qwen3.8-Flash-Next IQ3_S，128k 上下文）：成功，72 s，12 次工具调用，1 次报错后自行修正，花费 0；先读了运维手册；发现 2026-10-09 DQ 回执 FAIL（评估窗口止于 2026-07-23）；配置与实测见 GOV-008 需求文档第 20.7 节

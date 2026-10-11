@@ -753,3 +753,33 @@ pi `models.json`（provider `local-model-service`，`contextWindow` 16384，`max
 **结论**：本地模型在 pi 下能可靠完成"指令明确、上下文小"的任务（只读检查、记录类改动、按 skill 走 ship），零花费、速度不慢于云端；
 判断类与大范围代码改动仍用云端模型，改动由审阅（必要时做行为等价比较）把关。可选的后续：KV cache 量化或去掉草稿模型以换取 32k 上下文
 （需实测显存与速度）；让 `ship` 的门禁输出更短，减少溢出。
+
+### 20.7 本地模型换成 Strata + Qwen3.8-Flash-Next（owner 要求，2026-10-11）
+
+owner 要求在本机模型服务里加入 Strata 模型供本项目使用，选官方 Qwen3.8-Flash-Next（不用去拒答版），用途为 pi 开发任务，并在跑通后
+设为服务默认模型。配置都在仓库外：
+
+- 引擎 [Strata](https://github.com/Niko1221/Strata)（`D:\Work\Strata`，提交 `61b3fb5`），权重 ISTA-DASLab GSQ-RCO IQ3_S（84 GB，
+  `D:\Work\Strata-data`）+ MTP 草稿层；128k 上下文，INT8 KV，默认 `reasoning_effort=none`（请求可自行开启思考）。
+  选 IQ3_S 的依据：Strata 仓库里 4090 的社区测试（143k 上下文读提示 2,000–3,000 tok/s、生成 77–97 tok/s、长文检索 6/6）。
+- 本机模型服务（`D:\Work\LocalModelService`）新增 Strata 后端，仍由服务统一排队、校验身份和空闲卸载，接口不变
+  （`http://127.0.0.1:8080/v1`），模型 id `qwen3.8-flash-next-iq3_s`。空闲卸载 60 s → 900 s，单次推理超时 90 s → 600 s。
+  原 Qwen3.8-27B 仍可在 dashboard 切回。
+- pi `models.json` 改为该模型（`contextWindow` 131072，`maxTokens` 8192，支持 reasoning effort），压缩参数
+  reserve 16384 / keepRecent 20000；旧配置备份为 `models.before-strata.json`、`settings.before-strata.json`。
+
+实测（RTX 4090 24 GB，内存 94 GB）：冷启动 44–50 s；约 5 万 token 提示读 2,145 tok/s、生成 78 tok/s，并正确回答了埋在其中的问题；
+工具调用格式正确；显存约 23.7 GB。
+
+| 试跑 | Strata IQ3_S（128k） | 对照 |
+|---|---|---|
+| 1 只读：每日计划检查（与 20.2 试跑 1 同类提示） | 成功，72 s，12 次工具调用（1 次报错后自行修正），$0；先读 skill 与运维手册（Qwen 27B 当时跳过了），运行 `ops daily-plan --fail-on-missing-env`，未改仓库 | gpt-5.5：39 s，6 次，$0.19；Qwen 27B：32 s，5 次 |
+
+偏差：临时脚本用了系统 `python` 而不是项目 venv（与 20.4 记录的偏差相同）。
+
+**试跑中发现的运维问题（已核对产物，需 owner 处理）**：计划本身 READY（2026-10-09 交易日、27 步、环境变量齐全），但 2026-10-09 的
+`daily_default.v1` DQ 回执为 FAIL：评估窗口只到 2026-07-23，请求到 2026-10-09，阻断项为 `prices_stale`、`rates_stale`、
+`prices_requested_window_coverage_missing`、`prices_non_market_session_date`、`download_manifest_requested_window_mismatch`，
+`consumer_cutover_allowed=false`。也就是说缓存行情自 2026-07-23 后未刷新。gpt-5.5 与 Qwen 27B 的试跑只看了计划，没有检查 DQ 回执。
+
+**结论**：128k 上下文解决了 20.6 记录的溢出与大文件限制，本地模型可以承担更大范围的阅读任务。判断类改动仍需审阅把关。
