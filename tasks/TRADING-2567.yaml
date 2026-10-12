@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2567
+area: 研究 / QQQ 研究计划（1999 年起窗口，先方向信号，后期权实现）
+priority: P1
+status: IN_PROGRESS
+next_owner: Claude（S1 长历史数据、S2 研究窗口的 C 区改动包）；pi（执行）
+next_step: S1 + S2：FRED 长历史研究快照（NASDAQXNDX、NASDAQ100、DTB3、VIXCLS、VXNCLS、VXOCLS）和派生的现金代理、合成 2/3 倍；研究窗口登记 1999-03-10 起的开发验证窗口；之后 S3 评估台（TRADING-2565）、S4 第一批预注册。详见 `docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md`
+acceptance: 见 `docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md` 验收一节：S1 快照可复现、各序列首日与核查一致、与本机 QQQ/QLD/TQQQ 重叠段的跟踪差写进报告；S2 窗口登记和政策写明新窗口角色和禁止用途，AGENTS.md 一致
+notes: 2026-10-12：Baker 决定研究方向为 QQQ 期权路径、QQQ 类问题以 1999 年起为开发验证窗口、先方向信号后期权实现、期权层等信号站住后用 QuantConnect 回测、9/5–10/8 日报缺口永久不补、同时进行的研究问题不设上限（owner_decision:TRADING-2567:2026-10-12:qqq_direction_1999_window）。production_effect=none；broker_action=none

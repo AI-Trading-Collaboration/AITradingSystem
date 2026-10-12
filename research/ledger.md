@@ -27,7 +27,7 @@
 | 16 | 研究重启与 clean selection（2446~2458，7/20–26） | 未测成 | R1 负面 C；"家族无价值" D | 代码删除 |
 | 17 | 决策目标能力审计（2460/2461，7/26） | 拒绝 | B | 代码删除 |
 | 18 | 尾部能力、O1、盲重入（2462~2467） | 未测成 | C / D | 代码删除；2027-02 的一次性重看取消 |
-| 19 | QQQ 期权与 QuantConnect（2478~2554，8 月） | 未测成；部分不可执行 | D | 归档（代码删除） |
+| 19 | QQQ 期权与 QuantConnect（2478~2554，8 月） | 未测成；部分不可执行 | D | 代码删除；2026-10-12 按 TRADING-2567 重开 |
 | 20 | growth action value（2540~2542I） | 未测成 | D | 代码删除 |
 | 21 | Composer v2（2550、2555~2559，9/1–3） | 拒绝 | B | 代码删除；不得做参数救援 |
 | 22 | Composer 与 equal-risk 前瞻（2560、2563） | 证据不足 | 事实 A | 由评估台的前瞻记录接替 |
@@ -175,6 +175,7 @@
 - 为什么是"未测成"：54 个任务里只有 1 个产出过策略损益，且后续任务自己声明不可解释；期权层面的 DQ/PIT 从未通过。平台限制见 `negative_results.md`"工程上不可执行"。
 - 证据：`@archive:docs/requirements/TRADING-2552_QQQ_Options_Conditional_Paired_Comparison_Owner_Review_V1.md:64-86`；`@archive:docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md:286-304,425-434`；`@archive:docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md`。
 - 重开条件：某个方向信号先在前瞻上站住，且有带 bid/ask 的期权数据。
+- 2026-10-12 重开（TRADING-2567，`owner_decision:TRADING-2567:2026-10-12:qqq_direction_1999_window`）：方向信号先在 1999 年起的历史上通过预注册检验，再用 QuantConnect 分钟报价（带 bid/ask，2012 年起）回测期权表达；对照组和估计量在运行前冻结。
 
 ### 20. growth action value
 

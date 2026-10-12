@@ -2,8 +2,8 @@ schema_version: task.v1
 id: TRADING-2566_RESEARCH_AGENT_LOOP_GUARDRAILS
 area: 研究方法 / 研究 agent 闭环护栏（RSI 借鉴）
 priority: P2
-status: DEFERRED
+status: READY
 next_owner: Project Owner
-next_step: DEFERRED（owner_decision:GOV-008:2026-10-11:research_after_migration）：退出条件——研究策略讨论之后、pi 方案第 6 节第 7 项（研究重启交给 pi）之前完成。三项：（1）评估器隔离：受限账户 aits-agent 读不到 holdout 和前瞻 outcome，预注册、评估代码和阈值放在 C 区；（2）负结果清单：已关闭的方向（Composer 2557–2559 INSUFFICIENT/HOLD、relative_strength 只能做诊断、add-risk 可用特征族为空、breadth_participation 和 event_risk 的 PIT 阻塞等）整理成研究任务单必读的文件，只在人审阅后更新；（3）研究任务单模板：每张只给一个问题、合法证据类型和停止条件，汇报里列出偏离
+next_step: 退出条件已满足：2026-10-12 研究方向已定（owner_decision:TRADING-2567:2026-10-12:qqq_direction_1999_window）。在 TRADING-2567 S4 把研究运行交给 pi 之前完成
 acceptance: 以 aits-agent 读 holdout 和前瞻 outcome 路径被操作系统拒绝，有实测记录；负结果清单有 owner 审阅记录；research-run skill 和研究任务单模板引用清单与模板；不改任何研究线的冻结需求
-notes: production_effect=none；broker_action=none；依据：AQuA 用固定沙箱拿走 agent 泄漏数据的能力；RSI 综述认为研究方向仍要由人定；投毒基准论文（arXiv 2609.17817）说明 agent 的经验记忆也要人审；TRADING-2564 的阶段选择试行（SDP）是同一思路的文字版
+notes: production_effect=none；broker_action=none；依据：AQuA 用固定沙箱拿走 agent 泄漏数据的能力；RSI 综述认为研究方向仍要由人定；投毒基准论文（arXiv 2609.17817）说明 agent 的经验记忆也要人审；TRADING-2564 的阶段选择试行（SDP）是同一思路的文字版；2026-10-12：随 TRADING-2567 激活（owner_decision:TRADING-2567:2026-10-12:qqq_direction_1999_window）
