@@ -106,14 +106,15 @@ the tested tree -> ordinary push, with the remote checked before and after.
 
 ## Runs and evidence
 
-- Every research or daily run records the commit, whether result-affecting code was modified, content
-  hashes of its configuration, and the requested and evaluated date ranges (`core/provenance.py`).
+- Daily runs record the commit, whether result-affecting code was modified, content hashes of their
+  configuration, and the requested and evaluated date ranges (`core/provenance.py`). Research runs do
+  not record these yet; until the evaluation bench runner does (TRADING-2565), a research result is a
+  draft, not evidence.
 - State a hypothesis, window, cost model, and kill criteria and commit them before reading any outcome
   of a new experiment; record every trial. A validation PASS never means a candidate is valid,
   paper-shadow eligible, or approved for production or a broker.
-- Prospective captures run under a capture hold (`scripts/capture_hold.py`; exact commit, unmodified
-  code, exclusive output paths, bounded validity). A hold is a local self-attestation, not an
-  independent authority. Steps are in the operations runbook.
+- Research conclusions live in `research/ledger.md`; read `research/negative_results.md` before
+  proposing a candidate. A task's `DONE` or `DROPPED` is engineering status, not a research verdict.
 - Changing data flow, cache schemas, report outputs, data quality gates, scoring, backtest behavior, or
   market-regime interpretation updates `docs/system_flow.md` in the same change (it is being rewritten
   as a real flow diagram in P5). A change that does not affect data flow needs no update.

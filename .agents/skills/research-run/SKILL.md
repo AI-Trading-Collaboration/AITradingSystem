@@ -1,9 +1,25 @@
 ---
 name: research-run
-description: Plan, run, or review an AITradingSystem research experiment or backtest (preregistration, run authorization, research runs, result admission, prospective captures under a capture hold). Use for any strategy research, backtest, or investment-facing conclusion.
+description: Plan or review AITradingSystem strategy research, a backtest, or an investment-facing conclusion. Research is paused until the evaluation bench (TRADING-2565) exists; start from research/.
 ---
 
 # Research runs
+
+Strategy research is paused (GOV-009, 2026-10-12) until the evaluation bench (TRADING-2565) and the
+agent guardrails (TRADING-2566) exist. Until then, research work means designing those, or reviewing
+the records below.
+
+## Read first
+
+- `research/README.md`: how research is recorded now and how a new research question starts.
+- `research/ledger.md`: the 22 earlier research lines, each with a verdict (保留, 拒绝, 证据不足, 未测成)
+  and a reopen condition. The ledger, not a task's status, is the research conclusion.
+- `research/negative_results.md`: read before proposing any candidate. A proposal inside a falsified
+  scope says how it differs from the earlier result.
+- `research/assets.md`: reuse these before writing new evaluation code.
+- Removed research code and reports are under tag `research-archive-2026-10-12`
+  (`git show research-archive-2026-10-12:<path>`). Do not restore them into the working tree without
+  an owner decision.
 
 ## Window and data
 
@@ -19,11 +35,11 @@ description: Plan, run, or review an AITradingSystem research experiment or back
 1. **Preregister before reading any outcome**: hypothesis, window, cost model, kill criteria, and the
    decision rule, committed (and shipped) before the first result is read. Record every trial,
    including failed and abandoned ones.
-2. **Run** through the research command (`aits research ...`) or the line's documented script. Each run
-   records the commit, whether result-affecting code was modified, configuration hashes, and the
-   requested/evaluated ranges (`core/provenance.py`). A run on modified code is a draft, not evidence.
-3. **Admit** results only through the line's result-admission or decision record. A validation PASS never
-   means a candidate is valid, paper-shadow eligible, or approved for production or a broker.
+2. **Run**: research runs do not record the commit and configuration hashes yet. Until the evaluation
+   bench runner does, a research result is a draft, not evidence.
+3. **Admit**: a conclusion enters `research/ledger.md` only after human review; agents may propose
+   entries for `research/negative_results.md` but do not edit it. A validation PASS never means a
+   candidate is valid, paper-shadow eligible, or approved for production or a broker.
 
 ## Thresholds and policy
 
@@ -31,20 +47,5 @@ Any threshold, score band, sample floor, position cap, promotion gate, or accept
 change investment interpretation lives in a reviewed configuration (owner, version, rationale, intended
 effect, validation, review condition) or is a named, commented invariant. Never introduce an unexplained
 number in scoring, gates, backtests, or reports.
-
-## Prospective captures
-
-Captures run under a capture hold (steps in `docs/operations/operations_runbook.md` section 7):
-`python scripts/capture_hold.py acquire --candidate-commit <HEAD> --path <output dir> --actor <name>
---ttl-minutes <n>`, launch with `--source-hold-id <hold-id>`, then `python scripts/capture_hold.py release
---hold-id <hold-id>`. The hold needs the exact commit with unmodified `src/config/scripts/tools`. It is a
-local self-attestation, not an independent authority. Never retry a capture key or re-sign a time.
-
-## Research records are evidence
-
-Configs, docs, and files that research records reference or pin by hash (including
-`config/etf_portfolio/`, `src/ai_trading_system/etf_portfolio/regime.py`, the appendix of
-`docs/system_flow.md`, and `registry/development_tasks/2f/`) must not be edited or moved. A research
-line's requirements change only by owner decision.
 
 Write conclusions in Chinese; keep tickers, feature ids, file names, schema columns, and status codes in English.

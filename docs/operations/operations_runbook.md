@@ -113,64 +113,11 @@ ad hoc（SEC PIT 回填/评估/基线对比/诊断/候选复核、大参数搜�
    `docs/artifact_catalog.md`、任务记录与相关需求文档或本文。
 5. 遇到阻塞不静默绕过：说明最佳方案、阻塞原因、是否先修阻塞；临时绕过需 owner 同意并记录原因、影响、风险、验证与退出条件。
 
-## 7. 前瞻采集（手工研究入口）
+## 7. 前瞻采集（已删除）
 
-前瞻采集不是调度任务，不新增 scheduler entry；每次运行在 capture hold 下进行（第一小节）。
-
-### TRADING-2564 S3b 手工前瞻采集边界
-
-S3b `python -I -B scripts/run_named_data_quality.py --operation activate|capture` 为有限手工研究
-入口，固定 68-module/11-dependency profile（`named_prospective_five_candidate_sources_v2.json`）与
-`prospective_capture_execution_v3.yaml`（采集协议 v3，GOV-008），不登记第二个 scheduler。执行前
-显式复核 exact manifest/owner review、source commit、capture hold、根/输出归属、允许的 feature
-sessions 和 expiry。真实范围尚待独立 review；真实 activation/capture/DQ/provider/order/fill 均为零。
-
-**采集 hold（协议 v3，替代 S4D lease）**：hold 绑定精确候选 commit（HEAD 相同且 `src/config/scripts/tools`
-无未提交修改）、独占写入路径和有界有效期；它是本机自证，不是独立权威。操作顺序：
-
-1. `python scripts/capture_hold.py acquire --candidate-commit <HEAD> --path <manifest 输出目录> --actor <名字> --ttl-minutes <分钟>`，记下输出里的 `hold_id`；
-2. 以 `--source-hold-id <hold_id>` 启动上面的采集入口（子进程只恢复并复核该 hold，不新建）；
-3. 结束后 `python scripts/capture_hold.py release --hold-id <hold_id>`；进程崩溃留下的 hold 同样用 release 清除，
-   `python scripts/capture_hold.py status` 列出全部记录。hold 状态在 `outputs/runtime/capture_holds/`（git 忽略）。
-
-activation 完整 ACK 保守时间上界的纽约日期之后首 XNYS 为最早 F；capture 仅 F close 后、next_XNYS(F) close
-前执行。父固定零 DQ，child 最多一次 canonical DQ，严格 PASS + 原始成功终态/guards 后，同父
-context 零 DQ verify、原五候选 preview、完整闭包保全及 S3a signal witness 才能进入 ACK。
-ACK v2 保留固定 raw UTC ns/QPC anchor、每个原 recorder return 与 postguard；全部已验证
-bound 必须严格小于 D close。第一段收益为 Close(D)→Close(next(D))。
-result v3 单次提交前重验完整闭包及原 live capture hold，并保留同 anchor 最终时间证据；
-最终 bound 仅约束 manifest/hold expiry，自己落盘完成时间不作承诺。外层 source terminal
-失败属于交付未确认；失败 sampler 的完整/部分原始读数必须保留，不得换 anchor 重试。
-本入口不读取收益或运行 maturity/scoreboard。首次 outcome 访问须先冻结 S4 实验/会计合同。
-
-固定 key 原 attempt/部分证据必须保留；重复调用包括到期后的旧 key 只读复核完整 result 或返回
-INCOMPLETE，不能重试 DQ、补签时间或换 snapshot。输出路径和复核链见 artifact catalog 的
-S3b 条目。PASS admission 仅代表该范围本地源码/严格 DQ/信号/记录时间核验，不建立 provider
-available_at、PIT/OOS、调度启用、production 或 broker 权限。
-
-### TRADING-2560 Composer 手工前瞻研究入口
-
-`python -I -B scripts/run_named_data_quality.py --operation
-composer-activate|composer-readiness|composer-capture --request <request.json>
---request-sha256 <sha256> --source-hold-id <hold-id>` 使用独立 84-module/21-dependency
-`named_composer_prospective_sources_v2.json` 与 `composer_prospective_capture_v1.yaml`；hold 的获取与
-释放见上一节。
-这是 Owner 已选择的有限手工研究，沿用当前已知 revision 输入规则；不新增 scheduler entry。
-详细边界见 `docs/requirements/TRADING-2560_Composer_Known_Snapshot_Prospective_Capture_V1.md`。
-
-每次派发前自动 replay exact manifest、owner review、代码/政策、原 capture hold、根路径、唯一 F
-和 expiry。readiness 仅对显式现有快照运行 training/exact_cash/primary 三段 canonical DQ，
-完整保留 requested/evaluated 窗口与原 consistency 起点，零拟合、零观察；不能替代未来 F 的 DQ。
-activate 零 DQ/拟合，以实际完整 ACK 确定纽约日期之后首 XNYS F。
-capture 在 F close 后、D=next_XNYS(F) close 前完成三段同快照严格 PASS、完整输入封存、原
-504/20 Composer fit 与信号记录；价格完整至 F，rates 可早于 F，但原 DQ freshness 门禁不变。
-逐 rates series 披露 raw/effective 日期，R 来自原 input recorder 的保守返回上界。
-
-同 key 只读重放，部分尝试不得重试或补签；异常保留实际 DQ 计数，缺失计数保持 UNKNOWN。
-输出在 `outputs/research/composer_prospective/<manifest-id>/`，包括 control、attempt、分段
-DQ、segmented_dq_identity、timing、ACK 和 observation。记录 current revision 历史训练访问，
-不建立历史 provider available_at/PIT；未来 outcome、maturity、scoreboard、下载、缓存修改、
-production/broker/order/fill 均关闭。首次收益查看另须既有 S4 研究/会计合同。
+GOV-009（2026-10-12）删除了手工前瞻采集入口 `scripts/run_named_data_quality.py`、capture hold
+（`scripts/capture_hold.py`）和它们的 named DQ 子进程。新的前瞻记录直接接进日常调度（TRADING-2565）。
+旧的步骤和边界在 tag `research-archive-2026-10-12` 下本文的第 7 节。
 
 ## 8. 已删除的机制
 

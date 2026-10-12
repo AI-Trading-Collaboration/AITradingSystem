@@ -62,3 +62,4 @@
 ## 进展
 
 - 2026-10-12：方案 `research-cleanup-plan-2026-10-12`（项目文件）经 Baker 确认。W0 由 Claude 写好，等 DATA-022 之后交给 pi 发布。production_effect=none；broker_action=none。
+- W2：删 139 个模块（方案估的 146 个里，6 个没有命令用到但不属于研究的模块不在本批：`error_taxonomy`、`features/technical`、`legacy/reporting_catalog_adapter`、`market_calendar_freshness`、`platform/artifacts/validation_session`、`etf_portfolio/regime`，最后一个随 W4 的 `config/etf_portfolio/` 处理；`research_quality/growth_tilt_candidate_overlay_executor.py` 还被 W3 的 growth tilt 模块按文件路径读取，和它的测试一起挪到 W3）、131 个测试、5 个脚本（`capture_hold.py`、`run_named_data_quality.py`、3 个 `trading2464_o1_*`）、5 个 `config/data_governance/named_*_sources*.json`。`AGENTS.md`、research-run skill、运行手册第 7 节同批修改。
