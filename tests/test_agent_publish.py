@@ -45,14 +45,21 @@ def current_tree(repo: Path, ref: str = "HEAD") -> str:
     return run_git(repo, "rev-parse", f"{ref}^{{tree}}")
 
 
-def write_acceptance(run_dir: Path, verdict: str = "accepted", tree: str | None = None) -> None:
+def review_dir(run_dir: Path) -> Path:
+    # setup_repo commits agent_config.json with review_root = <tmp>/reviews on main.
+    return run_dir.parent / "reviews" / run_dir.name
+
+
+def write_acceptance(
+    run_dir: Path, verdict: str = "accepted", tree: str | None = None, target: Path | None = None
+) -> None:
     run_dir.mkdir(parents=True, exist_ok=True)
     review = {"verdict": verdict}
     if tree is not None:
         review["tree"] = tree
-    (run_dir / "acceptance.json").write_text(
-        json.dumps({"reviews": [review]}), encoding="utf-8"
-    )
+    path = target or (review_dir(run_dir) / "acceptance.json")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"reviews": [review]}), encoding="utf-8")
 
 
 def setup_repo(tmp_path: Path) -> tuple[Path, Path, Path]:
@@ -64,7 +71,11 @@ def setup_repo(tmp_path: Path) -> tuple[Path, Path, Path]:
     run_git(repo, "config", "user.name", "t")
     (repo / "config").mkdir()
     (repo / "tools/gov008").mkdir(parents=True)
+    (repo / "scripts/agent").mkdir(parents=True)
     (repo / "config/gov008_ship.yaml").write_text(yaml.safe_dump(MINI_POLICY), encoding="utf-8")
+    (repo / "scripts/agent/agent_config.json").write_text(
+        json.dumps({"review_root": str(tmp_path / "reviews")}), encoding="utf-8"
+    )
     shutil.copy2(ROOT / "tools/gov008/ship.py", repo / "tools/gov008/ship.py")
     (repo / "README.md").write_text("start\n", encoding="utf-8")
     run_git(repo, "add", "-A")
@@ -306,3 +317,58 @@ def test_publish_validation_rejects_uppercase_accepted_tree_without_json(tmp_pat
     )
     assert not (run_dir / "publish.json").exists()
     assert run_git(repo, "rev-parse", "main") == before
+
+
+def test_publish_ignores_acceptance_in_run_dir(tmp_path: Path) -> None:
+    repo, _origin, run_dir = setup_repo(tmp_path)
+    commit_file(repo, "src/app.py", "x\n", "code")
+    assert run_ship(repo, "--base", "main", "--gate").returncode == 0
+    write_acceptance(run_dir, tree=current_tree(repo), target=run_dir / "acceptance.json")
+    before = run_git(repo, "rev-parse", "main")
+    done = run_publish(repo, run_dir)
+    assert done.returncode == 2
+    expected = str(review_dir(run_dir) / "acceptance.json")
+    assert "acceptance.json is missing: " + expected in done.stdout
+    assert not (run_dir / "publish.json").exists()
+    assert run_git(repo, "rev-parse", "main") == before
+
+
+def test_publish_reads_review_root_from_base_not_task_branch(tmp_path: Path) -> None:
+    repo, _origin, run_dir = setup_repo(tmp_path)
+    elsewhere = tmp_path / "elsewhere"
+    commit_file(
+        repo,
+        "scripts/agent/agent_config.json",
+        json.dumps({"review_root": str(elsewhere)}),
+        "move review root on the branch",
+    )
+    assert run_ship(repo, "--base", "main", "--gate").returncode == 0
+    target = elsewhere / run_dir.name / "acceptance.json"
+    write_acceptance(run_dir, tree=current_tree(repo), target=target)
+    before = run_git(repo, "rev-parse", "main")
+    done = run_publish(repo, run_dir)
+    assert done.returncode == 2
+    expected = str(review_dir(run_dir) / "acceptance.json")
+    assert "acceptance.json is missing: " + expected in done.stdout
+    assert run_git(repo, "rev-parse", "main") == before
+
+
+def test_publish_rejects_acceptance_file_inside_run_dir(tmp_path: Path) -> None:
+    repo, _origin, run_dir = setup_repo(tmp_path)
+    inside = run_dir / "acceptance.json"
+    write_acceptance(run_dir, tree=current_tree(repo), target=inside)
+    done = run_publish(repo, run_dir, "-AcceptanceFile", str(inside))
+    assert done.returncode == 2
+    assert "must not be inside RunDir" in done.stdout
+    assert not (run_dir / "publish.json").exists()
+
+
+def test_publish_acceptance_file_override_publishes(tmp_path: Path) -> None:
+    repo, origin, run_dir = setup_repo(tmp_path)
+    commit_file(repo, "src/app.py", "x\n", "code")
+    other = tmp_path / "other" / "acceptance.json"
+    write_acceptance(run_dir, tree=current_tree(repo), target=other)
+    assert run_ship(repo, "--base", "main", "--gate").returncode == 0
+    done = run_publish(repo, run_dir, "-AcceptanceFile", str(other))
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert run_git(repo, "rev-parse", "main") == run_git(origin, "rev-parse", "main")

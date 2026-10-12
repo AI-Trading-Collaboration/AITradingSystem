@@ -62,8 +62,18 @@ read_paths: []
     )
 
 
-def write_config(path: Path, runs_root: Path) -> None:
-    path.write_text(json.dumps({"runs_root": str(runs_root), "models": {"local": "local/model", "cloud": "openai/gpt-5.5"}, "default_thinking": {"cloud": "high"}, "daily_windows_jst": [{"start": "09:20", "end": "10:30"}], "scheduled_task_name": "nope", "agent_clone": str(ROOT), "queue_file": str(runs_root / "queue/request.json")}), encoding="utf-8")
+def write_config(path: Path, runs_root: Path, *, review_root: bool = True) -> None:
+    config = {"runs_root": str(runs_root), "models": {"local": "local/model", "cloud": "openai/gpt-5.5"}, "default_thinking": {"cloud": "high"}, "daily_windows_jst": [{"start": "09:20", "end": "10:30"}], "scheduled_task_name": "nope", "agent_clone": str(ROOT), "queue_file": str(runs_root / "queue/request.json")}
+    if review_root:
+        config["review_root"] = str(runs_root.parent / "reviews")
+    path.write_text(json.dumps(config), encoding="utf-8")
+
+
+def write_review(runs_root: Path, run: str, reviews: list[dict]) -> Path:
+    path = runs_root.parent / "reviews" / run / "acceptance.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"reviews": reviews}), encoding="utf-8")
+    return path
 
 
 def run_brief(ps: str, brief: Path, config: Path, *extra: str) -> subprocess.CompletedProcess[str]:
@@ -101,7 +111,7 @@ def test_run_brief_fix_model_upgrade_and_existing_attempts(tmp_path: Path) -> No
     run_dir = runs / "DEVX-1-01"; (run_dir / "attempts/01").mkdir(parents=True); (run_dir / "session").mkdir()
     (run_dir / "session/s.jsonl").write_text("", encoding="utf-8")
     (run_dir / "attempts/01/exit.json").write_text(json.dumps({"stopReason": "error", "exit_code": 0}), encoding="utf-8")
-    (run_dir / "acceptance.json").write_text(json.dumps({"reviews": [{"verdict": "rejected"}, {"verdict": "rejected"}]}), encoding="utf-8")
+    write_review(runs, "DEVX-1-01", [{"verdict": "rejected"}, {"verdict": "rejected"}])
     done = run_brief(ps, brief, config, "-DryRun", "-Now", "2026-10-11T12:00:00+09:00")
     assert done.returncode == 2 and "已有 attempts" in done.stdout
     done = run_brief(ps, brief, config, "-Fix", str(fix), "-DryRun", "-Now", "2026-10-11T12:00:00+09:00")
@@ -132,15 +142,24 @@ def test_run_brief_fix_local_after_one_rejection_uses_cloud_high(tmp_path: Path)
     run_dir = runs / "DEVX-1-01"; (run_dir / "attempts/01").mkdir(parents=True); (run_dir / "session").mkdir()
     (run_dir / "session/s.jsonl").write_text("", encoding="utf-8")
     (run_dir / "attempts/01/exit.json").write_text(json.dumps({"stopReason": "stop", "exit_code": 0}), encoding="utf-8")
+    # A rejection written into the run dir (which the agent account can write) does not count; only review_root does.
+    (run_dir / "acceptance.json").write_text(json.dumps({"reviews": [{"verdict": "rejected"}]}), encoding="utf-8")
     for reviews, expected, effective in [
         ([{"verdict": "rejected"}], "--model openai/gpt-5.5:high", "cloud"),
         ([], "--model local/model ", "local"),
     ]:
-        (run_dir / "acceptance.json").write_text(json.dumps({"reviews": reviews}), encoding="utf-8")
+        write_review(runs, "DEVX-1-01", reviews)
         done = run_brief(ps, brief, config, "-Fix", str(fix), "-DryRun", "-Now", "2026-10-11T12:00:00+09:00")
         assert done.returncode == 0, done.stdout + done.stderr
         assert expected in done.stdout
         assert f"EffectiveModel={effective}" in done.stdout
+
+
+def test_run_brief_refuses_config_without_review_root(tmp_path: Path) -> None:
+    ps = powershell(); brief = tmp_path / "brief.md"; config = tmp_path / "config.json"
+    write_brief(brief); write_config(config, tmp_path / "runs", review_root=False)
+    done = run_brief(ps, brief, config, "-DryRun", "-Now", "2026-10-11T12:00:00+09:00")
+    assert done.returncode == 2 and "review_root" in done.stdout
 
 
 def test_run_brief_queue_mode_reports_schtasks_failure(tmp_path: Path) -> None:
@@ -412,6 +431,65 @@ $out | ConvertTo-Json
     ]
 
 
+
+def test_setup_restricted_dir_acl_matches_only_the_exact_protected_acl(tmp_path: Path) -> None:
+    ps = powershell(); script = tmp_path / "restricted-acl.ps1"
+    target = tmp_path / "locked"; target.mkdir()
+    write_function_loader_script(
+        script,
+        f"""
+$RightsFull = 2032127; $RightsModify = 1245631; $RightsReadExecute = 1179817
+$me = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+$dir = '{target}'
+$want = @{{ "S-1-5-32-544" = $RightsFull; "S-1-5-18" = $RightsFull; $me = $RightsFull; "S-1-5-32-545" = $RightsModify }}
+$out = [ordered]@{{}}
+$out.inherited = Test-RestrictedDirAcl $dir $want
+icacls $dir /inheritance:r /grant:r "*S-1-5-32-544:(OI)(CI)F" "*S-1-5-18:(OI)(CI)F" "*${{me}}:(OI)(CI)F" "*S-1-5-32-545:(OI)(CI)M" | Out-Null
+$out.exact = Test-RestrictedDirAcl $dir $want
+$readOnly = @{{ "S-1-5-32-544" = $RightsFull; "S-1-5-18" = $RightsFull; $me = $RightsFull; "S-1-5-32-545" = $RightsReadExecute }}
+$out.wrong_rights = Test-RestrictedDirAcl $dir $readOnly
+icacls $dir /grant "*S-1-5-11:(OI)(CI)RX" | Out-Null
+$out.extra_ace = Test-RestrictedDirAcl $dir $want
+$out.missing = Test-RestrictedDirAcl ($dir + "-missing") $want
+$out | ConvertTo-Json
+""",
+    )
+    done = subprocess.run([ps, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script)], text=True, capture_output=True, timeout=60)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert json.loads(done.stdout) == {"inherited": False, "exact": True, "wrong_rights": False, "extra_ace": False, "missing": False}
+
+
+
+def test_setup_build_agent_venv_locks_venv_and_keeps_junction_targets(tmp_path: Path) -> None:
+    ps = powershell(); script = tmp_path / "build-venv.ps1"
+    base_python = Path(sys.base_prefix) / "python.exe"
+    if not base_python.exists():
+        pytest.skip(f"base Python not found at {base_python}")
+    clone = tmp_path / "clone"; venv = clone / ".venv"; staging = tmp_path / "staging"; staging.mkdir()
+    keep = tmp_path / "keep"; keep.mkdir(); (keep / "keep.txt").write_text("keep", encoding="ascii")
+    venv.mkdir(parents=True)
+    subprocess.run(["cmd", "/c", "mklink", "/J", str(venv / "link"), str(keep)], check=True, text=True, capture_output=True, timeout=60)
+    requirements = tmp_path / "requirements.txt"; requirements.write_text("", encoding="ascii")
+    write_function_loader_script(
+        script,
+        f"""
+$ErrorActionPreference = "Stop"
+$RightsFull = 2032127; $RightsModify = 1245631; $RightsReadExecute = 1179817
+$me = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+$frozen = @(Build-AgentVenv '{base_python}' '{venv}' '{staging}' '{requirements}' '{clone / "src"}' $me "S-1-5-32-545")
+$want = @{{ "S-1-5-32-544" = $RightsFull; "S-1-5-18" = $RightsFull; $me = $RightsFull; "S-1-5-32-545" = $RightsReadExecute }}
+[ordered]@{{ frozen = $frozen.Count; locked = (Test-RestrictedDirAcl '{venv}' $want); staging_left = @(Get-ChildItem -LiteralPath '{staging}').Count }} | ConvertTo-Json
+""",
+    )
+    done = subprocess.run([ps, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script)], text=True, capture_output=True, timeout=300)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert json.loads(done.stdout[done.stdout.index("{"):]) == {"frozen": 0, "locked": True, "staging_left": 0}
+    assert (keep / "keep.txt").read_text(encoding="ascii") == "keep"
+    assert not (venv / "link").exists()
+    assert (venv / "Scripts/python.exe").exists()
+    assert (venv / "Lib/site-packages/aits_agent_clone.pth").read_bytes() == (str(clone / "src") + "\r\n").encode("utf-8")
+
+
 def test_setup_add_problem_deduplicates(tmp_path: Path) -> None:
     ps = powershell(); script = tmp_path / "add-problem.ps1"
     write_function_loader_script(
@@ -456,7 +534,7 @@ def ps_command(ps: str, command: str) -> subprocess.CompletedProcess[str]:
 
 def run_setup_whatif(ps: str, tmp_path: Path, *, pi_command: Path, base_python_home: Path | None = None) -> subprocess.CompletedProcess[str]:
     work = tmp_path / "work"; repo = tmp_path / "repo"
-    agent = tmp_path / "agent"; wt = tmp_path / "wt"; runs = tmp_path / "runs"
+    agent = tmp_path / "agent"; wt = tmp_path / "wt"; runs = tmp_path / "runs"; reviews = tmp_path / "reviews"
     work.mkdir(); repo.mkdir()
     if base_python_home is not None:
         (repo / ".venv").mkdir()
@@ -484,6 +562,8 @@ def run_setup_whatif(ps: str, tmp_path: Path, *, pi_command: Path, base_python_h
             str(runs),
             "-QueueFile",
             str(runs / "queue/request.json"),
+            "-ReviewRoot",
+            str(reviews),
             "-TaskName",
             "AITradingSystem pi agent whatif test",
             "-PiCommand",
@@ -508,6 +588,7 @@ def test_setup_whatif_changes_nothing(tmp_path: Path) -> None:
     assert "What if:" in output
     assert "Password for local standard user" not in output
     assert not agent.exists() and not wt.exists() and not runs.exists()
+    assert not (tmp_path / "reviews").exists()
     assert system_safe_directories() == before
     user_check = ps_command(ps, "if (Get-LocalUser -Name 'aits-whatif-test' -ErrorAction SilentlyContinue) { 'user-present' } else { 'user-absent' }")
     assert user_check.returncode == 0, user_check.stdout + user_check.stderr
@@ -536,6 +617,9 @@ def test_setup_whatif_shows_password_and_base_python_steps(tmp_path: Path) -> No
     assert "already has SeBatchLogonRight" not in flattened
     assert "--exclude-editable" in flattened
     assert "Main venv python not found" not in flattened
+    assert "readable but not writable by aits-whatif-test" in flattened
+    assert ".pth file instead of an editable install" in flattened
+    assert "no access for aits-whatif-test" in flattened
     after = subprocess.run(["icacls", str(basepy)], check=True, text=True, capture_output=True, timeout=60).stdout
     assert after == before
 

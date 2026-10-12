@@ -156,6 +156,23 @@ owner_decision:DEVX-025:2026-10-11:agent_task_launch —— 2026-10-11 owner（B
 - `ship.py --dry-run` 显示本次为 B 区。
 - owner 以管理员身份重跑安装脚本后，agent venv 与主 venv 一致，在 agent clone 里复测 PR 测试。
 
+### 运行 10：受限账户的信任边界
+
+owner 以管理员身份重跑安装脚本后，只读核对发现：脚本以管理员身份执行 agent venv 里的 python 和 pip，并在 agent clone 里做 editable 构建，而这些位置 aits-agent 都能改，它放进去的代码会在下一次重跑时以管理员身份运行；验收记录 acceptance.json 放在运行目录里，aits-agent 也能写。
+
+步骤：
+
+1. 安装脚本每次从底层 Python 重建 agent venv：先在验收根目录里建好只给 aits-agent 读和执行权限的目录，再改名放进 agent clone；按主 venv 的 `pip freeze --exclude-editable` 安装，项目源码通过 `.pth` 文件加入，不再在 agent clone 里做 editable 构建；requirements 文件写在验收根目录。旧 venv 用 `rmdir /s` 删除，不跟随里面的链接。管理员执行的 Python 都带 `-I`。
+2. 三个 agent 目录的权限已经符合预期时不再重设，避免 icacls 把权限传播进 aits-agent 建的子目录；计划任务里 owner 的权限条目按 SID 判断，重跑不再重复添加。
+3. 新建验收根目录 `D:\Work\AITradingSystem_agent_reviews`（`agent_config.json` 的 `review_root`），只有管理员、SYSTEM 和 owner 能访问。`publish.ps1` 只读 main 上配置的验收根目录里的 `<运行名>\acceptance.json`，不再读运行目录里的同名文件，`-AcceptanceFile` 指向运行目录时拒绝；`run-brief.ps1` 从同一位置统计退回次数；看板加 `--review-root`。
+4. 约定：owner 账户不执行 agent clone 和 agent venv 里的程序，也不在 agent clone 里跑会刷新索引的 git 命令（status、diff）；受限账户产出的代码先经 Claude 审阅，再在 owner 账户里跑门禁。
+
+验收：
+
+- 新旧测试通过；新增的发布、启动和看板用例在修改前的脚本上失败；PowerShell 用例在 Windows PowerShell 5.1 下通过，包括重建 venv 时不跟随链接、目录权限判断。
+- `ship.py --dry-run` 显示本次为 B 区。
+- 发布后 owner 以管理员身份重跑安装脚本：验收根目录建好，agent venv 被重建并与主 venv 一致；之后在 agent clone 里复测 PR 测试。
+
 ## 4. 开放问题
 
 - 已决定：受限账户的手动计划任务作为 periodic-operations“不要注册第二个计划任务”规则的唯一例外（`owner_decision:DEVX-025:2026-10-11:manual_agent_task_exception`），运行 05 已登记。
@@ -179,6 +196,7 @@ owner_decision:DEVX-025:2026-10-11:agent_task_launch —— 2026-10-11 owner（B
 
 - 2026-10-11：运行 07 发布（main f328dd127）。1b：owner 以管理员身份完成安装脚本、封住 D 盘其他目录、以 aits-agent 用订阅登录 pi；只读核对确认 aits-agent 读不到 owner 的用户目录和 D 盘其他目录。核对时发现三处问题，都已处理：计划任务的启动请求返回 SUCCESS，但任务没有运行，原因是 aits-agent 没有"作为批处理作业登录"权利（任务日志错误 0x80070569），owner 已手工添加，任务已能以 aits-agent 启动；agent venv 的底层 Python 在 owner 的用户目录里，aits-agent 读不到，owner 已授权读取；pi 1.1.0 的订阅登录凭据在 `openai` 下面，模型要写 `openai/…`，不是 `openai-codex/…`。owner 授权 Claude 直接启动这个计划任务。GOV-008-01（第一次用本地模型）发布（main fa0ab59d6）。运行 08：模型配置和约定、pi 进程去掉 API key 环境变量、任务启动检查、notes 按解析值比较、安装脚本小修。
 - 2026-10-11：运行 08 发布（main ce82757b8）。1b 隔离核对（DEVX-025-iso01）通过：受限账户下守卫照常拦截，aits-agent 读不到 owner 的用户目录和 D 盘其他目录，写不进 owner 的仓库目录和 `.git`，底层 Python 出站被防火墙拦住。核对时在 agent clone 跑 PR 测试，有 263 个失败、43 个错误，原因是 agent venv 只装了项目和几个开发工具（36 个包，主 venv 有 92 个），版本也和主 venv 不同，不是隔离问题。运行 09：守卫按引号切分命令并修正几处规则，安装脚本补批处理登录权利、agent venv 与主 venv 同版本。
+- 2026-10-11：运行 09 发布（main ead6a6291）。owner 以管理员身份重跑安装脚本，agent venv 与主 venv 同版本（89 个包）。以 aits-agent 复测（DEVX-025-iso02）：agent clone 从主仓库拉取被 git 的所有权检查拦下，未刷新，在原提交上测；PR 测试 8022 个通过、24 个失败，其中 23 个依赖主仓库里未纳入 git 的 `outputs/` 证据文件，1 个是 CLI 输出按控制台宽度折行（受限账户的临时路径更长），都与依赖无关；门禁继续在 owner 账户里跑，受限账户只跑与改动相关的测试。运行 10：安装脚本不再执行受限账户能改的程序，验收记录移到受限账户写不到的验收根目录。
 
 ## 6. 运行影响边界
 

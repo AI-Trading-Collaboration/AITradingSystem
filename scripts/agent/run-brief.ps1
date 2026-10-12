@@ -76,7 +76,9 @@ if ($Fix) {
 
 $modelKey = [string]$brief.model
 $effectiveKey = $modelKey
-$acceptancePath = Join-Path $runDir "acceptance.json"
+# Acceptance records live under review_root, which the agent account cannot write (DEVX-025 run 10).
+if (-not $config.review_root) { Write-Host "拒绝启动：配置里没有 review_root（验收记录根目录）。"; exit 2 }
+$acceptancePath = Join-Path (Join-Path ([string]$config.review_root) $runId) "acceptance.json"
 $rejectedCount = 0
 if (Test-Path -LiteralPath $acceptancePath) { $acc = Read-JsonFile $acceptancePath; $rejectedCount = @($acc.reviews | Where-Object { $_.verdict -eq "rejected" }).Count }
 $lastExit = $null
@@ -174,7 +176,7 @@ if ($Direct) {
     $runExit = if ($exitInfo.exit_code -eq 0 -and $exitInfo.stopReason -and $exitInfo.stopReason -ne "error" -and $exitInfo.stopReason -ne "aborted") { 0 } else { 1 }
 }
 
-& $Python (Join-Path $ScriptDir "runs_board.py") ([string]$config.runs_root) | Out-Host
+& $Python (Join-Path $ScriptDir "runs_board.py") ([string]$config.runs_root) --review-root ([string]$config.review_root) | Out-Host
 $exitInfo = Read-JsonFile (Join-Path (Join-Path (Join-Path $runDir "attempts") $attempt) "exit.json")
 $reportPath = Join-Path $runDir "report.json"
 $report = if (Test-Path -LiteralPath $reportPath) { Read-JsonFile $reportPath } else { $null }

@@ -4,6 +4,7 @@ param(
   [string]$Repo,
   [string]$Base = "main",
   [string]$Python,
+  [string]$AcceptanceFile,
   [switch]$NoPush
 )
 
@@ -116,12 +117,33 @@ $acceptedTree = $null
 foreach ($entry in [System.Environment]::GetEnvironmentVariables().GetEnumerator()) {
   if ([string]$entry.Key -like "AITS_PI_*") { $validationErrors += "AITS_PI environment variable is set: $($entry.Key)" }
 }
+# The acceptance record comes from review_root in the Base branch's agent_config.json, which the agent account cannot
+# write; a file in RunDir is never read (DEVX-025 run 10). -AcceptanceFile overrides the location (tests).
+$acceptPath = $null
+if (-not [string]::IsNullOrWhiteSpace($AcceptanceFile)) {
+  $acceptPath = [System.IO.Path]::GetFullPath($AcceptanceFile)
+} else {
+  try {
+    $configText = (Git @("show", "$Base`:scripts/agent/agent_config.json")).stdout
+    $reviewRoot = [string]($configText | ConvertFrom-Json).review_root
+    if ([string]::IsNullOrWhiteSpace($reviewRoot)) {
+      $validationErrors += "agent_config.json on $Base has no review_root"
+    } else {
+      $acceptPath = Join-Path (Join-Path $reviewRoot (Split-Path -Leaf $RunDir)) "acceptance.json"
+    }
+  } catch {
+    $validationErrors += "cannot read review_root from agent_config.json on ${Base}: $($_.Exception.Message)"
+  }
+}
+if (($acceptPath -ne $null) -and $acceptPath.StartsWith($RunDir.TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
+  $validationErrors += "acceptance file must not be inside RunDir: $acceptPath"
+  $acceptPath = $null
+}
 if (-not (Test-Path -LiteralPath $RunDir -PathType Container)) {
   $validationErrors += "RunDir does not exist: $RunDir"
-} else {
-  $acceptPath = Join-Path $RunDir "acceptance.json"
+} elseif ($acceptPath -ne $null) {
   if (-not (Test-Path -LiteralPath $acceptPath -PathType Leaf)) {
-    $validationErrors += "acceptance.json is missing in RunDir"
+    $validationErrors += "acceptance.json is missing: $acceptPath"
   } else {
     try {
       $accept = Get-Content -LiteralPath $acceptPath -Raw -Encoding UTF8 | ConvertFrom-Json

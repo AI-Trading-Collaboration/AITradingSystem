@@ -1,5 +1,6 @@
 {
   "runs_root": "D:\\Work\\AITradingSystem_agent_runs",
+  "review_root": "D:\\Work\\AITradingSystem_agent_reviews",
   "models": {
     "local": "local-model-service/qwen3.8-flash-next-iq3_s",
     "cloud": "openai/gpt-6.1-sol"

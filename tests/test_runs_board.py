@@ -139,3 +139,17 @@ def test_bom_json_publish_failed_weekly_costs_and_first_pass_rate(tmp_path: Path
     rejected = tmp_path / "DEVX-13-01"; brief(rejected, template="mechanical-change"); attempt(rejected); attempt(rejected, "02"); rejected.joinpath("acceptance.json").write_text(json.dumps({"reviews": [{"after_attempt": "01", "at": "2026-10-11T00:03:00Z", "verdict": "rejected"}, {"after_attempt": "02", "at": "2026-10-11T00:05:00Z", "verdict": "accepted"}]}), encoding="utf-8")
     summary = [s for s in runs_board.task_type_summaries([runs_board.parse_run(accepted), runs_board.parse_run(rejected)]) if s["type"] == "mechanical-change B"][0]
     assert summary["first_pass_rate"] == 0.5
+
+
+def test_review_root_replaces_run_dir_acceptance(tmp_path: Path) -> None:
+    runs = tmp_path / "runs"; reviews = tmp_path / "reviews"
+    run = runs / "DEVX-20-01"; brief(run); attempt(run)
+    run.joinpath("acceptance.json").write_text(json.dumps({"reviews": [{"after_attempt": "01", "at": "2026-10-11T00:03:00Z", "verdict": "accepted"}]}), encoding="utf-8")
+    assert runs_board.parse_run(run)["stage"] == "accepted_pending_ship"
+    assert runs_board.parse_run(run, reviews)["stage"] == "awaiting"
+    (reviews / run.name).mkdir(parents=True)
+    (reviews / run.name / "acceptance.json").write_text(json.dumps({"reviews": [{"after_attempt": "01", "at": "2026-10-11T00:04:00Z", "verdict": "rejected"}]}), encoding="utf-8")
+    assert runs_board.parse_run(run, reviews)["stage"] == "rejected"
+    out = tmp_path / "board.html"
+    assert runs_board.main([str(runs), "-o", str(out), "--review-root", str(reviews)]) == 0
+    assert "退回修正" in out.read_text(encoding="utf-8")

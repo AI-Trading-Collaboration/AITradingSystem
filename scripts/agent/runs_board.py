@@ -2,7 +2,7 @@
 """pi 运行看板：把运行目录汇总成一页静态 HTML。
 
 用法：
-    python runs_board.py <运行根目录> [-o runs.html] [--json summary.json] [--fragment]
+    python runs_board.py <运行根目录> [-o runs.html] [--json summary.json] [--fragment] [--review-root <验收根目录>]
 
 只读：只读取运行目录里的文件，只写 -o / --json 指定的输出。只用标准库。
 
@@ -13,7 +13,8 @@
     session/*.jsonl             pi 会话（--session-dir）
     session.html                pi --export 的导出
     report.json                 守卫扩展写（可选）
-    acceptance.json             Claude 验收写（可选）
+    acceptance.json             Claude 验收写（可选）；给了 --review-root 时改读 <验收根目录>/<运行名>/acceptance.json，
+                                运行目录里的同名文件不再读（受限账户能写运行目录）
 """
 
 from __future__ import annotations
@@ -305,7 +306,7 @@ def compute_phase_durations(path: Path, attempts: list[dict], acceptance, publis
     }
 
 
-def parse_run(path: Path) -> dict:
+def parse_run(path: Path, review_root: Path | None = None) -> dict:
     brief = parse_brief(path / "brief.md")
     attempts_dir = path / "attempts"
     attempts = sorted(
@@ -318,7 +319,7 @@ def parse_run(path: Path) -> dict:
         "brief": brief,
         "attempts": attempts,
         "report": read_json(path / "report.json"),
-        "acceptance": read_json(path / "acceptance.json"),
+        "acceptance": read_json((review_root / path.name if review_root else path) / "acceptance.json"),
         "queue": read_json(path / "queue.json"),
         "publish": read_json(path / "publish.json"),
         "links": {name: f"{path.name}/{name}" for name in ("session.html", "brief.md", "report.md") if (path / name).exists()},
@@ -354,8 +355,8 @@ def parse_run(path: Path) -> dict:
     return run
 
 
-def collect(root: Path) -> list[dict]:
-    runs = [parse_run(p) for p in sorted(root.iterdir()) if p.is_dir() and not p.name.startswith(".")]
+def collect(root: Path, review_root: Path | None = None) -> list[dict]:
+    runs = [parse_run(p, review_root) for p in sorted(root.iterdir()) if p.is_dir() and not p.name.startswith(".")]
     runs = [r for r in runs if r["attempts"] or r["brief"]["front"]]
     runs.sort(key=lambda r: r["summary"]["started_at"] or "", reverse=True)
     return runs
@@ -831,11 +832,12 @@ def main(argv=None) -> int:
     ap.add_argument("--json", type=Path, help="同时写一份 JSON 摘要（给 Claude 验收时读）")
     ap.add_argument("--fragment", action="store_true", help="只输出页面内容，不带 doctype/html/head/body")
     ap.add_argument("--sample-note", help="在页首加一行说明（用于样例数据）")
+    ap.add_argument("--review-root", type=Path, help="验收记录根目录：acceptance.json 从 <验收根目录>/<运行名>/ 读")
     args = ap.parse_args(argv)
     if not args.root.is_dir():
         print(f"找不到运行根目录：{args.root}", file=sys.stderr)
         return 2
-    runs = collect(args.root)
+    runs = collect(args.root, args.review_root)
     out = args.output or (args.root / "runs.html")
     out.write_text(render(runs, args.root, args.sample_note, args.fragment), encoding="utf-8")
     if args.json:

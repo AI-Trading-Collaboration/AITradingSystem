@@ -9,6 +9,7 @@ param(
     [string]$AgentWorktree = "D:\Work\AITradingSystem_agent_wt",
     [string]$RunsRoot = "D:\Work\AITradingSystem_agent_runs",
     [string]$QueueFile = "D:\Work\AITradingSystem_agent_runs\queue\request.json",
+    [string]$ReviewRoot = "D:\Work\AITradingSystem_agent_reviews",
     [string]$TaskName = "AITradingSystem pi agent",
     [int]$ExecutionLimitHours = 2,
     [string]$PiCommand = "C:\Program Files\aits-pi\pi.cmd"
@@ -46,6 +47,59 @@ function Test-PathAcl([string]$Path, [switch]$AlsoRead) {
         if (Test-Right $ace.FileSystemRights "write") { Add-Problem "$Path is writable by $name ($sid)" }
         if ($AlsoRead -and (Test-Right $ace.FileSystemRights "read")) { Add-Problem "$Path is readable by $name ($sid)" }
     }
+}
+
+# Rights as Get-Acl reports what icacls grants: F, M and RX (each with SYNCHRONIZE).
+$RightsFull = 2032127
+$RightsModify = 1245631
+$RightsReadExecute = 1179817
+
+# True when $Dir already carries exactly the protected ACL that setup applies ($Want maps SID -> rights, all (OI)(CI) allow).
+# Setup then leaves it alone, so icacls never re-propagates into children the agent account may have created.
+function Test-RestrictedDirAcl([string]$Dir, [hashtable]$Want) {
+    if (-not (Test-Path -LiteralPath $Dir -PathType Container)) { return $false }
+    $info = New-Object System.IO.DirectoryInfo($Dir)
+    if ($info.Attributes -band [IO.FileAttributes]::ReparsePoint) { return $false }
+    $acl = $info.GetAccessControl()
+    if (-not $acl.AreAccessRulesProtected) { return $false }
+    $rules = @($acl.GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier]))
+    if ($rules.Count -ne $Want.Count) { return $false }
+    $inherit = [System.Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [System.Security.AccessControl.InheritanceFlags]::ObjectInherit
+    foreach ($rule in $rules) {
+        $sid = $rule.IdentityReference.Value
+        if (-not $Want.ContainsKey($sid)) { return $false }
+        if ($rule.AccessControlType -ne [System.Security.AccessControl.AccessControlType]::Allow) { return $false }
+        if ($rule.InheritanceFlags -ne $inherit) { return $false }
+        if ($rule.PropagationFlags -ne [System.Security.AccessControl.PropagationFlags]::None) { return $false }
+        if ((([int64]$rule.FileSystemRights) -band 4294967295) -ne [int64]$Want[$sid]) { return $false }
+    }
+    return $true
+}
+
+# Rebuilds the agent venv from the base Python in a directory the agent account can read but not change, installs
+# $Requirements, then adds $SourceDir through a .pth file instead of an editable build. Nothing it runs comes from a
+# place the agent account can write. Returns the new venv's pip freeze lines.
+function Build-AgentVenv([string]$BasePython, [string]$AgentVenv, [string]$StagingRoot, [string]$Requirements, [string]$SourceDir, [string]$OwnerSid, [string]$AgentSid) {
+    if (Test-Path -LiteralPath $AgentVenv) {
+        # rmdir /s removes junctions and symbolic links inside the old venv without following them.
+        cmd.exe /d /c rmdir /s /q "$AgentVenv" | Out-Host
+        if (Test-Path -LiteralPath $AgentVenv) { throw "Could not remove the old agent venv: $AgentVenv" }
+    }
+    # Lock the directory before it appears in the clone: create it under $StagingRoot, then rename it into place.
+    # Directory.Move fails if anything already sits at the target, and the renamed directory keeps its protected ACL.
+    $staging = Join-Path $StagingRoot ("venv-" + [Guid]::NewGuid().ToString("N"))
+    New-Item -ItemType Directory -Path $staging | Out-Null
+    icacls $staging /inheritance:r /grant:r "*S-1-5-32-544:(OI)(CI)F" "*S-1-5-18:(OI)(CI)F" "*${OwnerSid}:(OI)(CI)F" "*${AgentSid}:(OI)(CI)RX" | Out-Null; Check-Native "icacls agent venv"
+    [IO.Directory]::Move($staging, $AgentVenv)
+    $want = @{ "S-1-5-32-544" = $RightsFull; "S-1-5-18" = $RightsFull; $OwnerSid = $RightsFull; $AgentSid = $RightsReadExecute }
+    if (-not (Test-RestrictedDirAcl $AgentVenv $want)) { throw "Agent venv directory does not have the expected locked ACL: $AgentVenv" }
+    & $BasePython -I -m venv $AgentVenv | Out-Host; Check-Native "python -m venv"
+    $agentPython = Join-Path $AgentVenv "Scripts\python.exe"
+    & $agentPython -I -m pip install --disable-pip-version-check -r $Requirements | Out-Host; Check-Native "pip install -r"
+    $frozen = @(& $agentPython -I -m pip freeze --exclude-editable); Check-Native "pip freeze (agent venv)"
+    # Written last: once it exists the agent venv also imports from $SourceDir, which the agent account can change.
+    [IO.File]::WriteAllText((Join-Path $AgentVenv "Lib\site-packages\aits_agent_clone.pth"), $SourceDir + "`r`n", (New-Object System.Text.UTF8Encoding $false))
+    return $frozen
 }
 
 function Show-MachineSecretNames {
@@ -151,17 +205,28 @@ if (($batchHolders -contains "*$agentSid") -or ($batchHolders -contains $UserNam
     Write-Host "Granted SeBatchLogonRight to $UserName."
 }
 
-foreach ($dir in @($AgentClone, $AgentWorktree, $RunsRoot, (Split-Path -Parent $QueueFile))) {
+foreach ($dir in @($AgentClone, $AgentWorktree, $RunsRoot, (Split-Path -Parent $QueueFile), $ReviewRoot)) {
     if ($PSCmdlet.ShouldProcess($dir, "create directory")) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
 }
 $ownerIdentity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $ownerSid = $ownerIdentity.User.Value
 Write-Host "Owner account: $($ownerIdentity.Name) ($ownerSid)"
+$agentDirWant = @{ "S-1-5-32-544" = $RightsFull; "S-1-5-18" = $RightsFull; $ownerSid = $RightsFull; $agentSid = $RightsModify }
 foreach ($dir in @($AgentClone, $AgentWorktree, $RunsRoot)) {
-    if ($PSCmdlet.ShouldProcess($dir, "disable inheritance; grant Administrators, SYSTEM, and current account full control; grant $UserName modify")) {
+    if (Test-RestrictedDirAcl $dir $agentDirWant) {
+        Write-Host "$dir already has the restricted ACL; left unchanged."
+    } elseif ($PSCmdlet.ShouldProcess($dir, "disable inheritance; grant Administrators, SYSTEM, and current account full control; grant $UserName modify")) {
         icacls $dir /inheritance:r /grant:r "*S-1-5-32-544:(OI)(CI)F" "*S-1-5-18:(OI)(CI)F" "*${ownerSid}:(OI)(CI)F" "*${agentSid}:(OI)(CI)M" | Out-Null; Check-Native "icacls restrict inheritance"
         icacls $dir
     }
+}
+# Acceptance records live here, out of reach of the agent account (DEVX-025 run 10): publish.ps1 reads them from this root only.
+$reviewWant = @{ "S-1-5-32-544" = $RightsFull; "S-1-5-18" = $RightsFull; $ownerSid = $RightsFull }
+if (Test-RestrictedDirAcl $ReviewRoot $reviewWant) {
+    Write-Host "$ReviewRoot already has the restricted ACL; left unchanged."
+} elseif ($PSCmdlet.ShouldProcess($ReviewRoot, "disable inheritance; grant Administrators, SYSTEM, and current account full control; no access for $UserName")) {
+    icacls $ReviewRoot /inheritance:r /grant:r "*S-1-5-32-544:(OI)(CI)F" "*S-1-5-18:(OI)(CI)F" "*${ownerSid}:(OI)(CI)F" | Out-Null; Check-Native "icacls review root"
+    icacls $ReviewRoot
 }
 
 $gitDir = Join-Path $Repo ".git"
@@ -186,20 +251,18 @@ $basePython = if ($venvHome) { Join-Path $venvHome "python.exe" } else { "python
 if ($venvHome) {
     if ($PSCmdlet.ShouldProcess($venvHome, "grant $UserName read and execute on the base Python")) { icacls $venvHome /grant "*${agentSid}:(OI)(CI)RX" | Out-Null; Check-Native "icacls base python" }
 }
-$agentPython = Join-Path $AgentClone ".venv\Scripts\python.exe"
-if (-not (Test-Path -LiteralPath $agentPython)) {
-    if ($PSCmdlet.ShouldProcess($AgentClone, "create venv")) { & $basePython -m venv (Join-Path $AgentClone ".venv"); Check-Native "python -m venv" }
-}
 # The agent venv mirrors the main venv package for package, so tests in the agent clone see the same versions.
+# Build-AgentVenv rebuilds it on every run so this elevated script never runs a program or build hook from a place the
+# agent account can write (DEVX-025 run 10).
 $sourcePython = Join-Path $Repo ".venv\Scripts\python.exe"
-$venvRequirements = Join-Path $RunsRoot "agent-venv-requirements.txt"
-if ($PSCmdlet.ShouldProcess($AgentClone, "install the main venv's packages at the same versions (pip freeze --exclude-editable of $sourcePython, saved to $venvRequirements), then the project in editable mode")) {
+$agentVenv = Join-Path $AgentClone ".venv"
+$venvRequirements = Join-Path $ReviewRoot "agent-venv-requirements.txt"
+if ($PSCmdlet.ShouldProcess($agentVenv, "rebuild the agent venv from the base Python, readable but not writable by $UserName; install the main venv's packages at the same versions (pip freeze --exclude-editable of $sourcePython, saved to $venvRequirements); add the clone's src through a .pth file instead of an editable install")) {
     if (-not (Test-Path -LiteralPath $sourcePython -PathType Leaf)) { throw "Main venv python not found: $sourcePython" }
-    $frozen = @(& $sourcePython -m pip freeze --exclude-editable); Check-Native "pip freeze (main venv)"
+    if (-not $venvHome) { throw "Base Python not found: no home line in $sourceCfg" }
+    $frozen = @(& $sourcePython -I -m pip freeze --exclude-editable); Check-Native "pip freeze (main venv)"
     [IO.File]::WriteAllLines($venvRequirements, [string[]]$frozen)
-    & $agentPython -m pip install -r $venvRequirements; Check-Native "pip install -r"
-    & $agentPython -m pip install --no-deps -e $AgentClone; Check-Native "pip install -e"
-    $agentFrozen = @(& $agentPython -m pip freeze --exclude-editable); Check-Native "pip freeze (agent venv)"
+    $agentFrozen = @(Build-AgentVenv $basePython $agentVenv $ReviewRoot $venvRequirements (Join-Path $AgentClone "src") $ownerSid $agentSid)
     $venvDiff = @(Compare-Object $frozen $agentFrozen)
     if ($venvDiff.Count -gt 0) {
         Write-Warning ("Agent venv differs from the main venv: " + (($venvDiff | ForEach-Object { $_.SideIndicator + " " + $_.InputObject }) -join "; "))
@@ -228,7 +291,8 @@ if ($PSCmdlet.ShouldProcess($TaskName, "register manual scheduled task: powershe
     $registeredTask = $service.GetFolder("\").GetTask($TaskName)
     $taskSddl = $registeredTask.GetSecurityDescriptor(4)
     $ownerAce = "(A;;GRGX;;;$ownerSid)"
-    if (-not $taskSddl.Contains($ownerAce)) {
+    # The scheduler reports GRGX back as 0x1200a9, so look for any allow ACE of the owner before adding one.
+    if ($taskSddl -notmatch ("\(A;;[^;]*;;;" + [regex]::Escape($ownerSid) + "\)")) {
         $aceStart = $taskSddl.IndexOf("(")
         $newSddl = if ($aceStart -ge 0) { $taskSddl.Insert($aceStart, $ownerAce) } else { $taskSddl + $ownerAce }
         $registeredTask.SetSecurityDescriptor($newSddl, 0)
