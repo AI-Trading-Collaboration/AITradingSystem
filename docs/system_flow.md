@@ -112,13 +112,13 @@ flowchart LR
 
 | 部分 | 退役时间 | 去向 |
 |---|---|---|
-| ETF 候选链（etf forward、dynamic-v3 rescue、候选跟踪每日步骤、`aits etf` 等命令） | 2026-10-10 GOV-008 P4 块 2；2026-10-10 GOV-008A Reader Brief 清理 | 代码删除；Reader Brief 已移除已归档 ETF 候选链栏目；仅 `etf_operations_health` 作为 owner 简报固定板块遗留摘要保留；`config/etf_portfolio/` 与 `etf_portfolio/regime.py` 作为研究证据保留 |
+| ETF 候选链（etf forward、dynamic-v3 rescue、候选跟踪每日步骤、`aits etf` 等命令） | 2026-10-10 GOV-008 P4 块 2；2026-10-10 GOV-008A Reader Brief 清理 | 代码删除；Reader Brief 已移除已归档 ETF 候选链栏目；仅 `etf_operations_health` 作为 owner 简报固定板块遗留摘要保留；`config/etf_portfolio/` 只留 score-daily 读取的 `dynamic_allocation_policy.yaml`、`trend_calibration.yaml`，其余与 `etf_portfolio/regime.py` 于 2026-10-12 GOV-009 W5 删除（tag `research-archive-2026-10-12`） |
 | 发布机制（fence、lease、hash-authority reseal、Full 验证、validation tier runner） | 2026-10-10 GOV-008 P4 块 1 | 由 `ship` 与本机门禁取代 |
 | Atlas 页面 | 2026-10-10 | 代码删除 |
 | release promotion、scheduler checkout preflight、Codex scheduler observation、workflow health 遥测（含周任务 `weekly_workflow_health_review`） | 2026-10-10 GOV-008 解耦 L2/P4/P5 | 命令与配置删除；确定性调度见 OPS-082 |
 | Codex automation `aitradingsystem-pit`、其提示词 `config/operations/aitradingsystem_pit_automation_prompt.md` 与业务合同模块 `ops_scheduler_business_contract.py`；终止恢复的 deployment receipt 依赖 | 2026-10-11 OPS-082 | Windows 计划任务 + 包装脚本（第 5 节）；恢复改为校验运行副本 HEAD |
 | 报告登记中命令已不存在的 507 个条目 | 2026-10-10 GOV-008 P5 | 保留条目（研究记录按 id 引用），标 `archived_optional` |
-| 任务事件库 `registry/development_tasks` | 2026-10-10 GOV-008 P5a | `tasks/<ID>.yaml` |
+| 任务事件库 `registry/development_tasks` | 2026-10-10 GOV-008 P5a；最后一个冻结片段 2026-10-12 GOV-009 W5 删除 | `tasks/<ID>.yaml` |
 
 旧机制的完整代码与文档在 tag `legacy-governance-final`（`2d29e4e35`）。
 

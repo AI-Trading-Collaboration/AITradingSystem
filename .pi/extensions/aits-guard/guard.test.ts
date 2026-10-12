@@ -179,7 +179,7 @@ test("exclude pathspecs for an excluded path pass (AGENTS.md requires them)", ()
   }
 });
 
-test("writes: excluded, rendered views and pinned evidence are blocked with rule names", () => {
+test("writes: excluded, rendered views and frozen config are blocked with rule names", () => {
   const root = fakeRepo();
   const excluded = checkWrite(root, root, "docs/research/private_pack.md");
   assert.ok(excluded && "block" in excluded);
@@ -187,9 +187,8 @@ test("writes: excluded, rendered views and pinned evidence are blocked with rule
   for (const path of [
     "docs/task_register.md",
     "docs/task_register_completed.md",
-    "registry/development_tasks/2f/abc.yaml",
-    "config/etf_portfolio/assets.yaml",
-    "src/ai_trading_system/etf_portfolio/regime.py",
+    "config/etf_portfolio/dynamic_allocation_policy.yaml",
+    "config/etf_portfolio/trend_calibration.yaml",
   ]) {
     const verdict = checkWrite(root, root, path);
     assert.ok(verdict && "block" in verdict, `expected block: ${path}`);

@@ -31,9 +31,11 @@ type RunState = {
 const NEVER_WRITE: readonly string[] = [
   "docs/task_register.md", // rendered by tools/tasks.py
   "docs/task_register_completed.md", // rendered by tools/tasks.py
-  "registry/development_tasks/**", // bytes pinned by the TRADING-2548 contract
-  "config/etf_portfolio/**", // research evidence (GOV-008 P4 block 2)
-  "src/ai_trading_system/etf_portfolio/regime.py", // bytes pinned by the QQQ options contract
+  // Frozen config of the retired ETF chain that score-daily still reads (indicator_research.py).
+  // The rest of config/etf_portfolio, etf_portfolio/regime.py and registry/development_tasks were
+  // deleted in GOV-009 W5 once the contracts that pinned their bytes were gone.
+  "config/etf_portfolio/dynamic_allocation_policy.yaml",
+  "config/etf_portfolio/trend_calibration.yaml",
 ];
 
 const READ_ONLY_WHEN_LOCKED = new Set(["read", "grep", "find", "ls"]);
@@ -493,7 +495,7 @@ export function writeVerdict(root: string, cwd: string, target: string, state = 
     };
   }
   if (matchesAny(rel, NEVER_WRITE)) {
-    return { block: true, rule: "never-write", reason: `${rel} is protected (rendered view or pinned research evidence)` };
+    return { block: true, rule: "never-write", reason: `${rel} is protected (rendered view or frozen config)` };
   }
   if (matchesAny(rel, policy.zoneC)) {
     if (ownerDecisionVerified(root)) {
