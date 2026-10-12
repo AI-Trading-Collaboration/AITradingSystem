@@ -847,6 +847,7 @@ def test_cli_direct_dispatches_data_commands(monkeypatch) -> None:
     )
     assert cli_direct.main(["data", "freshness", "--date", "2026-05-13"]) == 0
     assert cli_direct.main(["data", "recover-freshness", "--latest"]) == 0
+    assert cli_direct.main(["data", "recover-freshness", "--latest", "--no-price-writes"]) == 0
 
     assert calls == [
         (
@@ -890,6 +891,19 @@ def test_cli_direct_dispatches_data_commands(monkeypatch) -> None:
                 "freshness_config_path": (
                     cli_direct.data_cli.DEFAULT_MARKET_DATA_FRESHNESS_CONFIG_PATH
                 ),
+                "price_writes": True,
+            },
+        ),
+        (
+            "recover",
+            {
+                "latest": True,
+                "as_of": None,
+                "refresh_config_path": cli_direct.data_cli.DEFAULT_MARKET_DATA_REFRESH_CONFIG_PATH,
+                "freshness_config_path": (
+                    cli_direct.data_cli.DEFAULT_MARKET_DATA_FRESHNESS_CONFIG_PATH
+                ),
+                "price_writes": False,
             },
         ),
     ]

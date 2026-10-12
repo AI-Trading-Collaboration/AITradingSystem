@@ -35,6 +35,7 @@ from ai_trading_system.fundamentals.sec_pit_aliases import (
     canonicalize_ticker_series,
     canonicalize_tickers,
     load_ticker_aliases,
+    price_row_ticker_aliases,
 )
 from ai_trading_system.fundamentals.sec_pit_backfill import SEC_PIT_BACKTEST_DATA_GRADE
 from ai_trading_system.yaml_loader import safe_load_yaml_path
@@ -787,7 +788,10 @@ def _build_forward_labels(
     allowed_tickers = set(tickers) | {benchmark}
     aliases = {
         source: target
-        for source, target in load_ticker_aliases().items()
+        for source, target in price_row_ticker_aliases(
+            load_ticker_aliases(),
+            prices["ticker"],
+        ).items()
         if target in allowed_tickers
     }
     frame = prices.copy()

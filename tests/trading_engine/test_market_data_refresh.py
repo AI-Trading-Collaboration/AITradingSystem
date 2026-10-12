@@ -237,6 +237,156 @@ def test_audited_cache_refresh_registers_required_assets(
     assert run.payload["safety"]["synthetic_latest_bar_generated"] is False
 
 
+def test_refresh_after_download_registers_without_rewriting_prices(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    # OPS-080: download-data already carries the shadow-tracking assets with
+    # AUXILIARY_PRICE_HISTORY_CALENDAR_DAYS of history, so the daily recovery step before DQ
+    # (no price writes) still finds every asset complete and refreshes the registry and manifest.
+    from ai_trading_system.cli_commands.data_cache import AUXILIARY_PRICE_HISTORY_CALENDAR_DAYS
+    from ai_trading_system.trading_calendar import is_us_equity_trading_day
+
+    target = date(2026, 10, 9)
+    history_start = target - timedelta(days=AUXILIARY_PRICE_HISTORY_CALENDAR_DAYS)
+    sessions = [
+        history_start + timedelta(days=offset)
+        for offset in range(AUXILIARY_PRICE_HISTORY_CALENDAR_DAYS + 1)
+        if is_us_equity_trading_day(history_start + timedelta(days=offset))
+    ]
+    required_assets = ("GOOGL", "BRK.B", "SGOV")
+    prices_path = _write_prices(tmp_path, {symbol: sessions for symbol in required_assets})
+    _write_freshness(
+        tmp_path,
+        target=target,
+        effective=sessions[-2],
+        status="STALE",
+        missing_expected=required_assets,
+    )
+    config_path = _write_refresh_config(
+        tmp_path,
+        prices_path=prices_path,
+        required_assets=required_assets,
+        allow_external_fetch=False,
+    )
+    manifest_calls: list[date] = []
+
+    def fake_refresh_backtest_manifest(**kwargs: object) -> _ManifestRun:
+        manifest_calls.append(kwargs["as_of"])
+        return _ManifestRun({"target_manifest_date": target.isoformat()})
+
+    monkeypatch.setattr(
+        market_data_refresh,
+        "refresh_backtest_manifest",
+        fake_refresh_backtest_manifest,
+    )
+    monkeypatch.setattr(
+        market_data_refresh,
+        "run_market_data_freshness",
+        lambda **_: _Run(
+            {
+                "freshness": {"status": "OK", "reason": "manifest refreshed"},
+                "data_dates": {"effective_data_date": target.isoformat()},
+                "tracking_readiness": {"readiness": "can_track"},
+                "output_artifacts": {"summary_json": "freshness.json"},
+            }
+        ),
+    )
+    monkeypatch.setattr(
+        market_data_refresh,
+        "run_portfolio_candidate_tracking",
+        lambda **_: _Run({"candidate": {"tracking_status": "active_tracking"}}),
+    )
+    before = prices_path.read_bytes()
+
+    run = run_market_data_refresh(
+        as_of=target,
+        config_path=config_path,
+        generated_at=datetime(2026, 10, 10, 0, 40, tzinfo=UTC),
+        allow_price_writes=False,
+    )
+
+    assert run.payload["metadata"]["status"] == "OK"
+    assert run.payload["actions"]["price_writes_allowed"] is False
+    assert run.payload["actions"]["fetched_assets"] == []
+    assert run.payload["actions"]["updated_price_cache"] is False
+    assert run.payload["actions"]["updated_price_cache_registry"] is True
+    assert run.payload["actions"]["refreshed_backtest_manifest"] is True
+    assert manifest_calls == [target]
+    assert prices_path.read_bytes() == before
+
+
+def test_refresh_without_price_writes_reports_missing_history(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    # OPS-080: before DQ the daily run never fetches or writes prices; an asset that
+    # download-data left short is reported, and the registry and manifest stay untouched.
+    target = date(2026, 1, 6)
+    previous = date(2026, 1, 5)
+    prices_path = _write_prices(tmp_path, {"GOOGL": [previous, target], "BRK.B": [previous]})
+    _write_freshness(
+        tmp_path,
+        target=target,
+        effective=previous,
+        status="STALE",
+        missing_expected=("BRK.B",),
+    )
+    _write_audited_fmp_cache_row(
+        tmp_path,
+        canonical_symbol="BRK.B",
+        source_symbol="BRK-B",
+        target=target,
+    )
+    config_path = _write_refresh_config(
+        tmp_path,
+        prices_path=prices_path,
+        required_assets=("GOOGL", "BRK.B"),
+    )
+
+    def unexpected(**_: object) -> object:
+        raise AssertionError("price writes are disabled")
+
+    monkeypatch.setattr(market_data_refresh, "_fetch_required_price_history", unexpected)
+    monkeypatch.setattr(market_data_refresh, "refresh_backtest_manifest", unexpected)
+    monkeypatch.setattr(
+        market_data_refresh,
+        "run_market_data_freshness",
+        lambda **_: _Run(
+            {
+                "freshness": {"status": "STALE", "reason": "BRK.B short"},
+                "data_dates": {"effective_data_date": previous.isoformat()},
+                "tracking_readiness": {"readiness": "cannot_track"},
+                "output_artifacts": {},
+            }
+        ),
+    )
+    monkeypatch.setattr(
+        market_data_refresh,
+        "run_portfolio_candidate_tracking",
+        lambda **_: _Run({"candidate": {"tracking_status": "tracking_blocked"}}),
+    )
+    before = prices_path.read_bytes()
+
+    run = run_market_data_refresh(
+        as_of=target,
+        config_path=config_path,
+        generated_at=datetime(2026, 1, 7, 2, 0, tzinfo=UTC),
+        allow_price_writes=False,
+    )
+
+    assert validate_market_data_refresh_payload(run.payload) == []
+    assert run.payload["metadata"]["status"] == "SOURCE_DELAYED"
+    assert run.payload["actions"]["price_writes_allowed"] is False
+    assert run.payload["actions"]["updated_price_cache"] is False
+    assert run.payload["actions"]["updated_price_cache_registry"] is False
+    results = {item["symbol"]: item for item in run.payload["asset_results"]}
+    assert results["BRK.B"]["status"] == "SOURCE_DELAYED"
+    assert "OPS-080" in results["BRK.B"]["error"]
+    assert prices_path.read_bytes() == before
+    assert not (tmp_path / "artifacts" / "data_registry" / "price_cache_registry.json").exists()
+
+
 def test_target_only_audited_cache_does_not_claim_recovery(
     tmp_path: Path,
     monkeypatch,

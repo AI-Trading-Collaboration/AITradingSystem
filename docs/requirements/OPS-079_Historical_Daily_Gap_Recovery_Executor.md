@@ -1,12 +1,14 @@
 # OPS-079 Historical Daily Gap Recovery Executor
 
-最后更新：2026-09-05
+最后更新：2026-10-12
 
 稳定任务 ID：`OPS-079_HISTORICAL_DAILY_GAP_RECOVERY_EXECUTOR`
 
 Owner 指令：`owner_instruction:OPS-079:2026-09-05:continue-blocked-historical-gap-recovery`
 
-状态：`IN_PROGRESS`
+状态：`VALIDATING`（2026-10-11 由 DEFERRED 改回，见任务记录）
+
+Owner 决定：`owner_decision:OPS-079:2026-09-06:first-four-reviewed-recovery`（2026-10-12 确认，见第 8 节）
 
 ## 1. 问题与证据
 
@@ -97,3 +99,6 @@ OPS-070 S3 已生成并验证 `daily_input_capture_recovery_queue.v1`，但 revi
 - 2026-09-05：取得 transaction `ops-079-historical-gap-recovery-20260905-v1` / lease `lease-f36978e5120787261698`，开始 task-source 与最小 serial contract 登记。
 - 2026-09-05：v1/v2/v4/v5 分别因声明闭包、generated authority 与测试预期漂移 fail closed 并正式释放；v3 仅留下未取得 lease 的 immutable intent，未形成 active transaction。
 - 2026-09-05：v6 / lease `lease-fd5b9013d358e6d305ba` 已取得；producer/validator、双 CLI、9 项专属测试及 33 项相邻日常采集回归均 PASS，继续执行最终 generated rebuild 与正式门禁。
+- 2026-09-05 17:43Z（2026-09-06 02:43 JST）：运行副本在 `outputs\replays\historical_gap_recovery\` 生成第 2 节首批四项 bundle，4 个 validator 均 PASS，canonical guard 前后相同，`consumer_cutover_allowed=false`，bundle 引用 `owner_decision:OPS-079:2026-09-06:first-four-reviewed-recovery`。
+- 2026-09-06 02:48 JST：Codex 自动化记录（9/23 备份 `codex_state\automations\aitradingsystem-pit\memory.md` 第 3500–3544 行）写着 owner 明确批准发布运行副本并执行首批四项恢复，同处另有决定名 `publish-runtime-and-first-four-recoveries`；仓库里当时没有 owner 原话。
+- 2026-10-12 22:28 JST：owner 在线程"工程收尾遗留盘点"中确认。Claude 的提问（22:25 JST，节选）："OPS-079：确认 9/6 的同意。当时 Codex 的自动化记录写着，9/6 02:48 JST 你明确批准发布运行副本、恢复首批四项，四个校验都通过了。但仓库里没有你的原话。你确认的话，我把它记成正式决定；不确认，就记成'有执行记录、没有你的原话'。……两件都按上面的建议定，可以吗？（是 / 否）"；owner 回答："是"。记为 `owner_decision:OPS-079:2026-09-06:first-four-reviewed-recovery`（沿用 bundle 里的名字，确认日期 2026-10-12）。还差：用现行代码只读重跑 `validate-historical-gap` 复核四个 bundle；是否用本执行器处理 9/5–10/8 缺口留给研究策略讨论。

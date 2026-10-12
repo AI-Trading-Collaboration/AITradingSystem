@@ -350,6 +350,7 @@ def _dispatch(args: list[str]) -> None:
                 "--freshness-config",
                 data_cli.DEFAULT_MARKET_DATA_FRESHNESS_CONFIG_PATH,
             ),
+            price_writes=not _flag(args, "--no-price-writes"),
         )
         return
     if args[:2] == ["signals", "build-snapshot"]:

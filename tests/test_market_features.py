@@ -45,6 +45,37 @@ def test_build_market_features_generates_expected_rows() -> None:
     assert _feature_value(feature_set, "AI_CORE_WATCHLIST", "above_ma_3_ratio") == 1.0
 
 
+def test_shadow_tracking_rows_do_not_change_existing_market_features() -> None:
+    # OPS-080: download-data now carries GOOGL and BRK.B for shadow tracking. Their rows only
+    # add their own subjects; every existing feature and warning stays the same.
+    base_tickers = ["SPY", "SMH", "QQQ", "MSFT", "NVDA", "^VIX"]
+    base_prices = _sample_prices(base_tickers, periods=5)
+    shadow_prices = _sample_prices([*base_tickers, "GOOGL", "BRK.B"], periods=5)
+    shadow_prices = shadow_prices.loc[shadow_prices["ticker"].isin(["GOOGL", "BRK.B"])]
+    kwargs = {
+        "rates": _sample_rates(["DGS2", "DGS10", "DTWEXBGS"], periods=5),
+        "config": _small_feature_config(),
+        "as_of": date(2026, 4, 30),
+        "core_watchlist": ["MSFT", "NVDA"],
+    }
+
+    base = build_market_features(prices=base_prices, **kwargs)
+    combined = build_market_features(
+        prices=pd.concat([base_prices, shadow_prices], ignore_index=True),
+        **kwargs,
+    )
+
+    assert [row for row in combined.rows if row.subject not in {"GOOGL", "BRK.B"}] == list(
+        base.rows
+    )
+    assert {row.subject for row in combined.rows} - {row.subject for row in base.rows} == {
+        "GOOGL",
+        "BRK.B",
+    }
+    assert combined.warnings == base.warnings
+    assert combined.status == base.status
+
+
 def test_build_market_features_warns_on_insufficient_history() -> None:
     config = FeatureConfig(
         moving_average_windows=[10],

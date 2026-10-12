@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -104,6 +105,24 @@ def canonicalize_tickers(
             canonical.append(resolution.canonical_ticker)
             seen.add(resolution.canonical_ticker)
     return canonical, resolutions
+
+
+def price_row_ticker_aliases(
+    aliases: dict[str, str],
+    price_tickers: Iterable[object],
+) -> dict[str, str]:
+    """Return the aliases that may rename rows of a price file.
+
+    Price rows keep their internal ticker (config/data_sources.yaml). Since OPS-080 the price
+    file also holds GOOGL and BRK.B for shadow tracking, so an alias only stands in for a target
+    ticker that has no rows of its own: GOOGL rows never merge into GOOG.
+    """
+    present = {_normalize_symbol(value) for value in price_tickers}
+    return {
+        source: target
+        for source, target in aliases.items()
+        if source == target or target not in present
+    }
 
 
 def canonicalize_ticker_series(

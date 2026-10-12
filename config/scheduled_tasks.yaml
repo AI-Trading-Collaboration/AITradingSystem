@@ -1,5 +1,5 @@
 schema_version: 1
-policy_version: scheduled_tasks_v7
+policy_version: scheduled_tasks_v8
 policy_metadata:
   owner: system
   status: active_baseline
@@ -23,6 +23,11 @@ policy_metadata:
     ETF/candidate-tracking daily steps and the weekly/ad hoc ETF and dynamic-v3
     rescue tasks are removed, and so is the weekly workflow-health task whose
     command was deleted with the old publication machinery.
+    Version 8 (OPS-080, owner_decision:OPS-080:2026-10-12:no_input_rewrite_after_dq)
+    moves market data freshness recovery before validate-data with
+    --no-price-writes: download-data now carries the shadow-tracking assets, so DQ
+    checks their rows; recovery only refreshes the price cache registry, backtest
+    manifest and freshness, and no daily step after DQ rewrites a DQ-checked input.
   intended_effect: >
     Make `aits ops daily-plan` and `aits ops daily-run` enforce the default
     dependency-aware daily trading-day chain while registering non-daily governance chains for
@@ -101,6 +106,25 @@ cadences:
         activation_condition: closed_market_only
         closed_market_behavior: conditional_previous_trading_day_cache
         production_effect: local_cache_write
+      - task_id: daily_market_data_recover_freshness
+        daily_plan_step_id: market_data_recover_freshness
+        dependencies:
+          - capture_daily_inputs
+          - download_data
+        required_capture_components:
+          - market_macro
+        title: Refresh shadow-tracking price registrations before DQ
+        command: aits data recover-freshness --latest --no-price-writes
+        command_contains:
+          - data
+          - recover-freshness
+          - --latest
+          - --no-price-writes
+        closed_market_behavior: skip_score_artifacts
+        production_effect: local_cache_write
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
       - task_id: daily_validate_data
         daily_plan_step_id: validate_data
         dependencies:
@@ -371,21 +395,6 @@ cadences:
           - --latest
         closed_market_behavior: skip_score_artifacts
         production_effect: none
-        production_weight_write: false
-        active_shadow_weight_write: false
-        broker_action: false
-      - task_id: daily_market_data_recover_freshness
-        daily_plan_step_id: market_data_recover_freshness
-        dependencies:
-          - market_data_freshness
-        title: Recover market data freshness if needed
-        command: aits data recover-freshness --latest
-        command_contains:
-          - data
-          - recover-freshness
-          - --latest
-        closed_market_behavior: skip_score_artifacts
-        production_effect: local_cache_write
         production_weight_write: false
         active_shadow_weight_write: false
         broker_action: false

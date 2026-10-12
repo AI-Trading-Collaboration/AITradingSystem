@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 from collections.abc import Mapping
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -54,6 +54,7 @@ from ai_trading_system.external_request_cache import (
     sanitize_diagnostic_text,
 )
 from ai_trading_system.trading_calendar import resolve_default_data_quality_as_of
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 console = Console()
 
@@ -68,6 +69,13 @@ ALLOWED_DATA_QUALITY_EXECUTION_PROFILE_IDS = frozenset(
         MANUAL_DATA_QUALITY_EXECUTION_PROFILE_ID,
     }
 )
+# OPS-080 (owner_decision:OPS-080:2026-10-12:no_input_rewrite_after_dq): the shadow-tracking
+# assets that the scoring universe does not hold are downloaded with it, so the DQ gate sees
+# their rows and nothing after DQ has to fetch them. A ticker new to the cache starts this many
+# calendar days before the end date: enough for the shadow backtest's 1008-session history and
+# inside the five years of history that the FMP Starter plan serves.
+SHADOW_TRACKING_ASSETS_CONFIG_PATH = PROJECT_ROOT / "config" / "data" / "market_data_freshness.yaml"
+AUXILIARY_PRICE_HISTORY_CALENDAR_DAYS = 1600
 
 
 def register_data_cache_commands(app: typer.Typer) -> None:
@@ -188,6 +196,7 @@ def download_data(
     universe = load_universe()
     start_date = _parse_date(start)
     end_date = _parse_date(end) if end else date.today()
+    shadow_tracking_tickers = shadow_tracking_price_tickers()
     normalized_price_provider = price_provider.strip().lower()
     primary_price_provider: PriceDataProvider
     if normalized_price_provider == "fmp":
@@ -221,6 +230,9 @@ def download_data(
             price_provider=primary_price_provider,
             secondary_price_provider=marketstack_provider,
             marketstack_tail_catch_up=marketstack_tail_catch_up,
+            auxiliary_price_tickers=shadow_tracking_tickers,
+            auxiliary_history_start=end_date
+            - timedelta(days=AUXILIARY_PRICE_HISTORY_CALENDAR_DAYS),
         )
     except Exception as exc:
         report_path = failure_report_path or default_download_failure_report_path(
@@ -253,6 +265,11 @@ def download_data(
     console.print(f"FRED 宏观序列：{summary.rates_path}（{summary.rate_rows} 行）")
     console.print(f"下载审计清单：{summary.manifest_path}")
     console.print(f"价格标的：{', '.join(summary.price_tickers)}")
+    if summary.auxiliary_price_tickers:
+        console.print(
+            "其中影子跟踪资产（不在评分股票池，随下载一起过 DQ）："
+            f"{', '.join(summary.auxiliary_price_tickers)}"
+        )
     console.print(f"FRED 宏观序列：{', '.join(summary.rate_series)}")
     for budget in summary.request_budget_statuses:
         violation_reasons = _budget_violation_reasons(budget)
@@ -286,6 +303,20 @@ def download_data(
             f"live={cache_summary.get('live_request_count')} "
             f"quota_remaining={cache_summary.get('quota_remaining')}"
         )
+
+
+def shadow_tracking_price_tickers(
+    path: Path = SHADOW_TRACKING_ASSETS_CONFIG_PATH,
+) -> tuple[str, ...]:
+    """Return the price tickers the market data freshness gate requires (assets.required)."""
+    payload = safe_load_yaml_path(path)
+    assets = payload.get("assets") if isinstance(payload, Mapping) else None
+    required = assets.get("required") if isinstance(assets, Mapping) else None
+    if not isinstance(required, list) or not all(
+        isinstance(item, str) and item.strip() for item in required
+    ):
+        raise ValueError(f"{path} must list assets.required as non-empty strings")
+    return tuple(dict.fromkeys(item.strip() for item in required))
 
 
 def validate_data(

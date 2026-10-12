@@ -14,6 +14,7 @@ from ai_trading_system.fundamentals.sec_pit_evaluation import (
     FEATURE_EFFECTIVENESS_COLUMNS,
     SHADOW_CANDIDATE_WEIGHT_COLUMNS,
     SIGNAL_ATTRIBUTION_COLUMNS,
+    _build_forward_labels,
     _forward_max_drawdown,
     run_sec_pit_evaluation,
 )
@@ -85,6 +86,53 @@ def test_sec_pit_forward_max_drawdown_is_never_positive() -> None:
 
     assert rising[0] == 0.0
     assert round(float(falling[0]), 6) == -0.05
+
+
+def test_sec_pit_forward_labels_do_not_merge_googl_price_rows_into_goog() -> None:
+    # OPS-080: the price file also holds GOOGL for shadow tracking. The PIT alias GOOGL -> GOOG
+    # must not merge those rows into GOOG's price series.
+    dates = pd.bdate_range("2026-01-02", periods=90)
+    rows = [
+        {"date": day.date().isoformat(), "ticker": ticker, "adj_close": base + index}
+        for ticker, base in (("GOOG", 100.0), ("QQQ", 400.0))
+        for index, day in enumerate(dates)
+    ]
+    googl_rows = [
+        {"date": day.date().isoformat(), "ticker": "GOOGL", "adj_close": 50.0 + 3 * index}
+        for index, day in enumerate(dates)
+    ]
+    kwargs = {
+        "tickers": ["GOOG"],
+        "benchmark": "QQQ",
+        "start": dates[0].date(),
+        "end": dates[-1].date(),
+    }
+
+    expected = _build_forward_labels(prices=pd.DataFrame(rows), **kwargs)
+    labels = _build_forward_labels(prices=pd.DataFrame(rows + googl_rows), **kwargs)
+
+    pd.testing.assert_frame_equal(labels, expected)
+    assert len(labels) == len(dates)
+
+
+def test_sec_pit_forward_labels_still_alias_a_ticker_without_own_rows() -> None:
+    dates = pd.bdate_range("2026-01-02", periods=30)
+    rows = [
+        {"date": day.date().isoformat(), "ticker": ticker, "adj_close": base + index}
+        for ticker, base in (("GOOGL", 100.0), ("QQQ", 400.0))
+        for index, day in enumerate(dates)
+    ]
+
+    labels = _build_forward_labels(
+        prices=pd.DataFrame(rows),
+        tickers=["GOOG"],
+        benchmark="QQQ",
+        start=dates[0].date(),
+        end=dates[-1].date(),
+    )
+
+    assert set(labels["ticker"]) == {"GOOG"}
+    assert len(labels) == len(dates)
 
 
 def test_sec_pit_shadow_candidate_weights_are_observe_only(tmp_path: Path) -> None:

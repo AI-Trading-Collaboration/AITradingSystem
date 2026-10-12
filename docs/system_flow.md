@@ -16,6 +16,8 @@ flowchart TD
     TRIG["aits ops daily-run<br/>交易日判定（XNYS，America/New_York，收盘后 3 小时 provider-ready）"]
     TRIG --> CAP["capture_daily_inputs（交易日）<br/>market_macro · fmp_forward_pit · sec_companyfacts · fmp_valuation · official_policy_sources<br/>原始字节 + checksum manifest + 缺口台账"]
     TRIG --> CLOSED["休市日：download-data · fetch-fmp-forward · SEC companyfacts · valuation · official sources"]
+    CAP --> REC["recover-freshness --no-price-writes（DQ 前）<br/>影子跟踪资产随下载过 DQ；这里不改价格，只刷新价格缓存登记和 backtest manifest"]
+    CLOSED --> REC
     CAP --> DQ["validate-data（daily_default.v1）<br/>DQ receipt + 按 profile/as-of 的发现指针"]
     CLOSED --> DQ
     CAP --> PIT["pit-snapshots project → build-manifest → validate"]
@@ -29,11 +31,12 @@ flowchart TD
     SCORE --> DASH["reports dashboard"]
     SCORE --> ATTR["score-change attribution · market panel"]
     SEC --> SPS["sec-pit shadow observe → monitor"]
-    DQ --> FRESH["data freshness → recover-freshness"]
+    DQ --> FRESH["data freshness（只读检查）"]
     DASH --> LIN["artifact lineage → validate"]
     ATTR --> LIN
     SPS --> LIN
     FRESH --> LIN
+    REC --> LIN
     LIN --> IDX["report index → docs report-contract → research governance summary"]
     IDX --> RB["Reader Brief → report quality gate → validate reader brief"]
     RB --> FIN["canonical finalization：decision summary · task dashboard · 最终 Reader Brief 质量复核"]
@@ -45,6 +48,7 @@ flowchart TD
 | 环节 | 规则 | 代码/配置 |
 |---|---|---|
 | 数据质量 | `score-daily` 只接受同 as-of 的 strict `PASS` receipt；`PASS_WITH_WARNINGS`、`FAIL`、receipt/指针/源数据漂移都在评分前阻断。价格只用 FMP（DATA-022）：`daily_default.v1` 只绑定 prices 和 rates；Marketstack 对账只在 manual profile 下、价格缓存目录里有 Marketstack 文件时进行 | `data/quality*`、`config/data_quality.yaml`、`tests/invariants/` |
+| DQ 之后不改输入 | 能写 DQ 输入的步骤都在 `validate-data` 之前（OPS-080，`owner_decision:OPS-080:2026-10-12:no_input_rewrite_after_dq`）：影子跟踪资产 GOOGL、BRK.B 不在评分股票池，由 `download-data` 一起下载（新标的从结束日前 1600 天起），随同一份下载发布过 DQ；`recover-freshness --no-price-writes` 移到 DQ 前，不补抓、不改写价格，只刷新价格缓存登记、backtest manifest 和 freshness，缺历史只报告 `SOURCE_DELAYED`（补抓留给手动 `recover-freshness`）；万一价格文件被改，DQ 的下载发布绑定也会拦下。DQ 之后只有只读的 `data freshness`；SEC PIT 前瞻收益不把 GOOGL 价格并进 GOOG | `ops_daily.py`、`cli_commands/data_cache.py`、`trading_engine/market_data_refresh.py`、`config/scheduled_tasks.yaml` |
 | 输入采集 | 某个 capture 组件缺失只阻断依赖它的步骤；整体保持 `BLOCKED_DEPENDENCY`/`FAIL`，finalization 不运行 | `config/operations/daily_input_capture.yaml` |
 | PIT | 失败快照不得作为 PIT 输入；manifest/schema 异常 fail closed | `pit_snapshots` |
 | 休市日 | 不生成新评分、决策快照、Reader Brief 评分产物或 forward evidence | `ops_daily.py` |
@@ -56,7 +60,7 @@ flowchart TD
 
 ## 3. 非每日任务
 
-`config/scheduled_tasks.yaml`（`scheduled_tasks_v7`）另登记 27 个 weekly / biweekly / monthly / ad hoc 任务，`daily-run` 只为它们写不执行的
+`config/scheduled_tasks.yaml`（`scheduled_tasks_v8`）另登记 27 个 weekly / biweekly / monthly / ad hoc 任务，`daily-run` 只为它们写不执行的
 `periodic_operations_plan`（是否到期、缺什么证据）。自动派发关闭（`config/operations/periodic_control.yaml`
 `automatic_command_dispatch_enabled: false`）；人工运行用 `aits ops periodic-dispatch`，需显式给出 DQ 证据、
 源 artifact 与 owner 决策 id。主要内容：周度回测（`unified_primary_2021`，起点 2021-02-22）与稳健性、参数回放与治理、

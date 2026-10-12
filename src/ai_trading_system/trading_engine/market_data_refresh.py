@@ -167,7 +167,15 @@ def run_market_data_refresh(
     plan_only: bool = False,
     generated_at: datetime | None = None,
     price_providers: dict[str, PriceDataProvider] | None = None,
+    allow_price_writes: bool = True,
 ) -> MarketDataRefreshRun:
+    """Plan and run a market data freshness refresh.
+
+    With ``allow_price_writes=False`` (OPS-080: the daily run, before DQ) the refresh never
+    fetches or writes price rows. Assets without the required history are reported as
+    SOURCE_DELAYED; the registry, backtest manifest, freshness and tracking are refreshed
+    only when every required asset is already complete.
+    """
     config = load_market_data_refresh_config(config_path)
     generated = _generated_at(generated_at)
     output_root = _output_root(config, dry_run=dry_run)
@@ -204,6 +212,7 @@ def run_market_data_refresh(
         config_path=Path(config_path),
         generated_at=generated,
         price_providers=price_providers,
+        allow_price_writes=allow_price_writes,
     )
     json_path = default_market_data_refresh_json_path(output_root, target_date)
     markdown_path = default_market_data_refresh_markdown_path(output_root, target_date)
@@ -516,6 +525,7 @@ def _execute_market_data_refresh(
     config_path: Path,
     generated_at: datetime,
     price_providers: dict[str, PriceDataProvider] | None,
+    allow_price_writes: bool = True,
 ) -> dict[str, Any]:
     plan_status = str(_mapping(plan.get("metadata")).get("status") or "UNKNOWN")
     target_date = _target_date_from_plan(plan, generated_at.date())
@@ -584,6 +594,9 @@ def _execute_market_data_refresh(
             )
             asset_results.append(result)
             source_records[symbol] = result
+            continue
+        if not allow_price_writes:
+            asset_results.append(_price_writes_disabled_result(symbol, source_symbol))
             continue
         result, frame = _fetch_required_price_history(
             symbol=symbol,
@@ -691,6 +704,7 @@ def _execute_market_data_refresh(
         "target_date": target_date.isoformat(),
         "source": _combined_source(asset_results),
         "updated_price_cache": updated_price_cache,
+        "price_writes_allowed": allow_price_writes,
         "updated_price_cache_registry": updated_registry,
         "refreshed_backtest_manifest": manifest_run is not None,
         "reran_freshness": bool(freshness_after),
@@ -1246,6 +1260,23 @@ def _asset_result(
         "source_artifacts": source_artifacts or [],
         "error": error,
     }
+
+
+def _price_writes_disabled_result(symbol: str, source_symbol: str) -> dict[str, Any]:
+    reason = (
+        "price writes are disabled for this run (OPS-080: the daily run refreshes registrations "
+        "before DQ and never rewrites prices); download-data did not provide the required "
+        "history, so it is reported here and the manual recover-freshness can fetch it"
+    )
+    return _asset_result(
+        symbol=symbol,
+        source_symbol=source_symbol,
+        status=REFRESH_SOURCE_DELAYED,
+        source="",
+        rows_written=0,
+        attempts=[{"source": "download_data", "status": REFRESH_SOURCE_DELAYED, "reason": reason}],
+        error=reason,
+    )
 
 
 def _already_current_result(

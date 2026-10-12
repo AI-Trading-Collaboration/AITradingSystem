@@ -30,17 +30,18 @@ aits ops replay-day --mode cache-only --as-of YYYY-MM-DD   # 历史严格复现�
 
 ## 2. 每日链路
 
-步骤与依赖以 `config/scheduled_tasks.yaml`（`scheduled_tasks_v7`，`daily_trading_day` 共 32 个任务）为准，顺序如下：
+步骤与依赖以 `config/scheduled_tasks.yaml`（`scheduled_tasks_v8`，`daily_trading_day` 共 32 个任务）为准，顺序如下：
 
 | 阶段 | 步骤（命令） | 条件与阻断 |
 |---|---|---|
 | 输入 | `ops capture-daily-inputs`（交易日）：market_macro、fmp_forward_pit、sec_companyfacts、fmp_valuation、official_policy_sources | 每个组件独立尝试，原始字节与 checksum manifest、XNYS 缺口台账全部保留；`CAPTURED` 只表示字节已保存，不等于 DQ 通过 |
 | 输入（休市日） | `download-data`、`pit-snapshots fetch-fmp-forward`、`fundamentals download-sec-companyfacts`、`valuation fetch-fmp`、`risk-events fetch-official-sources` | 只在休市日运行 |
+| DQ 前刷新 | `data recover-freshness --latest --no-price-writes` | OPS-080：影子跟踪资产 GOOGL、BRK.B（不在评分股票池）已由 `download-data` 一起下载、进入同一份下载发布并过 DQ；这一步不补抓、不改写价格，只刷新价格缓存登记、backtest manifest 和 freshness，缺历史只报告 `SOURCE_DELAYED`。需要补抓时人工运行不带 `--no-price-writes` 的 `recover-freshness`，之后重跑 DQ。失败只阻断 artifact lineage 和 Reader Brief，不阻断 DQ 和评分 |
 | 数据质量 | `validate-data --execution-profile daily_default.v1` | 写 DQ receipt 与按 profile/as-of 的发现指针；**只有 strict PASS** 才能放行评分 |
 | PIT | `pit-snapshots project-fmp-forward-capture` → `build-manifest` → `validate` | 失败快照不得作为 PIT 输入 |
 | SEC | `fundamentals extract-sec-metrics` → `merge-tsm-ir-sec-metrics` → `validate-sec-metrics` | |
 | 评分 | `score-daily --consumer-authorization-profile daily_score_daily@1.0.0` | 评分前严格复核 DQ receipt、capture 证据与来源；任一缺失或漂移则零运行 |
-| 评分之后 | `forward-evidence capture-dry-run-daily`、`reports dashboard`、`sec-pit shadow-observe/shadow-monitor`、`reports score-change-attribution`、`reports market-panel`、`data freshness`、`data recover-freshness` | 只读或只写研究存档；不写权重、不触发 broker |
+| 评分之后 | `forward-evidence capture-dry-run-daily`、`reports dashboard`、`sec-pit shadow-observe/shadow-monitor`、`reports score-change-attribution`、`reports market-panel`、`data freshness`（只读） | 只读或只写研究存档；不改写 DQ 检查过的输入、不写权重、不触发 broker |
 | 报告 | `reports artifact-lineage` → `validate-artifact-lineage` → `reports index` → `docs report-contract` → `reports research-governance-summary` → `reports reader-brief` → `reports quality-gate` → `reports validate-reader-brief` | 质量失败必须在输出中可见 |
 | 收尾 | `ops health`、`security scan-secrets`（always-run） | 它们的 PASS 不覆盖投资门禁 |
 

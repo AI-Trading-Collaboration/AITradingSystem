@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -40,6 +40,7 @@ from ai_trading_system.data.market_data import (
 )
 from ai_trading_system.external_request_cache import write_external_request_cache_response
 from ai_trading_system.platform.artifacts import canonical_json_bytes, sha256_bytes
+from ai_trading_system.trading_calendar import is_us_equity_trading_day
 
 
 @dataclass(frozen=True)
@@ -283,6 +284,117 @@ def test_download_daily_data_incrementally_requests_only_missing_tail(
     assert incremental["fetched_row_count"] == len(second.price_tickers)
     assert incremental["fetch_window_count"] == 1
     assert incremental["fetch_windows"][0]["start"] == "2026-05-01"
+
+
+def test_download_daily_data_adds_auxiliary_tickers_to_primary_publication(
+    tmp_path: Path,
+) -> None:
+    # OPS-080: shadow-tracking assets outside the scoring universe are downloaded with it, so
+    # the DQ gate checks their rows. New ones start at the bounded history start; cached ones
+    # only fill the tail; the secondary source never fetches them.
+    primary_provider = RecordingRangePriceProvider()
+    secondary_provider = RecordingRangePriceProvider()
+    universe = load_universe()
+    universe_tickers = configured_price_tickers(universe)
+    assert "GOOGL" not in universe_tickers
+    assert "BRK.B" not in universe_tickers
+    assert "MSFT" in universe_tickers
+
+    first = download_daily_data(
+        universe,
+        start=date(2026, 4, 1),
+        end=date(2026, 4, 30),
+        output_dir=tmp_path,
+        price_provider=primary_provider,
+        secondary_price_provider=secondary_provider,
+        rate_provider=FakeRateProvider(),
+        auxiliary_price_tickers=("GOOGL", "BRK.B", "MSFT", "GOOGL"),
+        auxiliary_history_start=date(2026, 4, 20),
+    )
+
+    assert first.auxiliary_price_tickers == ("GOOGL", "BRK.B")
+    assert first.price_tickers == (*universe_tickers, "GOOGL", "BRK.B")
+    assert [(call.start, call.end) for call in primary_provider.calls] == [
+        (date(2026, 4, 1), date(2026, 4, 30)),
+        (date(2026, 4, 20), date(2026, 4, 30)),
+    ]
+    assert sorted(primary_provider.calls[1].tickers) == ["BRK.B", "GOOGL"]
+    assert all(
+        "GOOGL" not in call.tickers and "BRK.B" not in call.tickers
+        for call in secondary_provider.calls
+    )
+    prices = pd.read_csv(first.prices_path)
+    googl_dates = sorted(prices.loc[prices["ticker"] == "GOOGL", "date"])
+    assert googl_dates[0] == "2026-04-20"
+    assert googl_dates[-1] == "2026-04-30"
+    assert set(prices["ticker"]) == {*universe_tickers, "GOOGL", "BRK.B"}
+    assert first.secondary_prices_path is not None
+    secondary_prices = pd.read_csv(first.secondary_prices_path)
+    assert not set(secondary_prices["ticker"]) & {"GOOGL", "BRK.B"}
+
+    assert first.publication_manifest_path is not None
+    first_event = _publication_source_event(
+        first.publication_manifest_path,
+        artifact_role="prices",
+        source_id="recording_range_price_provider",
+    )
+    assert first_event["request_parameters"]["auxiliary_tickers"] == ["GOOGL", "BRK.B"]
+    assert first_event["request_parameters"]["auxiliary_history_start"] == "2026-04-20"
+
+    second = download_daily_data(
+        universe,
+        start=date(2026, 4, 1),
+        end=date(2026, 5, 1),
+        output_dir=tmp_path,
+        price_provider=primary_provider,
+        secondary_price_provider=secondary_provider,
+        rate_provider=FakeRateProvider(),
+        auxiliary_price_tickers=("GOOGL", "BRK.B"),
+        auxiliary_history_start=date(2026, 4, 21),
+    )
+
+    assert [(call.start, call.end) for call in primary_provider.calls[2:]] == [
+        (date(2026, 5, 1), date(2026, 5, 1)),
+    ]
+    assert {"GOOGL", "BRK.B"} <= set(primary_provider.calls[2].tickers)
+    assert second.price_rows == first.price_rows + len(second.price_tickers)
+
+
+def test_download_daily_data_without_auxiliary_tickers_keeps_request_parameters(
+    tmp_path: Path,
+) -> None:
+    summary = download_daily_data(
+        load_universe(),
+        start=date(2026, 4, 29),
+        end=date(2026, 4, 30),
+        output_dir=tmp_path,
+        price_provider=RecordingRangePriceProvider(),
+        rate_provider=FakeRateProvider(),
+    )
+
+    assert summary.auxiliary_price_tickers == ()
+    assert summary.publication_manifest_path is not None
+    event = _publication_source_event(
+        summary.publication_manifest_path,
+        artifact_role="prices",
+        source_id="recording_range_price_provider",
+    )
+    assert "auxiliary_tickers" not in event["request_parameters"]
+    assert "auxiliary_history_start" not in event["request_parameters"]
+
+
+def test_download_daily_data_rejects_auxiliary_history_start_after_end(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="auxiliary_history_start"):
+        download_daily_data(
+            load_universe(),
+            start=date(2026, 4, 29),
+            end=date(2026, 4, 30),
+            output_dir=tmp_path,
+            price_provider=RecordingRangePriceProvider(),
+            rate_provider=FakeRateProvider(),
+            auxiliary_price_tickers=("GOOGL",),
+            auxiliary_history_start=date(2026, 5, 1),
+        )
 
 
 def test_download_retires_validated_canonical_secondary_when_provider_is_omitted(
@@ -965,6 +1077,29 @@ def test_incremental_windows_skip_weekend_tail_for_existing_cache() -> None:
 
     assert [(window.start, window.end, window.tickers) for window in windows] == [
         (date(2026, 6, 29), date(2026, 6, 29), ("MSFT", "NVDA"))
+    ]
+
+
+def test_incremental_windows_start_new_tickers_at_their_bounded_start() -> None:
+    existing = pd.DataFrame(
+        [
+            {"date": "2018-01-02", "ticker": "NVDA"},
+            {"date": "2026-06-25", "ticker": "NVDA"},
+        ]
+    )
+
+    windows = _price_fetch_windows(
+        existing,
+        tickers=("NVDA", "GOOGL", "MSFT"),
+        start=date(2018, 1, 1),
+        end=date(2026, 6, 26),
+        new_ticker_starts={"GOOGL": date(2022, 2, 8), "NVDA": date(2026, 1, 1)},
+    )
+
+    assert [(window.start, window.end, window.tickers) for window in windows] == [
+        (date(2018, 1, 1), date(2026, 6, 26), ("MSFT",)),
+        (date(2022, 2, 8), date(2026, 6, 26), ("GOOGL",)),
+        (date(2026, 6, 26), date(2026, 6, 26), ("NVDA",)),
     ]
 
 
@@ -1743,6 +1878,82 @@ def test_download_data_cli_is_fmp_only_by_default(tmp_path: Path, monkeypatch) -
     assert explicit.exit_code == 1
     assert "未设置 MARKETSTACK_API_KEY" in explicit.output
     assert calls == [None]
+
+
+def test_shadow_tracking_tickers_cover_refresh_assets_with_bounded_history() -> None:
+    # OPS-080: download-data carries every asset the freshness recovery requires, so the
+    # recovery step before DQ only refreshes registrations and never has to fetch prices.
+    from ai_trading_system.cli_commands import data_cache as data_cache_cli
+    from ai_trading_system.trading_engine.market_data_refresh import (
+        load_market_data_refresh_config,
+    )
+    from ai_trading_system.trading_engine.parameters.parameter_loader import (
+        load_shadow_backtest_config,
+    )
+
+    tickers = data_cache_cli.shadow_tracking_price_tickers()
+    universe_tickers = configured_price_tickers(load_universe())
+    refresh_assets = load_market_data_refresh_config()["assets"]["required"]
+
+    assert [ticker for ticker in tickers if ticker not in universe_tickers] == ["GOOGL", "BRK.B"]
+    assert set(refresh_assets) <= {*universe_tickers, *tickers}
+
+    # A new auxiliary ticker must reach back past the recovery's required history start (the
+    # shadow backtest's min_history_days sessions before the target) and stay inside the five
+    # years of daily history the FMP Starter plan serves.
+    min_history_days = load_shadow_backtest_config().walk_forward.min_history_days
+    end = date(2026, 10, 9)
+    days = data_cache_cli.AUXILIARY_PRICE_HISTORY_CALENDAR_DAYS
+    history_start = end - timedelta(days=days)
+    sessions = sum(
+        1
+        for offset in range(days + 1)
+        if is_us_equity_trading_day(history_start + timedelta(days=offset))
+    )
+    assert sessions >= min_history_days + 21
+    assert history_start > end.replace(year=end.year - 5)
+
+
+def test_shadow_tracking_tickers_reject_invalid_config(tmp_path: Path) -> None:
+    from ai_trading_system.cli_commands import data_cache as data_cache_cli
+
+    config_path = tmp_path / "market_data_freshness.yaml"
+    config_path.write_text("assets:\n  required:\n    - GOOGL\n    - ''\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="assets.required"):
+        data_cache_cli.shadow_tracking_price_tickers(config_path)
+
+
+def test_download_data_cli_passes_shadow_tracking_tickers(tmp_path: Path, monkeypatch) -> None:
+    from ai_trading_system.cli_commands import data_cache as data_cache_cli
+
+    monkeypatch.setenv("FMP_API_KEY", "test-key")
+    calls: list[dict[str, object]] = []
+
+    def fake_download_daily_data(*_args: object, **kwargs: object) -> object:
+        calls.append(kwargs)
+        raise RuntimeError("stop after request assembly")
+
+    monkeypatch.setattr(data_cache_cli, "download_daily_data", fake_download_daily_data)
+
+    CliRunner().invoke(
+        app,
+        [
+            "download-data",
+            "--end",
+            "2026-10-09",
+            "--output-dir",
+            str(tmp_path),
+            "--failure-report-path",
+            str(tmp_path / "failure.md"),
+        ],
+    )
+
+    assert len(calls) == 1
+    assert calls[0]["auxiliary_price_tickers"] == data_cache_cli.shadow_tracking_price_tickers()
+    assert calls[0]["auxiliary_history_start"] == date(2026, 10, 9) - timedelta(
+        days=data_cache_cli.AUXILIARY_PRICE_HISTORY_CALENDAR_DAYS
+    )
 
 
 def test_write_download_failure_report_redacts_marketstack_diagnostics(tmp_path: Path) -> None:

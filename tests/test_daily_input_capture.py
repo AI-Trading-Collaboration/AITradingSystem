@@ -629,8 +629,9 @@ def test_daily_plan_binds_capture_before_strict_consumers() -> None:
     )
     step_ids = [step.step_id for step in plan.steps]
 
-    assert step_ids[:4] == [
+    assert step_ids[:5] == [
         "capture_daily_inputs",
+        "market_data_recover_freshness",
         "validate_data",
         "pit_snapshots_project_fmp_forward",
         "pit_snapshots_build_manifest",

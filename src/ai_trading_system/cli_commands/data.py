@@ -2033,6 +2033,16 @@ def data_recover_freshness_command(
         Path,
         typer.Option("--freshness-config", help="market data freshness 配置路径。"),
     ] = DEFAULT_MARKET_DATA_FRESHNESS_CONFIG_PATH,
+    price_writes: Annotated[
+        bool,
+        typer.Option(
+            "--price-writes/--no-price-writes",
+            help=(
+                "是否允许补抓并改写价格文件。日报在 DQ 前用 --no-price-writes："
+                "只刷新价格缓存登记、backtest manifest 和 freshness，缺历史只报告（OPS-080）。"
+            ),
+        ),
+    ] = True,
 ) -> None:
     """执行 freshness -> refresh -> manifest/freshness/tracking recovery 链路。"""
     if latest and as_of:
@@ -2052,6 +2062,7 @@ def data_recover_freshness_command(
         as_of=freshness_run.as_of,
         config_path=refresh_config_path,
         dry_run=False,
+        allow_price_writes=price_writes,
     )
     metadata = (
         refresh_run.payload.get("metadata", {}) if isinstance(refresh_run.payload, dict) else {}

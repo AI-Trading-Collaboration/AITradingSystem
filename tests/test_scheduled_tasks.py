@@ -19,7 +19,7 @@ from ai_trading_system.scheduled_tasks import (
 def test_scheduled_tasks_config_registers_required_cadences_and_safety() -> None:
     config = load_scheduled_tasks_config()
 
-    assert config.policy_version == "scheduled_tasks_v7"
+    assert config.policy_version == "scheduled_tasks_v8"
     cadence_ids = {cadence.cadence_id for cadence in config.cadences}
     assert DAILY_CADENCE_ID in cadence_ids
     assert set(NON_DAILY_CADENCE_IDS).issubset(cadence_ids)
@@ -35,6 +35,24 @@ def test_scheduled_tasks_config_registers_required_cadences_and_safety() -> None
     )
     assert tasks_by_id["daily_validate_data"].required_capture_components == (
         "market_macro",
+    )
+    # OPS-080: shadow-tracking recovery runs before DQ on the same capture, but a recovery
+    # failure must not block DQ or scoring.
+    assert tasks_by_id["daily_market_data_recover_freshness"].dependencies == (
+        "capture_daily_inputs",
+        "download_data",
+    )
+    assert tasks_by_id[
+        "daily_market_data_recover_freshness"
+    ].required_capture_components == ("market_macro",)
+    daily_task_ids = [
+        task.task_id
+        for cadence in config.cadences
+        if cadence.cadence_id == DAILY_CADENCE_ID
+        for task in cadence.tasks
+    ]
+    assert daily_task_ids.index("daily_market_data_recover_freshness") < daily_task_ids.index(
+        "daily_validate_data"
     )
     assert tasks_by_id[
         "daily_pit_project_fmp_forward_capture"
@@ -108,7 +126,7 @@ def test_daily_plan_matches_required_scheduled_order() -> None:
         "reports score-change-attribution --latest",
         "reports market-panel --latest",
         "data freshness --latest",
-        "data recover-freshness --latest",
+        "data recover-freshness --latest --no-price-writes",
         "reports artifact-lineage --latest",
         "reports validate-artifact-lineage --latest",
         "reports index --latest",
@@ -261,7 +279,10 @@ def test_daily_run_executes_forward_evidence_then_reader_brief_chain_after_score
             "--skip-risk-event-openai-precheck",
         )
     )
-    assert calls[score_index + 1 : score_index + 17] == [
+    recover_call = ("data", "recover-freshness", "--latest", "--no-price-writes")
+    validate_call = next(call for call in calls if call[:1] == ("validate-data",))
+    assert calls.index(recover_call) < calls.index(validate_call)
+    assert calls[score_index + 1 : score_index + 16] == [
         ("forward-evidence", "capture-dry-run-daily", "--as-of", "2026-05-06"),
         ("reports", "dashboard", "--as-of", "2026-05-06"),
         ("sec-pit", "shadow-observe", "--latest", "--end", "2026-05-06"),
@@ -269,7 +290,6 @@ def test_daily_run_executes_forward_evidence_then_reader_brief_chain_after_score
         ("reports", "score-change-attribution", "--latest"),
         ("reports", "market-panel", "--latest"),
         ("data", "freshness", "--latest"),
-        ("data", "recover-freshness", "--latest"),
         ("reports", "artifact-lineage", "--latest"),
         ("reports", "validate-artifact-lineage", "--latest"),
         ("reports", "index", "--latest"),

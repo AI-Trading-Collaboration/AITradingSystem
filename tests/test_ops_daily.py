@@ -409,6 +409,51 @@ def test_daily_ops_step_result_adapter_maps_summary_statuses_to_workflow_statuse
     )
 
 
+def test_daily_ops_plan_writes_market_inputs_only_before_data_quality() -> None:
+    # OPS-080 (owner_decision:OPS-080:2026-10-12:no_input_rewrite_after_dq): every daily step
+    # that can write a DQ-checked market input runs before validate_data.
+    plan = build_daily_ops_plan(
+        as_of=date(2026, 5, 6),
+        skip_risk_event_openai_precheck=True,
+    )
+    step_ids = [step.step_id for step in plan.steps]
+    validate_index = step_ids.index("validate_data")
+    input_writer_prefixes = (
+        ("download-data",),
+        ("ops", "capture-daily-inputs"),
+        ("data", "recover-freshness"),
+        ("data", "refresh-market"),
+        ("data", "reconcile-price-cache"),
+        ("data", "refresh-backtest-manifest"),
+        ("data", "repair-backtest-inputs"),
+    )
+
+    writer_indexes = [
+        index
+        for index, step in enumerate(plan.steps)
+        if any(step.command[1 : 1 + len(prefix)] == prefix for prefix in input_writer_prefixes)
+    ]
+
+    assert step_ids.index("market_data_recover_freshness") < validate_index
+    recover_step = next(
+        step for step in plan.steps if step.step_id == "market_data_recover_freshness"
+    )
+    assert recover_step.command == (
+        "aits",
+        "data",
+        "recover-freshness",
+        "--latest",
+        "--no-price-writes",
+    )
+    assert writer_indexes
+    assert max(writer_indexes) < validate_index
+    assert step_ids.index("market_data_freshness") > step_ids.index("score_daily")
+    freshness_step = next(step for step in plan.steps if step.step_id == "market_data_freshness")
+    assert freshness_step.command == ("aits", "data", "freshness", "--latest")
+    validate_step = next(step for step in plan.steps if step.step_id == "validate_data")
+    assert "market_data_recover_freshness" not in validate_step.dependencies
+
+
 def test_daily_ops_plan_includes_forward_evidence_after_score_daily() -> None:
     plan = build_daily_ops_plan(
         as_of=date(2026, 5, 6),
@@ -424,7 +469,6 @@ def test_daily_ops_plan_includes_forward_evidence_after_score_daily() -> None:
         "score_change_attribution",
         "market_panel",
         "market_data_freshness",
-        "market_data_recover_freshness",
         "artifact_lineage",
         "validate_artifact_lineage",
         "report_index",
@@ -557,7 +601,7 @@ def test_daily_ops_plan_cli_writes_report(tmp_path: Path) -> None:
     assert "reports score-change-attribution --latest" in markdown
     assert "reports market-panel --latest" in markdown
     assert "data freshness --latest" in markdown
-    assert "data recover-freshness --latest" in markdown
+    assert "data recover-freshness --latest --no-price-writes" in markdown
     assert "reports index --latest" in markdown
     assert "docs report-contract --latest" in markdown
     assert "reports research-governance-summary --latest" in markdown

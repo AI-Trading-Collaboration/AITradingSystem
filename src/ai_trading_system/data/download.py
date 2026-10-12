@@ -78,6 +78,7 @@ class DataDownloadSummary:
     rate_rows: int
     price_tickers: tuple[str, ...]
     rate_series: tuple[str, ...]
+    auxiliary_price_tickers: tuple[str, ...] = ()
     secondary_prices_path: Path | None = None
     secondary_price_rows: int = 0
     request_cache_summaries: tuple[dict[str, object], ...] = ()
@@ -247,14 +248,38 @@ def download_daily_data(
     secondary_price_provider: PriceDataProvider | None = None,
     rate_provider: RateDataProvider | None = None,
     marketstack_tail_catch_up: bool = True,
+    auxiliary_price_tickers: tuple[str, ...] = (),
+    auxiliary_history_start: date | None = None,
 ) -> DataDownloadSummary:
+    """Download the configured universe into one published price/rate cache.
+
+    Auxiliary tickers (OPS-080: the shadow-tracking assets that are not in the scoring
+    universe) are fetched by the primary provider into the same publication, so the data
+    quality gate checks their rows before any consumer runs. A ticker with no cached rows
+    starts at ``auxiliary_history_start`` instead of ``start``, because the primary
+    provider's history depth is shorter than the universe window.
+    """
     if start > end:
         raise ValueError("start date must be earlier than or equal to end date")
     if not isinstance(output_dir, Path):
         raise TypeError("output_dir must be Path")
     output_dir = output_dir.resolve(strict=False)
 
-    price_tickers = configured_price_tickers(config, include_full_ai_chain=include_full_ai_chain)
+    universe_price_tickers = configured_price_tickers(
+        config,
+        include_full_ai_chain=include_full_ai_chain,
+    )
+    auxiliary_tickers = tuple(
+        ticker
+        for ticker in dict.fromkeys(item.strip() for item in auxiliary_price_tickers)
+        if ticker and ticker not in universe_price_tickers
+    )
+    if auxiliary_history_start is not None and auxiliary_history_start > end:
+        raise ValueError("auxiliary_history_start must not be later than end")
+    auxiliary_new_ticker_start = (
+        max(start, auxiliary_history_start) if auxiliary_history_start is not None else start
+    )
+    price_tickers = [*universe_price_tickers, *auxiliary_tickers]
     rate_series = configured_rate_series(config)
 
     if not price_tickers:
@@ -377,6 +402,7 @@ def download_daily_data(
             existing_snapshot=primary_snapshot,
             existing_source_event_id=primary_existing_event_id,
             live_source_event_id=primary_live_event_id,
+            new_ticker_starts={ticker: auxiliary_new_ticker_start for ticker in auxiliary_tickers},
         )
         price_frames = [primary_download.prices]
         vix_download: IncrementalPriceDownload | None = None
@@ -447,7 +473,10 @@ def download_daily_data(
                 publication=publication_base,
                 legacy_manifest=legacy_manifest_snapshot,
             )
-            secondary_tickers = _supported_price_tickers(secondary_price_provider, price_tickers)
+            secondary_tickers = _supported_price_tickers(
+                secondary_price_provider,
+                universe_price_tickers,
+            )
             secondary_download = _download_incremental_prices(
                 provider=secondary_price_provider,
                 request=PriceRequest(
@@ -501,6 +530,10 @@ def download_daily_data(
                         price_request,
                         incremental_download=primary_download,
                         request_cache_summaries=request_cache_summaries,
+                        auxiliary_tickers=auxiliary_tickers,
+                        auxiliary_history_start=(
+                            auxiliary_new_ticker_start if auxiliary_tickers else None
+                        ),
                     ),
                 ),
                 alignment=price_session_alignment,
@@ -648,6 +681,7 @@ def download_daily_data(
         rate_rows=len(rates),
         price_tickers=tuple(price_tickers),
         rate_series=tuple(rate_series),
+        auxiliary_price_tickers=auxiliary_tickers,
         secondary_prices_path=publication.legacy_secondary_prices_path,
         secondary_price_rows=secondary_price_rows,
         request_cache_summaries=request_cache_summaries,
@@ -677,6 +711,7 @@ def _download_incremental_prices(
     existing_source_event_id: str | None,
     live_source_event_id: str,
     marketstack_tail_catch_up: bool = False,
+    new_ticker_starts: Mapping[str, date] | None = None,
 ) -> IncrementalPriceDownload:
     supported_tickers = _supported_price_tickers(provider, request.tickers)
     skipped_tickers = tuple(ticker for ticker in request.tickers if ticker not in supported_tickers)
@@ -695,6 +730,7 @@ def _download_incremental_prices(
         tickers=supported_tickers,
         start=request.start,
         end=request.end,
+        new_ticker_starts=new_ticker_starts,
     )
     fetch_windows, request_budget_status = _marketstack_fetch_windows_and_budget_status(
         provider=provider,
@@ -1305,6 +1341,7 @@ def _price_fetch_windows(
     tickers: tuple[str, ...],
     start: date,
     end: date,
+    new_ticker_starts: Mapping[str, date] | None = None,
 ) -> tuple[IncrementalPriceWindow, ...]:
     if not tickers:
         return ()
@@ -1313,7 +1350,7 @@ def _price_fetch_windows(
     for ticker in tickers:
         date_range = date_ranges_by_ticker.get(ticker)
         if date_range is None:
-            fetch_start = start
+            fetch_start = max(start, (new_ticker_starts or {}).get(ticker, start))
         else:
             _earliest, latest = date_range
             # Daily refresh only fills tail gaps; head gaps are often holidays or pre-listing
@@ -2070,6 +2107,8 @@ def _price_request_parameters(
     *,
     incremental_download: IncrementalPriceDownload | None = None,
     request_cache_summaries: tuple[dict[str, object], ...] = (),
+    auxiliary_tickers: tuple[str, ...] = (),
+    auxiliary_history_start: date | None = None,
 ) -> dict[str, object]:
     _, provider_name, _ = _price_provider_metadata(provider)
     request_parameters: dict[str, object] = {
@@ -2078,6 +2117,10 @@ def _price_request_parameters(
         "end": request.end.isoformat(),
         "interval": request.interval,
     }
+    if auxiliary_tickers:
+        request_parameters["auxiliary_tickers"] = list(auxiliary_tickers)
+        if auxiliary_history_start is not None:
+            request_parameters["auxiliary_history_start"] = auxiliary_history_start.isoformat()
     provider_symbol_aliases = _price_provider_symbol_aliases(provider, request.tickers)
     if provider_symbol_aliases:
         request_parameters["provider_symbol_aliases"] = provider_symbol_aliases

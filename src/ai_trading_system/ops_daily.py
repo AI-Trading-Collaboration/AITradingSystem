@@ -736,6 +736,37 @@ def build_daily_ops_plan(
                 input_visibility="live_provider",
             )
         )
+    # OPS-080 (owner_decision:OPS-080:2026-10-12:no_input_rewrite_after_dq): the shadow-tracking
+    # registry/manifest refresh runs before DQ and never writes prices (--no-price-writes);
+    # download-data already carries the shadow assets, so DQ checks their rows. After DQ only the
+    # read-only market_data_freshness step checks these inputs.
+    steps.append(
+        DailyOpsStep(
+            step_id="market_data_recover_freshness",
+            title="DQ 前刷新影子跟踪的价格缓存登记和 backtest manifest",
+            command=(
+                ("aits", "data", "recover-freshness", "--latest", "--no-price-writes")
+                if dashboard_enabled
+                else ()
+            ),
+            required_env_vars=(),
+            produced_paths=(
+                market_data_refresh_plan,
+                market_data_refresh_json,
+                market_data_refresh_md,
+            ),
+            quality_gate=(
+                "在 validate-data 之前运行，不改写价格（--no-price-writes）：影子跟踪资产已随 "
+                "download-data 进入同一份下载发布并过 DQ，这里只刷新价格缓存登记、backtest "
+                "manifest 和 freshness；缺历史只报告 SOURCE_DELAYED，补抓走手动 recover-freshness。"
+                "失败必须显式阻断，不伪造价格或 tracking days。"
+            ),
+            blocks_downstream=True,
+            enabled=dashboard_enabled,
+            skip_reason=scoring_artifact_skip_reason,
+            input_visibility="live_provider_or_cached",
+        )
+    )
     steps.append(
         DailyOpsStep(
             step_id="validate_data",
@@ -1337,27 +1368,6 @@ def build_daily_ops_plan(
                 enabled=dashboard_enabled,
                 skip_reason=scoring_artifact_skip_reason,
                 input_visibility="derived_local",
-            ),
-            DailyOpsStep(
-                step_id="market_data_recover_freshness",
-                title="执行 market data freshness recovery",
-                command=(
-                    ("aits", "data", "recover-freshness", "--latest") if dashboard_enabled else ()
-                ),
-                required_env_vars=(),
-                produced_paths=(
-                    market_data_refresh_plan,
-                    market_data_refresh_json,
-                    market_data_refresh_md,
-                ),
-                quality_gate=(
-                    "在 freshness 不足时尝试受控 refresh / manifest recovery；"
-                    "失败必须显式阻断，不伪造价格或 tracking days。"
-                ),
-                blocks_downstream=True,
-                enabled=dashboard_enabled,
-                skip_reason=scoring_artifact_skip_reason,
-                input_visibility="live_provider_or_cached",
             ),
             DailyOpsStep(
                 step_id="artifact_lineage",

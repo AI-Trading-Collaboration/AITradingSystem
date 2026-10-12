@@ -44,6 +44,8 @@ FMP_REQUEST_MAX_ATTEMPTS = 3
 FMP_REQUEST_RETRY_BACKOFF_SECONDS = 1.0
 FMP_DEFAULT_SYMBOL_ALIASES: dict[str, str | None] = {
     "^VIX": None,
+    # FMP lists Berkshire class B as BRK-B; rows keep the internal ticker BRK.B.
+    "BRK.B": "BRK-B",
 }
 CBOE_VIX_DAILY_PRICES_URL = (
     "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv"

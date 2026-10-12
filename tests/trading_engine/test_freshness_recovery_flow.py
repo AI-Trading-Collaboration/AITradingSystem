@@ -30,8 +30,11 @@ def test_recover_freshness_cli_runs_refresh_chain(monkeypatch) -> None:
             payload={"freshness": {"status": "STALE"}},
         )
 
-    def fake_refresh(**_kwargs) -> RefreshRun:
+    refresh_kwargs: list[dict[str, object]] = []
+
+    def fake_refresh(**kwargs) -> RefreshRun:
         calls.append("refresh")
+        refresh_kwargs.append(kwargs)
         return RefreshRun(
             payload={
                 "metadata": {"status": "OK"},
@@ -50,6 +53,42 @@ def test_recover_freshness_cli_runs_refresh_chain(monkeypatch) -> None:
 
     assert result.exit_code == 0
     assert calls == ["freshness", "refresh"]
+    assert refresh_kwargs[0]["allow_price_writes"] is True
     assert "Freshness recovery：OK" in result.output
     assert "tracking_status=active_track" in result.output
     assert "production_effect=none" in result.output
+
+
+def test_recover_freshness_cli_no_price_writes_reaches_refresh(monkeypatch) -> None:
+    # OPS-080: the daily run calls recover-freshness before DQ with --no-price-writes.
+    @dataclass(frozen=True)
+    class FreshnessRun:
+        as_of: date
+        payload: dict[str, object]
+        json_path: str = "freshness.json"
+
+    @dataclass(frozen=True)
+    class RefreshRun:
+        payload: dict[str, object]
+        json_path: str = "refresh.json"
+
+    refresh_kwargs: list[dict[str, object]] = []
+
+    def fake_refresh(**kwargs) -> RefreshRun:
+        refresh_kwargs.append(kwargs)
+        return RefreshRun(payload={"metadata": {"status": "SOURCE_DELAYED"}, "after": {}})
+
+    monkeypatch.setattr(
+        data_cli,
+        "run_market_data_freshness",
+        lambda **_: FreshnessRun(as_of=date(2026, 1, 6), payload={"freshness": {}}),
+    )
+    monkeypatch.setattr(data_cli, "run_market_data_refresh", fake_refresh)
+
+    result = CliRunner().invoke(
+        cli.app,
+        ["data", "recover-freshness", "--latest", "--no-price-writes"],
+    )
+
+    assert result.exit_code == 0
+    assert refresh_kwargs[0]["allow_price_writes"] is False

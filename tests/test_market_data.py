@@ -263,6 +263,30 @@ def test_fmp_price_provider_skips_unsupported_vix_and_uses_price_symbol() -> Non
     assert fake_requests.calls == [expected_params, expected_params]
 
 
+def test_fmp_price_provider_requests_brk_b_and_keeps_internal_ticker() -> None:
+    # OPS-080: BRK.B rides along with download-data; FMP lists it as BRK-B.
+    fake_requests = _FakeRequests(
+        [
+            {
+                "date": "2026-05-01",
+                "adjOpen": 100.0,
+                "adjHigh": 102.0,
+                "adjLow": 99.0,
+                "adjClose": 101.0,
+                "volume": 1234,
+            }
+        ]
+    )
+    provider = FmpPriceProvider(api_key="test-key", requests_module=fake_requests)
+
+    prices = provider.download_prices(
+        PriceRequest(tickers=["BRK.B"], start=date(2026, 5, 1), end=date(2026, 5, 1))
+    )
+
+    assert prices["ticker"].tolist() == ["BRK.B"]
+    assert [call["symbol"] for call in fake_requests.calls] == ["BRK-B", "BRK-B"]
+
+
 def test_cboe_vix_price_provider_reads_official_csv() -> None:
     fake_requests = _FakeTextRequests(
         "DATE,OPEN,HIGH,LOW,CLOSE\n"
