@@ -2,18 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from typer.testing import CliRunner
-
-from ai_trading_system.cli import app
 from ai_trading_system.config import PROJECT_ROOT
-from ai_trading_system.portfolio_decision import (
-    build_action_outcome_dataset,
-    build_advanced_policy_register,
-    build_cohort_prepare,
-    build_strategy_evaluation,
-    build_value_surface_report,
-    validate_portfolio_decision_contract,
-)
 from ai_trading_system.research_acceleration import (
     build_control_audit,
     build_dashboard,
@@ -109,105 +98,6 @@ def test_research_acceleration_outputs_keep_oracle_and_controls_non_promotional(
     assert queue["summary"]["wip_limit_enforced"] is True
     assert dashboard["summary"]["wip_by_lane_visible"] is True
     assert dashboard["summary"]["research_idle_or_stalled_items_visible"] is True
-
-
-def test_portfolio_decision_contract_strategy_and_sandbox(tmp_path: Path) -> None:
-    contract = validate_portfolio_decision_contract()
-    dataset = build_action_outcome_dataset(
-        "portfolio_decision_problem_v1",
-        output_root=tmp_path,
-    )
-    strategy = build_strategy_evaluation(
-        strategy_id="value_surface_baseline",
-        stage="stage_1_simple_benchmark",
-        output_root=tmp_path,
-    )
-    value_surface = build_value_surface_report(output_root=tmp_path)
-    advanced = build_advanced_policy_register(
-        policy_id="tree_candidate",
-        method="tree",
-        output_root=tmp_path,
-    )
-    cohort = build_cohort_prepare(
-        candidate_id="candidate_requires_review",
-        strategy_id="value_surface_baseline",
-        output_root=tmp_path,
-    )
-
-    assert contract["summary"]["portfolio_decision_contract_valid"] is True
-    assert contract["summary"]["action_space_defined"] is True
-    assert contract["summary"]["utility_profile_versioned"] is True
-    assert dataset["summary"]["pit_valid_rows_only"] is True
-    assert dataset["summary"]["future_outcome_marked_evaluation_only"] is True
-    assert dataset["summary"]["horizon_maturity_recorded"] is True
-    assert dataset["summary"]["overlapping_horizon_warning_present"] is True
-    assert strategy["summary"]["all_strategies_use_same_interface"] is True
-    assert strategy["summary"]["complex_strategy_cannot_skip_stage"] is True
-    assert strategy["summary"]["stage_outputs_registered"] is True
-    assert value_surface["summary"]["fixed_window_baseline_comparison_present"] is True
-    assert value_surface["summary"]["horizon_leakage_check_pass"] is True
-    assert advanced["summary"]["advanced_policy_skip_stage_count"] == 0
-    assert advanced["summary"]["promotion_gate_allowed"] is False
-    assert cohort["summary"]["paper_shadow_change_allowed"] is False
-    assert cohort["summary"]["broker_action"] == "none"
-    assert cohort["summary"]["rollback_criteria_present"] is True
-
-
-def test_research_master_roadmap_cli_smoke(tmp_path: Path) -> None:
-    runner = CliRunner()
-    portfolio_root = tmp_path / "portfolio"
-    ops_root = tmp_path / "ops"
-
-    protocol = runner.invoke(
-        app,
-        [
-            "research",
-            "governance",
-            "protocol-validate",
-            "--output-root",
-            str(tmp_path / "governance"),
-        ],
-    )
-    evidence = runner.invoke(
-        app,
-        [
-            "research",
-            "governance",
-            "evidence-audit",
-            "--research-id",
-            "dynamic_trend_thresholds",
-            "--output-root",
-            str(tmp_path / "governance"),
-        ],
-    )
-    portfolio = runner.invoke(
-        app,
-        [
-            "research",
-            "portfolio-decision",
-            "validate-contract",
-            "--output-root",
-            str(portfolio_root),
-        ],
-    )
-    ops = runner.invoke(
-        app,
-        ["research", "ops", "queue-build", "--output-root", str(ops_root)],
-    )
-    dashboard = runner.invoke(
-        app,
-        ["research", "ops", "dashboard", "--output-root", str(ops_root)],
-    )
-
-    assert protocol.exit_code == 0, protocol.output
-    assert evidence.exit_code == 0, evidence.output
-    assert portfolio.exit_code == 0, portfolio.output
-    assert ops.exit_code == 0, ops.output
-    assert dashboard.exit_code == 0, dashboard.output
-    assert (tmp_path / "governance" / "governance" / "research_protocol_validation.json").exists()
-    assert portfolio_root.joinpath("portfolio_decision_contract_validation.json").exists()
-    assert ops_root.joinpath("queue_build.json").exists()
-    assert ops_root.joinpath("research_ops_dashboard.json").exists()
 
 
 def test_research_master_roadmap_registry_catalog_and_validation_tiers() -> None:

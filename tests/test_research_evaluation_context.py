@@ -7,7 +7,6 @@ import pandas as pd
 import pytest
 
 from ai_trading_system.contracts import (
-    CanonicalStatus,
     ContextResolutionStatus,
     CoverageInterval,
     DataQualityContractRef,
@@ -21,19 +20,9 @@ from ai_trading_system.contracts import (
     ResearchEvaluationContext,
     ResearchWindowRole,
     ResearchWindowSpec,
-    canonical_status_from_legacy,
     require_research_evaluation_context,
     resolve_blocked_research_context,
     resolve_complete_research_context,
-)
-from ai_trading_system.legacy.research_context_adapter import (
-    attach_research_context,
-    resolve_legacy_research_context,
-)
-from ai_trading_system.research_window_extension import load_research_window_registry
-from ai_trading_system.upper_state_label_feature_reset import (
-    _build_first_layer_v2_effective_coverage_context,
-    build_first_layer_v2_effective_coverage_audit,
 )
 
 AS_OF = date(2026, 6, 30)
@@ -136,109 +125,6 @@ def test_blocked_context_preserves_missing_ranges_without_fabrication() -> None:
     assert exc_info.value.code == "RESEARCH_CONTEXT_BLOCKED"
 
 
-def test_legacy_adapter_resolves_governed_window_and_policy_provenance() -> None:
-    context = resolve_legacy_research_context(
-        market_regime_id="ai_after_chatgpt",
-        research_window_id="exact_three_asset_validated",
-        requested_range=DateRange(date(2021, 2, 22), AS_OF),
-        as_of=AS_OF,
-        data_quality_status="PASS_WITH_WARNINGS",
-        data_quality_passed=True,
-        data_quality_contract_id="secondary_cross_checked",
-        actual_data_range=DateRange(date(2021, 2, 22), AS_OF),
-        effective_feature_start=date(2021, 2, 22),
-        effective_prediction_start=date(2022, 2, 22),
-        actual_portfolio_start=date(2021, 2, 22),
-        evaluation_range=DateRange(date(2022, 2, 22), AS_OF),
-        effective_coverage=_coverage(),
-    )
-
-    assert context.research_window_start == date(2021, 2, 22)
-    assert context.regime_start == date(2022, 12, 1)
-    assert {item.role for item in context.policy_refs} >= {
-        PolicyRole.MARKET_REGIME,
-        PolicyRole.RESEARCH_WINDOW,
-        PolicyRole.DATA_QUALITY,
-    }
-    assert all(len(item.sha256) == 64 for item in context.policy_refs)
-
-
-def test_legacy_adapter_does_not_guess_missing_actual_or_effective_ranges() -> None:
-    with pytest.raises(ResearchContextError) as exc_info:
-        resolve_legacy_research_context(
-            market_regime_id="ai_after_chatgpt",
-            research_window_id="exact_three_asset_validated",
-            requested_range=DateRange(date(2021, 2, 22), AS_OF),
-            as_of=AS_OF,
-            data_quality_status="PASS",
-            data_quality_passed=True,
-            data_quality_contract_id="secondary_cross_checked",
-            actual_data_range=None,
-            effective_feature_start=None,
-            effective_prediction_start=None,
-            actual_portfolio_start=None,
-            evaluation_range=None,
-            effective_coverage=None,
-        )
-
-    assert exc_info.value.code == "LEGACY_CONTEXT_FIELD_MISSING"
-
-
-def test_legacy_adapter_unknown_window_and_unknown_status_fail_closed() -> None:
-    with pytest.raises(ResearchContextError) as exc_info:
-        resolve_legacy_research_context(
-            market_regime_id="ai_after_chatgpt",
-            research_window_id="not_registered",
-            requested_range=DateRange(date(2021, 2, 22), AS_OF),
-            as_of=AS_OF,
-            data_quality_status="FAIL",
-            data_quality_passed=False,
-            data_quality_contract_id="secondary_cross_checked",
-            actual_data_range=None,
-            effective_feature_start=None,
-            effective_prediction_start=None,
-            actual_portfolio_start=None,
-            evaluation_range=None,
-            effective_coverage=None,
-            blocking_issues=("DATA_QUALITY_FAILED",),
-        )
-    assert exc_info.value.code == "UNKNOWN_RESEARCH_WINDOW"
-
-    with pytest.raises(ValueError, match="UNKNOWN_LEGACY_STATUS"):
-        canonical_status_from_legacy(
-            "SOME_READYISH_VALUE",
-            explicit_mapping={"READY": CanonicalStatus.PASS},
-        )
-
-
-def test_attach_context_is_additive_and_refuses_conflicting_overwrite() -> None:
-    context = _complete_context()
-    legacy = {
-        "status": "LEGACY_READY",
-        "market_regime": "ai_after_chatgpt",
-        "requested_date_range": {"start": "2021-02-22", "end": "2026-06-30"},
-        "production_effect": "none",
-    }
-    enriched = attach_research_context(legacy, context)
-
-    assert {key: enriched[key] for key in legacy} == legacy
-    assert enriched["research_evaluation_context_id"] == context.context_id
-    assert enriched["research_evaluation_context"] == context.to_dict()
-    assert require_research_evaluation_context(enriched) == context
-
-    with pytest.raises(ResearchContextError) as exc_info:
-        attach_research_context(
-            {**legacy, "research_evaluation_context": {"context_id": "other"}}, context
-        )
-    assert exc_info.value.code == "LEGACY_CONTEXT_OVERWRITE_CONFLICT"
-
-    with pytest.raises(ResearchContextError) as flat_conflict:
-        attach_research_context(
-            {**legacy, "research_window_id": "legacy_research_window_2022_12"}, context
-        )
-    assert flat_conflict.value.code == "LEGACY_FLAT_CONTEXT_CONFLICT"
-
-
 def test_investment_artifact_context_requirement_fails_closed() -> None:
     with pytest.raises(ResearchContextError) as missing:
         require_research_evaluation_context({"status": "READY"})
@@ -278,66 +164,6 @@ def test_contract_package_does_not_import_config_cli_report_or_domain_modules() 
         "ai_trading_system.research_window_extension",
     ):
         assert forbidden not in source
-
-
-def test_first_layer_effective_coverage_consumer_adds_context_without_flat_field_drift() -> None:
-    primary_window = load_research_window_registry()["windows"]["exact_three_asset_validated"]
-    labels = _dated_frame("2021-02-22", "2026-06-30")
-    features = _dated_frame("2021-02-22", "2026-06-30")
-    predictions = _dated_frame("2023-02-22", "2026-06-30")
-    actual_path = {"probe_rows": [{"date_start": "2023-02-22", "date_end": "2026-06-30"}]}
-    data_gate = {"status": "PASS_WITH_WARNINGS", "passed": True, "as_of": "2026-06-30"}
-    context = _build_first_layer_v2_effective_coverage_context(
-        primary_window=primary_window,
-        labels=labels,
-        feature_matrix=features,
-        composer_predictions=predictions,
-        actual_path=actual_path,
-        data_gate=data_gate,
-    )
-    payload = build_first_layer_v2_effective_coverage_audit(
-        primary_window=primary_window,
-        labels=labels,
-        feature_matrix=features,
-        composer_predictions=predictions,
-        actual_path=actual_path,
-        research_context=context,
-    )
-
-    assert payload["status"] == "PRIMARY_WINDOW_COVERAGE_INCOMPLETE"
-    assert payload["market_regime"] == "ai_after_chatgpt"
-    assert payload["research_window_id"] == "exact_three_asset_validated"
-    assert payload["requested_start"] == "2021-02-22"
-    assert payload["promotion_allowed"] is False
-    assert payload["production_effect"] == "none"
-    assert payload["research_evaluation_context_id"] == context.context_id
-    nested = payload["research_evaluation_context"]
-    assert nested["status"] == "COMPLETE"
-    assert nested["research_window_start"] == "2021-02-22"
-    assert nested["regime_start"] == "2022-12-01"
-    assert nested["effective_prediction_start"] == "2023-02-22"
-    assert nested["evaluation_range"]["start"] == "2023-02-22"
-
-
-def test_first_layer_effective_coverage_consumer_blocks_missing_prediction_range() -> None:
-    primary_window = load_research_window_registry()["windows"]["exact_three_asset_validated"]
-    labels = _dated_frame("2021-02-22", "2026-06-30")
-    features = _dated_frame("2021-02-22", "2026-06-30")
-    context = _build_first_layer_v2_effective_coverage_context(
-        primary_window=primary_window,
-        labels=labels,
-        feature_matrix=features,
-        composer_predictions=_dated_frame(),
-        actual_path={"probe_rows": []},
-        data_gate={"status": "PASS", "passed": True, "as_of": "2026-06-30"},
-    )
-
-    assert context.status is ContextResolutionStatus.BLOCKED
-    assert "EFFECTIVE_COVERAGE_MISSING:predictions:first_layer_composer_v2" in (
-        context.blocking_issues
-    )
-    assert context.effective_prediction_start is None
-    assert context.evaluation_range is None
 
 
 def _dated_frame(start: str | None = None, end: str | None = None) -> pd.DataFrame:

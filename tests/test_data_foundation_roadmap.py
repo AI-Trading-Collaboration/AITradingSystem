@@ -2,9 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from typer.testing import CliRunner
-
-from ai_trading_system.cli import app
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data_foundation import (
     audit_cost_liquidity,
@@ -28,15 +25,6 @@ from ai_trading_system.data_foundation import (
     validate_asset_master,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
-
-CORE_DATA_FOUNDATION_CLI_SMOKE_COMMAND_NAMES = {
-    "data pit-feature-store build-snapshot",
-    "data asset-master validate",
-    "trading-costs estimate",
-    "research execution run-batch",
-    "forward-evidence capture-daily",
-    "research cases build-oracle-diagnostic-set",
-}
 
 
 def _command_path(command: list[str]) -> list[str]:
@@ -165,143 +153,6 @@ def test_asset_cost_label_run_execution_forward_and_case_foundation(
     assert oracle["summary"]["oracle_cases_promotion_gate_allowed"] is False
     assert case_audit["summary"]["oracle_cases_promotion_gate_allowed"] is False
     assert case_audit["summary"]["case_reuse_in_strategy_pair_diagnostics"] is True
-
-
-def test_data_foundation_cli_smoke(tmp_path: Path) -> None:
-    runner = CliRunner()
-    pit_root = tmp_path / "pit"
-    asset_root = tmp_path / "asset"
-    cost_root = tmp_path / "cost"
-    label_root = tmp_path / "labels"
-    run_root = tmp_path / "runs"
-    execution_root = tmp_path / "execution"
-    forward_root = tmp_path / "forward"
-    case_root = tmp_path / "cases"
-    snapshot_id = "pit_snapshot_20221201_data_foundation_minimum"
-    archive_id = "forward_evidence_20221201"
-
-    commands = [
-        [
-            "data",
-            "pit-feature-store",
-            "build-snapshot",
-            "--as-of-date",
-            "2022-12-01",
-            "--decision-time",
-            "2022-12-01T21:00:00Z",
-            "--output-root",
-            str(pit_root),
-        ],
-        [
-            "data",
-            "pit-feature-store",
-            "audit",
-            "--snapshot-id",
-            snapshot_id,
-            "--output-root",
-            str(pit_root),
-        ],
-        [
-            "data",
-            "pit-feature-store",
-            "query",
-            "--feature-id",
-            "adjusted_close",
-            "--asset-id",
-            "ETF_SPY",
-            "--as-of-date",
-            "2022-12-01",
-            "--output-root",
-            str(pit_root),
-        ],
-        ["data", "asset-master", "validate", "--output-root", str(asset_root)],
-        ["data", "asset-master", "build-tradability-calendar", "--output-root", str(asset_root)],
-        [
-            "data",
-            "universe",
-            "show",
-            "--universe",
-            "data_foundation_minimum",
-            "--output-root",
-            str(asset_root),
-        ],
-        [
-            "data",
-            "universe",
-            "audit",
-            "--universe",
-            "data_foundation_minimum",
-            "--output-root",
-            str(asset_root),
-        ],
-        ["trading-costs", "estimate", "--output-root", str(cost_root)],
-        ["trading-costs", "audit", "--output-root", str(cost_root)],
-        ["research", "labels", "audit", "--output-root", str(label_root)],
-        ["research", "runs", "register", "--output-root", str(run_root)],
-        [
-            "research",
-            "runs",
-            "query",
-            "--research-id",
-            "portfolio_decision_problem_v1",
-            "--output-root",
-            str(run_root),
-        ],
-        ["research", "runs", "compare", "--output-root", str(run_root)],
-        ["research", "runs", "audit", "--output-root", str(run_root)],
-        ["research", "execution", "plan", "--output-root", str(execution_root)],
-        ["research", "execution", "run-batch", "--output-root", str(execution_root)],
-        ["research", "execution", "cache-audit", "--output-root", str(execution_root)],
-        ["research", "execution", "cache-prune", "--output-root", str(execution_root)],
-        [
-            "forward-evidence",
-            "capture-daily",
-            "--as-of-date",
-            "2022-12-01",
-            "--feature-snapshot-id",
-            snapshot_id,
-            "--output-root",
-            str(forward_root),
-        ],
-        [
-            "forward-evidence",
-            "update-outcomes",
-            "--archive-id",
-            archive_id,
-            "--output-root",
-            str(forward_root),
-        ],
-        ["forward-evidence", "audit", "--output-root", str(forward_root)],
-        ["forward-evidence", "report", "--output-root", str(forward_root)],
-        ["research", "cases", "register", "--output-root", str(case_root)],
-        ["research", "cases", "query", "--output-root", str(case_root)],
-        ["research", "cases", "build-from-regret-casebook", "--output-root", str(case_root)],
-        ["research", "cases", "build-oracle-diagnostic-set", "--output-root", str(case_root)],
-        ["research", "cases", "audit", "--output-root", str(case_root)],
-    ]
-
-    command_names = {_command_name(command) for command in commands}
-    assert CORE_DATA_FOUNDATION_CLI_SMOKE_COMMAND_NAMES.issubset(command_names)
-
-    for command in commands:
-        command_name = _command_name(command)
-        if command_name not in CORE_DATA_FOUNDATION_CLI_SMOKE_COMMAND_NAMES:
-            continue
-        result = runner.invoke(app, command)
-        assert result.exit_code == 0, f"{command}\n{result.output}"
-
-    for command in commands:
-        command_name = _command_name(command)
-        if command_name in CORE_DATA_FOUNDATION_CLI_SMOKE_COMMAND_NAMES:
-            continue
-        _assert_command_registered(app, _command_path(command))
-
-    assert pit_root.joinpath(snapshot_id, "pit_feature_snapshot_manifest.json").exists()
-    assert asset_root.joinpath("asset_master_validation.json").exists()
-    assert cost_root.joinpath("trading_cost_estimate.json").exists()
-    assert execution_root.joinpath("research_execution_batch_run.json").exists()
-    assert forward_root.joinpath("daily_archive", f"{archive_id}.json").exists()
-    assert case_root.joinpath("oracle_diagnostic_case_set.json").exists()
 
 
 def test_data_foundation_registry_catalog_and_validation_tiers() -> None:

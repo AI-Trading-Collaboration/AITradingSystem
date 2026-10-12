@@ -5,9 +5,6 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from typer.testing import CliRunner
-
-from ai_trading_system.cli import app
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.current_subscription_qualification import (
     CONTROLLED_REPRESENTATIVE_UNIVERSE,
@@ -468,91 +465,6 @@ def test_controlled_research_expansion_765_to_769_contract(tmp_path: Path) -> No
     assert activation["summary"]["baseline_vs_simple_interpretable_difference_count"] > 0
     assert activation["summary"]["reverse_diagnostics_controlled_activation_allowed"] is True
     assert activation["summary"]["large_scale_reverse_diagnostics_allowed"] is False
-
-
-def test_current_subscription_source_qualification_cli_smoke(tmp_path: Path) -> None:
-    coverage_path = _write_coverage(tmp_path)
-    requirements_path = _write_requirements(tmp_path)
-    updated_matrix_path = _write_json(tmp_path / "updated_matrix.json", {"status": "BASELINE"})
-    source_root = tmp_path / "source_cli"
-    research_root = tmp_path / "research_cli"
-    runner = CliRunner()
-
-    commands = [
-        [
-            "data",
-            "source-qualification",
-            "usage-guardrails",
-            "--subscription-coverage",
-            str(coverage_path),
-            "--source-requirement-matrix",
-            str(requirements_path),
-            "--qualification-matrix-updated",
-            str(updated_matrix_path),
-            "--output-root",
-            str(source_root),
-        ],
-        [
-            "data",
-            "source-qualification",
-            "fmp-price-corporate-action",
-            "--subscription-coverage",
-            str(coverage_path),
-            "--output-root",
-            str(source_root),
-        ],
-        [
-            "forward-evidence",
-            "classify-requirement",
-            "--source-requirement-matrix",
-            str(requirements_path),
-            "--output-root",
-            str(source_root),
-        ],
-        ["research", "labels", "boundary-qualification", "--output-root", str(source_root)],
-        ["trading-costs", "qualify-model", "--output-root", str(source_root)],
-        ["research", "strategy-pilot", "readiness-board", "--output-root", str(research_root)],
-        ["research", "strategy-pilot", "benchmark-controls", "--output-root", str(research_root)],
-        [
-            "data",
-            "source-qualification",
-            "vendor-decision-gate",
-            "--output-root",
-            str(research_root),
-        ],
-        [
-            "data",
-            "source-qualification",
-            "first-batch",
-            "--subscription-coverage",
-            str(coverage_path),
-            "--source-requirement-matrix",
-            str(requirements_path),
-            "--qualification-matrix-updated",
-            str(updated_matrix_path),
-            "--source-output-root",
-            str(source_root / "batch_source"),
-            "--acceptance-output-root",
-            str(tmp_path / "batch_acceptance"),
-            "--controlled-output-root",
-            str(research_root / "batch_controlled"),
-            "--output-root",
-            str(tmp_path / "batch_review"),
-        ],
-    ]
-
-    for command in commands:
-        result = runner.invoke(app, command)
-        assert result.exit_code == 0, result.output
-        assert "production_effect=none" in result.output
-
-    assert (source_root / "data_source_usage_policy_audit.json").exists()
-    assert (source_root / "forward_evidence_requirement_reclassification.json").exists()
-    assert (research_root / "strategy_research_readiness_board.json").exists()
-    assert (research_root / "data_vendor_decision_gate.json").exists()
-    assert (
-        tmp_path / "batch_review" / "current_subscription_source_qualification_batch_review.json"
-    ).exists()
 
 
 def test_current_subscription_source_qualification_registry_catalog_schema_and_tiers() -> None:

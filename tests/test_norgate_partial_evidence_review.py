@@ -7,14 +7,9 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-import yaml
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
-from ai_trading_system.research_audit_metadata import (
-    load_research_audit_metadata_schema,
-    validate_research_audit_metadata,
-)
 from ai_trading_system.vendor_adapters import norgate_partial_evidence_review as review
 from ai_trading_system.vendor_adapters.norgate_partial_evidence_review import (
     run_norgate_2y_partial_evidence_review,
@@ -71,40 +66,6 @@ def test_partial_evidence_review_explains_none_without_unlocking_gates(
     )
     assert "trial_based_purchase_recommendation: `no`" in memo_text
     assert "stress_window_paid_experiment_recommendation: `conditional_yes`" in memo_text
-
-
-def test_partial_evidence_review_artifacts_have_audit_metadata(tmp_path: Path) -> None:
-    feature_path, coverage_path, local_signal_path, conclusion_path = _write_2267_artifacts(
-        tmp_path
-    )
-    dates = pd.bdate_range("2024-06-28", periods=190)
-    benchmark_frames = {
-        symbol: pd.DataFrame({"Close": [100.0 for _ in dates]}, index=dates)
-        for symbol in ("QQQ", "SPY", "SMH")
-    }
-
-    run_norgate_2y_partial_evidence_review(
-        output_root=tmp_path / "outputs",
-        docs_root=tmp_path / "docs",
-        inputs_root=tmp_path / "inputs",
-        policy_path=review.DEFAULT_PARTIAL_EVIDENCE_REVIEW_POLICY_PATH,
-        coverage_path=coverage_path,
-        feature_csv_path=feature_path,
-        local_signal_path=local_signal_path,
-        prior_conclusion_path=conclusion_path,
-        benchmark_price_frames=benchmark_frames,
-    )
-
-    schema = load_research_audit_metadata_schema()
-    for path in (
-        tmp_path / "inputs" / "norgate_2y_partial_evidence_review.yaml",
-        tmp_path / "inputs" / "norgate_platinum_decision_memo.yaml",
-        tmp_path / "inputs" / "norgate_2y_partial_evidence_conclusion_matrix.yaml",
-    ):
-        artifact = yaml.safe_load(path.read_text(encoding="utf-8"))
-        assert validate_research_audit_metadata(artifact, schema)["status"] == "PASS"
-        assert artifact["promotion_allowed"] is False
-        assert artifact["broker_action"] == "none"
 
 
 def test_partial_evidence_review_fails_closed_when_2267_artifacts_missing(

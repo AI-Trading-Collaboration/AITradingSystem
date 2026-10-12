@@ -21,7 +21,6 @@ from ai_trading_system.cli_commands.parameters import parameters_app
 from ai_trading_system.cli_commands.pit_snapshots import pit_snapshots_app
 from ai_trading_system.cli_commands.portfolio import portfolio_app
 from ai_trading_system.cli_commands.reports import reports_app
-from ai_trading_system.cli_commands.research import research_app
 from ai_trading_system.cli_commands.risk_events import risk_events_app
 from ai_trading_system.cli_commands.root_utils import register_root_utility_commands
 from ai_trading_system.cli_commands.scenarios import scenarios_app
@@ -54,7 +53,6 @@ app.add_typer(catalysts_app, name="catalysts")
 app.add_typer(execution_app, name="execution")
 app.add_typer(portfolio_app, name="portfolio")
 app.add_typer(trading_costs_app, name="trading-costs")
-app.add_typer(research_app, name="research")
 app.add_typer(parameters_app, name="parameters")
 app.add_typer(signals_app, name="signals")
 app.add_typer(reports_app, name="reports")
