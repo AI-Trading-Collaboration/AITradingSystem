@@ -26,6 +26,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
+import numpy as np
 import pandas as pd
 import typer
 from pydantic import BaseModel, ConfigDict, Field
@@ -38,7 +39,7 @@ DEFAULT_SPEC_PATH = PROJECT_ROOT / "config" / "research" / "qqq_long_history.yam
 DEFAULT_SNAPSHOT_ROOT = PROJECT_ROOT / "data" / "raw" / "research" / "qqq_long_history"
 DEFAULT_PRICES_PATH = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
 SNAPSHOT_SCHEMA_VERSION = "qqq_long_history_snapshot.v1"
-CHECK_SCHEMA_VERSION = "qqq_long_history_check.v3"
+CHECK_SCHEMA_VERSION = "qqq_long_history_check.v4"
 LATEST_POINTER = "LATEST"
 SERIES_FILE = "series.csv"
 MANIFEST_FILE = "manifest.json"
@@ -51,6 +52,9 @@ CASH_DAY_COUNT = 360
 EXPENSE_DAY_COUNT = 365
 # Reports list at most this many dates per issue so a summary never turns into a data dump.
 MAX_LISTED_DATES = 10
+# check.md shows an attribution statistic only when its standard error is below this; in years
+# where the two indexes barely differ the statistic is not measurable (check.json keeps it).
+MAX_SHOWN_STANDARD_ERROR = 1.0
 
 Severity = Literal["FAIL", "WARN"]
 SeriesRole = Literal[
@@ -568,6 +572,7 @@ def _check_calendar(
     negative = dividend < checks.min_daily_dividend_component
     windows, window_dates = _dividend_windows(daily, checks, issues)
     tr_returns = daily["ndx_tr_return"]
+    price_returns = daily["ndx_price_return"]
     years = pd.DatetimeIndex(dividend.index).year
     by_year = [
         {
@@ -580,7 +585,7 @@ def _check_calendar(
                 dividend[years == year].mean() * TRADING_DAYS_PER_YEAR
             ),
             "dividend_component_daily_std": _round(dividend[years == year].std()),
-            **_noise_share_fields(tr_returns, dividend[years == year]),
+            **_attribution_fields(tr_returns, price_returns, dividend[years == year]),
         }
         for year in sorted(set(years.tolist()))
     ]
@@ -589,7 +594,7 @@ def _check_calendar(
         {
             "trading_days": int(len(in_windows)),
             "dividend_component_daily_std": _round(in_windows.std()),
-            **_noise_share_fields(tr_returns, in_windows),
+            **_attribution_fields(tr_returns, price_returns, in_windows),
         }
         if len(in_windows)
         else {}
@@ -703,13 +708,50 @@ def total_return_noise_share(
     return slope, standard_error
 
 
-def _noise_share_fields(
-    total_return_returns: pd.Series, dividend_component: pd.Series
+def previous_day_coefficient(
+    returns: pd.Series, other_returns: pd.Series
+) -> tuple[float, float] | None:
+    """Coefficient on the other index's previous-day return, regressing ``returns`` on the other
+    index's same-day and previous-day returns over the dates of ``returns``.
+
+    About 0 when both indexes take each day's move on that day. A total-return index that takes a
+    fraction s of a day's move only on the next trading day gives about s against the price index;
+    the price index lagging instead gives a negative value. Level noise in ``returns`` leaves it
+    at 0; level noise in the other index biases it slightly up (noise in a regressor), by under
+    0.1 while that noise's daily variance stays under a fifth of the market's.
+    Returns the coefficient and its OLS standard error, or None with fewer than four dates.
+    """
+
+    joined = pd.concat(
+        [returns, other_returns, other_returns.shift(1)], axis=1, join="inner"
+    ).dropna()
+    if len(joined) < 4:
+        return None
+    y = joined.iloc[:, 0].to_numpy(dtype=float)
+    design = np.column_stack([np.ones(len(joined)), joined.iloc[:, 1:].to_numpy(dtype=float)])
+    gram = design.T @ design
+    if np.linalg.matrix_rank(gram) < design.shape[1]:
+        return None
+    coefficients = np.linalg.solve(gram, design.T @ y)
+    residual = y - design @ coefficients
+    variance = float(residual @ residual) / (len(y) - design.shape[1])
+    standard_error = math.sqrt(variance * float(np.linalg.inv(gram)[2, 2]))
+    return float(coefficients[2]), standard_error
+
+
+def _attribution_fields(
+    total_return_returns: pd.Series, price_returns: pd.Series, dividend_component: pd.Series
 ) -> dict[str, float | None]:
     share = total_return_noise_share(total_return_returns, dividend_component)
+    lag = previous_day_coefficient(
+        total_return_returns[total_return_returns.index.isin(dividend_component.index)],
+        price_returns,
+    )
     return {
         "total_return_noise_share": None if share is None else _round(share[0]),
         "total_return_noise_share_se": None if share is None else _round(share[1]),
+        "total_return_lag_coefficient": None if lag is None else _round(lag[0]),
+        "total_return_lag_coefficient_se": None if lag is None else _round(lag[1]),
     }
 
 
@@ -873,8 +915,10 @@ def render_check_markdown(report: Mapping[str, Any]) -> str:
             lines.append(
                 f"- 低于下限的窗口里的 {attribution['trading_days']} 个交易日：日股息分量标准差 "
                 f"{attribution['dividend_component_daily_std']}，噪声在总收益指数的比例 "
-                f"{_share_text(attribution)}（约 1 在总收益指数，约 0 在价格指数，"
-                "约 0.5 是两个都有或收盘时间不一致）"
+                f"{_estimate_text(attribution, 'total_return_noise_share')}（约 1 在总收益指数，"
+                "约 0 在价格指数，约 0.5 是两个都有或收盘时间不一致），总收益滞后系数 "
+                f"{_estimate_text(attribution, 'total_return_lag_coefficient')}（约 0 没有滞后，"
+                "正值是总收益指数有这部分涨跌晚一天才反映，负值是价格指数滞后）"
             )
         by_year = calendar.get("dividend_by_year") or []
         if by_year:
@@ -883,16 +927,21 @@ def render_check_markdown(report: Mapping[str, Any]) -> str:
                 "### 逐年股息分量",
                 "",
                 "| 年 | 交易日 | 落后天数 | 隐含股息率 | 总收益修补 | 价格修补 | 日分量标准差 | "
-                "噪声在总收益的比例 |",
-                "|---|---:|---:|---:|---:|---:|---:|---:|",
+                "噪声在总收益的比例 | 总收益滞后系数 |",
+                "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
             ]
             lines += [
                 f"| {row['year']} | {row['trading_days']} | {row['negative_component_days']} | "
                 f"{row['implied_dividend_yield_annual']} | {row['total_return_repaired_days']} | "
                 f"{row['price_repaired_days']} | {row['dividend_component_daily_std']} | "
-                f"{_share_text(row)} |"
+                f"{_estimate_text(row, 'total_return_noise_share')} | "
+                f"{_estimate_text(row, 'total_return_lag_coefficient')} |"
                 for row in by_year
             ]
+            lines.append(
+                f"\n标准误不小于 {MAX_SHOWN_STANDARD_ERROR:g} 的估计显示为 -"
+                "（两个指数几乎没有差别的年份测不出来）。"
+            )
     tracking = report.get("overlap_tracking") or {}
     overlap = {key: value for key, value in tracking.items() if isinstance(value, dict)}
     if overlap:
@@ -922,11 +971,11 @@ def render_check_markdown(report: Mapping[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _share_text(row: Mapping[str, Any]) -> str:
-    share = row.get("total_return_noise_share")
-    if share is None:
+def _estimate_text(row: Mapping[str, Any], key: str) -> str:
+    value, standard_error = row.get(key), row.get(f"{key}_se")
+    if value is None or standard_error is None or standard_error >= MAX_SHOWN_STANDARD_ERROR:
         return "-"
-    return f"{share:.2f} ± {row['total_return_noise_share_se']:.2f}"
+    return f"{value:.2f} ± {standard_error:.2f}"
 
 
 # --- gate for research code -------------------------------------------------------------------

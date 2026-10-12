@@ -530,6 +530,34 @@ def test_noise_share_tells_which_index_carries_level_noise() -> None:
     assert qlh.total_return_noise_share(clean.head(2), clean.head(2)) is None
 
 
+def test_previous_day_coefficient_detects_an_index_that_lags_the_other() -> None:
+    rng = np.random.default_rng(2568)
+    dates = pd.bdate_range("2003-01-02", periods=500)
+    common = pd.Series(rng.normal(0, 0.015, len(dates)), index=dates)
+    noise = pd.Series(rng.normal(0, 0.004, len(dates)), index=dates)
+    lagging = 0.7 * common + 0.3 * common.shift(1)
+    noisy = common + noise - noise.shift(1)
+    cases = {
+        "total return lags": (lagging, common),
+        "total return level noise": (noisy, common),
+        "price level noise": (common, noisy),
+        "price lags": (common, lagging),
+    }
+    coefficients = {}
+    for name, (total_return, price) in cases.items():
+        result = qlh.previous_day_coefficient(total_return.dropna(), price)
+        assert result is not None, name
+        coefficients[name], standard_error = result
+        assert standard_error < 0.05, name
+
+    assert coefficients["total return lags"] == pytest.approx(0.3, abs=0.05)
+    assert coefficients["total return level noise"] == pytest.approx(0, abs=0.05)
+    # Noise in the regressor biases the coefficient up a little, well short of a real lag.
+    assert 0 <= coefficients["price level noise"] < 0.15
+    assert coefficients["price lags"] < -0.2
+    assert qlh.previous_day_coefficient(common.head(3), common) is None
+
+
 @pytest.mark.parametrize(
     ("series_id", "low", "high"), [("NASDAQ100", -0.2, 0.2), ("NASDAQXNDX", 0.8, 1.2)]
 )
@@ -556,9 +584,11 @@ def test_check_attributes_window_noise_to_the_noisy_index(
     assert low < attribution["total_return_noise_share"] < high
     assert low < year["total_return_noise_share"] < high
     assert year["dividend_component_daily_std"] > 0.002
+    assert attribution["total_return_lag_coefficient_se"] is not None
     markdown = (snapshot / qlh.CHECK_MD_FILE).read_text(encoding="utf-8")
     assert "噪声在总收益指数的比例" in markdown
     assert "噪声在总收益的比例" in markdown
+    assert "总收益滞后系数" in markdown
 
 
 def test_load_daily_refuses_unchecked_failed_or_stale_checks(tmp_path: Path) -> None:

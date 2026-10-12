@@ -3,7 +3,7 @@ id: TRADING-2567
 area: 研究 / QQQ 研究计划（1999 年起窗口，先方向信号，后期权实现）
 priority: P1
 status: IN_PROGRESS
-next_owner: Claude（05 发布后按重跑检查的噪声归属定开发窗口用哪条序列，然后 S3 评估台设计，和 TRADING-2565 一起）
-next_step: S1、S2 已发布（main f3d941ba），03 修了交易日历、股息检查和融资利差（main 81a2fc5c）。重跑检查发现 2003–2005 年总收益和价格指数之间有逐日噪声（见需求文档进展），04（main 85e72ae1）排除了沿用前值。TRADING-2567-05 在检查里加噪声归属；发布后在主仓库重跑 `python -m ai_trading_system.research_data.qqq_long_history check --prices-path <运行副本的 prices_daily.csv>`，按归属定开发窗口用哪条序列（分不清时由 Baker 决定是否加 QQQ 实际复权价作参照），之后快照才用于研究；然后 S3 评估台（TRADING-2565）、S4 第一批预注册。详见 `docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md`
+next_owner: Claude（06 发布后核对重跑检查的滞后系数，向 Baker 提开发窗口用哪条序列、是否加 QQQ 实际复权价作参照，然后 S3 评估台设计，和 TRADING-2565 一起）
+next_step: S1、S2 已发布（main f3d941ba），03 修了交易日历、股息检查和融资利差（main 81a2fc5c）。重跑检查发现 2003–2005 年总收益和价格指数之间有逐日噪声（见需求文档进展），04（main 85e72ae1）排除了沿用前值；05（main ebe03ba3）的噪声归属为负，两个指数的差值和当天涨跌负相关。TRADING-2567-06 在检查里加总收益滞后系数；发布后在主仓库重跑 `python -m ai_trading_system.research_data.qqq_long_history check --prices-path <运行副本的 prices_daily.csv>`，按结果定开发窗口用哪条序列（由 Baker 决定是否加 QQQ 实际复权价作参照），之后快照才用于研究；然后 S3 评估台（TRADING-2565）、S4 第一批预注册。详见 `docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md`
 acceptance: 见 `docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md` 验收一节：S1 快照可复现、各序列首日与核查一致、与本机 QQQ/QLD/TQQQ 重叠段的跟踪差写进报告；S2 窗口登记和政策写明新窗口角色和禁止用途，AGENTS.md 一致
 notes: 2026-10-12：Baker 决定研究方向为 QQQ 期权路径、QQQ 类问题以 1999 年起为开发验证窗口、先方向信号后期权实现、期权层等信号站住后用 QuantConnect 回测、9/5–10/8 日报缺口永久不补、同时进行的研究问题不设上限（owner_decision:TRADING-2567:2026-10-12:qqq_direction_1999_window）。production_effect=none；broker_action=none
