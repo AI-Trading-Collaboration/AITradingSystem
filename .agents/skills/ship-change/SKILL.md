@@ -43,15 +43,17 @@ pi 的运行由远程会话用 `scripts/agent/run-brief.ps1` 启动，验收的�
 ```powershell
 .venv/Scripts/python.exe tools/gov008/ship.py --repo . --dry-run            # zones, gate commands, problems
 .venv/Scripts/python.exe tools/gov008/ship.py --repo . --execute --push     # one-step: gate, then main and origin
-.venv/Scripts/python.exe tools/gov008/ship.py --repo . --gate               # two-step after acceptance: write Gate only
-scripts/agent/publish.ps1 -Branch <branch> -RunDir <run-dir>                # owner account: publish with main ship.py
+.venv/Scripts/python.exe tools/gov008/ship.py --repo . --gate               # two-step after review: write Gate only
+scripts/agent/publish.ps1 -Branch <branch> -RunDir <run-dir> -ExpectedTree <tree>  # owner account: publish with main ship.py
 ```
 
 - `ship` runs the gate, writes a `Gate:` trailer, fast-forwards `main` to the tested tree, pushes
-  normally, and checks `origin/main` before and after. In two-step pi runs, run `--gate` after Claude
-  acceptance, then `publish.ps1` in the owner account; it only publishes the commit whose tree is in
-  the acceptance record and does not run tests or branch code. Do nothing else in the repository while
-  it runs.
+  normally, and checks `origin/main` before and after. In two-step pi runs pi stops after `--dry-run`
+  (the guard blocks `--gate`, `--execute`, `--publish` and `publish.ps1`); after Claude's review the
+  owner account runs `--gate`, then `publish.ps1` with the reviewed tree. It only publishes a branch
+  whose tree is that tree; zone C, or a branch without a `Gate:` trailer, also needs the owner's
+  accepted record for the same tree in the review root. It does not run tests or branch code. Do
+  nothing else in the repository while it runs.
 - If the gate fails: read the failures, fix them on the branch, commit, and run `ship` again. Never
   bypass `ship` with a manual `git push`, and never force-push, rebase, or rewrite history.
 - If `main` moved meanwhile, `ship` refuses. The second shipper brings the new `main` into its branch

@@ -1,10 +1,10 @@
 param(
   [Parameter(Mandatory=$true)][string]$Branch,
   [Parameter(Mandatory=$true)][string]$RunDir,
+  [Parameter(Mandatory=$true)][string]$ExpectedTree,
   [string]$Repo,
   [string]$Base = "main",
   [string]$Python,
-  [string]$AcceptanceFile,
   [switch]$NoPush
 )
 
@@ -117,12 +117,20 @@ $acceptedTree = $null
 foreach ($entry in [System.Environment]::GetEnvironmentVariables().GetEnumerator()) {
   if ([string]$entry.Key -like "AITS_PI_*") { $validationErrors += "AITS_PI environment variable is set: $($entry.Key)" }
 }
-# The acceptance record comes from review_root in the Base branch's agent_config.json, which the agent account cannot
-# write; a file in RunDir is never read (DEVX-025 run 10). -AcceptanceFile overrides the location (tests).
+# ExpectedTree is the tree Claude reviewed (owner_decision:DEVX-025:2026-10-12:signoff_policy). A Gate trailer with
+# zone A or B needs nothing more: ship.py --publish then checks that zone against the Base policy. Any other branch
+# (zone C, or no Gate trailer) also needs an accepted review of the same tree from review_root in the Base branch's
+# agent_config.json, which the agent account cannot write; a file in RunDir is never read (DEVX-025 run 10).
+if ($ExpectedTree -cnotmatch "^[0-9a-f]{40}$") { $validationErrors += "ExpectedTree is not a 40-character lowercase hex tree" }
+$gateZone = $null
+try {
+  $gateLines = @(((Git @("log", "-1", "--format=%(trailers:key=Gate,valueonly)", $Branch)).stdout -split "`r?`n") | Where-Object { $_.Trim() -ne "" })
+  if (($gateLines.Count -gt 0) -and ($gateLines[$gateLines.Count - 1].Trim() -cmatch "^zone=([ABC]) ")) { $gateZone = $Matches[1] }
+} catch {
+  $validationErrors += $_.Exception.Message
+}
 $acceptPath = $null
-if (-not [string]::IsNullOrWhiteSpace($AcceptanceFile)) {
-  $acceptPath = [System.IO.Path]::GetFullPath($AcceptanceFile)
-} else {
+if (($gateZone -ne "A") -and ($gateZone -ne "B")) {
   try {
     $configText = (Git @("show", "$Base`:scripts/agent/agent_config.json")).stdout
     $reviewRoot = [string]($configText | ConvertFrom-Json).review_root
@@ -169,11 +177,12 @@ try {
   if (($startBranch -ne $Base) -and ($startBranch -ne $Branch)) {
     $validationErrors += "current branch must be Base '$Base' or Branch '$Branch', got '$startBranch'"
   }
-  if ($acceptedTree -cmatch "^[0-9a-f]{40}$") {
-    $branchTree = (Git @("rev-parse", "$Branch`^{tree}")).stdout.Trim()
-    if ($branchTree -cne $acceptedTree) {
-      $validationErrors += "Branch tree $branchTree does not match accepted review tree $acceptedTree"
-    }
+  $branchTree = (Git @("rev-parse", "$Branch`^{tree}")).stdout.Trim()
+  if ($branchTree -cne $ExpectedTree) {
+    $validationErrors += "Branch tree $branchTree does not match ExpectedTree $ExpectedTree"
+  }
+  if (($acceptedTree -cmatch "^[0-9a-f]{40}$") -and ($acceptedTree -cne $ExpectedTree)) {
+    $validationErrors += "accepted review tree $acceptedTree does not match ExpectedTree $ExpectedTree"
   }
 } catch {
   $validationErrors += $_.Exception.Message

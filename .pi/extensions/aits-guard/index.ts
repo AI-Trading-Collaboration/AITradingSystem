@@ -382,6 +382,25 @@ function withoutGitGlobalOptions(command: string): string {
   );
 }
 
+// ship.py --gate/--execute/--publish and publish.ps1 run in the owner account after Claude's review, never in pi.
+const SHIP_PUBLISH_MODES = new Set(["--gate", "--execute", "--publish"]);
+
+function wordBasename(word: string): string {
+  return basename(word.replace(/\\/g, "/")).toLowerCase();
+}
+
+function runsShipOrPublish(part: string): boolean {
+  const words = invokedWords(part);
+  const first = words[0] ?? "";
+  if (/^(?:python(?:3(?:\.\d+)?)?|py)$/.test(commandName(first)) || wordBasename(first) === "ship.py") {
+    return words.some((word) => wordBasename(word) === "ship.py") && words.some((word) => SHIP_PUBLISH_MODES.has(word));
+  }
+  if (wordBasename(first) === "publish.ps1") return true;
+  if ((first === "&" || first === ".") && wordBasename(words[1] ?? "") === "publish.ps1") return true;
+  if (isShellInterpreter(first)) return words.slice(1).some((word) => /(?:^|[\s\\/&'"])publish\.ps1(?:[\s'"]|$)/i.test(word));
+  return false;
+}
+
 function isAitsOpsCommand(part: string): boolean {
   return /(?:^|\s)(?:\.venv[\\/]Scripts[\\/]aits(?:\.exe)?|aits(?:\.exe)?)\s+ops\b/.test(part);
 }
@@ -426,6 +445,13 @@ export function commandVerdict(root: string, command: string, state = makeState(
         rule: "git-whole-repo",
         reason:
           "repository-wide git status/diff/add/stash must include tree_clean_exclusions as exact exclude pathspecs; instead of git commit -a, git add the changed files by path",
+      };
+    }
+    if (runsShipOrPublish(part)) {
+      return {
+        block: true,
+        rule: "publish-by-owner",
+        reason: "pi stops after ship.py --dry-run: Claude reviews the run, then the owner account runs ship.py --gate and publish.ps1",
       };
     }
     if (isAitsOpsCommand(part) && !state.runbookRead) {
@@ -606,14 +632,6 @@ export function truncateToolResult(root: string, toolCallId: string, content: st
   };
 }
 
-function stripEnvAssignments(part: string): string {
-  return part.trim().replace(/^(?:[A-Za-z_][A-Za-z0-9_]*=[^\s]+\s+)*/, "").trim();
-}
-
-function commandWords(part: string): string[] {
-  return stripEnvAssignments(part).match(/"[^"]*"|'[^']*'|\S+/g)?.map((word) => word.replace(/^['"]|['"]$/g, "")) ?? [];
-}
-
 function isPythonWord(word: string): boolean {
   const normalized = word.replace(/\\/g, "/").toLowerCase();
   const name = basename(normalized);
@@ -621,7 +639,7 @@ function isPythonWord(word: string): boolean {
 }
 
 function isTestCommandPart(part: string): boolean {
-  const words = commandWords(part);
+  const words = invokedWords(part);
   if (words.length === 0) return false;
   const first = basename(words[0].replace(/\\/g, "/")).toLowerCase();
   if (first === "pytest" || first === "ruff") return true;
@@ -663,6 +681,13 @@ function allowedPathGlobs(): string[] {
     .split(/[;\n]/)
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+// Zone C paths a command changed count as confirmed only under a verified owner decision and only when every one
+// of them is inside the run's allowed paths; anything else locks the session as before.
+function confirmScriptedCChanges(root: string, paths: readonly string[]): boolean {
+  const allowed = allowedPathGlobs();
+  return allowed.length > 0 && paths.every((rel) => matchesAny(rel, allowed)) && ownerDecisionVerified(root);
 }
 
 function outOfScopeFiles(root: string): string[] {
@@ -782,7 +807,12 @@ export default function (pi: ExtensionAPI) {
     if ((event.toolName === "bash" || event.toolName === "powershell") && command) {
       recordCommandResult(state, command, output, event.isError, root);
       const unconfirmed = detectUnconfirmedCChanges(root, state);
-      if (unconfirmed.length > 0) {
+      if (unconfirmed.length > 0 && confirmScriptedCChanges(root, unconfirmed)) {
+        for (const rel of unconfirmed) {
+          state.confirmedCPaths.add(rel);
+          state.cZoneConfirmations.push(`${rel}: AITS_PI_OWNER_DECISION (${event.toolName})`);
+        }
+      } else if (unconfirmed.length > 0) {
         state.locked = true;
         state.blocked.push({
           tool: event.toolName,

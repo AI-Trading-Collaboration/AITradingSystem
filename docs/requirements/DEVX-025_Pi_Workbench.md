@@ -20,6 +20,14 @@ owner_decision:DEVX-025:2026-10-11:agent_read_base_python —— 2026-10-11 owne
 
 owner_decision:DEVX-025:2026-10-11:agent_task_launch —— 2026-10-11 owner（Baker）在项目线程的决定卡片上，对问题"以后由我直接启动受限账户的计划任务吗？"选择了"让我启动"（选项后果："我把请求放进队列后，自己运行 schtasks 启动这个任务，你不用每次动手。"）。授权只覆盖用 `schtasks /Run` 启动"AITradingSystem pi agent"这一个任务，不包括修改、新建或删除任务。
 
+owner_decision:DEVX-025:2026-10-12:signoff_policy —— 2026-10-12 owner（Baker）在项目线程里指出，每次发布前复制验收记录、点过卡片再照抄原话已经成了形式，要求统一考虑"到底什么情况需要我来签字"。Claude 整理 10-10 以来各线程里的 68 次请求，提出"签决定、不签执行"的方案，owner 打字同意："同意按签字方案调整：GOV-009-03 跑 gate 并发布到 main；GOV-009-04、05 按结果 tree 5150c117、5cd32350 事先批准，审查和 gate 通过后直接发布到 main；另开任务把方案落进规则和发布脚本。"方案要点：
+
+- owner 签的是决定：方向和范围、影响投资解释的 C 区改动、规则和门禁本身（AGENTS.md、ship 规则、pi 守卫、`publish.ps1`）、R2/R3、电脑上的权限，以及结果偏离已批预期的情况。签的时候写清范围和预期结果；执行结果和预期一致就不再问。
+- A/B 区发布不再需要 owner 的验收记录，由 Claude 审查、门禁和 tree 核对放行。
+- C 区结果事先能算出时，决定里写明预期 tree，按 tree 事先放行；pi 自己写代码的 C 区改动仍要一次验收记录。
+
+在运行 11、12 执行。
+
 ## 3. 分三次运行的步骤与验收
 
 ### 运行 01：守卫加固、append-note、任务单模板
@@ -173,6 +181,36 @@ owner 以管理员身份重跑安装脚本后，只读核对发现：脚本以�
 - `ship.py --dry-run` 显示本次为 B 区。
 - 发布后 owner 以管理员身份重跑安装脚本：验收根目录建好，agent venv 被重建并与主 venv 一致；之后在 agent clone 里复测 PR 测试。
 
+### 运行 11：签字方案落进发布脚本和守卫
+
+依据 `owner_decision:DEVX-025:2026-10-12:signoff_policy`。
+
+步骤：
+
+1. `publish.ps1` 必须带 `-ExpectedTree`（Claude 审查过的 tree），分支的 tree 必须与它相同。分支最后一个提交的 `Gate:` trailer 是 A 或 B 区时不再读验收记录，`ship.py --publish` 再按 main 的规则核对区划；C 区或没有 `Gate:` trailer 时，仍要验收根目录里最后一条通过的记录，且记录的 tree 与 `-ExpectedTree` 相同。去掉 `-AcceptanceFile` 参数。
+2. 守卫：owner 决定已登记在 main 的需求文档里，且命令改到的 C 区路径都在本次允许路径内时，认可这些改动并记入报告的 C 区确认；否则照旧锁定。pi 不能运行 `ship.py --gate`、`--execute`、`--publish` 和 `publish.ps1`。识别测试命令时跳过 `env` 等包装和前置的变量赋值。`guard.test.ts` 开头清掉继承来的 `AITS_PI_*` 变量。
+3. ship-change skill 和 C 区任务单模板改成新的发布流程。
+
+验收：
+
+- 新旧测试通过；新增的发布和守卫用例在修改前的脚本上失败；PowerShell 用例在 Windows PowerShell 5.1 下通过。
+- C 区改动的 `Gate:` trailer 被改成 B 区时发布失败，main 不动。
+- `ship.py --dry-run` 显示本次为 B 区。
+
+### 运行 12：签字原则写进 AGENTS.md（C 区）
+
+步骤：
+
+1. AGENTS.md 写进签字原则和新的两步发布流程。
+2. `config/gov008_ship.yaml` 把 pi 守卫（`.pi/extensions/aits-guard/**`）和 `scripts/agent/publish.ps1` 列入 C 区，以后改它们需要 owner 决定。
+3. 提交带 `Owner-Decision: owner_decision:DEVX-025:2026-10-12:signoff_policy` trailer。
+
+验收：
+
+- C 区门禁和 owner 决定的要求不被削弱。
+- `ship.py --dry-run` 显示本次为 C 区。
+- 发布后 owner 在电脑上 Claude Code 的设置里加一条只匹配 `publish.ps1` 的 `permissions.allow` 规则。
+
 ## 4. 开放问题
 
 - 已决定：受限账户的手动计划任务作为 periodic-operations“不要注册第二个计划任务”规则的唯一例外（`owner_decision:DEVX-025:2026-10-11:manual_agent_task_exception`），运行 05 已登记。
@@ -197,6 +235,7 @@ owner 以管理员身份重跑安装脚本后，只读核对发现：脚本以�
 - 2026-10-11：运行 07 发布（main f328dd127）。1b：owner 以管理员身份完成安装脚本、封住 D 盘其他目录、以 aits-agent 用订阅登录 pi；只读核对确认 aits-agent 读不到 owner 的用户目录和 D 盘其他目录。核对时发现三处问题，都已处理：计划任务的启动请求返回 SUCCESS，但任务没有运行，原因是 aits-agent 没有"作为批处理作业登录"权利（任务日志错误 0x80070569），owner 已手工添加，任务已能以 aits-agent 启动；agent venv 的底层 Python 在 owner 的用户目录里，aits-agent 读不到，owner 已授权读取；pi 1.1.0 的订阅登录凭据在 `openai` 下面，模型要写 `openai/…`，不是 `openai-codex/…`。owner 授权 Claude 直接启动这个计划任务。GOV-008-01（第一次用本地模型）发布（main fa0ab59d6）。运行 08：模型配置和约定、pi 进程去掉 API key 环境变量、任务启动检查、notes 按解析值比较、安装脚本小修。
 - 2026-10-11：运行 08 发布（main ce82757b8）。1b 隔离核对（DEVX-025-iso01）通过：受限账户下守卫照常拦截，aits-agent 读不到 owner 的用户目录和 D 盘其他目录，写不进 owner 的仓库目录和 `.git`，底层 Python 出站被防火墙拦住。核对时在 agent clone 跑 PR 测试，有 263 个失败、43 个错误，原因是 agent venv 只装了项目和几个开发工具（36 个包，主 venv 有 92 个），版本也和主 venv 不同，不是隔离问题。运行 09：守卫按引号切分命令并修正几处规则，安装脚本补批处理登录权利、agent venv 与主 venv 同版本。
 - 2026-10-11：运行 09 发布（main ead6a6291）。owner 以管理员身份重跑安装脚本，agent venv 与主 venv 同版本（89 个包）。以 aits-agent 复测（DEVX-025-iso02）：agent clone 从主仓库拉取被 git 的所有权检查拦下，未刷新，在原提交上测；PR 测试 8022 个通过、24 个失败，其中 23 个依赖主仓库里未纳入 git 的 `outputs/` 证据文件，1 个是 CLI 输出按控制台宽度折行（受限账户的临时路径更长），都与依赖无关；门禁继续在 owner 账户里跑，受限账户只跑与改动相关的测试。运行 10：安装脚本不再执行受限账户能改的程序，验收记录移到受限账户写不到的验收根目录。
+- 2026-10-12：运行 10 发布（main d27674d09），owner 重跑安装脚本，验收根目录建好；此后 OPS-083、GOV-009、DATA-022 的 pi 运行都按两步式发布。owner 同意签字方案（`owner_decision:DEVX-025:2026-10-12:signoff_policy`）。运行 11：`publish.ps1` 按 Claude 审查的 tree 发布，A/B 区不再要验收记录；守卫认可已登记 owner 决定下脚本对允许路径内 C 区文件的改动，不让 pi 自己跑门禁和发布。运行 12（C 区）把签字原则写进 AGENTS.md，守卫和 `publish.ps1` 进 C 区。
 
 ## 6. 运行影响边界
 

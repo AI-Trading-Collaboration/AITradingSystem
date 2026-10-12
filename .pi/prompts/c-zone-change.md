@@ -39,7 +39,7 @@ read_paths:
 5. 更新任务记录；追加 notes 用 `.venv/Scripts/python.exe tools/tasks.py append-note`。
 6. 运行相关的针对性测试：`.venv/Scripts/python.exe -m pytest {{TARGETED_TESTS}} -q`。完整 PR suite 由 ship 门禁跑一次，dry-run 之前不要重复跑。
 7. 提交时加入 `Owner-Decision: {{OWNER_DECISION_ID}}` trailer。
-8. 运行 `.venv/Scripts/python.exe tools/gov008/ship.py --repo . --dry-run`；只有 owner 明确要求时才执行发布。
+8. 运行 `.venv/Scripts/python.exe tools/gov008/ship.py --repo . --dry-run` 后停下；门禁和发布在 Claude 审查后由 owner 账户运行，pi 不运行 `--gate`、`--execute`、`--publish` 或 `publish.ps1`。
 
 ## 验收
 

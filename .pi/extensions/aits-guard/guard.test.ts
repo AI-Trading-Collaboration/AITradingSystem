@@ -20,6 +20,11 @@ import guard, {
   writeVerdict,
 } from "./index.ts";
 
+// pi runs these tests with its own AITS_PI_* settings; each test sets the ones it needs.
+for (const key of Object.keys(process.env)) {
+  if (key.startsWith("AITS_PI_")) delete process.env[key];
+}
+
 function fakeRepo(initGit = false): string {
   const root = mkdtempSync(join(tmpdir(), "aits-guard-"));
   mkdirSync(join(root, "config"));
@@ -138,7 +143,7 @@ test("ordinary non-wide commands pass", () => {
     "git push origin claude/gov008-p6-pi",
     "git checkout -b claude/topic main",
     "git clean -n",
-    ".venv/Scripts/python.exe tools/gov008/ship.py --repo . --execute --push",
+    ".venv/Scripts/python.exe tools/gov008/ship.py --repo . --dry-run",
     ".venv/Scripts/python.exe -m pytest tests -n 16 --dist loadfile -q",
     "git diff -- tools/tasks.py",
   ]) {
@@ -246,6 +251,75 @@ test("owner decision only passes for valid ids committed on main", () => {
     assert.ok(malformed && "block" in malformed);
     assert.equal(malformed.rule, "owner-decision-missing");
   });
+});
+
+test("a command may change zone C paths only under a verified owner decision inside the allowed paths", async () => {
+  const valid = "owner_decision:DEVX-025:2026-10-12:signoff_policy";
+  const root = fakeRepo(true);
+  writeFileSync(join(root, "docs", "requirements", "X.md"), `${valid}\n`);
+  commitAll(root, "decision");
+  const applyScript = async (vars: Record<string, string | undefined>): Promise<Record<string, (event: unknown, ctx?: unknown) => Promise<unknown>>> => {
+    execFileSync("git", ["checkout", "--", "."], { cwd: root });
+    execFileSync("git", ["clean", "-fdq", "--", "AGENTS.md", "config/data_quality.yaml"], { cwd: root });
+    const handlers = await makeHandlers(root);
+    writeFileSync(join(root, "AGENTS.md"), "rules\n");
+    writeFileSync(join(root, "config", "data_quality.yaml"), "quality\n");
+    await withEnvAsync(vars, async () => {
+      await handlers.tool_result(
+        { type: "tool_result", toolCallId: "apply", toolName: "bash", input: { command: "bash apply.sh" }, content: [{ type: "text", text: "ok" }], isError: false },
+        ctx(root, false),
+      );
+    });
+    return handlers;
+  };
+  const write = { type: "tool_call", toolCallId: "w", toolName: "write", input: { path: "notes.md" } };
+
+  const allowed = await applyScript({ AITS_PI_OWNER_DECISION: valid, AITS_PI_ALLOWED_PATHS: "AGENTS.md;config/**;docs/**" });
+  assert.equal(await allowed.tool_call(write, ctx(root, false)), undefined);
+  const runDir = mkdtempSync(join(tmpdir(), "aits-scripted-c-"));
+  await withEnvAsync({ AITS_PI_RUN_DIR: runDir }, async () => {
+    await allowed.agent_settled({ type: "agent_settled" }, ctx(root));
+  });
+  const report = JSON.parse(readFileSync(join(runDir, "report.json"), "utf8")) as { c_zone_confirmations: string[]; blocked: unknown[] };
+  assert.deepEqual(report.c_zone_confirmations, [
+    "AGENTS.md: AITS_PI_OWNER_DECISION (bash)",
+    "config/data_quality.yaml: AITS_PI_OWNER_DECISION (bash)",
+  ]);
+  assert.deepEqual(report.blocked, []);
+
+  for (const vars of [
+    { AITS_PI_OWNER_DECISION: valid, AITS_PI_ALLOWED_PATHS: "AGENTS.md;docs/**" },
+    { AITS_PI_OWNER_DECISION: valid, AITS_PI_ALLOWED_PATHS: undefined },
+    { AITS_PI_OWNER_DECISION: undefined, AITS_PI_ALLOWED_PATHS: "AGENTS.md;config/**" },
+    { AITS_PI_OWNER_DECISION: "owner_decision:DEVX-025:2026-10-12:not_recorded", AITS_PI_ALLOWED_PATHS: "AGENTS.md;config/**" },
+  ]) {
+    const locked = await applyScript(vars);
+    const result = await locked.tool_call(write, ctx(root, false));
+    assert.equal((result as { block: boolean }).block, true, JSON.stringify(vars));
+    assert.equal((result as { terminate: boolean }).terminate, true, JSON.stringify(vars));
+  }
+});
+
+test("pi cannot run the gate or publish: those run in the owner account after review", () => {
+  const root = fakeRepo();
+  assertBlocked(root, "publish-by-owner", [
+    ".venv/Scripts/python.exe tools/gov008/ship.py --repo . --execute --push",
+    ".venv/Scripts/python.exe tools/gov008/ship.py --repo . --gate",
+    ".venv\\Scripts\\python.exe tools\\gov008\\ship.py --repo . --publish --push",
+    "env A=1 .venv/Scripts/python.exe -I C:/Temp/x/ship.py --repo . --base main --publish",
+    "cd repo && .venv/Scripts/python.exe tools/gov008/ship.py --repo . --gate",
+    "scripts/agent/publish.ps1 -Branch pi/x -RunDir D:/runs/x",
+    "& .\\scripts\\agent\\publish.ps1 -Branch pi/x -RunDir D:/runs/x",
+    "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\\agent\\publish.ps1 -Branch pi/x -RunDir x",
+    "pwsh -Command \"& 'D:\\Work\\AITradingSystem\\scripts\\agent\\publish.ps1' -Branch pi/x\"",
+  ]);
+  assertPasses(root, [
+    ".venv/Scripts/python.exe tools/gov008/ship.py --repo . --dry-run",
+    "grep -n -- --gate tools/gov008/ship.py",
+    "grep -n publish.json scripts/agent/publish.ps1",
+    "git diff -- scripts/agent/publish.ps1",
+    ".venv/Scripts/python.exe -m pytest tests/test_agent_publish.py -q",
+  ]);
 });
 
 test("command checks also cover powershell-style tool use through the extension handler", async () => {
@@ -701,6 +775,8 @@ test("test command recording ignores mentions and records real test invocations"
     ".venv/Scripts/python.exe -m pytest tests/x.py -q",
     "cd repo && .venv/Scripts/python.exe -m ruff check x",
     "node --test .pi/extensions/aits-guard/guard.test.ts",
+    "env -u AITS_PI_OWNER_DECISION .venv/Scripts/python.exe -m pytest tests/y.py -q",
+    "PYTHONUTF8=1 .venv/Scripts/python.exe -m pytest tests/z.py -q",
   ];
   for (const command of commands) await runToolResult(handlers2, command);
   const runDir = mkdtempSync(join(tmpdir(), "aits-report-tests-"));
