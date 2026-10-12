@@ -72,6 +72,10 @@ series:
 # on an actual/360 basis (T-bill convention, rate of the previous index date), fund expenses on
 # actual/365.
 derivation:
+  # A level equal to the previous date's while the other index moved more than this is a stale
+  # carry-over and is rebuilt from the other index's move. Above two-decimal rounding of either
+  # index (well under 0.01%); the check counts every repaired date per year.
+  stale_level_min_other_move: 0.0001
   qqq_expense_ratio_annual: 0.0020
   synthetic_funds:
     - fund_id: lev2

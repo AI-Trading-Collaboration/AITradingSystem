@@ -88,6 +88,7 @@ class SyntheticFundSpec(_Strict):
 
 
 class DerivationSpec(_Strict):
+    stale_level_min_other_move: float = Field(gt=0)
     qqq_expense_ratio_annual: float = Field(ge=0)
     synthetic_funds: tuple[SyntheticFundSpec, ...] = Field(min_length=1)
     financing_spread_annual: float = Field(ge=0)
@@ -264,8 +265,10 @@ def derive_daily(frame: pd.DataFrame, spec: LongHistorySpec) -> pd.DataFrame:
 
     From the first total-return date on, a price-index date without a total-return level is dropped
     from the calendar (FRED carries the price index over some exchange holidays), so returns stay
-    defined on every remaining date. Returns on day t cover the previous index date to t. Cash and
-    financing accrue at the T-bill rate dated on or before the previous index date.
+    defined on every remaining date. A level repeated from the previous date while the other index
+    moved is stale and is rebuilt from the other index's move (see ``repair_stale_levels``); the
+    ``*_repaired`` columns mark those dates. Returns on day t cover the previous index date to t.
+    Cash and financing accrue at the T-bill rate dated on or before the previous index date.
     ``cash_rate_annual`` on day t is the rate dated t, which FRED publishes the next business day: a
     signal that reads it lags it by one day.
     """
@@ -281,8 +284,15 @@ def derive_daily(frame: pd.DataFrame, spec: LongHistorySpec) -> pd.DataFrame:
     calendar = pd.DatetimeIndex(price.index, name="date")
     out = pd.DataFrame(index=calendar)
     out["calendar_days"] = calendar.to_series().diff().dt.days.to_numpy()
-    out["ndx_price"] = price.to_numpy()
-    out["ndx_tr"] = wide[tr_id].reindex(calendar).to_numpy()
+    repaired = repair_stale_levels(
+        price.astype(float).tolist(),
+        wide[tr_id].reindex(calendar).astype(float).tolist(),
+        spec.derivation.stale_level_min_other_move,
+    )
+    out["ndx_price"] = repaired.price
+    out["ndx_tr"] = repaired.total_return
+    out["price_repaired"] = repaired.price_repaired
+    out["tr_repaired"] = repaired.total_return_repaired
     out["ndx_price_return"] = out["ndx_price"] / out["ndx_price"].shift(1) - 1
     out["ndx_tr_return"] = out["ndx_tr"] / out["ndx_tr"].shift(1) - 1
 
@@ -318,6 +328,48 @@ def derive_daily(frame: pd.DataFrame, spec: LongHistorySpec) -> pd.DataFrame:
         else:
             out[column] = math.nan
     return out
+
+
+@dataclass(frozen=True)
+class RepairedLevels:
+    price: list[float]
+    total_return: list[float]
+    price_repaired: list[bool]
+    total_return_repaired: list[bool]
+
+
+def repair_stale_levels(
+    price: Sequence[float], total_return: Sequence[float], min_other_move: float
+) -> RepairedLevels:
+    """Rebuild index levels that were carried over from the previous date.
+
+    A total-return level equal to the previous one while the price index moved more than
+    ``min_other_move`` cannot be right (reinvested dividends only add to the price move), and a
+    price level equal to the previous one while the total-return index moved that much is the same
+    error the other way. Such a level is replaced by the previous (repaired) level times the other
+    index's move on that date, so the day's return comes from the other index and the following
+    date, whose level is real again, gets the remainder. Levels are compared as given: a repeated
+    value on both indexes is a closed session and stays as it is.
+    """
+
+    price_out = [float(value) for value in price]
+    tr_out = [float(value) for value in total_return]
+    price_flags = [False] * len(price_out)
+    tr_flags = [False] * len(tr_out)
+    for i in range(1, len(price_out)):
+        p_prev, p_now = float(price[i - 1]), float(price[i])
+        t_prev, t_now = float(total_return[i - 1]), float(total_return[i])
+        if math.isnan(t_prev) or math.isnan(t_now):
+            continue
+        price_move = p_now / p_prev - 1
+        tr_move = t_now / t_prev - 1
+        if t_now == t_prev and abs(price_move) > min_other_move:
+            tr_out[i] = tr_out[i - 1] * p_now / p_prev
+            tr_flags[i] = True
+        elif p_now == p_prev and abs(tr_move) > min_other_move:
+            price_out[i] = price_out[i - 1] * t_now / t_prev
+            price_flags[i] = True
+    return RepairedLevels(price_out, tr_out, price_flags, tr_flags)
 
 
 def price_only_dates(price_dates: pd.Index, total_return_dates: pd.Index) -> pd.DatetimeIndex:
@@ -496,6 +548,21 @@ def _check_calendar(
             dates=[_iso(item) for item in moved[:MAX_LISTED_DATES]],
         )
 
+    tr_only = pd.DatetimeIndex(wide[tr_id].dropna().index).difference(pd.DatetimeIndex(price.index))
+    calendar_index = pd.DatetimeIndex(daily.index)
+    tr_repaired = calendar_index[daily["tr_repaired"].to_numpy(dtype=bool)]
+    price_repaired = calendar_index[daily["price_repaired"].to_numpy(dtype=bool)]
+    if len(tr_repaired) or len(price_repaired):
+        issues.add(
+            "WARN",
+            "stale_levels_repaired",
+            "calendar",
+            f"{len(tr_repaired)} total-return and {len(price_repaired)} price-index levels "
+            "repeated the previous date while the other index moved; rebuilt from the other "
+            "index's move",
+            dates=[_iso(item) for item in tr_repaired.union(price_repaired)[:MAX_LISTED_DATES]],
+        )
+
     tr_start = daily["ndx_tr"].first_valid_index()
     dividend = (daily["ndx_tr_return"] - daily["ndx_price_return"]).dropna()
     negative = dividend < checks.min_daily_dividend_component
@@ -506,6 +573,8 @@ def _check_calendar(
             "year": year,
             "trading_days": int((years == year).sum()),
             "negative_component_days": int(negative[years == year].sum()),
+            "total_return_repaired_days": int((tr_repaired.year == year).sum()),
+            "price_repaired_days": int((price_repaired.year == year).sum()),
             "implied_dividend_yield_annual": _round(
                 dividend[years == year].mean() * TRADING_DAYS_PER_YEAR
             ),
@@ -524,6 +593,10 @@ def _check_calendar(
         "price_only_dates_dropped": int(len(dropped)),
         "price_only_dates_unchanged": int(len(dropped) - len(moved)),
         "price_only_dates": [_iso(item) for item in dropped[:MAX_LISTED_DATES]],
+        "total_return_only_dates_ignored": int(len(tr_only)),
+        "total_return_only_dates": [_iso(item) for item in tr_only[:MAX_LISTED_DATES]],
+        "total_return_repaired_days": int(len(tr_repaired)),
+        "price_repaired_days": int(len(price_repaired)),
         "implied_dividend_yield_annual": _round(dividend.mean() * TRADING_DAYS_PER_YEAR),
         "negative_component_days": int(negative.sum()),
         "dividend_component_lag1_autocorrelation": (
@@ -715,6 +788,12 @@ def render_check_markdown(report: Mapping[str, Any]) -> str:
             f"- 从日历去掉的价格指数单独日期：{calendar['price_only_dates_dropped']} 个，"
             f"其中价格未变 {calendar['price_only_dates_unchanged']} 个"
             f"（{', '.join(calendar['price_only_dates']) or '无'}）",
+            "- 只有总收益、价格指数没有的日期（不在日历里）："
+            f"{calendar['total_return_only_dates_ignored']} 个"
+            f"（{', '.join(calendar['total_return_only_dates']) or '无'}）",
+            "- 沿用前值、按另一指数修补的水平："
+            f"总收益 {calendar['total_return_repaired_days']} 天，"
+            f"价格 {calendar['price_repaired_days']} 天",
             f"- 隐含股息率（总收益减价格收益，年化）：{calendar['implied_dividend_yield_annual']}",
             f"- 总收益落后价格收益超过阈值的天数：{calendar['negative_component_days']}；"
             f"日股息分量的一阶自相关：{calendar['dividend_component_lag1_autocorrelation']}",
@@ -734,12 +813,13 @@ def render_check_markdown(report: Mapping[str, Any]) -> str:
                 "",
                 "### 逐年股息分量",
                 "",
-                "| 年 | 交易日 | 落后天数 | 隐含股息率 |",
-                "|---|---:|---:|---:|",
+                "| 年 | 交易日 | 落后天数 | 隐含股息率 | 总收益修补 | 价格修补 |",
+                "|---|---:|---:|---:|---:|---:|",
             ]
             lines += [
                 f"| {row['year']} | {row['trading_days']} | {row['negative_component_days']} | "
-                f"{row['implied_dividend_yield_annual']} |"
+                f"{row['implied_dividend_yield_annual']} | {row['total_return_repaired_days']} | "
+                f"{row['price_repaired_days']} |"
                 for row in by_year
             ]
     tracking = report.get("overlap_tracking") or {}

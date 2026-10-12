@@ -277,6 +277,54 @@ def test_derive_daily_drops_price_only_dates_after_total_return_starts(tmp_path:
     assert monday["cash_return"] == pytest.approx(0.018 * 4 / 360)
 
 
+def test_repair_stale_levels_rebuilds_carried_over_levels_from_the_other_index() -> None:
+    repaired = qlh.repair_stale_levels(
+        [100.0, 101.0, 102.01, 103.0, 103.0, 103.004, 104.0],
+        [200.0, 202.0, 202.0, 206.06, 206.5, 206.5, 208.0],
+        0.0001,
+    )
+
+    # 2: total return carried over while the price index rose 1% -> rebuilt from that 1%.
+    assert repaired.total_return[2] == pytest.approx(202.0 * 102.01 / 101.0)
+    # 4: price carried over while total return moved -> rebuilt from the total-return move.
+    assert repaired.price[4] == pytest.approx(103.0 * 206.5 / 206.06)
+    # 5: total return repeated, but the price move (0.004%) is within the rounding allowance.
+    assert repaired.total_return_repaired == [False, False, True, False, False, False, False]
+    assert repaired.price_repaired == [False, False, False, False, True, False, False]
+    # Real levels are untouched, so the next date carries the rest of the move.
+    assert repaired.total_return[3] == 206.06
+    assert repaired.price[6] == 104.0
+
+    both = qlh.repair_stale_levels([100.0, 100.0], [200.0, 200.0], 0.0001)
+    assert both.price_repaired == both.total_return_repaired == [False, False]
+
+
+def test_check_reports_repaired_stale_levels(tmp_path: Path) -> None:
+    spec_path = _write_spec(tmp_path)
+    frame = _series_frame()
+    stale = ("2020-03-03", "2020-03-04", "2020-05-12")
+    total_return = frame["series"] == "NASDAQXNDX"
+    for day in stale:
+        previous = frame.loc[total_return & (frame["date"] < day), "value"].iloc[-1]
+        frame.loc[total_return & (frame["date"] == day), "value"] = previous
+    snapshot = _fetch(tmp_path, spec_path, frame)
+
+    report = qlh.check_snapshot(
+        snapshot, qlh.load_spec(spec_path), prices_path=tmp_path / "missing.csv"
+    )
+    codes = {issue["code"]: issue for issue in report["issues"]}
+    calendar = report["calendar"]
+
+    assert codes["stale_levels_repaired"]["dates"] == list(stale)
+    assert calendar["total_return_repaired_days"] == 3
+    assert calendar["dividend_by_year"][0]["total_return_repaired_days"] == 3
+    # Rebuilt from the price move, the carried-over days no longer show total return trailing.
+    assert calendar["negative_component_days"] == 0
+    daily, _ = qlh.load_daily(snapshot, qlh.load_spec(spec_path))
+    assert daily.loc[list(stale), "tr_repaired"].all()
+    assert daily["tr_repaired"].sum() == 3
+
+
 def test_check_passes_clean_data_and_measures_tracking(tmp_path: Path) -> None:
     spec_path = _write_spec(tmp_path)
     frame = _series_frame()
@@ -296,6 +344,8 @@ def test_check_passes_clean_data_and_measures_tracking(tmp_path: Path) -> None:
     assert calendar["total_return_first_date"] == "2020-01-02"
     assert calendar["implied_dividend_yield_annual"] > 0
     assert calendar["price_only_dates_dropped"] == 0
+    assert calendar["total_return_only_dates_ignored"] == 0
+    assert calendar["total_return_repaired_days"] == calendar["price_repaired_days"] == 0
     assert calendar["negative_component_days"] == 0
     assert calendar["dividend_windows"]["windows_below_limit"] == 0
     assert calendar["dividend_windows"]["min_change"] > 0
