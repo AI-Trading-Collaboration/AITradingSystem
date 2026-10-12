@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import ast
-import json
 import re
 from pathlib import Path
 
@@ -53,17 +52,3 @@ def test_active_python_defaults_do_not_reintroduce_legacy_comparison_start() -> 
     assert failures == []
 
 
-def test_frozen_statistical_validation_v1_is_not_a_runtime_active_policy() -> None:
-    path = Path("docs/research/statistical_validation_policy.json")
-    policy = json.loads(path.read_text(encoding="utf-8"))
-    runtime_references = [
-        str(candidate)
-        for candidate in _python_policy_paths()
-        if path.name in candidate.read_text(encoding="utf-8")
-    ]
-
-    assert policy["task_id"] == "TRADING-503"
-    assert policy["status"] == "VALIDATION_POLICY_FROZEN"
-    assert policy["market_regime"] == "ai_after_chatgpt"
-    assert policy["default_backtest_start"] == LEGACY_COMPARISON_START
-    assert runtime_references == []

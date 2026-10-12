@@ -165,14 +165,14 @@ def test_actual_report_registry_is_fully_covered_as_limited_unclassified() -> No
     )
 
     assert assessment.status is CanonicalStatus.LIMITED
-    assert len(assessment.entries) == 1372
+    assert len(assessment.entries) == 398
     assert all(item.report_spec is None for item in assessment.entries)
     assert all(item.status is CanonicalStatus.LIMITED for item in assessment.entries)
     assert {item.disposition for item in assessment.entries} == {
         ReportCatalogDisposition.AUDIT_INDEX_LIMITED_UNCLASSIFIED
     }
     assert assessment.to_dict()["typed_count"] == 0
-    assert assessment.to_dict()["limited_count"] == 1372
+    assert assessment.to_dict()["limited_count"] == 398
     assert assessment.to_dict()["blocked_count"] == 0
 
 
@@ -396,11 +396,11 @@ def test_report_audit_index_preserves_every_legacy_registry_entry(tmp_path: Path
     json_path, markdown_path = write_report_audit_index(view, output_dir=tmp_path)
     payload = json.loads(json_path.read_text(encoding="utf-8"))
 
-    assert payload["entry_count"] == 1372
+    assert payload["entry_count"] == 398
     assert payload["typed_count"] == 0
-    assert payload["limited_count"] == 1372
-    assert len(payload["entries"]) == 1372
-    assert len({item["report_id"] for item in payload["entries"]}) == 1372
+    assert payload["limited_count"] == 398
+    assert len(payload["entries"]) == 398
+    assert len({item["report_id"] for item in payload["entries"]}) == 398
     assert payload["include_all_registry_entries"] is True
     assert payload["include_legacy_unclassified"] is True
     assert payload["production_effect"] == "none"

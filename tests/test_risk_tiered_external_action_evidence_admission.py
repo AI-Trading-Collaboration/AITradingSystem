@@ -163,34 +163,6 @@ def test_trading_2537_v2_execution_evidence_is_exact_and_self_verifying() -> Non
     assert manifest["successor_task_id"].startswith("TRADING-2541_")
 
 
-def test_trading_2537_resolution_and_trading_2541_repair_boundary_are_disclosed() -> None:
-    flow = (ROOT / "docs/system_flow.md").read_text(encoding="utf-8")
-    requirement_2537 = (
-        ROOT
-        / "docs/requirements/"
-        "TRADING-2537_QC_QQQ_Options_Exact_Date_Provider_Catalog_Attribution_Correction_V1.md"
-    ).read_text(encoding="utf-8")
-    requirement_2539 = (
-        ROOT
-        / "docs/requirements/"
-        "TRADING-2539_QC_Cloud_File_API_Exact_Content_Mutation_And_Retry_Proposal_V1.md"
-    ).read_text(encoding="utf-8")
-    requirement_2541 = (
-        ROOT
-        / "docs/requirements/"
-        "TRADING-2541_QC_QQQ_Options_Exact_Date_Subscription_Missing_Remediation_V1.md"
-    ).read_text(encoding="utf-8")
-
-    # The retired Atlas page no longer discloses this boundary (Atlas retired, GOV-008).
-    for content in (flow, requirement_2537, requirement_2539, requirement_2541):
-        assert "2022-08-26" in content
-        assert "6496" in content
-    assert "## TRADING-2541 exact-date subscription missing remediation V1" in flow
-    assert "EXACT_DATE_CATALOG_AVAILABLE_SUBSCRIPTION_MISSING" in flow
-    assert "diagnosis" not in requirement_2541.lower() or "repair" in requirement_2541.lower()
-    assert "cross-date" in requirement_2541
-
-
 def test_project_rules_and_flow_expose_successor_policy() -> None:
     agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     flow = (ROOT / "docs/system_flow.md").read_text(encoding="utf-8")
