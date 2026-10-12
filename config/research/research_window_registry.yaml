@@ -16,7 +16,9 @@ policy_metadata:
     adjustment, primary-only extension caveat and required window metadata.
   review_condition: >
     Review before making any non-legacy window the default for promotion-style
-    interpretation or before introducing proxy robustness results.
+    interpretation or before introducing proxy robustness results. The QQQ
+    long-history windows (TRADING-2567) are reviewed when the long-history
+    snapshot check fails or the first preregistered question reaches a verdict.
 windows:
   exact_three_asset_validated:
     start: 2021-02-22
@@ -36,12 +38,14 @@ windows:
       - dynamic_second_layer_probe_validation
       - first_layer_trend_calibration
       - owner_review_evidence
+      - qqq_question_consistency_check
     blocked_usage:
       - production
       - paper_shadow
       - broker_order
     caveats:
       - still_short_sample
+      - reused_by_about_860_research_tasks_before_2026_10
       - does_not_cover_2020_covid_crash
   exact_three_asset_primary_only_extension:
     start: 2020-05-28
@@ -141,6 +145,66 @@ windows:
     caveats:
       - proxy_not_exact_sgov
       - not_mixed_with_exact_leaderboard
+  # QQQ-type questions (TRADING-2567, owner_decision:TRADING-2567:2026-10-12:qqq_direction_1999_window):
+  # develop on the first window, read the second once per preregistered question, then check
+  # consistency on exact_three_asset_validated and confirm on the forward record. Roles per question
+  # type are in primary_research_window_policy.yaml (question_windows).
+  qqq_long_history_development:
+    start: 1999-03-10
+    end: 2010-12-31
+    requested_start: 1999-03-10
+    actual_start: 1999-03-10
+    actual_portfolio_start: 1999-03-10
+    role: development
+    question_types: [qqq_direction]
+    assets: [QQQ_PROXY_NDX_TR, CASH_DTB3, SYNTHETIC_2X, SYNTHETIC_3X]
+    exact_or_proxy: proxy
+    data_quality_contract: qqq_long_history_snapshot_check
+    data_source: fred_qqq_long_history_research
+    data_spec: config/research/qqq_long_history.yaml
+    lookback_history_from: 1986-01-02
+    allowed_usage:
+      - signal_development
+      - parameter_selection
+      - falsification_tests
+    blocked_usage:
+      - promotion_evidence
+      - production
+      - paper_shadow
+      - broker_order
+    caveats:
+      - index_total_return_proxy_not_qqq_etf_price
+      - synthetic_leveraged_funds_are_hypothetical_before_qld_2006_06_and_tqqq_2010_02
+      - vxn_unavailable_before_2001_02_02
+      - cash_proxy_dtb3_not_sgov
+  qqq_long_history_validation:
+    start: 2011-01-03
+    end: 2021-02-19
+    requested_start: 2011-01-03
+    actual_start: 2011-01-03
+    actual_portfolio_start: 2011-01-03
+    role: validation
+    question_types: [qqq_direction]
+    assets: [QQQ_PROXY_NDX_TR, CASH_DTB3, SYNTHETIC_2X, SYNTHETIC_3X]
+    exact_or_proxy: proxy
+    data_quality_contract: qqq_long_history_snapshot_check
+    data_source: fred_qqq_long_history_research
+    data_spec: config/research/qqq_long_history.yaml
+    read_policy: once_per_preregistered_question
+    allowed_usage:
+      - preregistered_validation_read
+    blocked_usage:
+      - signal_development
+      - parameter_selection
+      - repeated_read_after_result_seen
+      - promotion_evidence
+      - production
+      - paper_shadow
+      - broker_order
+    caveats:
+      - index_total_return_proxy_not_qqq_etf_price
+      - synthetic_2x_3x_track_real_funds_with_cost_assumptions
+      - cash_proxy_dtb3_not_sgov
 safety_boundary:
   research_only: true
   actual_path_required: true

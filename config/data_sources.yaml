@@ -225,6 +225,53 @@ sources:
       - "`DTWEXBGS` 是 Federal Reserve 广义美元指数代理，不是 ICE DXY；报告不得把它称为 official DXY。"
     owner_notes: 当前 MVP 宏观利率和广义美元指数来源。
 
+  - source_id: fred_qqq_long_history_research
+    provider: Federal Reserve Economic Data
+    source_type: public_convenience
+    status: active
+    domains:
+      - research_history
+    endpoint: https://fred.stlouisfed.org/graph/fredgraph.csv
+    adapter: FredRateProvider via ai_trading_system.research_data.qqq_long_history
+    cadence: manual
+    requires_credentials: false
+    cache_paths:
+      - data/raw/research/qqq_long_history
+    primary_for:
+      - qqq_long_history_research
+    audit_fields:
+      - provider
+      - endpoint
+      - request_parameters
+      - downloaded_at
+      - row_count
+      - checksum
+    validation_checks:
+      - snapshot_checksum
+      - expected_first_dates
+      - duplicate_keys
+      - positive_index_levels
+      - suspicious_index_daily_returns
+      - calendar_gaps
+      - rate_and_volatility_ranges
+      - dividend_component_sign
+      - overlap_tracking_against_local_etf_prices
+    limitations:
+      - 研究专用（TRADING-2567 S1）：Nasdaq-100 总收益和价格指数、3 个月 T-bill、VIX/VXN/VXO，用来代理 1999 年起的 QQQ、现金和 2/3 倍杠杆基金；不进日报价格缓存，不进 `aits validate-data`，自己的 check 是这份数据的质量门禁。
+      - Nasdaq 指数数据经 FRED 转载，版权方禁止再分发：快照只在本机，不入库，不发给外部 LLM，命令只输出汇总。
+      - 合成 2/3 倍是按费率和融资成本假设算出的假想基金，QLD（2006-06）、TQQQ（2010-02）上市以前不是可交易路径。
+      - VXN 从 2001-02-02 起；VXO 在 2021-09 停更。
+    llm_permission:
+      license_scope: FRED 转载的 Nasdaq OMX、Cboe 指数数据，禁止再分发
+      personal_use_only: true
+      external_llm_allowed: false
+      cache_allowed: true
+      redistribution_allowed: false
+      max_content_sent_level: metadata_only
+    owner_notes: >-
+      owner_decision:TRADING-2567:2026-10-12:qqq_direction_1999_window。规格（序列、应有首日、派生参数、检查容差）在
+      config/research/qqq_long_history.yaml；研究窗口在 config/research/research_window_registry.yaml。
+
   - source_id: local_trade_theses
     provider: Local YAML input
     source_type: manual_input

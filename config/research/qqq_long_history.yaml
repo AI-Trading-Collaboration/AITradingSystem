@@ -1,0 +1,109 @@
+schema_version: qqq_long_history_spec.v1
+spec_id: qqq_long_history_v1
+status: owner_approved
+owner: research_governance
+owner_decision: owner_decision:TRADING-2567:2026-10-12:qqq_direction_1999_window
+requirement: docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md
+policy_metadata:
+  rationale: >
+    QQQ-type research questions use 1999-03-10 onward for development and validation (TRADING-2567).
+    The QQQ ETF price, SGOV and TQQQ do not reach back that far in the local cache, so the research
+    data is the Nasdaq-100 total return index, a T-bill cash proxy and synthetic 2x/3x funds built
+    from them, all from FRED.
+  intended_effect: >
+    One reviewed place for which series a long-history snapshot contains, the first observation each
+    must have, how the proxies are derived, and which checks a snapshot must pass before research
+    code may read it.
+  validation_evidence: >
+    tests/test_qqq_long_history.py covers snapshot checksums, first-date and structural checks,
+    the derivation arithmetic on fixed numbers, overlap tracking and the fail-closed loader. The
+    first real snapshot's check report (first dates, tracking against local QQQ/QLD/TQQQ) is
+    recorded in the TRADING-2567 progress section.
+  review_condition: >
+    Review when a series' first date or availability changes on FRED, when the check report shows
+    tracking outside the tolerances below, or before the synthetic funds are used for a question
+    whose answer depends on leverage cost.
+
+# Request window for fetch. 1986 gives the price-index lookback that signals need before
+# 1999-03-10; the research windows themselves are in research_window_registry.yaml.
+request_start: "1986-01-01"
+
+source:
+  source_id: fred_qqq_long_history_research
+  provider: Federal Reserve Economic Data
+  endpoint: https://fred.stlouisfed.org/graph/fredgraph.csv
+  redistribution_allowed: false
+  external_llm_allowed: false
+
+# expected_first_date is the first observation the snapshot must contain (on or after
+# request_start). A later first observation fails the check: coverage would be shorter than the
+# research window assumes.
+series:
+  - series_id: NASDAQXNDX
+    role: index_total_return
+    kind: index_level
+    expected_first_date: "1999-03-04"
+  - series_id: NASDAQ100
+    role: index_price
+    kind: index_level
+    expected_first_date: "1986-01-02"
+  - series_id: DTB3
+    role: cash_rate
+    kind: rate_percent
+    expected_first_date: "1986-01-02"
+  - series_id: VIXCLS
+    role: volatility_vix
+    kind: volatility_index
+    expected_first_date: "1990-01-02"
+  - series_id: VXNCLS
+    role: volatility_vxn
+    kind: volatility_index
+    expected_first_date: "2001-02-02"
+  - series_id: VXOCLS
+    role: volatility_vxo
+    kind: volatility_index
+    expected_first_date: "1986-01-02"
+    discontinued: true
+
+# Proxy derivation. Accruals use calendar days between consecutive index dates: cash and financing
+# on an actual/360 basis (T-bill convention, rate of the previous index date), fund expenses on
+# actual/365.
+derivation:
+  qqq_expense_ratio_annual: 0.0020
+  synthetic_funds:
+    - fund_id: lev2
+      leverage: 2
+      expense_ratio_annual: 0.0095
+      calibration_ticker: QLD
+    - fund_id: lev3
+      leverage: 3
+      expense_ratio_annual: 0.0095
+      calibration_ticker: TQQQ
+  # Leveraged ETFs borrow the (L-1) part through swaps priced above the T-bill rate. 0.5%/yr is a
+  # conservative assumption, not a fit; the check reports the actual tracking difference.
+  financing_spread_annual: 0.0050
+
+# Check tolerances. FAIL means the snapshot cannot be read by research code; WARN is reported and
+# must be explained in the run that uses the snapshot.
+checks:
+  first_date_tolerance_days: 5
+  # The largest real Nasdaq-100 daily moves are under 20%; a larger move is a data error suspect.
+  suspicious_index_daily_return_abs: 0.25
+  # Longest regular closure is a long weekend plus a holiday; the 2001-09-11 closure is listed.
+  max_calendar_gap_days: 5
+  known_long_gaps:
+    - "2001-09-10..2001-09-17"
+  rate_percent_range: [-1.0, 20.0]
+  volatility_index_range: [5.0, 150.0]
+  # Total return minus price return is the dividend reinvestment; a daily value below this is a
+  # misalignment suspect.
+  min_daily_dividend_component: -0.0005
+  stale_last_observation_days: 10
+  overlap_tickers:
+    QQQ: qqq_proxy
+    QLD: lev2
+    TQQQ: lev3
+  max_abs_annual_tracking_difference:
+    qqq_proxy: 0.005
+    lev2: 0.02
+    lev3: 0.03

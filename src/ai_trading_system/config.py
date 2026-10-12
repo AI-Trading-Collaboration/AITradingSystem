@@ -196,6 +196,7 @@ class DataSourceConfig(BaseModel):
             "portfolio_positions",
             "trade_thesis",
             "risk_events",
+            "research_history",
         ]
     ] = Field(min_length=1)
     endpoint: str = ""

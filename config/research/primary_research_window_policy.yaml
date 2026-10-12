@@ -18,6 +18,8 @@ policy_metadata:
   review_condition: >
     Review before changing the primary default window, allowing legacy results
     as primary decision evidence, or treating the 2020 extension as uncaveated.
+    The qqq_direction question windows (TRADING-2567, 2026-10-12) are reviewed
+    when the first preregistered QQQ question reaches a verdict.
 primary_research_window_policy:
   default_primary_window: exact_three_asset_validated
   default_primary_window_alias: EXACT_THREE_ASSET_VALIDATED_WINDOW
@@ -39,6 +41,26 @@ primary_research_window_policy:
     window_metadata_required_for_owner_review: true
     research_audit_metadata_required_post_1665: true
     mixed_window_leaderboard_allowed: false
+# Question types whose windows differ from the default above. A question belongs to a type when its
+# preregistration says so; everything else keeps default_primary_window.
+question_windows:
+  qqq_direction:
+    owner_decision: owner_decision:TRADING-2567:2026-10-12:qqq_direction_1999_window
+    requirement: docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md
+    scope: >
+      When to hold QQQ exposure (direction signals) and how to express it with QQQ, leveraged QQQ,
+      cash or QQQ options. Instruments are proxies before their real history starts.
+    development: qqq_long_history_development
+    validation: qqq_long_history_validation
+    consistency_check: exact_three_asset_validated
+    final_confirmation: forward_record
+    rules:
+      preregister_before_validation_read: true
+      validation_read_once_per_question: true
+      consistency_window_not_for_development: true
+      consistency_window_result_cannot_rescue_failed_validation: true
+      proxy_caveats_required_in_reports: true
+      option_layer_backtest_platform: quantconnect_after_direction_signal_holds
 windows:
   exact_three_asset_validated:
     role: primary_validated

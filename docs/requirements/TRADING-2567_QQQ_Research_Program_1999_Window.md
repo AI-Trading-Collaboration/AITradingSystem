@@ -40,7 +40,7 @@ FMP 没有期权数据；现有 FMP Starter 档只有 5 年历史。QQQ 实际 E
 |---|---|---|
 | S0 | 本文档、任务卡、研究台账的去向和更正 | A |
 | S1 | 长历史研究数据：上表 FRED 序列下载成研究快照（不进日报缓存和日报 DQ），带 manifest、校验和覆盖检查；派生现金代理和合成 2 倍、3 倍，与本机 QQQ、QLD、TQQQ 重叠段比对；`config/data_sources.yaml` 登记 | C |
-| S2 | 研究窗口：`research_window_registry.yaml` 新增 1999-03-10 到 2020-12-31 的开发验证窗口（代理口径），`primary_research_window_policy.yaml` 写明 QQQ 类问题的窗口角色；`AGENTS.md`、research-run skill 同步 | C |
+| S2 | 研究窗口：`research_window_registry.yaml` 新增开发窗口 1999-03-10 到 2010-12-31、验证窗口 2011-01-03 到 2021-02-19（代理口径），`primary_research_window_policy.yaml` 的 `question_windows` 写明 QQQ 方向问题的窗口角色；`AGENTS.md`、research-run skill 同步 | C |
 | S3 | 评估台：共享模拟器（从 `simple_baseline_portfolio_control` 提出）、快照读取、试验登记和多重检验校正（TRADING-2565）、标准证伪检验、预注册格式 | B/C |
 | S4 | 第一批预注册（Baker 签开题）：经典趋势基准、旧 QQQ 期权线冻结的 4 个风险否决、冻结的 Composer v2 只作样本外检验（是否纳入在开题时定） | A |
 | S5 | 期权实现：方向信号通过后另立任务，在 QuantConnect 上回测；对照组和估计量在运行前冻结 | 另立任务 |
@@ -57,6 +57,21 @@ FMP 没有期权数据；现有 FMP Starter 档只有 5 年历史。QQQ 实际 E
 - S2：窗口登记和政策写明新窗口的角色和禁止用途；`AGENTS.md` 与之一致。
 - S3、S4 的验收在各自的设计里定，开题时由 Baker 确认。
 
+## S1、S2 的实现（2026-10-12）
+
+数据：
+- 模块 `src/ai_trading_system/research_data/qqq_long_history.py`，规格 `config/research/qqq_long_history.yaml`，数据源目录登记为 `fred_qqq_long_history_research`（新领域 `research_history`，不参与 market_prices、macro_rates 的跨源对账，不进日报）。
+- `python -m ai_trading_system.research_data.qqq_long_history fetch`：用现成的 `FredRateProvider` 下载 1986-01-01 起的 6 个序列，写成 `data/raw/research/qqq_long_history/<快照 id>/`（`series.csv`、`manifest.json`）。快照 id 由请求截止日和内容 sha256 组成，同样的数据得到同样的 id。下载后自动检查。
+- `check`：校验和、各序列首日不晚于规格（FAIL）、重复日期、指数水平为正（FAIL）；单日涨跌超 25%、超过 5 个日历日的间隔（9/11 休市已登记）、利率和波动率指数越界、总收益落后价格收益、序列停更（WARN）；派生后与本机 `data/raw/prices_daily.csv` 的 QQQ、QLD、TQQQ 复权价比重叠段的年化跟踪差和跟踪误差，超出容差记 WARN。结果写 `check.json`、`check.md`，只含汇总。
+- 研究代码只能经 `load_daily` 读：快照校验和不符、没有检查、检查结果是 FAIL、或规格在检查后改过，都拒绝读取。这就是这份数据的质量门禁，相当于日报缓存的 `aits validate-data`。
+- 派生（以 Nasdaq-100 价格指数的交易日为日历，按两个交易日之间的日历天数计息）：QQQ 代理 = 总收益指数日收益 − 0.20% 年费率；现金 = 前一交易日的 DTB3 × 天数/360；合成 L 倍 = L × 总收益指数日收益 − (L−1) × (前一交易日 DTB3 + 0.5% 融资利差) × 天数/360 − 0.95% 年费率 × 天数/365。参数是事先定的假设，不按 QLD、TQQQ 拟合；检查报告给出实际跟踪差。
+- 检查报告不给任何窗口上的收益或择时结果，避免在预注册之前读到验证窗口的结论。
+
+窗口：
+- 开发 1999-03-10 到 2010-12-31（含 2000–2002、2008 两次熊市），验证 2011-01-03 到 2021-02-19（含 2011、2015–16、2018 年末、2020 的回撤），2021-02-22 起的现有窗口对 QQQ 方向问题只做一致性检查，一致性检查不能挽救验证失败。1986 起的价格指数只作信号回看期。
+- 其他问题的默认窗口不变，仍是 2021-02-22。
+
 ## 进展
 
 - 2026-10-12：Baker 决定研究方向、窗口和顺序；S0 记录。production_effect=none；broker_action=none。
+- 2026-10-12：S1、S2 的代码、规格、数据源登记、窗口政策和 `AGENTS.md` 改动（C 区，同一 owner 决定）。真实快照在本机发布后第一次下载，首日和跟踪结果补记在这里。production_effect=none；broker_action=none。

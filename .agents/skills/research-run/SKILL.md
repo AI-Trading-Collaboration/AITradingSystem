@@ -26,8 +26,14 @@ the records below.
 - Default research and backtest window starts on 2021-02-22 (`config/research/primary_research_window_policy.yaml`).
   Earlier data only for labelled sensitivity, proxy, or stress tests with data-quality caveats.
   2022-12-01 is not a default, comparator, or minimum start.
-- Run `aits validate-data` (or the same code path) first and stop on failure. State the data quality
-  status in the result.
+- QQQ direction questions (TRADING-2567) use `question_windows.qqq_direction` in that policy: develop
+  on 1999-03-10..2010-12-31; read 2011-01-03..2021-02-19 once, after the preregistration ships;
+  2021-02-22 onward is a consistency check only and cannot rescue a failed validation.
+- Their data is the long-history snapshot: `python -m ai_trading_system.research_data.qqq_long_history
+  fetch` on the owner's machine, read through `load_daily`. It stays local: never commit it, print
+  its rows, or send them to an external model.
+- Run `aits validate-data` (or the same code path) first and stop on failure when reading the daily
+  cache. State the data quality status in the result.
 - Every report states the selected window and the actual requested and evaluated date ranges.
 
 ## Order

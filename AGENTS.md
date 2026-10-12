@@ -13,8 +13,13 @@ Active strategy research, primary backtests, and investment-facing conclusions u
 QQQ/SGOV/TQQQ validated window beginning on 2021-02-22 (`config/research/primary_research_window_policy.yaml`).
 
 - default research and backtest start: 2021-02-22; this is the single project default.
-- Results before 2021-02-22 are allowed only for governed sensitivity, proxy, or stress testing with
-  the relevant data-quality caveats.
+- QQQ direction questions (TRADING-2567) are the exception, set in `question_windows` of the same
+  policy: develop on 1999-03-10..2010-12-31, read 2011-01-03..2021-02-19 once per preregistered
+  question, use 2021-02-22 onward only as a consistency check, and confirm on the forward record.
+  Their data is the long-history research snapshot (`config/research/qqq_long_history.yaml`), a
+  proxy: reports carry its caveats.
+- Otherwise, results before 2021-02-22 are allowed only for governed sensitivity, proxy, or stress
+  testing with the relevant data-quality caveats.
 - 2022-12-01 is not an active default, a primary conclusion boundary, a required comparator, or a
   minimum start. It may remain only in immutable historical artifacts and descriptions of prior runs.
 - Backtest and strategy reports state the selected research window and the actual requested and
@@ -32,7 +37,9 @@ inconsistencies as investigation items, never smooth them over silently.
 
 `aits validate-data` is the required gate for cached market and macro data. Any command that produces
 features, scores, backtests, or daily reports from cached data runs it first (or calls the same code
-path) and stops on failure. Passing validation is visible in downstream outputs: reports state the data
+path) and stops on failure. Research snapshots outside the daily cache have their own gate: the QQQ
+long-history snapshot is read only through `load_daily` in
+`ai_trading_system.research_data.qqq_long_history`, which refuses an unchecked or failed snapshot. Passing validation is visible in downstream outputs: reports state the data
 quality status or link the quality report. Local data-dependent commands enforce the gate themselves;
 CI cannot see the untracked cache. `tests/invariants/` proves the gate stops downstream work.
 
