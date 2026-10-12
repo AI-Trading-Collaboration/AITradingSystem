@@ -13,7 +13,7 @@
 | 成本模型 | `config/research/transaction_cost_model.yaml` | 删除前研究代码里的成本默认值有 0、4、5、5–15 bps 四种，评估台统一用这一份 |
 | 运行出处记录 | `src/ai_trading_system/core/provenance.py` | 记录 commit、代码是否改动、配置哈希。评估台的运行器以它为核心，补上快照 id、窗口和试验编号 |
 | 研究窗口政策 | `config/research/primary_research_window_policy.yaml`、`research_window_registry.yaml` | C 区。QQQ 方向问题的开发、验证、一致性窗口在 `question_windows.qqq_direction` |
-| 1999 年起的 QQQ 长历史数据 | `src/ai_trading_system/research_data/qqq_long_history.py`；规格 `config/research/qqq_long_history.yaml` | FRED 的 Nasdaq-100 总收益和价格、T-bill、VIX/VXN/VXO 快照，派生 QQQ 代理、现金、合成 2/3 倍。只能经 `load_daily` 读，未检查或检查失败的快照会被拒绝；数据只在本机（TRADING-2567 S1） |
+| 1999 年起的 QQQ 长历史数据 | `src/ai_trading_system/research_data/qqq_long_history.py`；规格 `config/research/qqq_long_history.yaml` | FRED 的 Nasdaq-100 总收益和价格、T-bill、VIX/VXN/VXO 快照，派生 QQQ 代理、现金、合成 2/3 倍。只能经 `load_daily` 读，未检查或检查失败的快照会被拒绝；数据只在本机。快照在主仓库的 `data/raw/research/qqq_long_history/`，`fetch`、`check` 带 `--prices-path` 指向运行副本的价格（TRADING-2567 S1） |
 
 ## 证伪检验
 

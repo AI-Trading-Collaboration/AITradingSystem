@@ -16,9 +16,10 @@ policy_metadata:
     code may read it.
   validation_evidence: >
     tests/test_qqq_long_history.py covers snapshot checksums, first-date and structural checks,
-    the derivation arithmetic on fixed numbers, overlap tracking and the fail-closed loader. The
-    first real snapshot's check report (first dates, tracking against local QQQ/QLD/TQQQ) is
-    recorded in the TRADING-2567 progress section.
+    the calendar and derivation arithmetic on fixed numbers, the dividend-ratio check, overlap
+    tracking and the fail-closed loader. The first real snapshot's check report (first dates,
+    tracking against local QQQ/TQQQ) and the changes it led to are recorded in the TRADING-2567
+    progress section.
   review_condition: >
     Review when a series' first date or availability changes on FRED, when the check report shows
     tracking outside the tolerances below, or before the synthetic funds are used for a question
@@ -65,7 +66,9 @@ series:
     expected_first_date: "1986-01-02"
     discontinued: true
 
-# Proxy derivation. Accruals use calendar days between consecutive index dates: cash and financing
+# Proxy derivation. The calendar is the price index's dates, minus those from the first
+# total-return date on that have no total-return level (FRED carries the price index over some
+# exchange holidays). Accruals use calendar days between consecutive index dates: cash and financing
 # on an actual/360 basis (T-bill convention, rate of the previous index date), fund expenses on
 # actual/365.
 derivation:
@@ -79,9 +82,11 @@ derivation:
       leverage: 3
       expense_ratio_annual: 0.0095
       calibration_ticker: TQQQ
-  # Leveraged ETFs borrow the (L-1) part through swaps priced above the T-bill rate. 0.5%/yr is a
-  # conservative assumption, not a fit; the check reports the actual tracking difference.
-  financing_spread_annual: 0.0050
+  # Leveraged ETFs borrow the (L-1) part through swaps priced above the T-bill rate. The first
+  # snapshot (2026-10-13) showed the 0.5%/yr assumption leaving synthetic 3x 1.54%/yr ahead of
+  # TQQQ over 2018-01-02..2026-10-09; 1.25%/yr closes that gap so the synthetic funds are not
+  # flattered. Calibrated on ETF tracking only, no signal or strategy result.
+  financing_spread_annual: 0.0125
 
 # Check tolerances. FAIL means the snapshot cannot be read by research code; WARN is reported and
 # must be explained in the run that uses the snapshot.
@@ -95,9 +100,14 @@ checks:
     - "2001-09-10..2001-09-17"
   rate_percent_range: [-1.0, 20.0]
   volatility_index_range: [5.0, 150.0]
-  # Total return minus price return is the dividend reinvestment; a daily value below this is a
-  # misalignment suspect.
+  # Total return minus price return is the dividend reinvestment. Days below this are counted per
+  # year in the report.
   min_daily_dividend_component: -0.0005
+  # Dividends only ever raise the total-return / price ratio. Single-day level noise in either
+  # index moves a window of this many trading days by at most that noise; a window where total
+  # return trails price return by more than the limit is a misalignment or drift (WARN).
+  dividend_window_trading_days: 21
+  min_window_dividend_component: -0.005
   stale_last_observation_days: 10
   overlap_tickers:
     QQQ: qqq_proxy

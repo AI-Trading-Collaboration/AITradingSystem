@@ -30,8 +30,9 @@ the records below.
   on 1999-03-10..2010-12-31; read 2011-01-03..2021-02-19 once, after the preregistration ships;
   2021-02-22 onward is a consistency check only and cannot rescue a failed validation.
 - Their data is the long-history snapshot: `python -m ai_trading_system.research_data.qqq_long_history
-  fetch` on the owner's machine, read through `load_daily`. It stays local: never commit it, print
-  its rows, or send them to an external model.
+  fetch` in the main checkout on the owner's machine (`--prices-path` to the ops runtime copy's
+  `prices_daily.csv`), read through `load_daily`. It stays local: never commit it, print its rows,
+  or send them to an external model.
 - Run `aits validate-data` (or the same code path) first and stop on failure when reading the daily
   cache. State the data quality status in the result.
 - Every report states the selected window and the actual requested and evaluated date ranges.

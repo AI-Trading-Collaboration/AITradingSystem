@@ -7,7 +7,9 @@ does not match its manifest or whose check is missing, stale or FAIL. This check
 gate for these snapshots; they are not part of the daily price cache or ``aits validate-data``.
 
 The Nasdaq series may not be redistributed: snapshots stay on this machine, are never committed,
-and the commands below print summaries only, never rows.
+and the commands below print summaries only, never rows. Run them from the main checkout, where
+research code reads the snapshot by default; ``--prices-path`` points the overlap check at the
+freshest local ETF prices (read only).
 
     python -m ai_trading_system.research_data.qqq_long_history fetch [--end YYYY-MM-DD]
     python -m ai_trading_system.research_data.qqq_long_history check [--snapshot ID]
@@ -36,7 +38,7 @@ DEFAULT_SPEC_PATH = PROJECT_ROOT / "config" / "research" / "qqq_long_history.yam
 DEFAULT_SNAPSHOT_ROOT = PROJECT_ROOT / "data" / "raw" / "research" / "qqq_long_history"
 DEFAULT_PRICES_PATH = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
 SNAPSHOT_SCHEMA_VERSION = "qqq_long_history_snapshot.v1"
-CHECK_SCHEMA_VERSION = "qqq_long_history_check.v1"
+CHECK_SCHEMA_VERSION = "qqq_long_history_check.v2"
 LATEST_POINTER = "LATEST"
 SERIES_FILE = "series.csv"
 MANIFEST_FILE = "manifest.json"
@@ -99,6 +101,8 @@ class CheckSpec(_Strict):
     rate_percent_range: tuple[float, float]
     volatility_index_range: tuple[float, float]
     min_daily_dividend_component: float
+    dividend_window_trading_days: int = Field(ge=2)
+    min_window_dividend_component: float = Field(lt=0)
     stale_last_observation_days: int = Field(ge=0)
     overlap_tickers: dict[str, str]
     max_abs_annual_tracking_difference: dict[str, float]
@@ -258,19 +262,22 @@ def read_snapshot(snapshot_dir: Path) -> tuple[dict[str, Any], pd.DataFrame]:
 def derive_daily(frame: pd.DataFrame, spec: LongHistorySpec) -> pd.DataFrame:
     """Daily research frame on the Nasdaq-100 price-index calendar.
 
-    Returns on day t cover the previous index date to t. Cash and financing accrue at the T-bill
-    rate dated on or before the previous index date. ``cash_rate_annual`` on day t is the rate dated
-    t, which FRED publishes the next business day: a signal that reads it lags it by one day.
+    From the first total-return date on, a price-index date without a total-return level is dropped
+    from the calendar (FRED carries the price index over some exchange holidays), so returns stay
+    defined on every remaining date. Returns on day t cover the previous index date to t. Cash and
+    financing accrue at the T-bill rate dated on or before the previous index date.
+    ``cash_rate_annual`` on day t is the rate dated t, which FRED publishes the next business day: a
+    signal that reads it lags it by one day.
     """
 
-    wide = frame.pivot(index="date", columns="series", values="value")
-    wide.index = pd.to_datetime(wide.index)
-    wide = wide.sort_index()
+    wide = _wide_series(frame)
     price_id = spec.series_for("index_price").series_id
     tr_id = spec.series_for("index_total_return").series_id
     cash_id = spec.series_for("cash_rate").series_id
 
     price = wide[price_id].dropna()
+    dropped = price_only_dates(price.index, wide[tr_id].dropna().index)
+    price = price.drop(dropped)
     calendar = pd.DatetimeIndex(price.index, name="date")
     out = pd.DataFrame(index=calendar)
     out["calendar_days"] = calendar.to_series().diff().dt.days.to_numpy()
@@ -311,6 +318,23 @@ def derive_daily(frame: pd.DataFrame, spec: LongHistorySpec) -> pd.DataFrame:
         else:
             out[column] = math.nan
     return out
+
+
+def price_only_dates(price_dates: pd.Index, total_return_dates: pd.Index) -> pd.DatetimeIndex:
+    """Price-index dates on or after the first total-return date that have no total-return level."""
+
+    price_index = pd.DatetimeIndex(price_dates)
+    if len(total_return_dates) == 0:
+        return pd.DatetimeIndex([])
+    total_return_index = pd.DatetimeIndex(total_return_dates)
+    after = price_index[price_index >= total_return_index.min()]
+    return pd.DatetimeIndex(after[~after.isin(total_return_index)])
+
+
+def _wide_series(frame: pd.DataFrame) -> pd.DataFrame:
+    wide = frame.pivot(index="date", columns="series", values="value")
+    wide.index = pd.to_datetime(wide.index)
+    return wide.sort_index()
 
 
 # --- check ------------------------------------------------------------------------------------
@@ -386,7 +410,7 @@ def check_snapshot(
         return report
 
     daily = derive_daily(frame, spec)
-    calendar_summary = _check_calendar(daily, spec, issues)
+    calendar_summary = _check_calendar(frame, daily, spec, issues)
     overlap = _check_overlap(daily, prices_path, checks, issues)
     report = _check_report(
         loaded, manifest, series_rows, issues, calendar_summary, overlap, checked_at
@@ -432,7 +456,9 @@ def _check_ranges(
         )
 
 
-def _check_calendar(daily: pd.DataFrame, spec: LongHistorySpec, issues: _Issues) -> dict[str, Any]:
+def _check_calendar(
+    frame: pd.DataFrame, daily: pd.DataFrame, spec: LongHistorySpec, issues: _Issues
+) -> dict[str, Any]:
     checks = spec.checks
     known = {gap.strip() for gap in checks.known_long_gaps}
     dates = daily.index
@@ -452,29 +478,40 @@ def _check_calendar(daily: pd.DataFrame, spec: LongHistorySpec, issues: _Issues)
             dates=unexplained[:MAX_LISTED_DATES],
         )
 
-    tr_start = daily["ndx_tr"].first_valid_index()
-    after_tr = daily.loc[tr_start:] if tr_start is not None else daily.iloc[0:0]
-    missing_tr = after_tr.index[after_tr["ndx_tr"].isna()]
-    if len(missing_tr):
+    wide = _wide_series(frame)
+    tr_id = spec.series_for("index_total_return").series_id
+    price = wide[spec.series_for("index_price").series_id].dropna()
+    dropped = price_only_dates(price.index, wide[tr_id].dropna().index)
+    # An unchanged level is the price index carried over a closed session; a moved level means a
+    # trading day without a total-return level, whose move the next date then absorbs.
+    previous = price.shift(1).reindex(dropped)
+    moved = dropped[price.reindex(dropped).to_numpy() != previous.to_numpy()]
+    if len(moved):
         issues.add(
             "WARN",
-            "total_return_missing_on_price_dates",
-            spec.series_for("index_total_return").series_id,
-            f"{len(missing_tr)} price-index dates have no total-return level",
-            dates=[_iso(item) for item in missing_tr[:MAX_LISTED_DATES]],
+            "total_return_missing_on_trading_dates",
+            tr_id,
+            f"{len(moved)} price-index dates with a moved level have no total-return level; "
+            "dropped from the calendar",
+            dates=[_iso(item) for item in moved[:MAX_LISTED_DATES]],
         )
 
+    tr_start = daily["ndx_tr"].first_valid_index()
     dividend = (daily["ndx_tr_return"] - daily["ndx_price_return"]).dropna()
-    negative = dividend.index[dividend < checks.min_daily_dividend_component]
-    if len(negative):
-        issues.add(
-            "WARN",
-            "negative_dividend_component",
-            "calendar",
-            f"{len(negative)} days where total return trails price return by more than "
-            f"{-checks.min_daily_dividend_component:.2%}",
-            dates=[_iso(item) for item in negative[:MAX_LISTED_DATES]],
-        )
+    negative = dividend < checks.min_daily_dividend_component
+    windows = _dividend_windows(daily, checks, issues)
+    years = pd.DatetimeIndex(dividend.index).year
+    by_year = [
+        {
+            "year": year,
+            "trading_days": int((years == year).sum()),
+            "negative_component_days": int(negative[years == year].sum()),
+            "implied_dividend_yield_annual": _round(
+                dividend[years == year].mean() * TRADING_DAYS_PER_YEAR
+            ),
+        }
+        for year in sorted(set(years.tolist()))
+    ]
 
     cash = spec.series_for("cash_rate")
     rate_dates = daily["cash_rate_annual"].notna()
@@ -484,9 +521,61 @@ def _check_calendar(daily: pd.DataFrame, spec: LongHistorySpec, issues: _Issues)
         "last_date": _iso(dates[-1]) if len(dates) else None,
         "long_gaps": long_gaps[:MAX_LISTED_DATES],
         "total_return_first_date": None if tr_start is None else _iso(tr_start),
+        "price_only_dates_dropped": int(len(dropped)),
+        "price_only_dates_unchanged": int(len(dropped) - len(moved)),
+        "price_only_dates": [_iso(item) for item in dropped[:MAX_LISTED_DATES]],
         "implied_dividend_yield_annual": _round(dividend.mean() * TRADING_DAYS_PER_YEAR),
+        "negative_component_days": int(negative.sum()),
+        "dividend_component_lag1_autocorrelation": (
+            _round(dividend.autocorr(lag=1)) if len(dividend) > 2 else None
+        ),
+        "min_daily_dividend_component": _round(dividend.min()) if len(dividend) else None,
+        "dividend_windows": windows,
+        "dividend_by_year": by_year,
         "cash_rate_series": cash.series_id,
         "cash_rate_dates_covered": int(rate_dates.sum()),
+    }
+
+
+def _dividend_windows(daily: pd.DataFrame, checks: CheckSpec, issues: _Issues) -> dict[str, Any]:
+    """Change of the total-return / price-index ratio over rolling windows of trading days.
+
+    Reinvested dividends only ever raise the ratio. Level noise on single days in either index
+    moves a window by at most the size of that noise and reverses in the next window; a
+    misalignment or drift that research would inherit accumulates over the window instead.
+    """
+
+    ratio = (daily["ndx_tr"] / daily["ndx_price"]).dropna()
+    window = checks.dividend_window_trading_days
+    change = (ratio / ratio.shift(window) - 1).dropna()
+    if change.empty:
+        return {}
+    below = (change < checks.min_window_dividend_component).to_numpy()
+    starts = pd.DatetimeIndex(ratio.index[: len(ratio) - window])
+    ends = pd.DatetimeIndex(change.index)
+    # Consecutive offending windows merge into one span: first window's start .. last window's end.
+    spans: list[str] = []
+    first = 0
+    for position, flag in enumerate(below):
+        if not flag:
+            first = position + 1
+        elif position + 1 == len(below) or not below[position + 1]:
+            spans.append(f"{_iso(starts[first])}..{_iso(ends[position])}")
+    if spans:
+        issues.add(
+            "WARN",
+            "dividend_window_negative",
+            "calendar",
+            f"{int(below.sum())} windows of {window} trading days where total return trails price "
+            f"return by more than {-checks.min_window_dividend_component:.2%}",
+            dates=spans[:MAX_LISTED_DATES],
+        )
+    return {
+        "trading_days": window,
+        "min_change": _round(float(change.min())),
+        "min_change_end_date": _iso(change.idxmin()),
+        "windows_below_limit": int(below.sum()),
+        "spans_below_limit": int(len(spans)),
     }
 
 
@@ -623,9 +712,36 @@ def render_check_markdown(report: Mapping[str, Any]) -> str:
             f"- 交易日：{calendar['calendar_dates']}"
             f"（{calendar['first_date']} 到 {calendar['last_date']}）",
             f"- 总收益指数首日：{calendar['total_return_first_date']}",
+            f"- 从日历去掉的价格指数单独日期：{calendar['price_only_dates_dropped']} 个，"
+            f"其中价格未变 {calendar['price_only_dates_unchanged']} 个"
+            f"（{', '.join(calendar['price_only_dates']) or '无'}）",
             f"- 隐含股息率（总收益减价格收益，年化）：{calendar['implied_dividend_yield_annual']}",
+            f"- 总收益落后价格收益超过阈值的天数：{calendar['negative_component_days']}；"
+            f"日股息分量的一阶自相关：{calendar['dividend_component_lag1_autocorrelation']}",
             f"- 超长间隔：{', '.join(calendar['long_gaps']) or '无'}",
         ]
+        windows = calendar.get("dividend_windows") or {}
+        if windows:
+            lines.append(
+                f"- 单日股息分量最低：{calendar['min_daily_dividend_component']}；"
+                f"{windows['trading_days']} 个交易日滚动窗口里总收益相对价格收益最差 "
+                f"{windows['min_change']}（截至 {windows['min_change_end_date']}），"
+                f"低于下限的窗口 {windows['windows_below_limit']} 个"
+            )
+        by_year = calendar.get("dividend_by_year") or []
+        if by_year:
+            lines += [
+                "",
+                "### 逐年股息分量",
+                "",
+                "| 年 | 交易日 | 落后天数 | 隐含股息率 |",
+                "|---|---:|---:|---:|",
+            ]
+            lines += [
+                f"| {row['year']} | {row['trading_days']} | {row['negative_component_days']} | "
+                f"{row['implied_dividend_yield_annual']} |"
+                for row in by_year
+            ]
     tracking = report.get("overlap_tracking") or {}
     overlap = {key: value for key, value in tracking.items() if isinstance(value, dict)}
     if overlap:

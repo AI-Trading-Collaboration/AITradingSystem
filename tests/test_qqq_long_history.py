@@ -129,6 +129,8 @@ def test_real_spec_names_the_reviewed_series_and_funds() -> None:
     }
     assert spec.source.redistribution_allowed is False
     assert spec.source.external_llm_allowed is False
+    # Calibrated on TQQQ after the first snapshot (TRADING-2567 progress, 2026-10-13).
+    assert spec.derivation.financing_spread_annual == 0.0125
 
 
 def test_data_source_entry_matches_the_spec_and_stays_out_of_reconciliation() -> None:
@@ -225,6 +227,7 @@ def test_derive_daily_arithmetic_on_fixed_numbers(tmp_path: Path) -> None:
     daily = qlh.derive_daily(frame, spec)
     monday = daily.loc["2020-01-06"]
     tr_return = 204.6 / 202.2 - 1
+    spread = spec.derivation.financing_spread_annual
 
     assert monday["calendar_days"] == 3
     assert monday["ndx_tr_return"] == pytest.approx(tr_return)
@@ -232,14 +235,46 @@ def test_derive_daily_arithmetic_on_fixed_numbers(tmp_path: Path) -> None:
     assert monday["cash_return"] == pytest.approx(0.018 * 3 / 360)
     assert monday["qqq_proxy_return"] == pytest.approx(tr_return - 0.002 * 3 / 365)
     assert monday["lev3_return"] == pytest.approx(
-        3 * tr_return - 2 * (0.018 + 0.005) * 3 / 360 - 0.0095 * 3 / 365
+        3 * tr_return - 2 * (0.018 + spread) * 3 / 360 - 0.0095 * 3 / 365
     )
     assert monday["lev2_return"] == pytest.approx(
-        2 * tr_return - 1 * (0.018 + 0.005) * 3 / 360 - 0.0095 * 3 / 365
+        2 * tr_return - 1 * (0.018 + spread) * 3 / 360 - 0.0095 * 3 / 365
     )
     assert monday["vix"] == 14.0
     assert math.isnan(daily.loc["2020-01-03", "vix"])
     assert math.isnan(daily.loc["2020-01-02", "lev3_return"])
+
+
+def test_derive_daily_drops_price_only_dates_after_total_return_starts(tmp_path: Path) -> None:
+    spec = qlh.load_spec(_write_spec(tmp_path)).spec
+    frame = pd.DataFrame(
+        [
+            ("2019-12-31", "NASDAQ100", 99.0),
+            ("2020-01-01", "NASDAQ100", 99.0),
+            ("2020-01-02", "NASDAQ100", 100.0),
+            ("2020-01-03", "NASDAQ100", 100.0),
+            ("2020-01-06", "NASDAQ100", 102.0),
+            ("2020-01-02", "NASDAQXNDX", 200.0),
+            ("2020-01-06", "NASDAQXNDX", 204.6),
+            ("2019-12-31", "DTB3", 1.8),
+        ],
+        columns=["date", "series", "value"],
+    )
+
+    daily = qlh.derive_daily(frame, spec)
+
+    # Before the first total-return date the price index alone sets the calendar.
+    assert list(daily.index.strftime("%Y-%m-%d")) == [
+        "2019-12-31",
+        "2020-01-01",
+        "2020-01-02",
+        "2020-01-06",
+    ]
+    monday = daily.loc["2020-01-06"]
+    assert monday["calendar_days"] == 4
+    assert monday["ndx_price_return"] == pytest.approx(0.02)
+    assert monday["ndx_tr_return"] == pytest.approx(204.6 / 200 - 1)
+    assert monday["cash_return"] == pytest.approx(0.018 * 4 / 360)
 
 
 def test_check_passes_clean_data_and_measures_tracking(tmp_path: Path) -> None:
@@ -257,12 +292,19 @@ def test_check_passes_clean_data_and_measures_tracking(tmp_path: Path) -> None:
     assert report["overlap_tracking"]["TQQQ"]["annual_tracking_difference"] == pytest.approx(
         -0.0001 * qlh.TRADING_DAYS_PER_YEAR, rel=1e-3
     )
-    assert report["calendar"]["total_return_first_date"] == "2020-01-02"
-    assert report["calendar"]["implied_dividend_yield_annual"] > 0
+    calendar = report["calendar"]
+    assert calendar["total_return_first_date"] == "2020-01-02"
+    assert calendar["implied_dividend_yield_annual"] > 0
+    assert calendar["price_only_dates_dropped"] == 0
+    assert calendar["negative_component_days"] == 0
+    assert calendar["dividend_windows"]["windows_below_limit"] == 0
+    assert calendar["dividend_windows"]["min_change"] > 0
+    assert [row["year"] for row in calendar["dividend_by_year"]] == [2020]
     assert (snapshot / qlh.CHECK_JSON_FILE).exists()
     markdown = (snapshot / qlh.CHECK_MD_FILE).read_text(encoding="utf-8")
     assert "状态：**PASS**" in markdown
     assert "TQQQ" in markdown
+    assert "| 2020 |" in markdown
 
 
 def test_check_fails_when_coverage_starts_late(tmp_path: Path) -> None:
@@ -324,10 +366,16 @@ def test_check_flags_suspicious_moves_and_bad_levels(tmp_path: Path) -> None:
         snapshot, qlh.load_spec(spec_path), prices_path=tmp_path / "missing.csv"
     )
     codes = {issue["code"]: issue for issue in report["issues"]}
+    dates = list(pd.bdate_range("2020-01-02", "2020-06-30").strftime("%Y-%m-%d"))
+    jump_at = dates.index("2020-04-01")
+    window = qlh.load_spec(spec_path).spec.checks.dividend_window_trading_days
 
     assert codes["suspicious_index_return"]["dates"] == ["2020-04-01"]
-    # Only the price index jumped, so total return trails price return on that day.
-    assert codes["negative_dividend_component"]["dates"] == ["2020-04-01"]
+    # Only the price index jumped, so every window holding that day has total return trailing.
+    assert codes["dividend_window_negative"]["dates"] == [
+        f"{dates[jump_at - window]}..{dates[jump_at + window - 1]}"
+    ]
+    assert report["calendar"]["dividend_by_year"][0]["negative_component_days"] == 1
     assert codes["overlap_unavailable"]["severity"] == "WARN"
 
     zero = frame.copy()
@@ -336,6 +384,71 @@ def test_check_flags_suspicious_moves_and_bad_levels(tmp_path: Path) -> None:
     report = qlh.check_snapshot(bad, qlh.load_spec(spec_path), prices_path=tmp_path / "x.csv")
     assert report["status"] == "FAIL"
     assert "nonpositive_index_level" in {issue["code"] for issue in report["issues"]}
+
+
+def _scale(frame: pd.DataFrame, series_id: str, factors: dict[str, float]) -> pd.DataFrame:
+    scaled = frame.copy()
+    for day, factor in factors.items():
+        rows = (scaled["series"] == series_id) & (scaled["date"] == day)
+        scaled.loc[rows, "value"] = scaled.loc[rows, "value"] * factor
+    return scaled
+
+
+def test_check_reports_price_only_dates_and_warns_only_when_the_level_moved(
+    tmp_path: Path,
+) -> None:
+    spec_path = _write_spec(tmp_path)
+    frame = _series_frame()
+    # 2020-02-17 is a holiday with the price index carried over; 2020-03-02 is a trading day
+    # whose total-return level is missing.
+    frame = frame[
+        ~((frame["series"] == "NASDAQXNDX") & frame["date"].isin(["2020-02-17", "2020-03-02"]))
+    ]
+    carried = frame.loc[(frame["series"] == "NASDAQ100") & (frame["date"] == "2020-02-14"), "value"]
+    frame.loc[(frame["series"] == "NASDAQ100") & (frame["date"] == "2020-02-17"), "value"] = float(
+        carried.iloc[0]
+    )
+    snapshot = _fetch(tmp_path, spec_path, frame)
+
+    report = qlh.check_snapshot(
+        snapshot, qlh.load_spec(spec_path), prices_path=tmp_path / "missing.csv"
+    )
+    codes = {issue["code"]: issue for issue in report["issues"]}
+    calendar = report["calendar"]
+
+    assert calendar["price_only_dates"] == ["2020-02-17", "2020-03-02"]
+    assert calendar["price_only_dates_dropped"] == 2
+    assert calendar["price_only_dates_unchanged"] == 1
+    assert codes["total_return_missing_on_trading_dates"]["dates"] == ["2020-03-02"]
+    daily, _ = qlh.load_daily(snapshot, qlh.load_spec(spec_path))
+    assert daily.loc["2020-01-03":, "qqq_proxy_return"].notna().all()
+
+
+def test_dividend_windows_tolerate_single_day_noise_but_warn_on_drift(tmp_path: Path) -> None:
+    spec_path = _write_spec(tmp_path)
+    loaded = qlh.load_spec(spec_path)
+    noisy = _scale(_series_frame(), "NASDAQXNDX", {"2020-03-03": 0.997, "2020-04-14": 1.003})
+    noisy_snapshot = _fetch(tmp_path / "noisy", spec_path, noisy)
+
+    report = qlh.check_snapshot(noisy_snapshot, loaded, prices_path=tmp_path / "missing.csv")
+    codes = {issue["code"] for issue in report["issues"]}
+
+    assert "dividend_window_negative" not in codes
+    assert report["calendar"]["negative_component_days"] == 2
+    assert report["calendar"]["dividend_component_lag1_autocorrelation"] < 0
+
+    dates = pd.bdate_range("2020-03-02", "2020-04-30").strftime("%Y-%m-%d")
+    drift = _scale(
+        _series_frame(), "NASDAQXNDX", {day: 1 - 0.001 * step for step, day in enumerate(dates)}
+    )
+    drift_snapshot = _fetch(tmp_path / "drift", spec_path, drift)
+
+    report = qlh.check_snapshot(drift_snapshot, loaded, prices_path=tmp_path / "missing.csv")
+    issue = next(item for item in report["issues"] if item["code"] == "dividend_window_negative")
+
+    assert report["status"] == "WARN"
+    assert report["calendar"]["dividend_windows"]["min_change"] < -0.015
+    assert issue["dates"][0].startswith("2020-")
 
 
 def test_load_daily_refuses_unchecked_failed_or_stale_checks(tmp_path: Path) -> None:

@@ -3,7 +3,7 @@ id: TRADING-2567
 area: 研究 / QQQ 研究计划（1999 年起窗口，先方向信号，后期权实现）
 priority: P1
 status: IN_PROGRESS
-next_owner: Claude（S3 评估台设计，和 TRADING-2565 一起）；Baker（本机第一次下载长历史快照后看检查结果）
-next_step: S1、S2 已实现（长历史快照模块、规格、数据源登记、QQQ 方向问题的窗口政策）。发布后在本机运行 `python -m ai_trading_system.research_data.qqq_long_history fetch`，把首日和跟踪结果补记进需求文档；然后 S3 评估台（TRADING-2565）、S4 第一批预注册。详见 `docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md`
+next_owner: Claude（03 发布后核对重跑的快照检查，然后 S3 评估台设计，和 TRADING-2565 一起）
+next_step: S1、S2 已发布（main f3d941ba），第一份快照已下载并检查（WARN，见需求文档进展）。TRADING-2567-03 修交易日历、股息分量检查和合成杠杆的融资利差；发布后在主仓库重跑 `python -m ai_trading_system.research_data.qqq_long_history check --prices-path <运行副本的 prices_daily.csv>`，结果补记进需求文档后快照才用于研究；然后 S3 评估台（TRADING-2565）、S4 第一批预注册。详见 `docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md`
 acceptance: 见 `docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md` 验收一节：S1 快照可复现、各序列首日与核查一致、与本机 QQQ/QLD/TQQQ 重叠段的跟踪差写进报告；S2 窗口登记和政策写明新窗口角色和禁止用途，AGENTS.md 一致
 notes: 2026-10-12：Baker 决定研究方向为 QQQ 期权路径、QQQ 类问题以 1999 年起为开发验证窗口、先方向信号后期权实现、期权层等信号站住后用 QuantConnect 回测、9/5–10/8 日报缺口永久不补、同时进行的研究问题不设上限（owner_decision:TRADING-2567:2026-10-12:qqq_direction_1999_window）。production_effect=none；broker_action=none
