@@ -2,8 +2,8 @@ schema_version: task.v1
 id: TRADING-708_PROMOTION_READINESS_POLICY_DECISION_LEDGER
 area: Research governance / promotion readiness and decision ledger
 priority: P0
-status: VALIDATING
+status: DROPPED
 next_owner: 系统实现 + 项目 owner 后续复核
-next_step: 详见 TRADING-703_to_725 总需求文档；建立 promotion readiness single source of truth 和 decision ledger
+next_step: 无（研究清理，GOV-009）
 acceptance: policy config 存在；`promotion-readiness
-notes: 'decision-record` 可运行；human_review_required=true；automatic_weight_change_count=0|2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入 VALIDATING；新增 schema/config/protocol、research governance / acceleration / portfolio decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定 production_effect=none，不修改 production / paper-shadow / official weights，不触发 broker/order。'
+notes: 'decision-record` 可运行；human_review_required=true；automatic_weight_change_count=0|2026-06-21: 按附件总计划新增并进入 IN_PROGRESS。2026-06-21: 实现 validation-only baseline 并进入 VALIDATING；新增 schema/config/protocol、research governance / acceleration / portfolio decision / ops / paper-shadow CLI、system flow、focused tests、fast-unit / contract-validation / report-validation tiers、compileall、Black check、Ruff 和 git diff --check；所有新增输出固定 production_effect=none，不修改 production / paper-shadow / official weights，不触发 broker/order。；2026-10-12：GOV-009 研究清理关闭（owner_decision:GOV-009:2026-10-12:research_cleanup）。研究结论见 `research/ledger.md` 第 7 行（指标到信号、value surface、controlled batch）：未测成。代码和文档按 GOV-009 分批删除，删除前的内容在 tag `research-archive-2026-10-12`'

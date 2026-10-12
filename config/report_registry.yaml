@@ -12361,6 +12361,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: forward_evidence_maturity_tracker
+    visibility_policy: archived_optional
     title: Forward Evidence Maturity Tracker
     group: research
     cadence: daily
@@ -12446,6 +12447,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: forward_evidence_daily_continuity_maturity_tracker
+    visibility_policy: archived_optional
     title: Forward Evidence Daily Continuity Maturity Tracker
     group: research
     cadence: daily
@@ -12531,6 +12533,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: forward_evidence_daily_continuity_review
+    visibility_policy: archived_optional
     title: Forward Evidence Daily Continuity Review
     group: research
     cadence: daily
@@ -12633,6 +12636,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: forward_evidence_continuity_extension
+    visibility_policy: archived_optional
     title: Forward Evidence Continuity Extension
     group: research
     cadence: daily

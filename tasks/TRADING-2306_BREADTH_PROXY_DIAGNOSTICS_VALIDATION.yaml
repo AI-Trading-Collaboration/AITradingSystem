@@ -2,8 +2,8 @@ schema_version: task.v1
 id: TRADING-2306_BREADTH_PROXY_DIAGNOSTICS_VALIDATION
 area: Research trends / breadth participation proxy diagnostics
 priority: P1
-status: PROPOSED
+status: DROPPED
 next_owner: 系统实现 + 项目 owner 后续复核
-next_step: 依赖 TRADING-2305 diagnostics-only POC 或 owner data-source decision。只能输出 `DATA_SOURCE_INVESTMENT_RECOMMENDED`、`CONTINUE_PROXY_DIAGNOSTICS` 或 `DROP_BREADTH_DIRECTION`，不得输出 promotion / paper-shadow / production / broker ready。
+next_step: 无（研究清理，GOV-009）
 acceptance: 形成 diagnostics-only validation report、data-source investment recommendation 和 stop/continue decision；保持 promotion/paper-shadow/production/broker false/none。
-notes: '2026-07-01: 根据 owner post-2302 roadmap 登记；用于判断是否值得接入 historical constituent 数据。'
+notes: '2026-07-01: 根据 owner post-2302 roadmap 登记；用于判断是否值得接入 historical constituent 数据。；2026-10-12：GOV-009 研究清理关闭（owner_decision:GOV-009:2026-10-12:research_cleanup）。研究结论见 `research/ledger.md` 第 14 行（闸门审计、候选生成器、风险上限）：证据不足。代码和文档按 GOV-009 分批删除，删除前的内容在 tag `research-archive-2026-10-12`'
