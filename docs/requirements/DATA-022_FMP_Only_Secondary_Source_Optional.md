@@ -47,6 +47,7 @@
   - `cli_commands/{score_daily,reports,backtest,feedback,trade_review,market_features}.py`、`research_framework/data_quality_gate.py`、`dynamic_strategy_growth_tilt_post_runtime_candidate_pit_replay_blocker_resolution.py`：改用共享函数。
   - `reports/artifact_lineage.py`：日报数据族不再列 Marketstack。
   - 新文件 `data/secondary_prices.py`。
+  - `cli_direct.py`（score_daily 授权）和 `cli_commands/ops.py`（周期 consumer 计划）核对的收据角色：第一次发布漏改，DATA-022-02 补上，见"进展"。
 - 配置：
   - `config/data_sources.yaml`：Marketstack 改为 `inactive`；
   - `config/data_source_fallback_policy.yaml`：价格没有回退源；
@@ -91,3 +92,7 @@
 ## 进展
 
 - 2026-10-12：方案和实现由 Claude 在云端完成并跑测试，交给本机 pi 应用、跑 ship 门禁并发布。真实日报验收等 FMP 恢复。production_effect=none；broker_action=none。
+- 2026-10-13：发布后第一次真实日报（2026-10-12 17:30 JST，运行副本 `a35f20956`，as_of 2026-10-09）capture 和 validate-data 都 PASS，DQ 收据角色是 prices、rates；但 score_daily 授权失败：`DQ_INPUT_SET_MISMATCH: expected=['prices', 'rates', 'secondary_prices'] actual=['prices', 'rates']`，后面 13 步 BLOCKED，周期 consumer 计划也因同一原因 BLOCKED。
+  - 原因：`cli_direct.py` 的 score_daily 授权（3 处）和 `cli_commands/ops.py` 的 `_DAILY_DEFAULT_DATA_QUALITY_INPUT_ROLES` 仍写死三种角色；第一次发布只改了授权策略。已有测试用的收据核对替身不看角色，所以没测出来。
+  - DATA-022-02：score_daily 授权改为读已审定授权策略的 `required_input_roles`；ops 的常量改为 prices、rates；测试核对两者一致，并核对 score_daily 授权向收据核对传的角色。
+  - `data/foundation_consumer_migration.py` 也写死三种角色，但它只用于 ARCH-004 D0C 演练脚本，不在日报链上，不改（见"不改的"）。

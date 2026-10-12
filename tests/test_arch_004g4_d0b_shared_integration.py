@@ -31,6 +31,7 @@ from ai_trading_system.contracts.data_quality_execution import (
 from ai_trading_system.contracts.status import CanonicalStatus
 from ai_trading_system.data.quality_consumer_authorization import (
     DataQualityConsumerAuthorizationError,
+    load_reviewed_data_quality_consumer_authorization_policy,
 )
 from ai_trading_system.data.quality_execution import DataQualityExecutionError
 from ai_trading_system.data.quality_execution_discovery import (
@@ -349,6 +350,7 @@ def test_ops_daily_to_cli_direct_discovers_and_dispatches_only_authorized_score(
     )
     discovery_calls: list[tuple[date, Path]] = []
     receipt_calls: list[Path] = []
+    role_calls: list[object] = []
     publication_calls: list[Path] = []
     score_calls: list[str] = []
 
@@ -362,6 +364,7 @@ def test_ops_daily_to_cli_direct_discovers_and_dispatches_only_authorized_score(
 
     def receipt_verifier(receipt_path: Path, **kwargs: object) -> VerifiedDataQualityPreflight:
         receipt_calls.append(receipt_path)
+        role_calls.append(kwargs["expected_input_roles"])
         return preflight
 
     def publication_resolver(*, output_dir: Path):
@@ -401,8 +404,20 @@ def test_ops_daily_to_cli_direct_discovers_and_dispatches_only_authorized_score(
         root / Path(preflight.receipt_path),
         Path(preflight.receipt_path),
     ]
+    # DATA-022: the daily receipt is FMP-only. On 2026-10-12 a hardcoded secondary_prices role
+    # here blocked score_daily with DQ_INPUT_SET_MISMATCH.
+    receipt_roles = tuple(sorted(item.role for item in preflight.receipt.inputs))
+    assert receipt_roles == ("prices", "rates")
+    assert role_calls == [receipt_roles, receipt_roles]
     assert publication_calls == [root / "data/raw", root / "data/raw"]
     assert len(list(root.glob("outputs/data_quality/consumer_authorizations/*/*.json"))) == 1
+
+
+def test_daily_default_receipt_roles_match_the_reviewed_score_consumer_policy() -> None:
+    policy = load_reviewed_data_quality_consumer_authorization_policy()
+
+    assert policy.required_input_roles == ("prices", "rates")
+    assert ops_cli._DAILY_DEFAULT_DATA_QUALITY_INPUT_ROLES == policy.required_input_roles
 
 
 def test_cli_direct_daily_discovery_tamper_blocks_before_score_and_runtime(
@@ -538,7 +553,7 @@ def test_daily_run_writes_bound_native_and_legacy_plans_without_dispatch(
             "receipt_path": discovered.receipt_path,
             "expected_as_of": data_quality_as_of,
             "expected_policy_path": tmp_path / "config" / "data_quality.yaml",
-            "expected_input_roles": ("prices", "rates", "secondary_prices"),
+            "expected_input_roles": ("prices", "rates"),
             "project_root": tmp_path,
         }
     ]

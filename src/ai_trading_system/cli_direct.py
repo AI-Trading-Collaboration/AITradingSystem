@@ -123,12 +123,14 @@ def _dispatch_daily_score_with_consumer_authorization(
 
     root = project_root.resolve()
     timestamp = (now or datetime.now(tz=UTC)).astimezone(UTC)
+    # The reviewed consumer policy names the receipt roles (DATA-022: prices and rates).
+    policy = load_reviewed_data_quality_consumer_authorization_policy(project_root=root)
     discovered = discovery_loader(as_of, project_root=root)
     preflight = receipt_verifier(
         discovered.receipt_path,
         expected_as_of=as_of,
         expected_policy_path=root / "config/data_quality.yaml",
-        expected_input_roles=("prices", "rates", "secondary_prices"),
+        expected_input_roles=policy.required_input_roles,
         project_root=root,
     ).assert_strict_passed()
     pointer = discovered.pointer
@@ -154,7 +156,6 @@ def _dispatch_daily_score_with_consumer_authorization(
             "daily discovery pointer differs from strict preflight",
         )
 
-    policy = load_reviewed_data_quality_consumer_authorization_policy(project_root=root)
     publication = publication_resolver(output_dir=root / Path(policy.publication_output_dir))
     attestation = build_data_quality_consumer_authorization_attestation(
         policy=policy,
@@ -191,7 +192,7 @@ def _dispatch_daily_score_with_consumer_authorization(
             receipt_path.resolve() != discovered.receipt_path.resolve()
             or expected_as_of != as_of
             or expected_policy_path.resolve() != (root / "config/data_quality.yaml").resolve()
-            or tuple(sorted(expected_input_roles)) != ("prices", "rates", "secondary_prices")
+            or tuple(sorted(expected_input_roles)) != policy.required_input_roles
             or project_root != root
         ):
             raise DataQualityConsumerAuthorizationError(
@@ -204,7 +205,7 @@ def _dispatch_daily_score_with_consumer_authorization(
         as_of=as_of,
         data_quality_as_of=as_of,
         expected_policy_path=root / "config/data_quality.yaml",
-        expected_input_roles=("prices", "rates", "secondary_prices"),
+        expected_input_roles=policy.required_input_roles,
         daily_status=CanonicalStatus.PASS,
         required_artifacts_ready=True,
         source_artifact_ids=(attestation.authorization_id,),

@@ -2970,10 +2970,11 @@ def _run_periodic_command(command: tuple[str, ...], *, cwd: Path) -> object:
     )
 
 
+# DATA-022: daily_default.v1 receipts are FMP-only. These must equal required_input_roles in
+# config/data_quality/arch_004_wave15_daily_score_consumer_authorization.yaml (a test checks).
 _DAILY_DEFAULT_DATA_QUALITY_INPUT_ROLES = (
     "prices",
     "rates",
-    "secondary_prices",
 )
 _DAILY_VALIDATE_DATA_COMMAND_PREFIX = ("aits", "validate-data", "--as-of")
 
