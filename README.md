@@ -12,6 +12,7 @@
 | 系统怎么运转 | [系统流程](docs/system_flow.md) 第 1～6 节（第 7 节是只读的历史附录） |
 | 产物在哪里 | [产物目录](docs/artifact_catalog.md) |
 | 有哪些任务 | `tasks/<ID>.yaml`；视图：[未完成](docs/task_register.md)、[已完成](docs/task_register_completed.md) |
+| 研究结论、研究方向 | [研究入口](research/README.md)：研究台账、负结果清单、可复用资产 |
 
 ## 几条硬规则
 

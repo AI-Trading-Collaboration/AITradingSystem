@@ -1,5 +1,7 @@
 # Research Method Contract
 
+> 2026-10-12：已作废。本文描述的候选 `median_plus_regime_mismatch_filter` 属于 ETF dynamic v3 线，复核结论为"未测成"，见 `research/ledger.md` 第 5 行。本文将随 GOV-009 的研究清理删除。
+
 本文件定义 TRADING-346 的 research-only formal method contract。它只把
 TRADING-336 到 TRADING-345 的 filtered candidate evidence chain 转成可审计决策契约，
 不实现正式 target method，不写 official target weights，不改 portfolio / baseline /
