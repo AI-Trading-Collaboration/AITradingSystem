@@ -38,7 +38,7 @@ DEFAULT_SPEC_PATH = PROJECT_ROOT / "config" / "research" / "qqq_long_history.yam
 DEFAULT_SNAPSHOT_ROOT = PROJECT_ROOT / "data" / "raw" / "research" / "qqq_long_history"
 DEFAULT_PRICES_PATH = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
 SNAPSHOT_SCHEMA_VERSION = "qqq_long_history_snapshot.v1"
-CHECK_SCHEMA_VERSION = "qqq_long_history_check.v2"
+CHECK_SCHEMA_VERSION = "qqq_long_history_check.v3"
 LATEST_POINTER = "LATEST"
 SERIES_FILE = "series.csv"
 MANIFEST_FILE = "manifest.json"
@@ -566,7 +566,8 @@ def _check_calendar(
     tr_start = daily["ndx_tr"].first_valid_index()
     dividend = (daily["ndx_tr_return"] - daily["ndx_price_return"]).dropna()
     negative = dividend < checks.min_daily_dividend_component
-    windows = _dividend_windows(daily, checks, issues)
+    windows, window_dates = _dividend_windows(daily, checks, issues)
+    tr_returns = daily["ndx_tr_return"]
     years = pd.DatetimeIndex(dividend.index).year
     by_year = [
         {
@@ -578,9 +579,21 @@ def _check_calendar(
             "implied_dividend_yield_annual": _round(
                 dividend[years == year].mean() * TRADING_DAYS_PER_YEAR
             ),
+            "dividend_component_daily_std": _round(dividend[years == year].std()),
+            **_noise_share_fields(tr_returns, dividend[years == year]),
         }
         for year in sorted(set(years.tolist()))
     ]
+    in_windows = dividend[dividend.index.isin(window_dates)]
+    noise_attribution = (
+        {
+            "trading_days": int(len(in_windows)),
+            "dividend_component_daily_std": _round(in_windows.std()),
+            **_noise_share_fields(tr_returns, in_windows),
+        }
+        if len(in_windows)
+        else {}
+    )
 
     cash = spec.series_for("cash_rate")
     rate_dates = daily["cash_rate_annual"].notna()
@@ -604,26 +617,35 @@ def _check_calendar(
         ),
         "min_daily_dividend_component": _round(dividend.min()) if len(dividend) else None,
         "dividend_windows": windows,
+        "noise_attribution": noise_attribution,
         "dividend_by_year": by_year,
         "cash_rate_series": cash.series_id,
         "cash_rate_dates_covered": int(rate_dates.sum()),
     }
 
 
-def _dividend_windows(daily: pd.DataFrame, checks: CheckSpec, issues: _Issues) -> dict[str, Any]:
+def _dividend_windows(
+    daily: pd.DataFrame, checks: CheckSpec, issues: _Issues
+) -> tuple[dict[str, Any], pd.DatetimeIndex]:
     """Change of the total-return / price-index ratio over rolling windows of trading days.
 
     Reinvested dividends only ever raise the ratio. Level noise on single days in either index
     moves a window by at most the size of that noise and reverses in the next window; a
     misalignment or drift that research would inherit accumulates over the window instead.
+    Also returns the dates whose returns fall inside a window below the limit.
     """
 
     ratio = (daily["ndx_tr"] / daily["ndx_price"]).dropna()
     window = checks.dividend_window_trading_days
     change = (ratio / ratio.shift(window) - 1).dropna()
     if change.empty:
-        return {}
+        return {}, pd.DatetimeIndex([])
     below = (change < checks.min_window_dividend_component).to_numpy()
+    covered = [False] * len(ratio)
+    for position in range(len(below)):
+        if below[position]:
+            covered[position + 1 : position + window + 1] = [True] * window
+    window_dates = pd.DatetimeIndex(ratio.index[covered])
     starts = pd.DatetimeIndex(ratio.index[: len(ratio) - window])
     ends = pd.DatetimeIndex(change.index)
     # Consecutive offending windows merge into one span: first window's start .. last window's end.
@@ -643,12 +665,51 @@ def _dividend_windows(daily: pd.DataFrame, checks: CheckSpec, issues: _Issues) -
             f"return by more than {-checks.min_window_dividend_component:.2%}",
             dates=spans[:MAX_LISTED_DATES],
         )
-    return {
+    summary = {
         "trading_days": window,
         "min_change": _round(float(change.min())),
         "min_change_end_date": _iso(change.idxmin()),
         "windows_below_limit": int(below.sum()),
         "spans_below_limit": int(len(spans)),
+    }
+    return summary, window_dates
+
+
+def total_return_noise_share(
+    total_return_returns: pd.Series, dividend_component: pd.Series
+) -> tuple[float, float] | None:
+    """How much of the day-to-day gap between the two indexes sits in the total-return index.
+
+    With d = total-return return minus price-index return on the same dates, the slope of the
+    total-return return on d is 1 when the gap is level noise in the total-return index (its return
+    is the common move plus d) and 0 when the noise is in the price index (the total-return return
+    is the common move alone). Equal noise in both, or one index recorded at a different time of
+    day, lands near 0.5. Returns the slope and its OLS standard error, or None with fewer than
+    three dates or no variation in d.
+    """
+
+    joined = pd.concat([total_return_returns, dividend_component], axis=1, join="inner").dropna()
+    if len(joined) < 3:
+        return None
+    y = joined.iloc[:, 0].to_numpy(dtype=float)
+    x = joined.iloc[:, 1].to_numpy(dtype=float)
+    if float(x.max() - x.min()) == 0:
+        return None
+    x_centered = x - x.mean()
+    sxx = float((x_centered**2).sum())
+    slope = float((x_centered * (y - y.mean())).sum()) / sxx
+    residual = y - y.mean() - slope * x_centered
+    standard_error = math.sqrt(float((residual**2).sum()) / (len(y) - 2) / sxx)
+    return slope, standard_error
+
+
+def _noise_share_fields(
+    total_return_returns: pd.Series, dividend_component: pd.Series
+) -> dict[str, float | None]:
+    share = total_return_noise_share(total_return_returns, dividend_component)
+    return {
+        "total_return_noise_share": None if share is None else _round(share[0]),
+        "total_return_noise_share_se": None if share is None else _round(share[1]),
     }
 
 
@@ -807,19 +868,29 @@ def render_check_markdown(report: Mapping[str, Any]) -> str:
                 f"{windows['min_change']}（截至 {windows['min_change_end_date']}），"
                 f"低于下限的窗口 {windows['windows_below_limit']} 个"
             )
+        attribution = calendar.get("noise_attribution") or {}
+        if attribution:
+            lines.append(
+                f"- 低于下限的窗口里的 {attribution['trading_days']} 个交易日：日股息分量标准差 "
+                f"{attribution['dividend_component_daily_std']}，噪声在总收益指数的比例 "
+                f"{_share_text(attribution)}（约 1 在总收益指数，约 0 在价格指数，"
+                "约 0.5 是两个都有或收盘时间不一致）"
+            )
         by_year = calendar.get("dividend_by_year") or []
         if by_year:
             lines += [
                 "",
                 "### 逐年股息分量",
                 "",
-                "| 年 | 交易日 | 落后天数 | 隐含股息率 | 总收益修补 | 价格修补 |",
-                "|---|---:|---:|---:|---:|---:|",
+                "| 年 | 交易日 | 落后天数 | 隐含股息率 | 总收益修补 | 价格修补 | 日分量标准差 | "
+                "噪声在总收益的比例 |",
+                "|---|---:|---:|---:|---:|---:|---:|---:|",
             ]
             lines += [
                 f"| {row['year']} | {row['trading_days']} | {row['negative_component_days']} | "
                 f"{row['implied_dividend_yield_annual']} | {row['total_return_repaired_days']} | "
-                f"{row['price_repaired_days']} |"
+                f"{row['price_repaired_days']} | {row['dividend_component_daily_std']} | "
+                f"{_share_text(row)} |"
                 for row in by_year
             ]
     tracking = report.get("overlap_tracking") or {}
@@ -849,6 +920,13 @@ def render_check_markdown(report: Mapping[str, Any]) -> str:
             f"- {issue['severity']} `{issue['code']}` {issue['subject']}：{issue['message']}{dates}"
         )
     return "\n".join(lines) + "\n"
+
+
+def _share_text(row: Mapping[str, Any]) -> str:
+    share = row.get("total_return_noise_share")
+    if share is None:
+        return "-"
+    return f"{share:.2f} ± {row['total_return_noise_share_se']:.2f}"
 
 
 # --- gate for research code -------------------------------------------------------------------

@@ -6,6 +6,7 @@ import re
 from datetime import date
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 import yaml
@@ -349,6 +350,7 @@ def test_check_passes_clean_data_and_measures_tracking(tmp_path: Path) -> None:
     assert calendar["negative_component_days"] == 0
     assert calendar["dividend_windows"]["windows_below_limit"] == 0
     assert calendar["dividend_windows"]["min_change"] > 0
+    assert calendar["noise_attribution"] == {}
     assert [row["year"] for row in calendar["dividend_by_year"]] == [2020]
     assert (snapshot / qlh.CHECK_JSON_FILE).exists()
     markdown = (snapshot / qlh.CHECK_MD_FILE).read_text(encoding="utf-8")
@@ -499,6 +501,64 @@ def test_dividend_windows_tolerate_single_day_noise_but_warn_on_drift(tmp_path: 
     assert report["status"] == "WARN"
     assert report["calendar"]["dividend_windows"]["min_change"] < -0.015
     assert issue["dates"][0].startswith("2020-")
+
+
+def test_noise_share_tells_which_index_carries_level_noise() -> None:
+    rng = np.random.default_rng(2567)
+    dates = pd.bdate_range("2003-01-02", periods=500)
+    common = pd.Series(rng.normal(0, 0.015, len(dates)), index=dates)
+    level = (1 + common).cumprod()
+
+    def returns(noise_std: float) -> pd.Series:
+        noisy = level * (1 + pd.Series(rng.normal(0, noise_std, len(dates)), index=dates))
+        return noisy / noisy.shift(1) - 1
+
+    clean = level / level.shift(1) - 1
+    cases = {
+        "total return noisy": (returns(0.004), clean, 1.0),
+        "price noisy": (clean, returns(0.004), 0.0),
+        "both noisy": (returns(0.004), returns(0.004), 0.5),
+    }
+    for name, (total_return, price, expected) in cases.items():
+        result = qlh.total_return_noise_share(total_return, (total_return - price).dropna())
+        assert result is not None, name
+        share, standard_error = result
+        assert standard_error < 0.15, name
+        assert abs(share - expected) < 4 * standard_error, (name, share, standard_error)
+
+    assert qlh.total_return_noise_share(clean, pd.Series(0.0001, index=dates)) is None
+    assert qlh.total_return_noise_share(clean.head(2), clean.head(2)) is None
+
+
+@pytest.mark.parametrize(
+    ("series_id", "low", "high"), [("NASDAQ100", -0.2, 0.2), ("NASDAQXNDX", 0.8, 1.2)]
+)
+def test_check_attributes_window_noise_to_the_noisy_index(
+    tmp_path: Path, series_id: str, low: float, high: float
+) -> None:
+    spec_path = _write_spec(tmp_path)
+    dates = pd.bdate_range("2020-03-02", "2020-04-30").strftime("%Y-%m-%d")
+    # Every third day one index is 0.8% off and back the next day: total return trails price
+    # return by more than the window limit in every window that ends on such a day.
+    sign = 1.0 if series_id == "NASDAQ100" else -1.0
+    noisy = _scale(_series_frame(), series_id, {day: 1 + sign * 0.008 for day in dates[::3]})
+    snapshot = _fetch(tmp_path, spec_path, noisy)
+
+    report = qlh.check_snapshot(
+        snapshot, qlh.load_spec(spec_path), prices_path=tmp_path / "missing.csv"
+    )
+    codes = {issue["code"] for issue in report["issues"]}
+    attribution = report["calendar"]["noise_attribution"]
+    year = report["calendar"]["dividend_by_year"][0]
+
+    assert "dividend_window_negative" in codes
+    assert attribution["trading_days"] > 0
+    assert low < attribution["total_return_noise_share"] < high
+    assert low < year["total_return_noise_share"] < high
+    assert year["dividend_component_daily_std"] > 0.002
+    markdown = (snapshot / qlh.CHECK_MD_FILE).read_text(encoding="utf-8")
+    assert "噪声在总收益指数的比例" in markdown
+    assert "噪声在总收益的比例" in markdown
 
 
 def test_load_daily_refuses_unchecked_failed_or_stale_checks(tmp_path: Path) -> None:
