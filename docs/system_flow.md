@@ -5651,8 +5651,8 @@ flowchart TD
         ODRR["outputs/replays/YYYY-MM-DD/<run-id>/ 与 outputs/replays/windows/<run-id>/<br/>input freeze manifest、prices/rates replay raw cache、OpenAI cache-only 过滤报告/source_report_status、trade_theses/trades 过滤视图、replay_run、diff_vs_production、replay_window failure_summary、score/dashboard/health/secret 输出"]
         OPH["aits ops health<br/>src/ai_trading_system/cli_commands/ops.py<br/>关键 pipeline artifact + PIT 抓取/快照健康检查<br/>休市日可用 --non-trading-day"]
         OPR["outputs/reports/pipeline_health_YYYY-MM-DD.md<br/>market session、存在性、mtime、row count、freshness、checksum、fetch status"]
-        SCS["aits security scan-secrets<br/>本地 secret hygiene 扫描"]
-        SCSR["outputs/reports/secret_hygiene_YYYY-MM-DD.md<br/>疑似 secret 脱敏问题清单"]
+        SCS["aits security scan-secrets<br/>本地 secret hygiene 扫描<br/>默认入口增量：data/cache/secret_hygiene/scan_cache.json（size+mtime）；规则或入口变化、缓存缺失、满 7 天或 --full-scan 时全量"]
+        SCSR["outputs/reports/secret_hygiene_YYYY-MM-DD.md<br/>疑似 secret 脱敏问题清单、扫描方式、本次读取与沿用文件数"]
     end
 
     subgraph Thesis["交易假设复核"]
