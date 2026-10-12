@@ -39,7 +39,7 @@ sources:
       - "股票/ETF 价格路径直接按内部 ticker 请求；`GOOG` 不再映射为 `GOOGL`。估值/PIT 路径的 provider alias 独立维护，不能复用到价格路径。"
       - 2026-05-05 质量复核显示，此前 SPY、INTC、MSFT、SOXX 的硬错误主要落在 Marketstack 第二源缓存；下一次真实下载后仍必须用质量门禁重新验证 FMP 主源，不能本地静默修正。
       - "TRADING-049 price history repair 复用 FMP 主源补齐 shadow backtest 缺失资产；`BRK.B` 请求时映射为 source symbol `BRK-B`，manifest 必须记录 canonical/source symbol mapping。"
-      - 与 Marketstack 的 adjusted close 分红复权口径差异必须保留为质量门禁限制或调查项，不能自动平滑。
+      - 与 Marketstack 的 adjusted close 分红复权口径差异必须保留为质量门禁限制或调查项，不能自动平滑（DATA-022 起只在手动对账时出现）。
       - API plan 可能限制历史深度、请求频率和字段覆盖。
     llm_permission:
       license_scope: paid_vendor_terms_not_reviewed_for_external_llm
@@ -138,7 +138,7 @@ sources:
   - source_id: marketstack_eod_daily_prices
     provider: Marketstack
     source_type: paid_vendor
-    status: active
+    status: inactive
     domains:
       - market_prices
     endpoint: https://api.marketstack.com/v2/eod
@@ -170,6 +170,7 @@ sources:
       - provider_symbol_alias
       - no_secret_leakage
     limitations:
+      - "2026-10-12 起停用（DATA-022，`owner_decision:DATA-022:2026-10-12:fmp_only_secondary_optional`）：价格只用 FMP，日报不再下载或要求 Marketstack；只有显式 `aits download-data --with-marketstack` 才下载，`validate-data` 在 manual 档对同目录的 Marketstack 缓存做可选对账。以下各条是停用前的角色说明。"
       - Marketstack Basic 当前作为股票和 ETF 日线第二来源，不替代一手交易所行情。
       - Basic 历史深度约 10 年，足够覆盖 `ai_after_chatgpt` 默认窗口和当前 warm-up，但不支持更长历史压力测试。
       - "`^VIX` 等 Yahoo 风格宏观代理不在当前 Marketstack Basic 覆盖内，质量门禁需显式排除或标记限制。"

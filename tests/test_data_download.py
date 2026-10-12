@@ -1707,6 +1707,44 @@ def test_download_data_cli_requires_fmp_key_by_default(tmp_path: Path, monkeypat
     assert "未设置 FMP_API_KEY" in result.output
 
 
+def test_download_data_cli_is_fmp_only_by_default(tmp_path: Path, monkeypatch) -> None:
+    # DATA-022: no Marketstack provider and no Marketstack key unless explicitly requested.
+    from ai_trading_system.cli_commands import data_cache as data_cache_cli
+
+    monkeypatch.setenv("FMP_API_KEY", "test-key")
+    monkeypatch.delenv("MARKETSTACK_API_KEY", raising=False)
+    calls: list[object] = []
+
+    def fake_download_daily_data(*_args: object, **kwargs: object) -> object:
+        calls.append(kwargs["secondary_price_provider"])
+        raise RuntimeError("stop after provider selection")
+
+    monkeypatch.setattr(data_cache_cli, "download_daily_data", fake_download_daily_data)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "download-data",
+            "--output-dir",
+            str(tmp_path),
+            "--failure-report-path",
+            str(tmp_path / "failure.md"),
+        ],
+    )
+
+    assert calls == [None]
+    assert "MARKETSTACK_API_KEY" not in result.output
+
+    explicit = CliRunner().invoke(
+        app,
+        ["download-data", "--output-dir", str(tmp_path), "--with-marketstack"],
+    )
+
+    assert explicit.exit_code == 1
+    assert "未设置 MARKETSTACK_API_KEY" in explicit.output
+    assert calls == [None]
+
+
 def test_write_download_failure_report_redacts_marketstack_diagnostics(tmp_path: Path) -> None:
     diagnostic = ProviderRequestDiagnostic(
         provider="Marketstack",

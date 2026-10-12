@@ -738,14 +738,18 @@ def _require_daily_default_profile_shape(
     policy_path: object,
     require_secondary_prices: object,
 ) -> None:
+    # DATA-022 (owner_decision:DATA-022:2026-10-12:fmp_only_secondary_optional): daily runs
+    # are FMP-only, so the profile takes no second source. Receipts written before DATA-022
+    # carry the Marketstack shape and stay verifiable.
+    fmp_only = secondary_prices_path is None
     expected = {
         "prices_path": _DAILY_DEFAULT_PRICES_PATH,
         "rates_path": _DAILY_DEFAULT_RATES_PATH,
         "manifest_path": _DAILY_DEFAULT_MANIFEST_PATH,
-        "secondary_prices_path": _DAILY_DEFAULT_SECONDARY_PRICES_PATH,
+        "secondary_prices_path": None if fmp_only else _DAILY_DEFAULT_SECONDARY_PRICES_PATH,
         "backtest_manifest_path": None,
         "policy_path": DEFAULT_POLICY_PATH.as_posix(),
-        "require_secondary_prices": True,
+        "require_secondary_prices": not fmp_only,
     }
     observed = {
         "prices_path": prices_path,

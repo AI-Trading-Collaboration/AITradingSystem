@@ -33,12 +33,12 @@ Set-StrictMode -Version 3
 $ErrorActionPreference = 'Stop'
 
 # Variables `aits ops daily-run` and the commands it starts actually read (grep of src,
-# OPS-082 2026-10-11): FMP, Marketstack, SEC user agent, OpenAI (score-daily risk-event
-# precheck), Congress.gov and GovInfo (official policy sources). Nothing reads the retired
-# Codex automation contract (AITS_EXTERNAL_SCHEDULER, AITS_OPS_*), so it is not set.
+# OPS-082 2026-10-11): FMP, SEC user agent, OpenAI (score-daily risk-event precheck),
+# Congress.gov and GovInfo (official policy sources). Marketstack is no longer a daily source
+# (DATA-022, 2026-10-12). Nothing reads the retired Codex automation contract
+# (AITS_EXTERNAL_SCHEDULER, AITS_OPS_*), so it is not set.
 $DailyRunEnvironment = @(
     'FMP_API_KEY',
-    'MARKETSTACK_API_KEY',
     'SEC_USER_AGENT',
     'OPENAI_API_KEY',
     'CONGRESS_API_KEY',

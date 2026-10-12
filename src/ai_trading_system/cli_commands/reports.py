@@ -62,6 +62,7 @@ from ai_trading_system.data.quality import (
     validate_data_cache,
     write_data_quality_report,
 )
+from ai_trading_system.data.secondary_prices import optional_secondary_prices_path
 from ai_trading_system.decision_learning_queue import (
     DEFAULT_DECISION_LEARNING_QUEUE_PATH,
 )
@@ -671,18 +672,6 @@ def _read_optional_json_object(path: Path | None) -> dict[str, object]:
 
 def _download_manifest_path(prices_path: Path) -> Path:
     return prices_path.parent / "download_manifest.csv"
-
-
-def _marketstack_prices_path(prices_path: Path) -> Path:
-    return prices_path.parent / "prices_marketstack_daily.csv"
-
-
-def _requires_marketstack_prices(prices_path: Path) -> bool:
-    default_prices_path = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
-    try:
-        return prices_path.resolve() == default_prices_path.resolve()
-    except OSError:
-        return prices_path == default_prices_path
 
 
 @reports_app.command("investment-review")
@@ -6585,8 +6574,8 @@ def _run_next_research_data_quality_gate(
         quality_config=load_data_quality(),
         as_of=report_date,
         manifest_path=_download_manifest_path(prices_path),
-        secondary_prices_path=_marketstack_prices_path(prices_path),
-        require_secondary_prices=_requires_marketstack_prices(prices_path),
+        secondary_prices_path=optional_secondary_prices_path(prices_path),
+        require_secondary_prices=False,
     )
     write_data_quality_report(quality_report, quality_report_path)
     return {
@@ -7836,8 +7825,8 @@ def market_panel_command(
         quality_config=quality_config,
         as_of=report_date,
         manifest_path=_download_manifest_path(prices_path),
-        secondary_prices_path=_marketstack_prices_path(prices_path),
-        require_secondary_prices=_requires_marketstack_prices(prices_path),
+        secondary_prices_path=optional_secondary_prices_path(prices_path),
+        require_secondary_prices=False,
     )
     write_data_quality_report(quality_report, quality_report_path)
     if not quality_report.passed:

@@ -272,6 +272,12 @@ def test_g1_3e_growth_tilt_data_quality_gate_preserves_required_call_contract(
         return report
 
     monkeypatch.setattr(dq_gate, "validate_data_cache", fake_validate_data_cache)
+    secondary_prices_path = tmp_path / "prices_marketstack_daily.csv"
+    monkeypatch.setattr(
+        dq_gate,
+        "optional_secondary_prices_path",
+        lambda value: captured.update(secondary_lookup=value) or secondary_prices_path,
+    )
     monkeypatch.setattr(
         dq_gate,
         "write_data_quality_report",
@@ -297,9 +303,11 @@ def test_g1_3e_growth_tilt_data_quality_gate_preserves_required_call_contract(
         "quality_config": quality_config,
         "as_of": date(2026, 7, 11),
         "manifest_path": prices_path.parent / "download_manifest.csv",
-        "secondary_prices_path": prices_path.parent / "prices_marketstack_daily.csv",
-        "require_secondary_prices": True,
+        # DATA-022: Marketstack is reconciled when present and never required.
+        "secondary_prices_path": secondary_prices_path,
+        "require_secondary_prices": False,
     }
+    assert captured["secondary_lookup"] == prices_path
     assert captured["universe"] is universe
     assert captured["include_full_ai_chain"] is False
     assert captured["written_report"] is report

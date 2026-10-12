@@ -47,6 +47,7 @@ from ai_trading_system.data.quality_execution import (
 from ai_trading_system.data.quality_execution_discovery import (
     publish_default_data_quality_execution_discovery,
 )
+from ai_trading_system.data.secondary_prices import optional_secondary_prices_path
 from ai_trading_system.data_refresh_audit import write_validate_data_audit_sidecar
 from ai_trading_system.external_request_cache import (
     invalidate_external_request_cache,
@@ -158,9 +159,12 @@ def download_data(
         bool,
         typer.Option(
             "--with-marketstack/--without-marketstack",
-            help="是否同时下载 Marketstack 第二行情源缓存。",
+            help=(
+                "是否同时下载 Marketstack 第二行情源缓存。默认不下载（DATA-022：价格只用 FMP，"
+                "第二源对账可选）；下载后 validate-data 会在 manual 档对账。"
+            ),
         ),
-    ] = True,
+    ] = False,
     marketstack_api_key_env: Annotated[
         str,
         typer.Option(help="读取 Marketstack API key 的环境变量名。"),
@@ -370,10 +374,12 @@ def validate_data(
         validation_date,
     )
     requested_window = DataQualityDateWindow(min(consistency_starts), validation_date)
-    require_secondary_prices = _requires_marketstack_prices(normalized_prices_path)
-    secondary_candidate = _marketstack_prices_path(normalized_prices_path)
+    # DATA-022: the daily profile is FMP-only; a manual run reconciles a Marketstack cache
+    # that sits next to the price cache, and never requires one.
     secondary_prices_path = (
-        secondary_candidate if require_secondary_prices or secondary_candidate.is_file() else None
+        None
+        if resolved_execution_profile == DAILY_DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID
+        else optional_secondary_prices_path(normalized_prices_path)
     )
     try:
         request = CanonicalDataQualityExecutionRequest(
@@ -390,7 +396,7 @@ def validate_data(
             ),
             expected_rate_series=tuple(configured_rate_series(universe)),
             secondary_prices_path=secondary_prices_path,
-            require_secondary_prices=require_secondary_prices,
+            require_secondary_prices=False,
             backtest_manifest_path=normalized_backtest_manifest_path,
             execution_profile_id=resolved_execution_profile,
         )
@@ -516,21 +522,9 @@ def _budget_violation_reasons(budget: dict[str, object]) -> list[str]:
     return []
 
 
-def _marketstack_prices_path(prices_path: Path) -> Path:
-    return prices_path.parent / "prices_marketstack_daily.csv"
-
-
 def _resolve_project_input_path(path: Path) -> Path:
     candidate = path if path.is_absolute() else PROJECT_ROOT / path
     return candidate.resolve(strict=False)
-
-
-def _requires_marketstack_prices(prices_path: Path) -> bool:
-    default_prices_path = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
-    try:
-        return prices_path.resolve() == default_prices_path.resolve()
-    except OSError:
-        return prices_path == default_prices_path
 
 
 def _is_daily_default_data_quality_profile(

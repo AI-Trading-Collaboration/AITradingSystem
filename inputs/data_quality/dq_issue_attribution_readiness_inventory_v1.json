@@ -15,7 +15,7 @@
       "emitter_kind": "SUPPORT_CONSTRUCTOR",
       "enclosing_function": "_provenance_issue",
       "legacy_affected_instruments_present": false,
-      "line": 1008,
+      "line": 1012,
       "rows_present": false,
       "sample_present": true,
       "severity_expression": "Severity.ERROR",
@@ -24,7 +24,7 @@
       "static_code": null
     }
   ],
-  "inventory_id": "dq_issue_attribution_inventory_f266d9f47b5d85ddc2021670",
+  "inventory_id": "dq_issue_attribution_inventory_8733406a6dbb03c720be4fdf",
   "noncanonical_constructor_sites": [
     {
       "code_expression": "research_backfill_source_warning",
@@ -2172,7 +2172,7 @@
       "enclosing_function": "_bindings_from_report",
       "existing_policy_authorized": false,
       "legacy_affected_instruments_present": false,
-      "line": 949,
+      "line": 953,
       "message_or_sample_scope_inference_allowed": false,
       "occurrence": 0,
       "owner_review_status": "OWNER_REVIEW_REQUIRED",
@@ -2203,7 +2203,7 @@
       "enclosing_function": "_bindings_from_report",
       "existing_policy_authorized": false,
       "legacy_affected_instruments_present": false,
-      "line": 957,
+      "line": 961,
       "message_or_sample_scope_inference_allowed": false,
       "occurrence": 0,
       "owner_review_status": "OWNER_REVIEW_REQUIRED",
@@ -2234,7 +2234,7 @@
       "enclosing_function": "_bindings_from_report",
       "existing_policy_authorized": false,
       "legacy_affected_instruments_present": false,
-      "line": 960,
+      "line": 964,
       "message_or_sample_scope_inference_allowed": false,
       "occurrence": 0,
       "owner_review_status": "OWNER_REVIEW_REQUIRED",
@@ -2265,7 +2265,7 @@
       "enclosing_function": "_bindings_from_report",
       "existing_policy_authorized": false,
       "legacy_affected_instruments_present": false,
-      "line": 973,
+      "line": 977,
       "message_or_sample_scope_inference_allowed": false,
       "occurrence": 0,
       "owner_review_status": "OWNER_REVIEW_REQUIRED",
@@ -2296,7 +2296,7 @@
       "enclosing_function": "_bindings_from_report",
       "existing_policy_authorized": false,
       "legacy_affected_instruments_present": false,
-      "line": 982,
+      "line": 986,
       "message_or_sample_scope_inference_allowed": false,
       "occurrence": 0,
       "owner_review_status": "OWNER_REVIEW_REQUIRED",
@@ -2358,8 +2358,8 @@
     },
     {
       "path": "src/ai_trading_system/data/quality_execution.py",
-      "sha256": "51a2054aba48d42df642e98d53ab8794c0943139ed41fe33e19b1b75b527d1dc",
-      "size_bytes": 69037
+      "sha256": "6ca9bc0d78457b8d4364e91900d05cdf857b1187408f956e2f81360a411f3874",
+      "size_bytes": 69351
     }
   ],
   "status": "SOURCE_OWNER_REVIEW_REQUIRED",

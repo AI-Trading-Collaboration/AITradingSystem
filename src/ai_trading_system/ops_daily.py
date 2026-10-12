@@ -716,13 +716,10 @@ def build_daily_ops_plan(
                 title="更新市场和宏观缓存",
                 command=tuple(download_command) if download_enabled else (),
                 required_env_vars=(
-                    ("FMP_API_KEY", "MARKETSTACK_API_KEY")
-                    if download_enabled and not capture_active
-                    else ()
+                    ("FMP_API_KEY",) if download_enabled and not capture_active else ()
                 ),
                 produced_paths=(
                     raw_dir / "prices_daily.csv",
-                    raw_dir / "prices_marketstack_daily.csv",
                     raw_dir / "rates_daily.csv",
                     raw_dir / "download_manifest.csv",
                 ),
@@ -3095,31 +3092,24 @@ def _metadata_step_result(result: DailyOpsStepResult) -> Mapping[str, object]:
 
 @dataclass(frozen=True)
 class _MarketCacheCoverage:
+    # DATA-022: prices are FMP-only, so coverage is decided by the primary cache alone.
     required_date: date
     primary_latest: date | None
-    secondary_latest: date | None
 
     @property
     def covers_required_date(self) -> bool:
-        return (
-            self.primary_latest is not None
-            and self.primary_latest >= self.required_date
-            and self.secondary_latest is not None
-            and self.secondary_latest >= self.required_date
-        )
+        return self.primary_latest is not None and self.primary_latest >= self.required_date
 
     @property
     def summary(self) -> str:
         primary = self.primary_latest.isoformat() if self.primary_latest else "missing"
-        secondary = self.secondary_latest.isoformat() if self.secondary_latest else "missing"
-        return f"prices_daily max={primary}, marketstack max={secondary}"
+        return f"prices_daily max={primary}"
 
 
 def _market_cache_coverage(*, raw_dir: Path, required_date: date) -> _MarketCacheCoverage:
     return _MarketCacheCoverage(
         required_date=required_date,
         primary_latest=_latest_csv_date(raw_dir / "prices_daily.csv"),
-        secondary_latest=_latest_csv_date(raw_dir / "prices_marketstack_daily.csv"),
     )
 
 

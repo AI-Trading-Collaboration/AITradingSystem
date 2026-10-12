@@ -118,6 +118,7 @@ from ai_trading_system.data.quality import (
     validate_data_cache,
     write_data_quality_report,
 )
+from ai_trading_system.data.secondary_prices import optional_secondary_prices_path
 from ai_trading_system.feature_availability import (
     DEFAULT_FEATURE_AVAILABILITY_CONFIG_PATH,
     FeatureAvailabilitySourceCheck,
@@ -770,8 +771,8 @@ def backtest(
         quality_config=data_quality_config,
         as_of=quality_date,
         manifest_path=_download_manifest_path(prices_path),
-        secondary_prices_path=_marketstack_prices_path(prices_path),
-        require_secondary_prices=_requires_marketstack_prices(prices_path),
+        secondary_prices_path=optional_secondary_prices_path(prices_path),
+        require_secondary_prices=False,
     )
     write_data_quality_report(data_quality_report, quality_output)
     if not data_quality_report.passed:
@@ -1684,8 +1685,8 @@ def backtest_input_gaps(
         quality_config=quality_config,
         as_of=quality_date,
         manifest_path=_download_manifest_path(prices_path),
-        secondary_prices_path=_marketstack_prices_path(prices_path),
-        require_secondary_prices=_requires_marketstack_prices(prices_path),
+        secondary_prices_path=optional_secondary_prices_path(prices_path),
+        require_secondary_prices=False,
     )
     write_data_quality_report(data_quality_report, quality_output)
     if not data_quality_report.passed:
@@ -1852,18 +1853,6 @@ def backtest_pit_coverage(
 
 def _download_manifest_path(prices_path: Path) -> Path:
     return prices_path.parent / "download_manifest.csv"
-
-
-def _marketstack_prices_path(prices_path: Path) -> Path:
-    return prices_path.parent / "prices_marketstack_daily.csv"
-
-
-def _requires_marketstack_prices(prices_path: Path) -> bool:
-    default_prices_path = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
-    try:
-        return prices_path.resolve() == default_prices_path.resolve()
-    except OSError:
-        return prices_path == default_prices_path
 
 
 def _market_feature_source_checks(

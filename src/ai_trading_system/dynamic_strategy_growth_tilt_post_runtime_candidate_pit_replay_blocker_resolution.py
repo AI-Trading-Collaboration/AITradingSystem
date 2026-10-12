@@ -25,6 +25,7 @@ from ai_trading_system.data.quality import (
     validate_data_cache,
     write_data_quality_report,
 )
+from ai_trading_system.data.secondary_prices import optional_secondary_prices_path
 from ai_trading_system.data_foundation import utc_now_iso
 from ai_trading_system.dynamic_strategy_report_common import json_block as _json_block
 from ai_trading_system.dynamic_strategy_report_common import (
@@ -255,8 +256,8 @@ def _run_data_quality_gate(
         quality_config=quality_config,
         as_of=as_of_date,
         manifest_path=prices_path.parent / "download_manifest.csv",
-        secondary_prices_path=prices_path.parent / "prices_marketstack_daily.csv",
-        require_secondary_prices=_requires_marketstack_prices(prices_path),
+        secondary_prices_path=optional_secondary_prices_path(prices_path),
+        require_secondary_prices=False,
     )
     write_data_quality_report(report, report_path)
     return {
@@ -269,13 +270,6 @@ def _run_data_quality_gate(
         "data_quality_warning_count": report.warning_count,
         "data_quality_info_count": report.info_count,
     }
-
-
-def _requires_marketstack_prices(prices_path: Path) -> bool:
-    try:
-        return prices_path.resolve() == DEFAULT_PRICES_PATH.resolve()
-    except OSError:
-        return prices_path == DEFAULT_PRICES_PATH
 
 
 def _source_validation_errors(sources: Mapping[str, Any]) -> list[str]:

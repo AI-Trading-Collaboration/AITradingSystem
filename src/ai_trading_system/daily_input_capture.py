@@ -161,10 +161,6 @@ class DailyInputCapturePaths:
         return self.market_macro_dir / "prices_daily.csv"
 
     @property
-    def market_secondary_prices_path(self) -> Path:
-        return self.market_macro_dir / "prices_marketstack_daily.csv"
-
-    @property
     def market_rates_path(self) -> Path:
         return self.market_macro_dir / "rates_daily.csv"
 
@@ -474,7 +470,6 @@ def build_daily_input_capture_components(
             command=tuple(market_command),
             expected_paths=(
                 paths.market_prices_path,
-                paths.market_secondary_prices_path,
                 paths.market_rates_path,
                 paths.market_download_manifest_path,
             ),
@@ -489,7 +484,6 @@ def build_daily_input_capture_components(
             recovery_mode=component_policy["market_macro"].recovery_mode,
             snapshot_sources=(
                 market_raw_dir / "prices_daily.csv",
-                market_raw_dir / "prices_marketstack_daily.csv",
                 market_raw_dir / "rates_daily.csv",
                 market_raw_dir / "download_manifest.csv",
             ),
@@ -2376,11 +2370,10 @@ def _snapshot_component_sources(component: CaptureComponent) -> None:
         publication = resolve_download_publication(
             output_dir=component.snapshot_sources[0].parent,
         )
-        if publication.secondary_prices_path is None:
-            raise OSError("market_macro: canonical secondary prices artifact missing")
+        # DATA-022: market/macro capture is FMP-only; a Marketstack artifact that an explicit
+        # `download-data --with-marketstack` left in the publication is not captured.
         sources = (
             publication.prices_path,
-            publication.secondary_prices_path,
             publication.rates_path,
             publication.manifest_path,
         )

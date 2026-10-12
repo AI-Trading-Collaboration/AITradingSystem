@@ -1,9 +1,9 @@
 schema_version: data_quality_consumer_authorization_policy.v1
 policy_id: arch_004_wave15_daily_score_consumer_authorization_v1
-policy_version: 1.0.0
+policy_version: 1.1.0
 owner: data_governance
 status: REVIEWED
-owner_decision_id: owner_decision:ARCH-004-WAVE15:2026-07-25:approve_narrow_d0b3_g4b_g3_close_v1
+owner_decision_id: owner_decision:DATA-022:2026-10-12:fmp_only_secondary_optional
 profile:
   consumer_id: daily_score_daily
   consumer_version: 1.0.0
@@ -11,7 +11,7 @@ profile:
   publication_output_dir: data/raw
   authorization_ttl_hours: 24
   accepted_data_quality_statuses: [PASS]
-  required_input_roles: [prices, rates, secondary_prices]
+  required_input_roles: [prices, rates]
   require_download_publication_companion: true
   require_legacy_projection_verified: true
   require_exact_as_of: true
@@ -24,6 +24,9 @@ governance:
     DQ receipt and D0B2 immutable publication have both been independently
     revalidated. The authorization is a separate, revocable, consumer-scoped
     capability; historical receipt and publication safety fields remain false.
+    Originally approved by owner_decision:ARCH-004-WAVE15:2026-07-25:approve_narrow_d0b3_g4b_g3_close_v1
+    with roles prices, rates and secondary_prices. DATA-022 (2026-10-12) made prices FMP-only, so
+    the daily receipt carries prices and rates; a Marketstack artifact in the publication is ignored.
   intended_effect: >
     Permit one controlled native daily-score dispatch path while preserving
     fail-closed behavior before runner invocation and downstream artifact

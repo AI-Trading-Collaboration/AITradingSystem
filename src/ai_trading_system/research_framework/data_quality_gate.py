@@ -16,6 +16,7 @@ from ai_trading_system.data.quality import (
     validate_data_cache,
     write_data_quality_report,
 )
+from ai_trading_system.data.secondary_prices import optional_secondary_prices_path
 
 DEFAULT_GROWTH_TILT_PRICES_PATH = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
 
@@ -46,8 +47,8 @@ def run_growth_tilt_data_quality_gate(
         quality_config=quality_config,
         as_of=resolved_as_of,
         manifest_path=prices_path.parent / "download_manifest.csv",
-        secondary_prices_path=prices_path.parent / "prices_marketstack_daily.csv",
-        require_secondary_prices=_requires_marketstack_prices(prices_path),
+        secondary_prices_path=optional_secondary_prices_path(prices_path),
+        require_secondary_prices=False,
     )
     write_data_quality_report(report, report_path)
     return {
@@ -60,10 +61,3 @@ def run_growth_tilt_data_quality_gate(
         "data_quality_warning_count": report.warning_count,
         "data_quality_info_count": report.info_count,
     }
-
-
-def _requires_marketstack_prices(prices_path: Path) -> bool:
-    try:
-        return prices_path.resolve() == DEFAULT_GROWTH_TILT_PRICES_PATH.resolve()
-    except OSError:
-        return prices_path == DEFAULT_GROWTH_TILT_PRICES_PATH

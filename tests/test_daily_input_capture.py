@@ -153,16 +153,17 @@ def _runner_for_components(
 def test_reviewed_policy_governs_source_control_and_recovery_modes() -> None:
     policy = load_daily_input_capture_policy()
 
-    assert policy.policy_version == "daily_input_capture_v6"
+    assert policy.policy_version == "daily_input_capture_v7"
     assert policy.tracking_start == date(2026, 7, 24)
     assert policy.blocker_taxonomy_version == "daily_input_capture_blockers_v1"
     assert policy.lease_ttl_seconds == 1800
     assert policy.component_policies["market_macro"].max_attempts == 2
     assert policy.component_policies["market_macro"].source_revision == (
-        "market_macro_v4_relocation_recovery"
+        "market_macro_v5_fmp_only"
     )
     assert policy.component_policies["market_macro"].supersedes_source_revisions == (
         "daily_input_capture_v3",
+        "market_macro_v4_relocation_recovery",
     )
     assert policy.component_policies["market_macro"].retry_delay_seconds == 5
     assert policy.component_policies["market_macro"].retryable_blocker_codes == (
@@ -429,22 +430,27 @@ def test_market_macro_snapshot_uses_validated_immutable_publication(
         source.parent.mkdir(parents=True, exist_ok=True)
         source.write_text(f"immutable:{filename}\n", encoding="utf-8")
         immutable_sources.append(source)
-    monkeypatch.setattr(
-        capture_module,
-        "resolve_download_publication",
-        lambda **_: SimpleNamespace(
-            prices_path=immutable_sources[0],
-            secondary_prices_path=immutable_sources[1],
-            rates_path=immutable_sources[2],
-            manifest_path=immutable_sources[3],
-        ),
-    )
+    # DATA-022: market/macro capture is FMP-only. A Marketstack artifact left in the
+    # publication by an explicit download is not captured, and its absence is not an error.
+    fmp_only_sources = [immutable_sources[0], immutable_sources[2], immutable_sources[3]]
+    for secondary in (immutable_sources[1], None):
+        monkeypatch.setattr(
+            capture_module,
+            "resolve_download_publication",
+            lambda secondary=secondary, **_: SimpleNamespace(
+                prices_path=immutable_sources[0],
+                secondary_prices_path=secondary,
+                rates_path=immutable_sources[2],
+                manifest_path=immutable_sources[3],
+            ),
+        )
 
-    capture_module._snapshot_component_sources(component)
+        capture_module._snapshot_component_sources(component)
 
-    assert [
-        destination.read_text(encoding="utf-8") for destination in component.expected_paths
-    ] == [source.read_text(encoding="utf-8") for source in immutable_sources]
+        assert [
+            destination.read_text(encoding="utf-8") for destination in component.expected_paths
+        ] == [source.read_text(encoding="utf-8") for source in fmp_only_sources]
+        assert not (paths.market_macro_dir / "prices_marketstack_daily.csv").exists()
 
 
 def test_capture_attempts_all_components_and_retains_partial_inputs(tmp_path: Path) -> None:

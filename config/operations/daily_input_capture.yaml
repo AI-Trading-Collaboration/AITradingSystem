@@ -1,5 +1,5 @@
 schema_version: daily_input_capture_policy.v2
-policy_version: daily_input_capture_v6
+policy_version: daily_input_capture_v7
 owner: operations_owner_and_data_platform_owner
 status: REVIEWED
 reviewed_at: 2026-08-05
@@ -23,9 +23,10 @@ source_control:
   lease_ttl_seconds: 1800
   component_policies:
     market_macro:
-      source_revision: market_macro_v4_relocation_recovery
+      source_revision: market_macro_v5_fmp_only
       supersedes_source_revisions:
         - daily_input_capture_v3
+        - market_macro_v4_relocation_recovery
       max_attempts: 2
       retry_delay_seconds: 5
       retryable_blocker_codes:
@@ -67,6 +68,10 @@ source_control:
     state after the checkout-relocation publication defect was fixed; the old
     state remains immutable at its original path. The market/macro command retains
     the reviewed two-attempt transient-failure budget established by OPS-069.
+    market_macro_v5_fmp_only (DATA-022,
+    owner_decision:DATA-022:2026-10-12:fmp_only_secondary_optional) captures FMP
+    prices, FRED rates and the download manifest only; Marketstack is no longer a
+    daily source, and it supersedes the v4 four-file state.
     PIT-sensitive and mutable-current endpoints
     receive one contemporaneous attempt; later recovery must not manufacture
     historical strict PIT. The 30-minute lease only serializes one

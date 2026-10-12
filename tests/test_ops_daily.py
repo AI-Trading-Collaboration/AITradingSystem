@@ -1134,11 +1134,8 @@ def test_daily_ops_plan_capture_replaces_sec_and_valuation_fetch_before_score() 
 def test_daily_ops_plan_closed_market_skips_score_and_current_download(
     tmp_path: Path,
 ) -> None:
+    # DATA-022: the FMP price cache alone decides coverage; no Marketstack cache or key.
     _write_price_cache(tmp_path / "data" / "raw" / "prices_daily.csv", "2026-05-08")
-    _write_price_cache(
-        tmp_path / "data" / "raw" / "prices_marketstack_daily.csv",
-        "2026-05-08",
-    )
 
     plan = build_daily_ops_plan(
         as_of=date(2026, 5, 10),
@@ -1148,7 +1145,6 @@ def test_daily_ops_plan_closed_market_skips_score_and_current_download(
         plan,
         env={
             "FMP_API_KEY": "present",
-            "MARKETSTACK_API_KEY": "present",
             "SEC_USER_AGENT": "AITradingSystem test@example.com",
         },
     )
@@ -1220,6 +1216,10 @@ def test_daily_ops_plan_closed_market_downloads_previous_trading_day_when_cache_
         "2018-01-01",
         "--end",
         "2026-05-08",
+    )
+    assert download_step.required_env_vars == ("FMP_API_KEY",)
+    assert not any(
+        path.name == "prices_marketstack_daily.csv" for path in download_step.produced_paths
     )
 
 

@@ -16,6 +16,7 @@
 
 ## 总体结论
 
+- 2026-10-12 更新（DATA-022，`owner_decision:DATA-022:2026-10-12:fmp_only_secondary_optional`）：只保留 FMP 价格订阅，Marketstack 退订；日报和 DQ 不再要求第二行情源，对账改为手动可选。下面其余各条仍是 2026-06-28 的盘点，没有重新核对。
 - 当前本机可见关键凭据：`FMP_API_KEY`、`MARKETSTACK_API_KEY`、`EODHD_API_KEY`、`FRED_API_KEY`、`BEA_API_KEY`、`BLS_API_KEY`、`ALPHA_VANTAGE_API_KEY`、`CONGRESS_API_KEY`、`GOVINFO_API_KEY`、`OPENAI_API_KEY`、`SEC_USER_AGENT`。
 - 当前本机不可见：`FINANCIAL_MODELING_PREP_API_KEY`。FMP 实际使用 `FMP_API_KEY`，`FINANCIAL_MODELING_PREP_API_KEY` 只是 audit runner 支持的别名。
 - 2026-06-28 最小服务端 key 验证：BEA `GETDATASETLIST` 返回 13 个 dataset；BLS v2 `LNS14000000` 2024 样本返回 `REQUEST_SUCCEEDED`；Alpha Vantage `GLOBAL_QUOTE` / `MSFT` 返回 `Global Quote`。

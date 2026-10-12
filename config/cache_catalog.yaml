@@ -56,7 +56,8 @@ entries:
   - entry_id: secondary_price_cache
     title: Marketstack secondary price cache
     data_type: secondary_price_data
-    required: true
+    # DATA-022: optional; present only after an explicit download-data --with-marketstack.
+    required: false
     path: data/raw/prices_marketstack_daily.csv
     format: csv
     date_column: date

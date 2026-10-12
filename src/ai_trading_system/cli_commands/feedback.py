@@ -45,6 +45,7 @@ from ai_trading_system.data.quality import (
     validate_data_cache,
     write_data_quality_report,
 )
+from ai_trading_system.data.secondary_prices import optional_secondary_prices_path
 from ai_trading_system.decision_causal_chains import (
     DEFAULT_DECISION_CAUSAL_CHAIN_PATH,
     build_decision_causal_chain_ledger,
@@ -240,18 +241,6 @@ def _parse_positive_int_csv(value: str, label: str) -> list[int]:
 
 def _download_manifest_path(prices_path: Path) -> Path:
     return prices_path.parent / "download_manifest.csv"
-
-
-def _marketstack_prices_path(prices_path: Path) -> Path:
-    return prices_path.parent / "prices_marketstack_daily.csv"
-
-
-def _requires_marketstack_prices(prices_path: Path) -> bool:
-    default_prices_path = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
-    try:
-        return prices_path.resolve() == default_prices_path.resolve()
-    except OSError:
-        return prices_path == default_prices_path
 
 
 def _path_from_snapshot_trace(snapshot: dict[str, object]) -> Path | None:
@@ -485,8 +474,8 @@ def calibrate_decision_outcomes(
         quality_config=data_quality_config,
         as_of=calibration_date,
         manifest_path=_download_manifest_path(prices_path),
-        secondary_prices_path=_marketstack_prices_path(prices_path),
-        require_secondary_prices=_requires_marketstack_prices(prices_path),
+        secondary_prices_path=optional_secondary_prices_path(prices_path),
+        require_secondary_prices=False,
     )
     write_data_quality_report(data_quality_report, quality_output)
     if not data_quality_report.passed:
@@ -626,8 +615,8 @@ def calibrate_prediction_outcomes(
         quality_config=data_quality_config,
         as_of=calibration_date,
         manifest_path=_download_manifest_path(prices_path),
-        secondary_prices_path=_marketstack_prices_path(prices_path),
-        require_secondary_prices=_requires_marketstack_prices(prices_path),
+        secondary_prices_path=optional_secondary_prices_path(prices_path),
+        require_secondary_prices=False,
     )
     write_data_quality_report(data_quality_report, quality_output)
     if not data_quality_report.passed:

@@ -47,7 +47,6 @@ FAMILY_SPECS: tuple[FamilySpec, ...] = (
         ("data_quality", "market_data_freshness", "market_data_refresh"),
         (
             "data/raw/prices_daily.csv",
-            "data/raw/prices_marketstack_daily.csv",
             "data/raw/rates_daily.csv",
             "data/processed/features_daily.csv",
             "data/processed/scores_daily.csv",

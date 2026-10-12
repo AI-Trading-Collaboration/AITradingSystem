@@ -1758,6 +1758,8 @@ def test_validate_data_cli_explicit_as_of_auto_profile_does_not_publish_pointer(
     assert not (
         tmp_path / "outputs/data_quality/executions/discovery/daily_default/2026-05-02/current.json"
     ).exists()
+    # DATA-022: a manual run reconciles the Marketstack cache that sits next to the prices.
+    assert _receipt_input_roles(tmp_path) == ["prices", "rates", "secondary_prices"]
 
 
 def test_validate_data_cli_explicit_daily_profile_uses_project_relative_inputs(
@@ -1798,6 +1800,8 @@ def test_validate_data_cli_explicit_daily_profile_uses_project_relative_inputs(
     assert result.exit_code == 0, result.output
     assert "未发布（非 daily_default profile）" not in result.output
     assert pointer_path.is_file()
+    # DATA-022: the daily profile is FMP-only even when a Marketstack cache is present.
+    assert _receipt_input_roles(tmp_path) == ["prices", "rates"]
 
 
 def test_validate_data_cli_daily_profile_cannot_use_cwd_short_path_bypass(
@@ -2127,6 +2131,12 @@ def _write_valid_cache(
     prices.to_csv(prices_path, index=False)
     rates.to_csv(rates_path, index=False)
     return prices_path, rates_path
+
+
+def _receipt_input_roles(root: Path) -> list[str]:
+    (receipt_path,) = (root / "outputs/data_quality/executions").glob("*/receipt.json")
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    return sorted(item["role"] for item in receipt["inputs"])
 
 
 def _write_daily_default_cli_cache(root: Path) -> tuple[Path, Path]:

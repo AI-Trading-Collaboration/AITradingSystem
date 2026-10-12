@@ -428,7 +428,9 @@ def _verify_publication_projection(
         if item.manifest_path != expected_manifest:
             _fail("DQ_MANIFEST_SHA_MISMATCH", f"role={item.role}")
         observed_roles.add(item.role)
-    if observed_roles != set(expected_paths):
+    # DATA-022: an FMP-only receipt ignores a Marketstack artifact that the publication may
+    # still carry; prices and rates must always be bound.
+    if not {"prices", "rates"} <= observed_roles:
         _fail("DQ_INPUT_SET_MISMATCH", "publication/receipt role sets differ")
 
 

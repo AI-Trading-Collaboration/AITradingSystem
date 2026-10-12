@@ -67,8 +67,8 @@ source_groups:
     primary_sources:
       - fmp_eod_daily_prices
       - cboe_vix_daily_prices
-    fallback_sources:
-      - marketstack_eod_daily_prices
+    # DATA-022: Marketstack is inactive; prices have no fallback and fail closed.
+    fallback_sources: []
     ineligible_sources:
       - yahoo_finance_daily_prices
     artifact_metadata_required: true

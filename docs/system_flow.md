@@ -44,7 +44,7 @@ flowchart TD
 
 | 环节 | 规则 | 代码/配置 |
 |---|---|---|
-| 数据质量 | `score-daily` 只接受同 as-of 的 strict `PASS` receipt；`PASS_WITH_WARNINGS`、`FAIL`、receipt/指针/源数据漂移都在评分前阻断 | `data/quality*`、`config/data_quality.yaml`、`tests/invariants/` |
+| 数据质量 | `score-daily` 只接受同 as-of 的 strict `PASS` receipt；`PASS_WITH_WARNINGS`、`FAIL`、receipt/指针/源数据漂移都在评分前阻断。价格只用 FMP（DATA-022）：`daily_default.v1` 只绑定 prices 和 rates；Marketstack 对账只在 manual profile 下、价格缓存目录里有 Marketstack 文件时进行 | `data/quality*`、`config/data_quality.yaml`、`tests/invariants/` |
 | 输入采集 | 某个 capture 组件缺失只阻断依赖它的步骤；整体保持 `BLOCKED_DEPENDENCY`/`FAIL`，finalization 不运行 | `config/operations/daily_input_capture.yaml` |
 | PIT | 失败快照不得作为 PIT 输入；manifest/schema 异常 fail closed | `pit_snapshots` |
 | 休市日 | 不生成新评分、决策快照、Reader Brief 评分产物或 forward evidence | `ops_daily.py` |

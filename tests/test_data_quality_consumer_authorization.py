@@ -29,6 +29,7 @@ from ai_trading_system.data.download_publication import ValidatedDownloadPublica
 from ai_trading_system.data.quality_consumer_authorization import (
     DEFAULT_CONSUMER_AUTHORIZATION_POLICY_PATH,
     DataQualityConsumerAuthorizationError,
+    _verify_publication_projection,
     build_data_quality_consumer_authorization_attestation,
     load_reviewed_data_quality_consumer_authorization_policy,
     verify_data_quality_consumer_authorization,
@@ -50,7 +51,10 @@ def test_reviewed_profile_is_exact_single_consumer_strict_pass_policy() -> None:
     assert policy.consumer_id == "daily_score_daily"
     assert policy.consumer_version == "1.0.0"
     assert policy.accepted_data_quality_statuses == ("PASS",)
-    assert policy.required_input_roles == ("prices", "rates", "secondary_prices")
+    assert policy.required_input_roles == ("prices", "rates")
+    assert policy.owner_decision_id == (
+        "owner_decision:DATA-022:2026-10-12:fmp_only_secondary_optional"
+    )
     assert policy.authorization_ttl_hours == 24
     assert policy.publication_output_dir == "data/raw"
 
@@ -86,6 +90,38 @@ def test_attestation_round_trip_binds_receipt_publication_and_keeps_legacy_false
     assert attestation.automatic_non_daily_dispatch is False
     assert preflight.receipt.consumer_cutover_allowed is False
     assert publication.consumer_cutover_allowed is False
+
+
+def test_fmp_only_receipt_authorizes_with_or_without_marketstack_in_publication(
+    tmp_path: Path,
+) -> None:
+    # DATA-022: an FMP-only publication and one that still carries Marketstack both authorize
+    # the prices+rates receipt; a receipt that drops rates does not.
+    root = _project_root(tmp_path)
+    preflight = _preflight()
+    policy = load_reviewed_data_quality_consumer_authorization_policy(project_root=root)
+    fmp_only_publication = replace(
+        _publication(root),
+        secondary_prices_path=None,
+        legacy_secondary_prices_path=None,
+        artifact_sha256={"prices": SHA_A, "rates": SHA_B},
+        artifact_row_count={"prices": 10, "rates": 10},
+    )
+    for publication in (_publication(root), fmp_only_publication):
+        attestation = build_data_quality_consumer_authorization_attestation(
+            policy=policy,
+            preflight=preflight,
+            publication=publication,
+            authorized_at=AUTHORIZED_AT,
+            project_root=root,
+        )
+        assert attestation.consumer_dispatch_authorized is True
+
+    prices_only_inputs = tuple(
+        item for item in preflight.receipt.inputs if item.role == "prices"
+    )
+    with pytest.raises(DataQualityConsumerAuthorizationError, match="DQ_INPUT_SET_MISMATCH"):
+        _verify_publication_projection(root, prices_only_inputs, fmp_only_publication)
 
 
 def test_write_and_verify_returns_unforgeable_consumer_capability(tmp_path: Path) -> None:
@@ -140,7 +176,7 @@ def test_write_and_verify_returns_unforgeable_consumer_capability(tmp_path: Path
         (
             Path(preflight.receipt_path),
             AS_OF,
-            ("prices", "rates", "secondary_prices"),
+            ("prices", "rates"),
         )
     ]
     assert publication_calls == [root / "data/raw"]
@@ -367,7 +403,7 @@ def _receipt(
         report_path=report.path,
         report_sha256=report.sha256,
         warning_count=warning_count,
-        checked_input_count=3,
+        checked_input_count=2,
     )
     inputs = tuple(
         DataQualityInputBinding(
@@ -384,15 +420,11 @@ def _receipt(
             matched_source_ids=(source,),
             matched_record_refs=(f"manifest_record_{digest[:16]}",),
         )
+        # DATA-022: the daily receipt is FMP-only; _publication() still carries a Marketstack
+        # artifact, which the authorization must ignore.
         for role, filename, digest, source in (
             ("prices", "prices_daily.csv", SHA_A, "stooq"),
             ("rates", "rates_daily.csv", SHA_B, "fred"),
-            (
-                "secondary_prices",
-                "prices_marketstack_daily.csv",
-                SHA_C,
-                "marketstack",
-            ),
         )
     )
     return DataQualityExecutionReceipt(

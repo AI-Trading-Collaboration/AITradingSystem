@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DATA-022
+area: 数据工程/价格只用 FMP，第二源对账改为可选
+priority: P1
+status: VALIDATING
+next_owner: Baker（恢复 FMP 订阅）；Claude（首次日报验收）
+next_step: 详细见 docs/requirements/DATA-022_FMP_Only_Secondary_Source_Optional.md；FMP 订阅和 FMP_API_KEY 恢复后，用第一个交易日的计划任务验收：没有 MARKETSTACK_API_KEY 时全链 PASS、DQ 收据角色为 prices/rates、score-daily 授权通过；之后删除 MARKETSTACK_API_KEY 并退订 Marketstack
+acceptance: 日报链（download/capture/validate-data daily_default.v1/score-daily 授权/休市日覆盖）不再要求 Marketstack；manual 档 validate-data 对同目录存在的 Marketstack 缓存照旧对账，raw close 冲突仍 FAIL；DATA-022 之前的 Marketstack 形状收据仍可验证；PR 套件通过；首个 FMP-only 交易日计划任务全链 PASS
+notes: 2026-10-12：owner_decision:DATA-022:2026-10-12:fmp_only_secondary_optional（Baker「只留 FMP，第二源对账改成可选」）；实现与测试在云端完成，由本机 pi 应用并经 ship C 区门禁发布；运行副本 96 份 DQ 报告（2026-05-02..10-09）8 次 FAIL 均与第二源无关，89 份对账明细只有 INFO；production_effect=none；broker_action=none

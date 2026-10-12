@@ -22,6 +22,7 @@ from ai_trading_system.data.quality import (
     validate_data_cache,
     write_data_quality_report,
 )
+from ai_trading_system.data.secondary_prices import optional_secondary_prices_path
 from ai_trading_system.trade_review import (
     build_trade_review_report,
     default_trade_review_report_path,
@@ -110,8 +111,8 @@ def review_trades(
         quality_config=load_data_quality(),
         as_of=review_date,
         manifest_path=_download_manifest_path(prices_path),
-        secondary_prices_path=_marketstack_prices_path(prices_path),
-        require_secondary_prices=_requires_marketstack_prices(prices_path),
+        secondary_prices_path=optional_secondary_prices_path(prices_path),
+        require_secondary_prices=False,
     )
     write_data_quality_report(data_quality_report, quality_output)
     if not data_quality_report.passed:
@@ -172,15 +173,3 @@ def _parse_csv_items(value: str) -> list[str]:
 
 def _download_manifest_path(prices_path: Path) -> Path:
     return prices_path.parent / "download_manifest.csv"
-
-
-def _marketstack_prices_path(prices_path: Path) -> Path:
-    return prices_path.parent / "prices_marketstack_daily.csv"
-
-
-def _requires_marketstack_prices(prices_path: Path) -> bool:
-    default_prices_path = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
-    try:
-        return prices_path.resolve() == default_prices_path.resolve()
-    except OSError:
-        return prices_path == default_prices_path

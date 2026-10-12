@@ -37,6 +37,7 @@ from ai_trading_system.data.quality_execution import (
     DataQualityExecutionError,
     load_reviewed_data_quality_policy,
     run_canonical_data_quality_execution,
+    verify_daily_default_execution_profile_receipt,
     verify_data_quality_execution_receipt,
 )
 
@@ -387,6 +388,55 @@ scoring_weights: {}
 
     assert len(calls) == 1
     assert not (execution_fixture.root / "outputs").exists()
+
+
+def test_daily_default_profile_runs_fmp_only_and_rejects_half_secondary_shape(
+    execution_fixture: ExecutionFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # DATA-022: the daily profile binds prices and rates only; a Marketstack path without
+    # the matching requirement flag is neither the FMP-only nor the legacy shape.
+    (execution_fixture.root / "config/universe.yaml").write_text(
+        """market:
+  decision_frequency: daily
+  benchmarks: [QQQ]
+  defensive: []
+  simple_baseline_research: []
+macro:
+  volatility: []
+  rates: [DGS10]
+  currency: []
+ai_chain:
+  core_watchlist: []
+scoring_weights: {}
+""",
+        encoding="utf-8",
+    )
+    _install_report_spy(monkeypatch, status="PASS")
+    request = replace(
+        execution_fixture.request,
+        execution_profile_id=DAILY_DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID,
+    )
+
+    result = run_canonical_data_quality_execution(request, project_root=execution_fixture.root)
+    verify_daily_default_execution_profile_receipt(
+        result.receipt, project_root=execution_fixture.root
+    )
+
+    assert sorted(item.role for item in result.receipt.inputs) == ["prices", "rates"]
+    invocation = {item.name: item.value_json for item in result.receipt.invocation}
+    assert invocation["require_secondary_prices"] == "false"
+    assert invocation["secondary_prices_path"] == "null"
+
+    secondary_path = execution_fixture.root / "data/raw/prices_marketstack_daily.csv"
+    secondary_path.write_text(PRICE_HEADER + PRICE_ROW, encoding="utf-8")
+    half_shape = replace(
+        request,
+        secondary_prices_path=Path("data/raw/prices_marketstack_daily.csv"),
+        require_secondary_prices=False,
+    )
+    with pytest.raises(DataQualityExecutionError, match="profile shape mismatch"):
+        run_canonical_data_quality_execution(half_shape, project_root=execution_fixture.root)
 
 
 def test_runner_discloses_actual_common_window_from_two_day_captured_inputs(

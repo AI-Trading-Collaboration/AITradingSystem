@@ -2,6 +2,8 @@
 
 状态：BASELINE_DONE
 
+> 2026-10-12 起停用（DATA-022，`owner_decision:DATA-022:2026-10-12:fmp_only_secondary_optional`）：价格只用 FMP，日报不再下载或要求 Marketstack；对账改为手动可选，见 `docs/requirements/DATA-022_FMP_Only_Secondary_Source_Optional.md`。本文其余内容是停用前的记录。
+
 最后更新：2026-05-05
 
 关联任务：`DATA-002`、`DATA-005`
