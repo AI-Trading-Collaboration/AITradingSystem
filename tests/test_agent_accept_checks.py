@@ -309,7 +309,7 @@ def test_zone_classification_matches_ship_for_real_policy() -> None:
     sys.path.insert(0, str(ROOT / "scripts/agent"))
     import accept_checks  # noqa: PLC0415
 
-    policy_text = subprocess.run(["git", "show", "main:config/gov008_ship.yaml"], cwd=ROOT, text=True, capture_output=True, check=True).stdout
+    policy_text = (ROOT / "config/gov008_ship.yaml").read_text(encoding="utf-8")
     policy = accept_checks.parse_policy(policy_text)
     paths = subprocess.run(["git", "ls-files"], cwd=ROOT, text=True, capture_output=True, check=True).stdout.splitlines()
     paths += [".agents/skills/ship-change/SKILL.md", ".pi/prompts/x.md", "README.md", "docs/x.md", "tasks/x.yaml", "src/ai_trading_system/scoring/a.py", "config/ibkr_paper_x.yaml"]

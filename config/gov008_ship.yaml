@@ -54,6 +54,8 @@ zones:
     - AGENTS.md
     - config/gov008_ship.yaml
     - tools/gov008/ship.py
+    - .pi/extensions/aits-guard/**
+    - scripts/agent/publish.ps1
   # Zone A: records. Documentation, task and experiment records, generated lists.
   A:
     - docs/**

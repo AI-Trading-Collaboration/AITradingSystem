@@ -60,12 +60,15 @@ the tested tree -> ordinary push, with the remote checked before and after.
   `python -m pytest tests -n 16 --dist loadfile -m "not slow"` (about 10 minutes; `slow` marks
   single tests of 30 s or more, which run nightly). **C** semantic-critical
   paths (data quality, PIT, research window, scoring, thresholds, position caps, production and broker
-  boundaries, `tests/invariants`, `.github`, this file, the ship policy) run the PR suite and need an
-  `Owner-Decision:` trailer in at least one commit of the range; `ship` refuses without it.
+  boundaries, `tests/invariants`, `.github`, this file, the ship policy, the pi guard, `publish.ps1`)
+  run the PR suite and need an `Owner-Decision:` trailer in at least one commit of the range; `ship`
+  refuses without it.
 - `ship` writes a `Gate:` trailer recording the tested tree. The gate is run by the agent itself and
   is not an independent verifier; for zone C the owner decision is the real control. In two-step pi
-  runs, after Claude acceptance the owner account runs `publish.ps1`, which uses `main`'s `ship.py` to
-  `--publish --push` without tests or branch code and verifies the Gate tree, zone, and Owner-Decision.
+  runs pi stops after `--dry-run`; after Claude's review the owner account runs `--gate`, then
+  `publish.ps1 -ExpectedTree <reviewed tree>`, which uses `main`'s `ship.py` to `--publish --push`
+  without tests or branch code and verifies the Gate tree, zone, and Owner-Decision. Zone A and B
+  publish on the reviewed tree; zone C also needs the owner's accepted record for that tree.
   Do not weaken a test, invariant, or this policy to make a gate pass.
 - Never pass hundreds of test file paths to pytest (collection becomes quadratic on Windows); pass
   `tests` and select with markers. Run serial pytest only to reproduce a parallelism-related failure
@@ -94,6 +97,12 @@ the tested tree -> ordinary push, with the remote checked before and after.
   the step plan, acceptance per step, open questions, and progress; the task record links to it.
 - Record owner decisions as `owner_decision:<task>:<date>:<slug>` in the requirement document and cite
   them in the `Owner-Decision:` trailer.
+- The owner signs decisions, not executions (`owner_decision:DEVX-025:2026-10-12:signoff_policy`):
+  direction and scope, zone C changes, these rules and the gates themselves (this file, the ship
+  policy, the pi guard, `publish.ps1`), R2 and R3 actions, machine permissions, and any result that
+  departs from what was approved. A decision states its scope and expected result (for zone C, the
+  expected tree when it can be computed beforehand); work that matches it goes ahead without asking
+  again.
 - Task records are `tasks/<ID>.yaml` (schema `task.v1`): edit the file or use
   `python tools/tasks.py new|set`, then `python tools/tasks.py render`. `docs/task_register.md` and
   `docs/task_register_completed.md` are rendered views: never edit them; the PR suite fails when they
