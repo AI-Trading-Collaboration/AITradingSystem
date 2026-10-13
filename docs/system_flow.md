@@ -69,21 +69,37 @@ ad hoc 的 SEC PIT 回填/评估与缓存回放。
 
 ## 4. 研究链路
 
+研究只走评估台（TRADING-2565），按 TRADING-2567 的问题和窗口进行；入口说明在 `research/README.md`。
+
 ```mermaid
 flowchart LR
-    PRE["预注册：假设 · 窗口 · 成本模型 · kill 条件<br/>先提交，后读结果"] --> AUTH["run authorization"]
-    AUTH --> RUN["研究运行<br/>validate-data → 计算 → manifest"]
-    RUN --> PROV["运行溯源 core/provenance.py<br/>commit · 代码是否修改 · 配置哈希 · requested/evaluated 窗口"]
-    PROV --> ADM["result admission → 决策记录"]
-    HOLD["前瞻采集：capture_hold acquire →<br/>run_named_data_quality.py --source-hold-id → release"] --> ADM
+    Q["Owner 定问题（TRADING-2567）"] --> PRE["research/&lt;题号&gt;/prereg.yaml + strategy.py<br/>C 区：随 Owner-Decision ship 进 main"]
+    SNAP["长历史快照（本机 data/raw/research/，不入库）<br/>qqq_long_history fetch → check"] --> BENCH
+    PRE --> BENCH["评估台 python -m ai_trading_system.research_bench<br/>读固定快照 · 控制窗口 · 次日收盘成交 · 统一成本 · 固定基准"]
+    BENCH --> DEV["开发窗口 run：每个不同配置一次试验，超过 trial_cap 拒绝<br/>--falsify：成本、推迟、逐年和逐段剔除、同敞口随机择时、块 bootstrap"]
+    BENCH --> VAL["验证窗口 validate：每题一次<br/>prereg.yaml 和策略模块须等于 main，决定号须在 docs/requirements"]
+    VAL --> CON["一致性窗口 consistency：只做一致性检查"]
+    DEV --> REC["research/&lt;题号&gt;/runs/NNNN.json（哈希链）· window_reads.jsonl<br/>ledger：试验数、折算夏普 · report：第一屏"]
+    VAL --> REC
+    CON --> REC
+    REC --> DEC["decision.md（只引用登记过的运行号和读取号）<br/>→ research/ledger.md · negative_results.md（人审后更新）"]
 ```
 
-- 默认研究与回测窗口起点 2021-02-22（`config/research/primary_research_window_policy.yaml`）；更早的数据只用于有说明的
-  敏感性、代理或压力测试。
-- 保留的五条研究线：Composer 前瞻观察、equal-risk、simple baseline、第一/二层 meta policy、QQQ options。研究入口是
-  `aits research ...` 命令组与各自的预注册/授权/准入配置。
-- 前瞻采集（TRADING-2564 S3b、TRADING-2560 Composer）用 capture hold：精确 commit、`src/config/scripts/tools` 未修改、
-  写入路径独占、有效期 ≤ 24 小时；hold 是本机自证，不是独立权威。步骤见运维手册。
+- 窗口：QQQ 方向问题（`question_type: qqq_direction`）在 1999-03-10～2010-12-31 开发，2011-01-03～2021-02-19 每题预注册后
+  只读一次，2021-02-22 起只做一致性检查，不能挽救失败的验证（`config/research/primary_research_window_policy.yaml` 的
+  `question_windows`）。其他研究和回测的默认起点仍是 2021-02-22。
+- 数据：`python -m ai_trading_system.research_data.qqq_long_history fetch` 在 owner 本机下载并检查快照（FRED 的 Nasdaq-100
+  总收益和价格指数、3 个月国库券利率、VIX/VXN/VXO，FMP 的 QQQ 复权收盘价）。快照只在本机，不入库、不打印行、不发给外部
+  模型；预注册写死快照 id 和 QQQ 序列（`proxy` 总收益指数减费率，或 `actual` 真实 QQQ）。策略读 `qqq_return`，带回看的读
+  `ndx_return`：选定的 QQQ 序列开始以前接价格指数收益（1986 年起），之后的缺口不补（TRADING-2567-09）。
+- 模拟：策略只给出每个交易日的目标敞口（0～3）。评估台在下一个收盘成交，敞口换成可买的 QQQ、QLD、TQQQ 和现金，持仓在
+  两次调仓之间随价格漂移；按 `config/research/transaction_cost_model.yaml` 的统一成本扣费；每次运行先查目标是否用了之后的数据、
+  每个参数是否都被读到。基准固定：买入持有 QQQ、现金、固定 2 倍和 3 倍，以及平均敞口相同、调仓方式相同的固定敞口。
+- 记录：每次运行（失败的也算）记 commit、代码是否修改、预注册和设置的哈希、策略模块哈希、快照、试验号和窗口；git 历史
+  检查运行记录没有被改写或删除。别处得到的结果只是草稿。
+- agent 边界：pi 按 `research/_template/brief.md` 跑研究运行，只运行列出的评估台命令、只看屏幕上的汇总，不改预注册和策略
+  模块。pi 守卫拦提到或打开、列出、写 `data/raw/research/`、`data/raw/external_request_cache/` 的操作（TRADING-2566）。
+  守卫防的是误操作，不是安全边界；窗口由评估台控制。
 - 验证 PASS 不代表候选有效、可进入 paper shadow 或获准用于 production/broker。
 
 ## 5. 开发与发布
@@ -92,7 +108,20 @@ flowchart LR
 `pytest tests -n 16 --dist loadfile -m "not slow"`，C 区还要求 `Owner-Decision:` 行）→ 提交信息写 `Gate:` 行 → main 快进到
 被测试的树 → 普通推送并核对远端。任务记录在 `tasks/<ID>.yaml`，`docs/task_register*.md` 由 `tools/tasks.py render` 生成。
 各步骤的操作说明是 `.agents/skills/` 下的 Agent Skills（ship-change、task-records、periodic-operations、research-run）；
-使用 pi 时，`.pi/extensions/aits-guard` 拦截强推、改写历史、直接推 main 等被禁止的 git 操作，并在编辑 C 区路径前要求确认。
+使用 pi 时，`.pi/extensions/aits-guard` 拦截强推、改写历史、直接推 main 等被禁止的 git 操作，在编辑 C 区路径前要求确认，并拦截对研究数据目录的读写（第 4 节）。
+
+**两步发布与 C 区批准（DEVX-029，`owner_decision:DEVX-029:2026-10-13:decision_scoped_signoff`）**：pi 运行时 pi 停在
+`ship.py --dry-run`；Claude 审过后，owner 账户先跑 `ship.py --gate`，再跑 `scripts/agent/publish.ps1`。发布核对二选一：
+`-ExpectedTree`（审过的结果 tree），或 `-ExpectedPatch` 加 `-ExpectedMessage`（审过的补丁指纹 `git patch-id --stable` 和
+去掉 `Gate:` 行后的提交信息 SHA-256；分支只能比 base 多一个提交，main 前进了只要补丁不变仍可发布）。`publish.ps1` 用 main 上的
+`ship.py --publish --push`，不跑测试、不用分支代码，核对 Gate tree、区和 `Owner-Decision`；区划和排除清单按 base 上的规则算。
+C 区有两种批准：
+
+- 按决定：owner 在 pi 线程写一句话点名一个决定 → Claude 起草 `aits.owner_decision/1` 记录（决定号、owner 原话和时间、允许改的
+  C 区路径 `c_paths`、预期结果、不超过 14 天的有效期）→ 电脑会话用 `approve.ps1 -Draft … -ExpectSha256 … -Yes` 写进验收根目录的
+  `decisions/`。记录覆盖到的 C 区改动不再需要按 tree 的验收记录。
+- 按 tree：`config/gov008_ship.yaml` 的 `decision_record_excluded` 里的路径（`AGENTS.md`、ship 规则和 `ship.py`、pi 守卫、
+  `publish.ps1`、`approve.ps1`、`.github`、生产和券商边界）仍要 owner 对结果 tree 的运行前批准记录。
 
 **运行与调度（OPS-082，`owner_decision:OPS-082:2026-10-11:deterministic_scheduler_v1`）**：ship 之后，运行副本
 `D:\Work\AITradingSystem_ops_runtime`（独立 clone，detached 到已 ship 的 main 提交，`.venv` editable 安装指向本副本 `src`）
@@ -127,6 +156,7 @@ flowchart LR
 | Codex automation `aitradingsystem-pit`、其提示词 `config/operations/aitradingsystem_pit_automation_prompt.md` 与业务合同模块 `ops_scheduler_business_contract.py`；终止恢复的 deployment receipt 依赖 | 2026-10-11 OPS-082 | Windows 计划任务 + 包装脚本（第 5 节）；恢复改为校验运行副本 HEAD |
 | 报告登记中命令已不存在的 507 个条目 | 2026-10-10 GOV-008 P5 | 保留条目（研究记录按 id 引用），标 `archived_optional` |
 | 任务事件库 `registry/development_tasks` | 2026-10-10 GOV-008 P5a；最后一个冻结片段 2026-10-12 GOV-009 W5 删除 | `tasks/<ID>.yaml` |
+| 旧研究链路：`aits research` 命令组、前瞻采集的 capture hold、旧研究线的大部分代码、配置和记录（保留的见 `research/assets.md`） | 2026-10-12 GOV-009 W1～W5 | 结论在 `research/ledger.md` 和 `negative_results.md`；内容在 tag `research-archive-2026-10-12`；新研究走评估台（第 4 节） |
 
 旧机制的完整代码与文档在 tag `legacy-governance-final`（`2d29e4e35`）。
 
