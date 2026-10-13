@@ -9,6 +9,7 @@ from hashlib import sha256
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.paths import join_root, relative_to_root
 from ai_trading_system.platform.artifacts import (
     load_strict_json_path,
     write_json_atomic,
@@ -61,7 +62,7 @@ class InventoryPaths:
 
     def resolve(self, relative_path: str) -> Path:
         root = self.repo_root.resolve()
-        resolved = (root / relative_path).resolve()
+        resolved = (join_root(root, relative_path)).resolve()
         if root != resolved and root not in resolved.parents:
             raise AttributionInventoryError(f"path escapes repository: {relative_path}")
         if not resolved.is_file():
@@ -407,7 +408,7 @@ def _scan_noncanonical_constructors(
     source_root = root / "src" / "ai_trading_system"
     sites: list[dict[str, Any]] = []
     for path in sorted(source_root.rglob("*.py"), key=lambda item: item.as_posix()):
-        relative_path = path.relative_to(root).as_posix()
+        relative_path = relative_to_root(path, root).as_posix()
         if relative_path in excluded_paths:
             continue
         source_text = path.read_text(encoding="utf-8")

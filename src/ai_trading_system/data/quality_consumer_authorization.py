@@ -35,6 +35,7 @@ from ai_trading_system.data.quality_execution import (
     DataQualityExecutionError,
     verify_data_quality_execution_receipt,
 )
+from ai_trading_system.paths import join_root, relative_to_root
 from ai_trading_system.yaml_loader import safe_load_yaml_text
 
 DEFAULT_CONSUMER_AUTHORIZATION_POLICY_PATH: Final = Path(
@@ -277,7 +278,7 @@ def default_data_quality_consumer_authorization_path(
     root: Path = DEFAULT_CONSUMER_AUTHORIZATION_ROOT,
 ) -> Path:
     _text(authorization_id, "authorization_id")
-    return root / authorization_id / "attestation.json"
+    return join_root(root, authorization_id) / "attestation.json"
 
 
 def write_data_quality_consumer_authorization_attestation(
@@ -365,7 +366,9 @@ def verify_data_quality_consumer_authorization(
             expected_input_roles=policy.required_input_roles,
             project_root=root,
         )
-        publication = publication_resolver(output_dir=root / Path(policy.publication_output_dir))
+        publication = publication_resolver(
+            output_dir=join_root(root, Path(policy.publication_output_dir))
+        )
     except (DataQualityExecutionError, DownloadPublicationError, OSError) as exc:
         code = getattr(exc, "code", "DQ_CONSUMER_AUTHORIZATION_NOT_VERIFIED")
         raise DataQualityConsumerAuthorizationError(str(code), str(exc)) from exc
@@ -456,10 +459,10 @@ def _publication_lineage(
 
 
 def _repo_relative(root: Path, value: Path) -> str:
-    candidate = value if value.is_absolute() else root / value
+    candidate = value if value.is_absolute() else join_root(root, value)
     absolute = candidate.resolve(strict=False)
     try:
-        relative = absolute.relative_to(root)
+        relative = relative_to_root(absolute, root)
     except ValueError as exc:
         raise DataQualityConsumerAuthorizationError(
             "DQ_CONSUMER_AUTHORIZATION_FIELDS_INVALID",

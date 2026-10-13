@@ -25,6 +25,7 @@ from ai_trading_system.data.immutable_publish import (
 from ai_trading_system.data.quality_capability import (
     verify_consumer_data_capability_receipt,
 )
+from ai_trading_system.paths import join_root, relative_to_root
 from ai_trading_system.yaml_loader import safe_load_yaml_text
 
 
@@ -105,7 +106,7 @@ def consumer_data_capability_discovery_path(
     _require_dependency(dependency)
     _require_date(as_of, "as_of")
     root = _resolved_root(project_root)
-    return root / Path(_discovery_relative_path(dependency, as_of))
+    return join_root(root, Path(_discovery_relative_path(dependency, as_of)))
 
 
 def publish_consumer_data_capability_discovery(
@@ -252,7 +253,7 @@ def _load_discovery(
     checked_as_of = _require_date(as_of, "as_of")
     _verify_dependency_files(root, dependency)
     pointer_relative = _discovery_relative_path(dependency, checked_as_of)
-    pointer_path = root / Path(pointer_relative)
+    pointer_path = join_root(root, Path(pointer_relative))
     pointer_bytes = _read_secure(root, pointer_relative)
     pointer = ConsumerDataCapabilityDiscoveryPointer.from_json_bytes(pointer_bytes)
     if (
@@ -309,7 +310,7 @@ def _load_discovery(
     return PublishedConsumerDataCapabilityDiscovery(
         pointer_path=pointer_path,
         pointer=pointer,
-        retained_receipt_path=root / Path(pointer.receipt_path),
+        retained_receipt_path=join_root(root, Path(pointer.receipt_path)),
         receipt=receipt,
     )
 
@@ -325,9 +326,9 @@ def _verify_receipt_bytes(
     _assert_dependency_receipt(dependency, receipt)
     captured_bindings = _capture_receipt_bindings(root, receipt)
     verified = verify_consumer_data_capability_receipt(
-        root / Path(relative_path),
-        capability_policy_path=root / Path(dependency.capability_policy_path),
-        data_quality_policy_path=root / Path(dependency.data_quality_policy_path),
+        join_root(root, Path(relative_path)),
+        capability_policy_path=join_root(root, Path(dependency.capability_policy_path)),
+        data_quality_policy_path=join_root(root, Path(dependency.data_quality_policy_path)),
     )
     if verified != receipt:
         raise DataQualityCapabilityContractError(
@@ -466,10 +467,10 @@ def _resolved_root(project_root: Path) -> Path:
 
 
 def _relative_path(root: Path, path: Path) -> str:
-    candidate = path if path.is_absolute() else root / path
+    candidate = path if path.is_absolute() else join_root(root, path)
     absolute = Path(os.path.abspath(candidate))
     try:
-        relative = absolute.relative_to(root)
+        relative = relative_to_root(absolute, root)
     except ValueError as exc:
         raise DataQualityCapabilityContractError(
             "DQ_CAPABILITY_PATH_OUTSIDE_ROOT",

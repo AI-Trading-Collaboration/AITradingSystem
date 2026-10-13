@@ -58,6 +58,7 @@ from ai_trading_system.data.quality_provenance import (
     manifest_record_ref,
     parse_manifest_content,
 )
+from ai_trading_system.paths import join_root, relative_to_root
 from ai_trading_system.us_equity_special_closure_policy import (
     CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH,
     UsEquitySpecialClosurePolicy,
@@ -301,7 +302,7 @@ def load_reviewed_data_quality_policy(
 def _load_reviewed_calendar_policy(root: Path) -> UsEquitySpecialClosurePolicy:
     relative = CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH.as_posix()
     try:
-        return load_us_equity_special_closure_policy(root / Path(relative))
+        return load_us_equity_special_closure_policy(join_root(root, Path(relative)))
     except ValueError as exc:
         raise DataQualityExecutionError(
             "DQ_CALENDAR_POLICY_INVALID",
@@ -455,7 +456,7 @@ def run_canonical_data_quality_execution(
     )
     _assert_file_unchanged(
         policy.binding.path,
-        root / Path(policy.binding.path),
+        join_root(root, Path(policy.binding.path)),
         expected_sha256=policy.binding.sha256,
         mismatch_code="DQ_POLICY_SHA_MISMATCH",
     )
@@ -520,7 +521,7 @@ def verify_data_quality_execution_receipt(
 
     root = project_root.resolve()
     receipt_relative, receipt_absolute = _repo_path(root, receipt_path)
-    if receipt_absolute != root / Path(receipt_relative):
+    if receipt_absolute != join_root(root, Path(receipt_relative)):
         raise DataQualityExecutionError(
             "DQ_RECEIPT_FIELDS_INVALID", "receipt path changed during containment resolution"
         )
@@ -621,10 +622,10 @@ def _validated_expected_roles(values: Collection[str]) -> tuple[str, ...]:
 
 def _repo_path(project_root: Path, value: Path) -> tuple[str, Path]:
     root = project_root.resolve()
-    candidate = value if value.is_absolute() else root / value
+    candidate = value if value.is_absolute() else join_root(root, value)
     absolute = candidate.resolve(strict=False)
     try:
-        relative = absolute.relative_to(root)
+        relative = relative_to_root(absolute, root)
     except ValueError as exc:
         raise DataQualityExecutionError(
             "DQ_RECEIPT_FIELDS_INVALID", f"path is outside project root: {value}"
@@ -698,7 +699,7 @@ def _build_execution_profile_binding(
 def _capture_daily_default_universe(root: Path) -> tuple[DataFileSnapshot, UniverseConfig]:
     expected_path = _DAILY_DEFAULT_UNIVERSE_PATH.as_posix()
     content = _read_daily_default_profile_config_bytes(root, expected_path)
-    snapshot = DataFileSnapshot(root / _DAILY_DEFAULT_UNIVERSE_PATH, True, content)
+    snapshot = DataFileSnapshot(join_root(root, _DAILY_DEFAULT_UNIVERSE_PATH), True, content)
     try:
         decoded = content.decode("utf-8")
         payload = safe_load_yaml_text(decoded)
@@ -792,7 +793,10 @@ def _utc_now() -> datetime:
 
 
 def _capture_validator_sources(root: Path) -> dict[str, DataFileSnapshot]:
-    paths = {source_path.as_posix(): root / source_path for source_path in _VALIDATOR_SOURCE_PATHS}
+    paths = {
+        source_path.as_posix(): join_root(root, source_path)
+        for source_path in _VALIDATOR_SOURCE_PATHS
+    }
     snapshots = capture_data_file_snapshots(paths)
     for source_path, snapshot in snapshots.items():
         if not snapshot.exists or snapshot.content is None:
@@ -1137,7 +1141,7 @@ def _manifest_output_matches(
         project_root = manifest.absolute_path
         for _ in Path(manifest.path).parts:
             project_root = project_root.parent
-        candidate = project_root / candidate
+        candidate = join_root(project_root, candidate)
     return candidate.resolve(strict=False) == input_path.resolve(strict=False)
 
 
@@ -1265,7 +1269,7 @@ def _verify_validator_binding(claimed: DataQualityValidatorBinding, root: Path) 
             f"expected={sorted(expected_paths)} actual={sorted(claimed_paths)}",
         )
     for source in claimed.implementation_sources:
-        absolute = root / Path(source.path)
+        absolute = join_root(root, Path(source.path))
         snapshot = capture_data_file_snapshots({"source": absolute})["source"]
         if not snapshot.exists or snapshot.content is None:
             raise DataQualityExecutionError("DQ_VALIDATOR_IMPLEMENTATION_MISSING", source.path)
@@ -1567,7 +1571,7 @@ def _verify_report_binding(
     root: Path,
 ) -> _ParsedReport:
     relative, absolute = _repo_path(root, Path(receipt.report.path))
-    if relative != receipt.report.path or absolute != root / Path(relative):
+    if relative != receipt.report.path or absolute != join_root(root, Path(relative)):
         raise DataQualityExecutionError("DQ_REPORT_MISSING", receipt.report.path)
     content = _read_secure_output_bytes(
         root,

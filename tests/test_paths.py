@@ -226,18 +226,7 @@ def _hand_built_state_paths(path: Path) -> list[str]:
 
 
 # Zone C files still to convert (DATA-023 step 2). The list only shrinks.
-PENDING_ZONE_C: frozenset[str] = frozenset(
-    {
-        "src/ai_trading_system/data/quality_capability.py",
-        "src/ai_trading_system/data/quality_capability_discovery.py",
-        "src/ai_trading_system/data/quality_consumer_authorization.py",
-        "src/ai_trading_system/data/quality_execution.py",
-        "src/ai_trading_system/data/quality_execution_discovery.py",
-        "src/ai_trading_system/data/quality_issue_attribution_inventory.py",
-        "src/ai_trading_system/trading_engine/brokers/ibkr_paper_controlled_fill.py",
-        "src/ai_trading_system/trading_engine/brokers/paperbroker_ibkr_comparison.py",
-    }
-)
+PENDING_ZONE_C: frozenset[str] = frozenset()
 
 
 def test_no_state_path_is_built_from_a_root_outside_the_paths_module() -> None:

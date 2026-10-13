@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 from ai_trading_system.trading_engine.brokers.ibkr_paper_order import (
     DEFAULT_IBKR_PAPER_ORDER_CONFIG_PATH,
     IBKRPaperOrderConfig,
@@ -36,7 +37,7 @@ from ai_trading_system.trading_engine.schemas.order_intent import (
 COMPARISON_REPORT_TYPE = "paperbroker_vs_ibkr_paper_comparison"
 COMPARISON_PRODUCTION_EFFECT = "none"
 COMPARISON_MODE = "diagnostic_only"
-DEFAULT_COMPARISON_OUTPUT_DIR = PROJECT_ROOT / "outputs" / "reports"
+DEFAULT_COMPARISON_OUTPUT_DIR = state_dir(PROJECT_ROOT, "outputs") / "reports"
 DEFAULT_RECOMMENDATIONS = [
     "consider stricter fill simulation",
     "require historical bid/ask",

@@ -26,6 +26,7 @@ from ai_trading_system.data.quality import (
     render_data_quality_report,
     validate_data_cache,
 )
+from ai_trading_system.paths import join_root
 from ai_trading_system.platform.artifacts import sha256_path, write_bytes_atomic
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
@@ -50,7 +51,7 @@ def load_reviewed_consumer_data_capability_policy(
     project_root: Path | None = None,
 ) -> ConsumerDataCapabilityPolicy:
     root = Path.cwd() if project_root is None else project_root
-    resolved = path if path.is_absolute() else root / path
+    resolved = path if path.is_absolute() else join_root(root, path)
     try:
         payload = safe_load_yaml_path(resolved)
         if not isinstance(payload, Mapping):

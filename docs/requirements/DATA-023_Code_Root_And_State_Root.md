@@ -92,3 +92,7 @@
   - 对照运行在合入 DATA-023-02 改写的完整版本上做：28 条命令的退出码全部相同；两边各 101 个产出文件；stdout 一致。
   - 内容差异只有三类：时间戳、运行 id；报告里绝对路径变长后的字节数；一处真实漏改，`scan-secrets` 的扫描入口按工作目录解析，已用 `cli_path` 修复，复跑后一致。
   - production_effect=none；broker_action=none。
+- **2026-10-13：** DATA-023-02 在云端完成并测试。
+  - 8 个 C 区文件按同一套规则改写，`PENDING_ZONE_C` 清空，棘轮测试覆盖 src 全部文件。
+  - `quality_execution.py` 行号变化：DQ 归因就绪清单（`dq_issue_attribution_inventory_2663185b691512ca889bd6c0`）和利率归因复核包（`dq_rate_issue_attribution_review_c78d68488a89e31ca1882641`）用脚本重新生成；复核包 id 和 sha256 在 `config/data_quality/rate_row_issue_attribution_decision_v1.yaml`、`contracts/rate_data_quality_attribution.py` 和测试里重新绑定，批准的站点不变。价格归因复核包不受影响。
+  - production_effect=none；broker_action=none。

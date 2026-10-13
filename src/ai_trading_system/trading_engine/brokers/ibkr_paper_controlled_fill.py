@@ -12,6 +12,7 @@ from typing import Any, Literal, Self
 from pydantic import BaseModel, Field, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 from ai_trading_system.trading_engine.brokers.ibkr_paper_order import (
     DEFAULT_ALLOWED_SYMBOLS,
     IBKRPaperOrderConfig,
@@ -48,7 +49,7 @@ CONTROLLED_FILL_PRODUCTION_EFFECT = "none"
 DEFAULT_IBKR_PAPER_CONTROLLED_FILL_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "ibkr_paper_controlled_fill.yaml"
 )
-DEFAULT_CONTROLLED_FILL_OUTPUT_DIR = PROJECT_ROOT / "outputs" / "reports"
+DEFAULT_CONTROLLED_FILL_OUTPUT_DIR = state_dir(PROJECT_ROOT, "outputs") / "reports"
 _BROKER_ORDER_ID_KEYS = {
     "broker_order_id",
     "orderid",
@@ -1044,7 +1045,7 @@ def _resolve_reliable_market_snapshot(
     historical = _historical_market_snapshot(
         symbol,
         as_of=as_of,
-        prices_path=prices_path or PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+        prices_path=prices_path or state_dir(PROJECT_ROOT, "data") / "raw" / "prices_daily.csv",
     )
     if historical is not None:
         return historical, "historical_ohlc"

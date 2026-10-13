@@ -25,6 +25,7 @@ from ai_trading_system.data.quality_execution import (
     DataQualityExecutionError,
     verify_daily_default_execution_profile_receipt,
 )
+from ai_trading_system.paths import join_root, relative_to_root
 
 DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID = DAILY_DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID
 DISCOVERY_POINTER_SCHEMA_VERSION = "data_quality_execution_discovery_pointer.v1"
@@ -167,7 +168,7 @@ def default_data_quality_execution_discovery_path(
     project_root: Path = PROJECT_ROOT,
 ) -> Path:
     checked_as_of = _date_value(as_of, "as_of")
-    return project_root.resolve() / Path(_discovery_relative_path(checked_as_of))
+    return join_root(project_root.resolve(), Path(_discovery_relative_path(checked_as_of)))
 
 
 def publish_default_data_quality_execution_discovery(
@@ -239,7 +240,9 @@ def load_default_data_quality_execution_discovery(
             "DQ_AS_OF_MISMATCH",
             f"expected={checked_as_of.isoformat()} actual={pointer.as_of.isoformat()}",
         )
-    receipt_relative, receipt_absolute = _contained_path(root, root / Path(pointer.receipt_path))
+    receipt_relative, receipt_absolute = _contained_path(
+        root, join_root(root, Path(pointer.receipt_path))
+    )
     if receipt_relative != pointer.receipt_path:
         raise DataQualityExecutionError(
             "DQ_RECEIPT_ID_MISMATCH", "receipt path normalization mismatch"
@@ -296,7 +299,7 @@ def _contained_path(root: Path, value: Path) -> tuple[str, Path]:
         )
     absolute = value.resolve(strict=False)
     try:
-        relative = absolute.relative_to(root)
+        relative = relative_to_root(absolute, root)
     except ValueError as exc:
         raise DataQualityExecutionError(
             "DQ_RECEIPT_FIELDS_INVALID", f"path is outside project root: {value}"
