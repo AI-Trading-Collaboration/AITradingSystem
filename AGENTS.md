@@ -82,6 +82,14 @@ the tested tree -> ordinary push, with the remote checked before and after.
   path. Paths in `decision_record_excluded` (the rules, the gates, and the production and broker
   boundary) always need the per-tree record.
   Do not weaken a test, invariant, or this policy to make a gate pass.
+- **Research records** (`research_records` in the policy,
+  `owner_decision:TRADING-2565:2026-10-13:research_throughput`): the bench's run records, screening
+  records, and window reads ship in a commit that touches nothing else, and `ship` checks them instead
+  of a review: only new numbered files or lines appended at the end, chained to the records on `main`,
+  made on a commit already on `main` without local code changes, and naming that commit's strategy,
+  preregistration, and signal files by hash. Their gate is the ledger invariants (`gates.records`).
+  Research runs use the research worktree, one run at a time (`research/_template/brief.md`); the
+  session publishes them with the patch and message fingerprints its own `--dry-run` prints.
 - Never pass hundreds of test file paths to pytest (collection becomes quadratic on Windows); pass
   `tests` and select with markers. Run serial pytest only to reproduce a parallelism-related failure
   and say so. Use the project venv interpreter, not a system Python.
@@ -92,7 +100,8 @@ the tested tree -> ordinary push, with the remote checked before and after.
   force-push, history rewrite, or remote-divergence repair by the agent.
 - Parallel work (several agents or sessions) uses separate worktrees and branches. Git's fast-forward
   check is the only coordination: whoever ships second brings the new `main` into its branch and
-  re-runs the gate.
+  re-runs the gate. A research records commit is instead re-created on the new `main` by
+  `ship.py --replay-records` (same patch, message, and author; it refuses anything else).
 - Pushing `main` (ordinary, non-force) after a green gate is a standing authorization; no per-change
   question. Pull requests and force-pushes always need explicit authorization.
 - Stop and report instead of pushing when the owner said not to, the tree holds unrelated user changes,

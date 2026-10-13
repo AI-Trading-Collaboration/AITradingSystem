@@ -6,6 +6,11 @@ record without running branch code, then fast-forwards the base branch. ``--publ
 check the reviewed patch (``--expected-patch``) instead of a predicted tree, and, for zone C, owner
 decision records under the review root (``--review-root``) instead of a per-tree acceptance.
 
+Research records (``research_records`` in the policy) ship on their own: a change that touches one
+touches nothing else, and every plan checks them mechanically (new files or appended lines only,
+numbered and chained after the records on the base, made on a published commit without local code
+changes). ``--replay-records`` re-creates such a one-commit change on a base that moved meanwhile.
+
 This is an agent-run gate, not an independent verifier (no branch protection; owner decision
 2026-10-10). Zone C changes (see config/gov008_ship.yaml) must carry an ``Owner-Decision:`` trailer.
 
@@ -14,6 +19,7 @@ usage:
   python tools/gov008/ship.py --repo . --execute [--push] # run gate, amend trailer, move main
   python tools/gov008/ship.py --repo . --gate             # run gate and amend trailer only
   python tools/gov008/ship.py --repo . --publish [--push] # verify Gate trailer, move main
+  python tools/gov008/ship.py --repo . --replay-records   # records-only commit onto a moved main
   python tools/gov008/ship.py --check-decision-record <file> # validate one owner decision record
 """
 
@@ -24,6 +30,7 @@ import datetime as dt
 import hashlib
 import json
 import os
+import posixpath
 import re
 import subprocess
 import sys
@@ -71,6 +78,13 @@ PATCH_DIFF_OPTIONS = (
 # short test summary. Display truncation only: the full output always goes to the gate log file.
 GATE_FAILURE_TAIL_LINES = 60
 GATE_LOG_DIRNAME = "gov008-ship"
+# Research records (owner_decision:TRADING-2565:2026-10-13:research_throughput): a numbered record
+# is one file per record, named like the bench names them; a commit field holds a full commit id.
+RECORD_FILE_RE = re.compile(r"^(?P<number>[0-9]{4,})\.json$")
+COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
+# A {field} placeholder in a files_at_commit path takes a record value that names one file.
+RECORD_PATH_FIELD_RE = re.compile(r"\{(?P<field>[A-Za-z0-9_.]+)\}")
+RECORD_PATH_VALUE_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]*$")
 
 
 class ShipError(RuntimeError):
@@ -122,13 +136,14 @@ def highest_zone(by_zone: dict[str, list[str]]) -> str:
     return "A"
 
 
-def git(repo: Path, *args: str, check: bool = True) -> str:
+def git(repo: Path, *args: str, check: bool = True, env: dict | None = None) -> str:
     proc = subprocess.run(
         ["git", "-C", str(repo), *args],
         capture_output=True,
         text=True,
         encoding="utf-8",
         check=False,
+        env=env,
     )
     if check and proc.returncode != 0:
         raise ShipError(f"git {' '.join(args)} failed: {proc.stderr.strip()}")
@@ -166,6 +181,202 @@ def owner_decisions(repo: Path, base: str) -> list[str]:
     return [line.strip() for line in out.splitlines() if line.strip()]
 
 
+def record_rule(path: str, policy: dict) -> tuple[str, dict] | None:
+    """("numbered" | "appended", rule) for a research record path, or None for any other path."""
+    records = policy.get("research_records") or {}
+    for kind in ("numbered", "appended"):
+        for rule in records.get(kind, []):
+            if glob_to_regex(rule["glob"]).match(path):
+                return kind, rule
+    return None
+
+
+def blob_bytes(repo: Path, rev: str, path: str) -> bytes | None:
+    """The file's bytes at rev, or None when rev has no such file."""
+    proc = subprocess.run(
+        ["git", "-C", str(repo), "cat-file", "blob", f"{rev}:{path}"],
+        capture_output=True,
+        check=False,
+    )
+    return proc.stdout if proc.returncode == 0 else None
+
+
+def chain_digest(data: bytes) -> str:
+    """The research ledger's link hash: sha256 with CRLF read as LF (research_bench.ledger)."""
+    return hashlib.sha256(data.replace(b"\r\n", b"\n")).hexdigest()
+
+
+_MISSING = object()
+
+
+def _field(record: object, dotted: str) -> object:
+    value = record
+    for key in dotted.split("."):
+        if not isinstance(value, dict) or key not in value:
+            return _MISSING
+        value = value[key]
+    return value
+
+
+def _json_object(data: bytes) -> dict | None:
+    try:
+        value = json.loads(data.decode("utf-8"))
+    except ValueError:
+        return None
+    return value if isinstance(value, dict) else None
+
+
+def _record_path(template: str, record: dict, directory: str) -> str | None:
+    """A files_at_commit path with {dir} and {field} filled in; None if a value is no file name."""
+    values: list[str] = []
+
+    def fill(match: re.Match[str]) -> str:
+        name = match["field"]
+        value = directory if name == "dir" else _field(record, name)
+        if name != "dir" and (
+            not isinstance(value, str) or RECORD_PATH_VALUE_RE.fullmatch(value) is None
+        ):
+            values.append(name)
+            return ""
+        return str(value)
+
+    filled = posixpath.normpath(RECORD_PATH_FIELD_RE.sub(fill, template))
+    if values or filled.startswith(("../", "/")) or filled in (".", ".."):
+        return None
+    return filled
+
+
+def provenance_problems(
+    repo: Path, name: str, record: dict, rule: dict, directory: str, published: str
+) -> list[str]:
+    """The record was made on a published commit, without local code changes, from its files."""
+    problems: list[str] = []
+    commit = _field(record, rule["commit_field"])
+    if not isinstance(commit, str) or COMMIT_RE.fullmatch(commit) is None:
+        return [f"{name}: {rule['commit_field']} is not a full commit id"]
+    if not is_ancestor(repo, commit, published):
+        return [f"{name}: {rule['commit_field']} {commit[:12]} is not a published commit"]
+    if "modified_field" in rule and _field(record, rule["modified_field"]) is not False:
+        problems.append(f"{name}: {rule['modified_field']} is not false (local code changes)")
+    for hash_field, template in rule.get("files_at_commit", {}).items():
+        digest = _field(record, hash_field)
+        source = _record_path(template, record, directory)
+        if source is None:
+            problems.append(f"{name}: cannot name the file for {hash_field} from {template}")
+            continue
+        blob = blob_bytes(repo, commit, source)
+        if blob is None:
+            problems.append(f"{name}: {source} is not in commit {commit[:12]}")
+        elif digest not in (hashlib.sha256(blob).hexdigest(), chain_digest(blob)):
+            problems.append(f"{name}: {hash_field} is not the hash of {source} at {commit[:12]}")
+    return problems
+
+
+def _record_numbers(repo: Path, rev: str, directory: str) -> dict[int, str]:
+    out = git(repo, "ls-tree", "--name-only", rev, "--", f"{directory}/")
+    numbers: dict[int, str] = {}
+    for path in out.splitlines():
+        match = RECORD_FILE_RE.fullmatch(posixpath.basename(path))
+        if match and posixpath.dirname(path) == directory:
+            numbers[int(match["number"])] = path
+    return numbers
+
+
+def numbered_problems(
+    repo: Path, old: str, new: str, directory: str, paths: list[str], rule: dict, published: str
+) -> list[str]:
+    """New records in one directory: numbered on from old's last record and chained to it."""
+    existing = _record_numbers(repo, old, directory)
+    problems: list[str] = []
+    numbered: list[tuple[int, str]] = []
+    for path in paths:
+        match = RECORD_FILE_RE.fullmatch(posixpath.basename(path))
+        if match is None:
+            problems.append(f"{path}: a record file is named NNNN.json")
+        else:
+            numbered.append((int(match["number"]), path))
+    if problems:
+        return problems
+    last = max(existing, default=0)
+    previous_blob = blob_bytes(repo, old, existing[last]) if existing else None
+    previous = None if previous_blob is None else chain_digest(previous_blob)
+    for expected, (number, path) in enumerate(sorted(numbered), start=last + 1):
+        if number != expected:
+            return [*problems, f"{path}: expected record {expected:04d} next in {directory}"]
+        data = blob_bytes(repo, new, path) or b""
+        record = _json_object(data)
+        if record is None:
+            problems.append(f"{path} is not a JSON object")
+        elif record.get("prev_sha256") != previous:
+            problems.append(f"{path}: prev_sha256 does not match the record before it")
+        else:
+            problems += provenance_problems(
+                repo, path, record, rule, posixpath.dirname(path), published
+            )
+        previous = chain_digest(data)
+    return problems
+
+
+def appended_problems(
+    repo: Path, old: str, new: str, path: str, rule: dict, published: str
+) -> list[str]:
+    """Lines added at the end of a JSON-lines record file, each chained to the line before it."""
+    before = blob_bytes(repo, old, path) or b""
+    after = blob_bytes(repo, new, path) or b""
+    if not after.startswith(before) or (before and not before.endswith(b"\n")):
+        return [f"{path}: existing lines changed; a record file only gains lines at its end"]
+    added = after[len(before) :]
+    if not added.endswith(b"\n"):
+        return [f"{path}: the added lines do not end with a newline"]
+    lines = [line for line in before.replace(b"\r\n", b"\n").split(b"\n") if line]
+    previous = chain_digest(lines[-1]) if lines else None
+    problems: list[str] = []
+    for position, line in enumerate(added.split(b"\n")[:-1], start=len(lines) + 1):
+        name = f"{path} line {position}"
+        record = _json_object(line)
+        if record is None:
+            problems.append(f"{name} is not a JSON object")
+        elif record.get("prev_sha256") != previous:
+            problems.append(f"{name}: prev_sha256 does not match the line before it")
+        else:
+            problems += provenance_problems(
+                repo, name, record, rule, posixpath.dirname(path), published
+            )
+        previous = chain_digest(line)
+    return problems
+
+
+def records_problems(repo: Path, old: str, new: str, policy: dict, published: str) -> list[str]:
+    """Mechanical checks for a records-only change old..new (owner decision research_throughput)."""
+    out = git(repo, "diff", "--name-status", "--no-renames", f"{old}..{new}")
+    status = {line.split("\t", 1)[1]: line[0] for line in out.splitlines() if line}
+    modes = git(repo, "ls-tree", new, "--", *status) if status else ""
+    regular = {line.split("\t", 1)[1] for line in modes.splitlines() if line.startswith("100644 ")}
+    problems: list[str] = []
+    groups: dict[tuple[str, int], list[str]] = {}
+    for path, letter in sorted(status.items()):
+        found = record_rule(path, policy)
+        if found is None:
+            problems.append(f"{path} is not a research record")
+            continue
+        kind, rule = found
+        if kind == "numbered" and letter != "A":
+            problems.append(f"{path}: a numbered record is only ever added (status {letter})")
+        elif letter not in ("A", "M"):
+            problems.append(f"{path}: a record file is only ever appended (status {letter})")
+        elif path not in regular:
+            problems.append(f"{path}: a record is a regular file (mode 100644)")
+        elif kind == "numbered":
+            index = policy["research_records"]["numbered"].index(rule)
+            groups.setdefault((posixpath.dirname(path), index), []).append(path)
+        else:
+            problems += appended_problems(repo, old, new, path, rule, published)
+    for (directory, index), paths in sorted(groups.items()):
+        rule = policy["research_records"]["numbered"][index]
+        problems += numbered_problems(repo, old, new, directory, paths, rule, published)
+    return problems
+
+
 def plan(repo: Path, base: str = "main", policy: dict | None = None) -> dict:
     """Everything ship would decide, without running tests or moving refs."""
     policy = load_policy(repo) if policy is None else policy
@@ -173,9 +384,11 @@ def plan(repo: Path, base: str = "main", policy: dict | None = None) -> dict:
     problems: list[str] = []
     if branch in ("", base):
         problems.append(f"must run from a task branch, not '{branch or 'detached HEAD'}'")
-    if not is_ancestor(repo, base, "HEAD"):
+    ancestor = is_ancestor(repo, base, "HEAD")
+    if not ancestor:
         problems.append(
-            f"{base} is not an ancestor of HEAD: rebase or merge {base} first (ship never does)"
+            f"{base} is not an ancestor of HEAD: rebase or merge {base} first (ship never does; "
+            "one records-only commit: --replay-records)"
         )
     dirty = dirty_paths(repo, policy.get("tree_clean_exclusions", []))
     if dirty:
@@ -189,7 +402,23 @@ def plan(repo: Path, base: str = "main", policy: dict | None = None) -> dict:
             f"zone C paths changed ({by_zone['C'][:3]}...) but no commit carries an "
             f"'{OWNER_DECISION_TRAILER}:' trailer"
         )
-    return {
+    gate_commands = policy["gates"][zone]
+    records = [p for p in changed if record_rule(p, policy) is not None]
+    research: dict | None = None
+    if records and ancestor:
+        others = [p for p in changed if record_rule(p, policy) is None]
+        if others:
+            problems.append(
+                f"research records ship on their own; this change also has {others[:5]}"
+            )
+        else:
+            problems += records_problems(repo, base, "HEAD", policy, published=base)
+            gate_commands = policy["gates"]["records"]
+            research = {"paths": len(records)}
+            if git(repo, "rev-list", "--count", f"{base}..HEAD") == "1":
+                research["patch"] = patch_fingerprint(repo, base, policy)
+                research["message"] = message_fingerprint(repo)
+    result = {
         "branch": branch,
         "base": base,
         "base_sha": git(repo, "rev-parse", base),
@@ -199,10 +428,13 @@ def plan(repo: Path, base: str = "main", policy: dict | None = None) -> dict:
         "paths_by_zone": {z: len(v) for z, v in by_zone.items()},
         "zone": zone,
         "owner_decisions": decisions,
-        "gate": policy["gates"][zone],
+        "gate": gate_commands,
         "problems": problems,
         "ok": not problems,
     }
+    if research is not None:
+        result["research_records"] = research
+    return result
 
 
 def decision_record_name(decision: str) -> str:
@@ -299,12 +531,12 @@ def check_decision_records(
     return {"decisions": decisions, "zone_c_paths": len(c_paths)}
 
 
-def patch_fingerprint(repo: Path, base: str, policy: dict) -> str:
-    """``git patch-id --stable`` of base..HEAD without rendered views and registered exclusions."""
+def patch_fingerprint(repo: Path, base: str, policy: dict, head: str = "HEAD") -> str:
+    """``git patch-id --stable`` of base..head without rendered views and registered exclusions."""
     excluded = [*policy.get("tree_clean_exclusions", []), *RENDERED_VIEWS]
     spec = [".", *[f":(exclude,literal){p}" for p in excluded]]
     diff = subprocess.run(
-        ["git", "-C", str(repo), "diff", *PATCH_DIFF_OPTIONS, f"{base}..HEAD", "--", *spec],
+        ["git", "-C", str(repo), "diff", *PATCH_DIFF_OPTIONS, f"{base}..{head}", "--", *spec],
         capture_output=True,
         check=False,
     )
@@ -471,9 +703,7 @@ def validate_gate_trailer(repo: Path, trailer: str, plan_: dict) -> None:
         )
     tree_prefix = match.group("tree")
     if not plan_["tree"].startswith(tree_prefix):
-        raise ShipError(
-            f"Gate trailer tree {tree_prefix} does not match HEAD tree {plan_['tree']}"
-        )
+        raise ShipError(f"Gate trailer tree {tree_prefix} does not match HEAD tree {plan_['tree']}")
     zone = match.group("zone")
     if zone != plan_["zone"]:
         raise ShipError(f"Gate trailer zone {zone} does not match planned zone {plan_['zone']}")
@@ -541,6 +771,90 @@ def ship(repo: Path, base: str, push: bool) -> dict:
     return {"shipped_sha": new_head, "pushed": push, "gate": result, "plan": p}
 
 
+def blob_id(repo: Path, rev: str, path: str) -> str | None:
+    return git(repo, "rev-parse", "--verify", "--quiet", f"{rev}:{path}", check=False) or None
+
+
+def replay_records(repo: Path, base: str = "main") -> dict:
+    """Re-create the branch's one records-only commit on the current ``base``.
+
+    Research records are made on a published commit and ship on their own. When ``base`` moved
+    meanwhile, this puts the same added records and appended lines on top of it, with the same
+    message, author and patch fingerprint, and refuses anything that would not apply unchanged."""
+    policy = load_policy_from_ref(repo, base)
+    branch = git(repo, "branch", "--show-current")
+    if branch in ("", base):
+        raise ShipError(f"must run from a task branch, not '{branch or 'detached HEAD'}'")
+    dirty = dirty_paths(repo, policy.get("tree_clean_exclusions", []))
+    if dirty:
+        raise ShipError(f"working tree is not clean: {dirty[:5]}")
+    old = git(repo, "rev-parse", "HEAD")
+    new_base = git(repo, "rev-parse", base)
+    if is_ancestor(repo, new_base, old):
+        raise ShipError(f"{base} is already an ancestor of HEAD: nothing to replay")
+    parent = git(repo, "rev-parse", "--verify", "--quiet", f"{old}^", check=False)
+    if not parent or git(repo, "merge-base", new_base, old) != parent:
+        raise ShipError(f"replay takes exactly one commit on top of a commit of {base}")
+    changed = [p for p in git(repo, "diff", "--name-only", f"{parent}..{old}").splitlines() if p]
+    if not changed or any(record_rule(p, policy) is None for p in changed):
+        raise ShipError("replay takes a commit that changes research records and nothing else")
+    problems = records_problems(repo, parent, old, policy, published=new_base)
+    if problems:
+        raise ShipError("research records: " + "; ".join(problems))
+    moved = [p for p in changed if blob_id(repo, parent, p) != blob_id(repo, new_base, p)]
+    if moved:
+        raise ShipError(f"{base} changed {moved[:5]} since the records were made: refusing")
+    index = git_dir(repo) / f"gov008-replay-{os.getpid()}.index"
+    env = {**os.environ, "GIT_INDEX_FILE": str(index)}
+    try:
+        git(repo, "read-tree", new_base, env=env)
+        for path in changed:
+            blob = blob_id(repo, old, path)
+            git(repo, "update-index", "--add", "--cacheinfo", f"100644,{blob},{path}", env=env)
+        tree = git(repo, "write-tree", env=env)
+    finally:
+        index.unlink(missing_ok=True)
+    name, email, date = git(
+        repo, "log", "-1", "--format=%an%x00%ae%x00%ad", "--date=raw", old
+    ).split("\x00")
+    message = git(repo, "log", "-1", "--format=%B", old)
+    lines = [line for line in message.splitlines() if not line.startswith(f"{GATE_TRAILER}: ")]
+    author = {"GIT_AUTHOR_NAME": name, "GIT_AUTHOR_EMAIL": email, "GIT_AUTHOR_DATE": date}
+    # The message goes to git as bytes: text-mode stdin turns "\n" into "\r\n" on Windows.
+    message_file = git_dir(repo) / f"gov008-replay-{os.getpid()}.msg"
+    message_file.write_bytes(("\n".join(lines).rstrip() + "\n").encode("utf-8"))
+    try:
+        new = git(
+            repo,
+            "commit-tree",
+            tree,
+            "-p",
+            new_base,
+            "-F",
+            str(message_file),
+            env={**os.environ, **author},
+        )
+    finally:
+        message_file.unlink(missing_ok=True)
+    patch = patch_fingerprint(repo, parent, policy, head=old)
+    if patch_fingerprint(repo, new_base, policy, head=new) != patch:
+        raise ShipError("the replayed commit's patch differs from the original: refusing")
+    if message_fingerprint(repo, new) != message_fingerprint(repo, old):
+        raise ShipError("the replayed commit's message differs from the original: refusing")
+    git(repo, "update-ref", f"refs/heads/{branch}", new, old)
+    git(repo, "read-tree", "-m", "-u", old, new)
+    return {
+        "branch": branch,
+        "replayed_from": old,
+        "replayed_sha": new,
+        "base_sha": new_base,
+        "tree": tree,
+        "research_records": len(changed),
+        "patch": patch,
+        "message": message_fingerprint(repo, new),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path("."))
@@ -550,6 +864,7 @@ def main() -> int:
     mode.add_argument("--execute", action="store_true")
     mode.add_argument("--gate", action="store_true")
     mode.add_argument("--publish", action="store_true")
+    mode.add_argument("--replay-records", action="store_true")
     mode.add_argument("--check-decision-record", type=Path, metavar="FILE")
     parser.add_argument(
         "--push", action="store_true", help="with --execute or --publish: ordinary push of base"
@@ -585,6 +900,8 @@ def main() -> int:
             result = plan(repo, args.base)
         elif args.gate:
             result = gate(repo, args.base)
+        elif args.replay_records:
+            result = replay_records(repo, args.base)
         elif args.publish:
             result = publish(
                 repo,

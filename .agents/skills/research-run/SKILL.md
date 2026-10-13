@@ -48,6 +48,10 @@ pi research run follows `research/_template/brief.md` and runs only the bench co
    `research/<question>/runs/` with its commit, settings and module hashes, trial number and window;
    a result from anywhere else is a draft, not evidence. The preregistration and the strategy module
    are zone C: after the owner approves them, changing either needs a new owner decision.
+   Runs happen in the research worktree `D:\Work\AITradingSystem_research`, one at a time, and their
+   records ship on their own through the records lane
+   (`owner_decision:TRADING-2565:2026-10-13:research_throughput`): ship checks them mechanically,
+   `--replay-records` moves them onto a newer `main`. Steps in `research/_template/brief.md`.
 3. **Admit**: a conclusion enters `research/ledger.md` only after human review; agents may propose
    entries for `research/negative_results.md` but do not edit it. A validation PASS never means a
    candidate is valid, paper-shadow eligible, or approved for production or a broker.

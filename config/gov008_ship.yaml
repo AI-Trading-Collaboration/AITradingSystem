@@ -1,9 +1,10 @@
 schema_version: gov008_ship_policy.v1
 policy_id: GOV-008-SHIP
-version: 1.1.1
+version: 1.2.0
 # In force from the GOV-008 P3 cutover (owner_decision:GOV-008:2026-10-10:bootstrap_route_b_v1).
 # 1.1.0: decision_record_excluded (owner_decision:DEVX-029:2026-10-13:decision_scoped_signoff).
 # 1.1.1: strategy modules research/*/*.py in zone C (owner_decision:TRADING-2567:2026-10-13:pi_research_runs).
+# 1.2.0: research_records and the records gate (owner_decision:TRADING-2565:2026-10-13:research_throughput).
 status: OWNER_APPROVED_ENFORCED
 owner: Project Owner
 rationale: >
@@ -93,6 +94,33 @@ decision_record_excluded:
   - config/ibkr_paper_*.yaml
   - config/production_boundary_static_scan_allowlist.yaml
 
+# Research records: the bench's own numbered record files and JSON-lines files. A change that touches
+# one touches nothing else, and ship.py checks it mechanically instead of a reviewed tree or patch:
+# numbered files are only added, numbered on from the base's last record and chained to it by
+# prev_sha256; JSON-lines files only gain lines at their end, each chained to the line before it.
+# commit_field must name a commit already on the base (modified_field, when given, must be false), and
+# every files_at_commit hash must be the hash of that file at that commit ({dir} is the record's
+# directory, {field} a value of the record). Every glob here is a zone A path.
+research_records:
+  numbered:
+    - glob: research/*/runs/*.json
+      commit_field: provenance.commit
+      modified_field: provenance.code_modified
+      files_at_commit:
+        strategy.module_sha256: "{dir}/../{strategy.module}"
+        prereg_sha256: "{dir}/../prereg.yaml"
+    - glob: research/_screens/ledger/*.json
+      commit_field: code.commit
+      modified_field: code.modified
+      files_at_commit:
+        module_sha256: "src/ai_trading_system/research_screens/signals/{signal_id}.py"
+        spec_sha256: "src/ai_trading_system/research_screens/signals/{signal_id}.yaml"
+  appended:
+    - glob: research/*/window_reads.jsonl
+      commit_field: approval_commit
+      files_at_commit:
+        prereg_sha256: "{dir}/prereg.yaml"
+
 gates:
   # Commands are argv lists run from the repository root; "python" means the interpreter running
   # ship. Zone A needs no test run. The PR suite is ONE directory argument: passing hundreds of
@@ -104,3 +132,6 @@ gates:
     - [python, -m, pytest, tests, -n, "16", --dist, loadfile, -m, "not slow", -q]
   C:
     - [python, -m, pytest, tests, -n, "16", --dist, loadfile, -m, "not slow", -q]
+  # A records-only change: the ledger invariants on the records as they are in the tree.
+  records:
+    - [python, -m, pytest, tests/invariants, -q, -k, repository_ledgers]

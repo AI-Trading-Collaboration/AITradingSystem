@@ -102,6 +102,20 @@ def test_run_brief_dry_run_prints_command_env_and_tools(tmp_path: Path) -> None:
     assert "AITS_PI_RUN_DIR" in done.stdout and "AITS_PI_ALLOWED_PATHS=scripts/agent/**" in done.stdout
 
 
+def test_run_brief_state_root_goes_to_the_run_environment(tmp_path: Path) -> None:
+    ps = powershell(); brief = tmp_path / "brief.md"; config = tmp_path / "config.json"
+    write_brief(brief); write_config(config, tmp_path / "runs")
+    state = tmp_path / "main checkout"; state.mkdir()
+    now = ["-DryRun", "-Direct", "-Now", "2026-10-11T12:00:00+09:00"]
+    done = run_brief(ps, brief, config, *now, "-StateRoot", str(state))
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert f"AITS_STATE_ROOT={state}" in done.stdout.splitlines()
+    assert "AITS_STATE_ROOT" not in run_brief(ps, brief, config, *now).stdout
+    for bad in ("relative", str(tmp_path / "missing")):
+        done = run_brief(ps, brief, config, *now, "-StateRoot", bad)
+        assert done.returncode == 2 and "-StateRoot" in done.stdout
+
+
 def test_run_brief_refuses_daily_window(tmp_path: Path) -> None:
     ps = powershell(); brief = tmp_path / "brief.md"; config = tmp_path / "config.json"
     write_brief(brief); write_config(config, tmp_path / "runs")

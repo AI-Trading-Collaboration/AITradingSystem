@@ -123,6 +123,14 @@ C 区有两种批准：
 - 按 tree：`config/gov008_ship.yaml` 的 `decision_record_excluded` 里的路径（`AGENTS.md`、ship 规则和 `ship.py`、pi 守卫、
   `publish.ps1`、`approve.ps1`、`.github`、生产和券商边界）仍要 owner 对结果 tree 的运行前批准记录。
 
+**研究记录快车道（DEVX-030，`owner_decision:TRADING-2565:2026-10-13:research_throughput`）**：评估台的运行记录、筛选记录和
+验证窗口读取记录（`config/gov008_ship.yaml` 的 `research_records`）单独成一个提交，不和别的文件一起发；`ship.py` 每次规划都机械检查，
+代替 Claude 逐次审补丁：编号记录只新增、接着 main 上最后一条编号并用 `prev_sha256` 连上，JSON 行文件只在末尾追加、逐行连上，
+记录里的提交已在 main 上、没有本地代码改动，策略模块、预注册和信号文件的哈希就是那个提交里的文件。门禁只跑账本不变量
+（`gates.records`）。研究运行在研究工作区 `D:\Work\AITradingSystem_research`，`run-brief.ps1 -StateRoot D:\Work\AITradingSystem`
+让评估台读主工作区的研究数据；main 在此期间前进了，`ship.py --replay-records` 把这一个提交原样放到新的 main 上（补丁、提交信息、
+作者都不变）。研究会话用自己 `--dry-run` 打出的补丁指纹在主工作区跑 `publish.ps1 -ExpectedPatch -ExpectedMessage`。
+
 **运行与调度（OPS-082，`owner_decision:OPS-082:2026-10-11:deterministic_scheduler_v1`）**：ship 之后，运行副本
 `D:\Work\AITradingSystem_ops_runtime`（独立 clone，detached 到已 ship 的 main 提交，`.venv` editable 安装指向本副本 `src`）
 按运维手册第 9.1 节更新。唯一外部调度入口是 Windows 计划任务 `\AITradingSystem Daily Run`（`scripts/ops/register_daily_scheduler_task.ps1`

@@ -44,6 +44,7 @@ pi 的运行由远程会话用 `scripts/agent/run-brief.ps1` 启动，验收的�
 .venv/Scripts/python.exe tools/gov008/ship.py --repo . --dry-run            # zones, gate commands, problems
 .venv/Scripts/python.exe tools/gov008/ship.py --repo . --execute --push     # one-step: gate, then main and origin
 .venv/Scripts/python.exe tools/gov008/ship.py --repo . --gate               # two-step after review: write Gate only
+.venv/Scripts/python.exe tools/gov008/ship.py --repo . --replay-records     # research records commit onto a moved main
 scripts/agent/publish.ps1 -Branch <branch> -RunDir <run-dir> -ExpectedTree <tree>  # owner account: publish with main ship.py
 scripts/agent/publish.ps1 -Branch <branch> -RunDir <run-dir> -ExpectedPatch <patch id> -ExpectedMessage <sha256>  # or by the reviewed patch
 ```
@@ -62,4 +63,8 @@ scripts/agent/publish.ps1 -Branch <branch> -RunDir <run-dir> -ExpectedPatch <pat
   bypass `ship` with a manual `git push`, and never force-push, rebase, or rewrite history.
 - If `main` moved meanwhile, `ship` refuses. The second shipper brings the new `main` into its branch
   and re-runs the gate (AGENTS.md); if that would need a merge commit or a rebase, stop and ask the owner.
+- Research records (`research_records` in the policy) ship alone and need no review: `--dry-run`
+  checks them and prints `research_records.patch` and `.message` for `publish.ps1 -ExpectedPatch
+  -ExpectedMessage`; their gate is the ledger invariants. If `main` moved, `--replay-records`, then
+  `--dry-run` and `--gate` again. A refused record is reported, never edited (`research/_template/brief.md`).
 - Afterwards: `git rev-parse main origin/main` must be equal; delete the merged task branch.

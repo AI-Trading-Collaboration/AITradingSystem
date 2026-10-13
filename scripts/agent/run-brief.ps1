@@ -8,7 +8,8 @@ param(
     [string]$Now,
     [int]$TimeoutSeconds = 7200,
     [int]$PickupSeconds = 120,
-    [string]$ConfigPath
+    [string]$ConfigPath,
+    [string]$StateRoot
 )
 
 $ErrorActionPreference = "Stop"
@@ -103,6 +104,15 @@ $modelArg = if ($thinking) { $modelId + ":" + $thinking } else { $modelId }
 $envMap = [ordered]@{ AITS_PI_RUN_DIR=$runDir; AITS_PI_RUN=[string]$brief.run; AITS_PI_TASK=[string]$brief.task; AITS_PI_ZONE=[string]$brief.zone; AITS_PI_ALLOWED_PATHS=([string[]]$brief.allowed_paths -join ";") }
 if ($brief.zone -eq "C") { $envMap.AITS_PI_OWNER_DECISION = [string]$brief.owner_decision }
 if ($brief.allow_done -eq $true) { $envMap.AITS_PI_ALLOW_DONE = "1" }
+# Research lane (owner_decision:TRADING-2565:2026-10-13:research_throughput): a run in the research worktree reads
+# research data and state from the main checkout through AITS_STATE_ROOT (paths.state_dir).
+if ($StateRoot) {
+    if (-not ($StateRoot -match '^([A-Za-z]:[\\/]|\\\\|/)') -or -not (Test-Path -LiteralPath $StateRoot -PathType Container)) {
+        Write-Host "拒绝启动：-StateRoot 必须是已存在目录的绝对路径：$StateRoot"
+        exit 2
+    }
+    $envMap.AITS_STATE_ROOT = $StateRoot
+}
 
 $promptTarget = if ($Fix) { Join-Path (Join-Path $attemptRoot $attempt) "prompt.md" } else { Join-Path $runDir "brief.md" }
 $toolList = if ($brief.tools -eq "readonly") { "read,grep,find,ls" } else { "read,bash,edit,write" }

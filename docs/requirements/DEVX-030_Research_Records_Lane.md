@@ -78,7 +78,8 @@ owner_decision:TRADING-2565:2026-10-13:research_throughput —— owner（Baker�
 验收：
 
 - `tests/test_research_lane_ship.py` 用真实规则里的 `research_records` 在临时仓库里跑：正向（记录单独发布、接着 base 编号、追加、筛选账、门禁和按补丁发布、重放）和反向（混入别的文件、跳号、链断、不是 JSON、短提交号、未发布的提交、`code_modified` 为真或 `unavailable`、策略或预注册哈希不对、模块文件不存在、文件名带路径、可执行位、改或删已发布记录、追加文件改旧行或缺换行、重放的各种拒绝）。
-- 变异检查：对 `ship.py` 的新代码做 32 个变异（去掉每一项检查、重放保留 `Gate:` 行、丢作者、不更新工作区等），每个都让测试失败。
+- 变异检查：对 `ship.py` 的新代码做 34 个变异（去掉每一项检查、重放保留 `Gate:` 行、丢作者、提交信息换成 CRLF、不更新工作区等），每个都让测试失败。
+- 重放出来的提交信息逐字节等于原提交去掉 `Gate:` 行（提交信息以字节写给 git；Windows 上文本模式的 stdin 会把换行变成 CRLF）。
 - `-StateRoot`：DryRun 输出 `AITS_STATE_ROOT=<目录>`；相对路径和不存在的目录退出 2。
 - 全套 PR 测试通过；按 tree 的老流程、决定记录和补丁发布的现有用例不变。
 
@@ -96,6 +97,7 @@ owner_decision:TRADING-2565:2026-10-13:research_throughput —— owner（Baker�
 ## 6. 进度
 
 - 2026-10-13：owner 选"两项都做"和"机械检查"（`owner_decision:TRADING-2565:2026-10-13:research_throughput`）。运行 01 登记本需求；运行 02（C 区）实现第 3 节，云端全套测试通过后按 tree 请 owner 批准。
+- 2026-10-13：运行 02（C 区）的改动在云端测好：`tests/test_research_lane_ship.py` 47 条通过；对 `ship.py` 新代码做的 34 个变异都让测试失败；`-StateRoot` 用例在 PowerShell 7 下通过，Windows PowerShell 5.1 由电脑上的门禁覆盖；全套 PR 测试 3148 passed，另有 22 条在云端失败，改动前也一样（IBKR 模拟和两条按日期的报告用例）。改的是规则本身，按 tree 请 owner 批准。
 
 ## 7. 运行影响边界
 
