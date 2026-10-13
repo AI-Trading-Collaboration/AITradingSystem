@@ -8,7 +8,7 @@
 ## 1. 每日链路
 
 唯一外部入口是 `aits ops daily-run`（`aits ops daily-plan` 只出计划不执行），由 Windows 计划任务在运行副本里每天触发
-（09:30、17:30 Asia/Tokyo，见第 5 节与 OPS-082）。步骤、依赖和交易日/休市日条件以
+（12:00、17:30 Asia/Tokyo，见第 5 节、OPS-082 与 OPS-084）。步骤、依赖和交易日/休市日条件以
 `config/scheduled_tasks.yaml` 的 `daily_trading_day` 为准（32 个任务）；`ops_daily.py` 与运行控制使用同一份 DAG。
 
 ```mermaid
@@ -97,11 +97,11 @@ flowchart LR
 **运行与调度（OPS-082，`owner_decision:OPS-082:2026-10-11:deterministic_scheduler_v1`）**：ship 之后，运行副本
 `D:\Work\AITradingSystem_ops_runtime`（独立 clone，detached 到已 ship 的 main 提交，`.venv` editable 安装指向本副本 `src`）
 按运维手册第 9.1 节更新。唯一外部调度入口是 Windows 计划任务 `\AITradingSystem Daily Run`（`scripts/ops/register_daily_scheduler_task.ps1`
-幂等注册；当前用户、仅登录时运行、不提权；09:30 与 17:30 两个触发时间），它运行 `scripts/ops/daily_scheduler_run.ps1`：
+幂等注册；当前用户、仅登录时运行、不提权；12:00 与 17:30 两个触发时间），它运行 `scripts/ops/daily_scheduler_run.ps1`：
 
 ```mermaid
 flowchart LR
-    TASK["Windows 计划任务<br/>09:30 / 17:30 Asia/Tokyo"] --> PRE["前置检查：运行副本工作区干净 ·<br/>HEAD 可从 origin/main 到达 · aits.exe 存在"]
+    TASK["Windows 计划任务<br/>12:00 / 17:30 Asia/Tokyo"] --> PRE["前置检查：运行副本工作区干净 ·<br/>HEAD 可从 origin/main 到达 · aits.exe 存在"]
     PRE -->|失败| SUM
     PRE --> ENV["只设置 daily-run 读取的环境变量<br/>（日志只记 PRESENT/MISSING）"]
     ENV --> RUN["一次 aits ops daily-run<br/>运行控制按 as_of 去重"]

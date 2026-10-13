@@ -616,9 +616,35 @@ def test_register_script_creates_one_interactive_unelevated_task_with_two_trigge
 
     assert code.count("Register-ScheduledTask") == 1
     assert "-Force" in code.split("Register-ScheduledTask", 1)[1].split("| Out-Null", 1)[0]
-    assert "$PrimaryTime = '09:30'" in code and "$RescueTime = '17:30'" in code
+    assert "$PrimaryTime = '12:00'" in code and "$RescueTime = '17:30'" in code
     assert code.count("New-ScheduledTaskTrigger -Daily") == 2
     assert "-LogonType Interactive -RunLevel Limited" in code
     assert "-StartWhenAvailable -MultipleInstances IgnoreNew" in code
     assert "Password" not in code
     assert "Only one scheduling source is allowed" in code
+
+
+def _minutes(clock: str) -> int:
+    hours, minutes = clock.split(":")
+    return int(hours) * 60 + int(minutes)
+
+
+def test_trigger_times_window_labels_and_agent_windows_agree() -> None:
+    """OPS-084: moving a trigger moves the wrapper's window boundary, the summary labels and the pi
+    agent's daily windows with it."""
+    register = _code_lines(_ps1("register_daily_scheduler_task.ps1"))
+    wrapper = _code_lines(_ps1("daily_scheduler_run.ps1"))
+    primary = re.search(r"\$PrimaryTime = '(\d\d:\d\d)'", register)
+    rescue = re.search(r"\$RescueTime = '(\d\d:\d\d)'", register)
+    boundary = re.search(r"\$RescueWindowStartHour = (\d+)", wrapper)
+    assert primary is not None and rescue is not None and boundary is not None
+
+    primary_at, rescue_at = _minutes(primary[1]), _minutes(rescue[1])
+    assert primary_at < int(boundary[1]) * 60 <= rescue_at
+    assert summary.WINDOW_LABELS["PRIMARY"].startswith(f"{primary[1]} ")
+    assert summary.WINDOW_LABELS["RESCUE"].startswith(f"{rescue[1]} ")
+
+    config = json.loads((ROOT / "scripts" / "agent" / "agent_config.json").read_text("utf-8"))
+    windows = [(_minutes(w["start"]), _minutes(w["end"])) for w in config["daily_windows_jst"]]
+    for trigger in (primary_at, rescue_at):
+        assert any(start < trigger < end for start, end in windows), trigger

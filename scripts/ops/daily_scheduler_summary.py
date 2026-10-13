@@ -44,7 +44,7 @@ CATEGORY_LABELS = {
 }
 
 WINDOW_LABELS = {
-    "PRIMARY": "09:30 主窗口（Asia/Tokyo）",
+    "PRIMARY": "12:00 主窗口（Asia/Tokyo）",
     "RESCUE": "17:30 补救窗口（Asia/Tokyo，同一计划任务的第二个触发时间）",
 }
 

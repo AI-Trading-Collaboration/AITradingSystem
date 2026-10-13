@@ -10,9 +10,9 @@
   },
   "daily_windows_jst": [
     {
-      "start": "09:20",
-      "end": "10:30",
-      "note": "placeholder for OPS-082 09:30 JST daily trigger; revise after measured daily-run duration"
+      "start": "11:50",
+      "end": "13:00",
+      "note": "OPS-084 12:00 JST daily trigger (09:30 until 2026-10-13); a full run took 915 s on 2026-10-11"
     },
     {
       "start": "17:20",

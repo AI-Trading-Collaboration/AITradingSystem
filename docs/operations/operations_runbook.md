@@ -1,6 +1,6 @@
 # AITradingSystem Operations Runbook
 
-最后更新：2026-10-11（OPS-082：Windows 计划任务、终止恢复改为运行副本校验、新增第 9 节）；2026-10-10 GOV-008 P5 重写
+最后更新：2026-10-13（OPS-084：主触发时间改为 12:00）；2026-10-11（OPS-082：Windows 计划任务、终止恢复改为运行副本校验、新增第 9 节）；2026-10-10 GOV-008 P5 重写
 
 执行任何 daily、weekly、biweekly、monthly、调度或产物目录任务前先读本文：确认 cadence、触发路径、质量门禁、
 预期产物和"不影响 production"的边界。数据怎么流动见 `docs/system_flow.md` 第 1～6 节；产物怎么理解见
@@ -21,7 +21,7 @@ aits ops replay-day --mode cache-only --as-of YYYY-MM-DD   # 历史严格复现�
 - 未给 `--as-of` 时，`daily-run` 与 `validate-data` 使用 America/New_York 最近已完成交易日加收盘后 3 小时
   provider-ready 缓冲，不用主机本地日期。
 - **调度（OPS-082，2026-10-11 起）**：唯一外部调度入口是 Windows 计划任务 `\AITradingSystem Daily Run`，
-  在独立运行副本 `D:\Work\AITradingSystem_ops_runtime` 里经包装脚本调用一次 `aits ops daily-run`；每天 09:30 与 17:30
+  在独立运行副本 `D:\Work\AITradingSystem_ops_runtime` 里经包装脚本调用一次 `aits ops daily-run`；每天 12:00 与 17:30
   （Asia/Tokyo）两个触发时间，17:30 是同一任务的补救时间，重复触发由 `daily-run` 的运行控制去重
   （`owner_decision:OPS-082:2026-10-11:deterministic_scheduler_v1`）。Codex automation `aitradingsystem-pit` 已停用
   （owner 2026-10-11 暂停），任一时刻只有一个调度来源；不得再登记第二个调度。包装脚本、中文摘要、注册与运行副本更新
@@ -154,7 +154,9 @@ dynamic-v3 rescue、候选跟踪每日步骤）。发布改由 `python tools/gov
 - **注册或更新**（幂等，重复运行不会产生第二个任务）：在运行副本根目录运行
   `powershell -NoProfile -File scripts\ops\register_daily_scheduler_task.ps1`（默认运行副本 `D:\Work\AITradingSystem_ops_runtime`、
   任务 `\AITradingSystem Daily Run`）。脚本要求主机时区为 Tokyo Standard Time；发现另一个计划任务也在启动 daily-run 时拒绝注册。
-  任务：当前用户、仅登录时运行（不存密码）、不提权、每天 09:30 与 17:30、StartWhenAvailable、不并行实例、单次上限 6 小时。
+  任务：当前用户、仅登录时运行（不存密码）、不提权、每天 12:00 与 17:30、StartWhenAvailable、不并行实例、单次上限 6 小时。
+  12:00 自 2026-10-13 起（OPS-084，此前 09:30）：纽约夏令 23:00、冬令 22:00，晚于 Cboe 更新 VIX 历史文件的时间。
+  改了触发时间要在运行副本根目录重跑一次本注册脚本，再用下面的查看命令确认。
 - **手动触发**（与定时触发走同一路径）：`Start-ScheduledTask -TaskName 'AITradingSystem Daily Run'`。
 - **查看配置**：`schtasks /query /tn "\AITradingSystem Daily Run" /xml`。
 - **停用**：`Disable-ScheduledTask -TaskName 'AITradingSystem Daily Run'`，只在 owner 决定时执行；不得另建第二个调度来源。
@@ -170,7 +172,7 @@ dynamic-v3 rescue、候选跟踪每日步骤）。发布改由 `python tools/gov
    `CONGRESS_API_KEY`、`GOVINFO_API_KEY`；进程里没有时取用户环境变量。值不打印、不写日志，日志只记 PRESENT/MISSING。
    新增或停用数据源时，同一次改动更新这个列表。
 3. 调用一次 `.venv\Scripts\aits.exe ops daily-run`（不带 `--as-of`，由 daily-run 解析最近 provider-ready 交易日）。
-4. 输出与退出码写 `outputs\run_control\scheduler\<东京日期>_<PRIMARY|RESCUE>.log`（13:00 前为 PRIMARY；已存在则加 `_2`、`_3`）。
+4. 输出与退出码写 `outputs\run_control\scheduler\<东京日期>_<PRIMARY|RESCUE>.log`（15:00 前为 PRIMARY；已存在则加 `_2`、`_3`）。
 5. `scripts\ops\daily_scheduler_summary.py` 用代码（不调用 LLM）写同名 `.summary.md`（中文）与 `.summary.json`：as_of、窗口、
    终态、每步状态、每个 capture 组件、DQ 状态与阻断原因分类。通知只写这些文件。
 

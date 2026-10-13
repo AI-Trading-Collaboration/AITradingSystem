@@ -4,7 +4,7 @@ OPS-082: register the single Windows scheduled task that starts the daily run.
 
 .DESCRIPTION
 owner_decision:OPS-082:2026-10-11:deterministic_scheduler_v1: Windows Task Scheduler is the only
-external scheduling entry. One task, two daily triggers (09:30 and 17:30 Asia/Tokyo; the second is
+external scheduling entry. One task, two daily triggers (12:00 and 17:30 Asia/Tokyo; the second is
 the same-day rescue time, and daily-run's run control deduplicates by as_of). The task runs as the
 current user, only while that user is logged on, with no stored password and without elevation;
 StartWhenAvailable; no parallel instance.
@@ -30,7 +30,10 @@ param(
 Set-StrictMode -Version 3
 $ErrorActionPreference = 'Stop'
 
-$PrimaryTime = '09:30'
+# OPS-084 (owner_decision:OPS-084:2026-10-13:primary_trigger_1200): 12:00 Tokyo is 23:00 New York in
+# summer and 22:00 in winter, after Cboe posts the day's VIX history (seen as late as 21:11 New York).
+# At the former 09:30 the 2026-10-12 row was not posted yet, so that day's daily run failed.
+$PrimaryTime = '12:00'
 $RescueTime = '17:30'
 $TriggerTimeZoneId = 'Tokyo Standard Time'
 # Upper bound for one wrapper run; a normal daily run takes well under an hour. Operational

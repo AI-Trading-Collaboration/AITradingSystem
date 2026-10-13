@@ -1,6 +1,6 @@
 # OPS-082：确定性 Windows 调度替代 Codex automation
 
-最后更新：2026-10-11
+最后更新：2026-10-13（主触发时间由 OPS-084 从 09:30 改为 12:00）
 
 稳定任务 ID：`OPS-082_DETERMINISTIC_WINDOWS_SCHEDULER`
 
@@ -42,6 +42,8 @@ Codex automation。GOV-008 后 AGENTS.md 与 runbook 已不再维持"不得使�
 - e) 终止恢复不再依赖 `AITS_OPS_DEPLOYMENT_RECEIPT`，改为校验运行副本工作区干净且 HEAD 是 `origin/main` 上可达的提交，
   用它代替 receipt 的 `candidate_commit` 与父运行 manifest 的 `git_commit` 比对；
 - 计划任务：当前用户、仅登录时运行、StartWhenAvailable、不并行实例、不保存密码、不用管理员。
+- 2026-10-13 起 d) 的主触发时间是 12:00，17:30 不变（`owner_decision:OPS-084:2026-10-13:primary_trigger_1200`，
+  原因与证据见 `docs/requirements/OPS-084_Daily_Primary_Trigger_After_Source_Publication.md`）。
 
 **`owner_decision:GOV-008:2026-10-11:research_after_migration`**
 
@@ -61,7 +63,7 @@ B：仍记为 BASELINE_DONE，等 owner 确认付费源状态后再转 DONE。ow
 | 部分 | 实现 |
 |---|---|
 | 运行副本 | `D:\Work\AITradingSystem_ops_runtime`：独立 clone，detached 到已 ship 的 main 提交；`.venv` 为 editable 安装（`_editable_impl_ai_trading_system.pth` 指向本副本 `src`）。更新步骤见运维手册第 9.1 节 |
-| 计划任务 | `\AITradingSystem Daily Run`，由 `scripts/ops/register_daily_scheduler_task.ps1` 幂等注册（`Register-ScheduledTask -Force`；发现另一个启动 daily-run 的任务时拒绝）。两个每日触发 09:30、17:30（主机时区必须是 Tokyo Standard Time）；当前用户、`LogonType Interactive`（仅登录时运行，不存密码）、`RunLevel Limited`、StartWhenAvailable、`MultipleInstances IgnoreNew`、单次运行上限 6 小时 |
+| 计划任务 | `\AITradingSystem Daily Run`，由 `scripts/ops/register_daily_scheduler_task.ps1` 幂等注册（`Register-ScheduledTask -Force`；发现另一个启动 daily-run 的任务时拒绝）。两个每日触发 12:00、17:30（2026-10-13 前为 09:30，见 OPS-084；主机时区必须是 Tokyo Standard Time）；当前用户、`LogonType Interactive`（仅登录时运行，不存密码）、`RunLevel Limited`、StartWhenAvailable、`MultipleInstances IgnoreNew`、单次运行上限 6 小时 |
 | 无窗口启动 | 动作是 `conhost.exe --headless powershell.exe -NoProfile -NonInteractive -File <运行副本>\scripts\ops\daily_scheduler_run.ps1`（owner 偏好后台进程不弹控制台窗口）。conhost 不转发子进程退出码，所以计划任务的"上次运行结果"只表示包装脚本已启动，运行结论看日志与摘要 |
 | 包装脚本 | `scripts/ops/daily_scheduler_run.ps1`：① 前置检查：工作区干净（`git status --porcelain`）、HEAD 可从本地 `origin/main` 到达、`aits.exe` 存在，任一失败不调用 daily-run、退出码 2；② 只设置 daily-run 实际读取的环境变量（grep `src` 确认：`FMP_API_KEY`、`MARKETSTACK_API_KEY`、`SEC_USER_AGENT`、`OPENAI_API_KEY`、`CONGRESS_API_KEY`、`GOVINFO_API_KEY`），进程里没有时取用户环境变量，日志只记 PRESENT/MISSING；不设置 Codex automation 旧合同里的 `AITS_*` 变量（已无代码读取）；③ 调用一次 `<运行副本>\.venv\Scripts\aits.exe ops daily-run`；④ 输出与退出码写 `<运行副本>\outputs\run_control\scheduler\<东京日期>_<窗口>.log`（已存在则加 `_2`、`_3`，不覆盖）；⑤ 调用摘要脚本 |
 | 摘要 | `scripts/ops/daily_scheduler_summary.py`（只用标准库，读文件，不调用 LLM）：读 daily-run 输出、run state 与 ledger、run metadata、capture manifest、DQ 发现指针与回执，写 `<stem>.summary.md`（中文）与 `<stem>.summary.json`：as_of、窗口、终态、每步状态、每个 capture 组件、DQ 状态、阻断原因分类。分类：数据源不可用（provider 鉴权/额度/不可用等 capture blocker，含付费源停订）、数据质量未通过（validate_data FAIL）、代码缺陷（未处理异常、非数据原因的步骤失败）、控制面问题（前置检查、运行控制、缺环境变量、本地 source-control 问题）、等待新 as_of（同一 as_of 已有终态的重复触发、as_of 尚未 provider-ready）。错误摘录再做一次密钥脱敏 |

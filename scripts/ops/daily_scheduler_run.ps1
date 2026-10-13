@@ -45,9 +45,10 @@ $DailyRunEnvironment = @(
     'GOVINFO_API_KEY'
 )
 $OriginMainRef = 'refs/remotes/origin/main'
-# The 17:30 trigger is the same task's second start time; anything before 13:00 Tokyo is the
-# 09:30 primary window. Display label only; run control deduplicates by as_of.
-$RescueWindowStartHour = 13
+# The 17:30 trigger is the same task's second start time; anything before 15:00 Tokyo is the
+# 12:00 primary window (OPS-084), including a late start after the PC wakes. Display label only;
+# run control deduplicates by as_of.
+$RescueWindowStartHour = 15
 
 $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 $RuntimeRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
