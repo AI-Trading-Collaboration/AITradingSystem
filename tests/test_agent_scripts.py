@@ -35,6 +35,18 @@ def test_powershell_scripts_parse(path: Path) -> None:
     assert done.returncode == 0, done.stdout + done.stderr
 
 
+# Windows PowerShell 5.1 defines these in the Microsoft.PowerShell.Utility module script, not the binary
+# snap-in. Started from PowerShell 7 it inherits PowerShell 7's PSModulePath, cannot load that module and
+# reports them as not recognized (DEVX-029: approve.ps1 used Get-FileHash).
+UTILITY_MODULE_FUNCTIONS = ("Get-FileHash", "New-TemporaryFile", "New-Guid", "Format-Hex", "Import-PowerShellDataFile", "ConvertFrom-SddlString")
+
+
+@pytest.mark.parametrize("path", PS1, ids=lambda p: p.name)
+def test_powershell_scripts_avoid_utility_module_functions(path: Path) -> None:
+    code = [line for line in path.read_text(encoding="utf-8-sig").lower().splitlines() if not line.lstrip().startswith("#")]
+    assert [name for name in UTILITY_MODULE_FUNCTIONS if any(name.lower() in line for line in code)] == []
+
+
 def write_brief(path: Path, *, valid: bool = True, model: str = "local", thinking: str = "default") -> None:
     path.write_text(
         f"""---

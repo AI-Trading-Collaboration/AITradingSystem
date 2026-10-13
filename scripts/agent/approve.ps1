@@ -61,8 +61,13 @@ function Copy-GitBlob([string]$Spec, [string]$OutFile) {
   if ($proc.ExitCode -ne 0) { throw "git show $Spec failed: $stderr" }
 }
 
+# .NET instead of Get-FileHash: Windows PowerShell 5.1 started from PowerShell 7 inherits its PSModulePath
+# and cannot load the module script that defines Get-FileHash.
 function Get-Sha256([string]$Path) {
-  return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+  $sha = [System.Security.Cryptography.SHA256]::Create()
+  $stream = [System.IO.File]::OpenRead($Path)
+  try { $bytes = $sha.ComputeHash($stream) } finally { $stream.Close(); $sha.Dispose() }
+  return ([System.BitConverter]::ToString($bytes) -replace '-', '').ToLowerInvariant()
 }
 
 function Test-Inside([string]$Path, [string]$Root) {

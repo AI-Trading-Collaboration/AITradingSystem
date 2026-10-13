@@ -4,6 +4,6 @@ area: Developer workflow / 按决定签字、按补丁发布
 priority: P1
 status: IN_PROGRESS
 next_owner: Claude（发布后给 owner 补丁模式的放行规则片段）
-next_step: 运行 02 发布后：owner 建 D:\Work\AITradingSystem_decision_drafts（继承 D:\Work 的权限，pi 的账户无权访问）；Claude 给出 publish.ps1 补丁模式的放行规则片段，由 owner 自己加到电脑设置里；第一次用决定记录的 C 区包（候选 DATA-023-02）按方式 A 走一遍，记录是否被电脑上的自动检查拦下
+next_step: 运行 03（approve.ps1 改用 .NET SHA256）发布后：owner 建 D:\Work\AITradingSystem_decision_drafts（继承 D:\Work 的权限，pi 的账户无权访问）；Claude 给出 publish.ps1 补丁模式的放行规则片段，由 owner 自己加到电脑设置里；第一次用决定记录的 C 区包（候选 DATA-023-02）按方式 A 走一遍，记录是否被电脑上的自动检查拦下
 acceptance: 见 docs/requirements/DEVX-029_Decision_Scoped_Signoff.md 第 3 节：反向用例在修改前失败、修改后通过；按 tree 的老流程不变；PowerShell 用例在 Windows PowerShell 5.1 下通过；ship.py --dry-run 显示 C 区
-notes: production_effect=none；broker_action=none；requirement=docs/requirements/DEVX-029_Decision_Scoped_Signoff.md；owner_decision:DEVX-029:2026-10-13:decision_scoped_signoff（方式 A：owner 在 pi 线程写一句，电脑会话用 approve.ps1 -Yes 写入记录）；依据 2026-10-13 耗时分析：等 owner 约占 28%，C 区每个包 owner 出手三次，批准绑定 tree 导致重算重批
+notes: production_effect=none；broker_action=none；requirement=docs/requirements/DEVX-029_Decision_Scoped_Signoff.md；owner_decision:DEVX-029:2026-10-13:decision_scoped_signoff（方式 A：owner 在 pi 线程写一句，电脑会话用 approve.ps1 -Yes 写入记录）；依据 2026-10-13 耗时分析：等 owner 约占 28%，C 区每个包 owner 出手三次，批准绑定 tree 导致重算重批；2026-10-13 01、02 已发布（main 62b3737d）；从 PowerShell 7 启动的 5.1 加载不到 Get-FileHash，approve.ps1 会拒绝，运行 03 修复

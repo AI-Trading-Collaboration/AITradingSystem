@@ -99,6 +99,11 @@ owner_decision:DEVX-029:2026-10-13:decision_scoped_signoff —— owner（Baker�
   - AGENTS.md 和 ship-change skill 同步。
 
   云端在 Linux 上用 PowerShell 7 跑了全部 PowerShell 用例；PowerShell 5.1 由 Windows 上的门禁覆盖。这次改的是规则本身，owner 按结果 tree 批准。
+- 2026-10-13：01、02 已发布（02 为 main 62b3737d）。02 的第一次门禁从电脑会话的 PowerShell 7 启动，`test_agent_approve.py` 有 4 条失败：Windows PowerShell 5.1 继承了 PowerShell 7 的 `PSModulePath`，加载不到定义 `Get-FileHash` 的模块脚本，`approve.ps1` 报 "Get-FileHash is not recognized" 后拒绝、不写任何东西。从 Git Bash 启动则全部通过，按同一 tree 重跑门禁后发布。运行 03 修复：
+  - `approve.ps1` 改用 .NET 的 SHA256 计算哈希；
+  - `tests/test_agent_scripts.py` 新增用例：`scripts/agent` 下的 .ps1 不得使用 5.1 里由模块脚本定义的命令（`Get-FileHash`、`New-TemporaryFile`、`New-Guid`、`Format-Hex`、`Import-PowerShellDataFile`、`ConvertFrom-SddlString`）。
+
+  `approve.ps1` 在 `decision_record_excluded` 里，这次修复按 tree 请 owner 批准。
 
 ## 6. 运行影响边界
 
