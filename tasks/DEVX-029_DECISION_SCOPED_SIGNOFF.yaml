@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-029_DECISION_SCOPED_SIGNOFF
+area: Developer workflow / 按决定签字、按补丁发布
+priority: P1
+status: IN_PROGRESS
+next_owner: Claude（运行 02 的包）
+next_step: 运行 02（C 区，云端模型）：ship.py 增加决定记录和补丁核对，publish.ps1 增加 -ExpectedPatch/-ExpectedMessage 并在 C 区没有按 tree 的验收记录时改查决定记录，新增 approve.ps1，gov008_ship.yaml 增加 decision_record_excluded 并把 approve.ps1 列入 C 区，AGENTS.md 和 ship-change skill 同步；owner 按结果 tree 批准这一次
+acceptance: 见 docs/requirements/DEVX-029_Decision_Scoped_Signoff.md 第 3 节：反向用例在修改前失败、修改后通过；按 tree 的老流程不变；PowerShell 用例在 Windows PowerShell 5.1 下通过；ship.py --dry-run 显示 C 区
+notes: production_effect=none；broker_action=none；requirement=docs/requirements/DEVX-029_Decision_Scoped_Signoff.md；owner_decision:DEVX-029:2026-10-13:decision_scoped_signoff（方式 A：owner 在 pi 线程写一句，电脑会话用 approve.ps1 -Yes 写入记录）；依据 2026-10-13 耗时分析：等 owner 约占 28%，C 区每个包 owner 出手三次，批准绑定 tree 导致重算重批
