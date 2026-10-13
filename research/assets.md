@@ -8,9 +8,9 @@
 
 | 资产 | 位置 | 说明 |
 |---|---|---|
-| 研究评估台 | `src/ai_trading_system/research_bench/`；配置 `config/research/research_bench.yaml` | TRADING-2565 S3a，C 区。策略接口是"每天给出目标敞口"，评估台负责执行滞后、漂移、统一成本、固定基准、指标、前视和参数消费检查、运行指纹；不变量测试在 `tests/invariants/test_research_bench_invariants.py`。S3b 加了运行登记、试验计数、折算夏普（`deflated.py`）和验证窗口读取登记（`ledger.py`），不变量在 `test_research_ledger_invariants.py`。新研究一律经它运行 |
+| 研究评估台 | `src/ai_trading_system/research_bench/`；配置 `config/research/research_bench.yaml` | TRADING-2565 S3a，C 区。策略接口是"每天给出目标敞口"，评估台负责执行滞后、漂移、统一成本、固定基准、指标、前视和参数消费检查、运行指纹；不变量测试在 `tests/invariants/test_research_bench_invariants.py`。S3b 加了运行登记、试验计数、折算夏普（`deflated.py`）和验证窗口读取登记（`ledger.py`），不变量在 `test_research_ledger_invariants.py`。S3c 加了标准证伪（`falsify.py`）和报告第一屏（`report.py`），不变量在 `test_research_falsify_invariants.py`。新研究一律经它运行 |
 | 简单基线模拟器 | `src/ai_trading_system/simple_baseline_portfolio_control.py`：`_strategy_return_series`（1272 行）、`_metrics_for_strategy`（1473 行） | 信号滞后经核实正确，是事实上的共享模拟器（删除前有 28 个模块调它的私有函数）。评估台的时序和它相同，200 日均线规则逐日对得上（不变量 10）；评估台另加了持仓漂移和乘法扣成本 |
-| 稳健性场景 | `src/ai_trading_system/backtest/robustness.py`：`same_turnover_random_scenario`、`same_exposure_random_scenario`、`_block_bootstrap_total_return_delta_ci` | 同换手、同暴露的随机基线和 block bootstrap 区间。C 区 |
+| 稳健性场景 | `src/ai_trading_system/backtest/robustness.py`：`same_turnover_random_scenario`、`same_exposure_random_scenario`、`_block_bootstrap_total_return_delta_ci` | 同换手、同暴露的随机基线和 block bootstrap 区间。C 区。接旧回测的结果类型，逐日打乱、只算总收益；评估台的标准证伪按自己的接口重写了这两项 |
 | 成本模型 | `config/research/transaction_cost_model.yaml` | 删除前研究代码里的成本默认值有 0、4、5、5–15 bps 四种，评估台统一用这一份 |
 | 运行出处记录 | `src/ai_trading_system/core/provenance.py` | 记录 commit、代码是否改动、配置哈希。评估台的运行登记用它的 `git_provenance`，另记快照 id、窗口、试验编号、配置和策略模块的哈希 |
 | 研究窗口政策 | `config/research/primary_research_window_policy.yaml`、`research_window_registry.yaml` | C 区。QQQ 方向问题的开发、验证、一致性窗口在 `question_windows.qqq_direction` |
@@ -18,7 +18,7 @@
 
 ## 证伪检验
 
-Composer v2 的一整套证伪检验（TRADING-2555~2559），评估台要做成通用的"标准证伪"：
+Composer v2 的一整套证伪检验（TRADING-2555~2559）。评估台已把它们做成通用的标准证伪（TRADING-2565 S3c，`src/ai_trading_system/research_bench/falsify.py`），下面的归档只作参考：
 
 | 检验 | 位置 |
 |---|---|

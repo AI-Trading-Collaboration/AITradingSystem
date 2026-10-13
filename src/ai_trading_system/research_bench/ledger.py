@@ -21,6 +21,9 @@ Rules:
   The read is registered before anything runs; it permits one run of each validated strategy, with
   the preregistered parameters.
 - The consistency window opens only after the validation read, under the same approval.
+- Validation and consistency runs always face the standard falsification (S3c), and their rules
+  are judged on the main result and the falsification together. A read is refused while a rule
+  names a metric no run has. Development runs are falsified on request; that is not a new trial.
 
 Trial counts and the deflated Sharpe ratio use the development trials of every question.
 
@@ -51,7 +54,13 @@ from ai_trading_system.research_bench.deflated import (
     deflated_sharpe,
     sample_variance,
 )
-from ai_trading_system.research_bench.prereg import PREREG_FILE, Prereg, evaluate_rules, load_prereg
+from ai_trading_system.research_bench.prereg import (
+    PREREG_FILE,
+    Prereg,
+    evaluate_rules,
+    load_prereg,
+    rule_problems,
+)
 from ai_trading_system.research_bench.run import (
     BenchCheckError,
     RunResult,
@@ -295,6 +304,11 @@ def register_read(
     if role == "development":
         raise ValueError("the development window needs no registered read")
     ref = loaded.settings.approval_ref
+    problems = rule_problems(question.prereg, loaded.settings)
+    if problems:
+        raise LedgerError(
+            f"{question.question_id} has rules no run can meet: {'; '.join(problems)}"
+        )
     problems = approval_problems(question, ref)
     if problems:
         raise LedgerError(f"{question.question_id} is not approved: {'; '.join(problems)}")
@@ -347,18 +361,22 @@ def run_and_record(
     params: Mapping[str, Any] | None = None,
     permit: WindowPermit | None = None,
     loaded: LoadedSettings | None = None,
+    falsify: bool = False,
 ) -> RecordedRun:
     """Run one preregistered strategy and record the run, whatever its outcome.
 
-    Development runs may override parameters (each distinct configuration is a trial). Validation
-    and consistency runs use the preregistered parameters under a registered read. A run that
-    fails its checks or raises is recorded, then the error is raised again.
+    Development runs may override parameters (each distinct configuration is a trial) and are
+    falsified when ``falsify`` is set. Validation and consistency runs use the preregistered
+    parameters under a registered read and are always falsified. A run that fails its checks or
+    raises is recorded, then the error is raised again.
     """
 
     loaded = loaded or load_settings()
     prereg = question.prereg
     entry = prereg.strategy(strategy_id)
     _check_data(question, data)
+    falsify = falsify or role != "development"
+    confidence = prereg.validation.confidence or loaded.settings.falsification.confidence
     if role == "development":
         merged = {**entry.params, **dict(params or {})}
         read_id = None
@@ -401,6 +419,7 @@ def run_and_record(
         },
         "spec": specified,
         "cost_bps": loaded.cost_bps,
+        "falsification_confidence": confidence if falsify else None,
         "trial": trial,
         "window_read_id": read_id,
         "window": {
@@ -416,7 +435,14 @@ def run_and_record(
     }
     try:
         strategy = load_strategy(question, strategy_id)
-        result = run_strategy(data, strategy, spec, loaded, permit=permit)
+        result = run_strategy(
+            data,
+            strategy,
+            spec,
+            loaded,
+            permit=permit,
+            falsification_confidence=confidence if falsify else None,
+        )
     except BenchCheckError as exc:
         _append_run(question, {**body, "status": "check_failed", "problems": exc.problems})
         raise
@@ -425,9 +451,10 @@ def run_and_record(
         _append_run(question, {**body, "status": "error", "error": error})
         raise
     outcome = result.to_dict()
+    falsification = outcome.get("falsification") or {}
     rules = None
     if role != "development" and strategy_id in prereg.validation.rules:
-        rules = evaluate_rules(prereg.validation.rules[strategy_id], outcome)
+        rules = evaluate_rules(prereg.validation.rules[strategy_id], {**falsification, **outcome})
     record = _append_run(
         question,
         {
@@ -442,6 +469,7 @@ def run_and_record(
                     "exposure_gap",
                     "checks",
                     "fingerprint",
+                    "falsification",
                 )
             },
             "rules": rules,

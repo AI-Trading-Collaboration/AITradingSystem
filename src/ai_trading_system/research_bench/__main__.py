@@ -2,9 +2,11 @@
 
 python -m ai_trading_system.research_bench benchmarks [--snapshot ID] [--qqq-series proxy]
 python -m ai_trading_system.research_bench run QUESTION --strategy ID [--set KEY=VALUE ...]
+    [--falsify]
 python -m ai_trading_system.research_bench validate QUESTION
 python -m ai_trading_system.research_bench consistency QUESTION
 python -m ai_trading_system.research_bench ledger [QUESTION]
+python -m ai_trading_system.research_bench report QUESTION [--run RUN_ID ...]
 
 Every run is recorded under research/<QUESTION>/ (see ``research_bench.ledger``).
 """
@@ -21,6 +23,7 @@ import typer
 from ai_trading_system.research_bench import ledger as lg
 from ai_trading_system.research_bench.data import BenchData, QqqSeries, from_snapshot
 from ai_trading_system.research_bench.metrics import cvar_field
+from ai_trading_system.research_bench.report import question_report
 from ai_trading_system.research_bench.run import BenchCheckError, WindowPermit, benchmark_summaries
 from ai_trading_system.research_bench.settings import LoadedSettings, WindowRole, load_settings
 from ai_trading_system.research_data import qqq_long_history as qlh
@@ -87,6 +90,9 @@ def run_command(
         list[str] | None,
         typer.Option("--set", help="开发窗口改参数：KEY=VALUE（VALUE 按 JSON 读），可多次。"),
     ] = None,
+    falsify: Annotated[
+        bool, typer.Option("--falsify", help="同时跑标准证伪（验证和一致性窗口总是跑）。")
+    ] = False,
     root: SnapshotRootOption = qlh.DEFAULT_SNAPSHOT_ROOT,
 ) -> None:
     """在开发窗口上跑一个预注册策略，并登记这次运行（失败的也登记）。"""
@@ -95,7 +101,9 @@ def run_command(
     item = _question(loaded, question)
     params = dict(_parse_setting(text) for text in set_ or [])
     data = _data(item, root)
-    _run_one(item, data, item.prereg.strategy(strategy).id, "development", params, None, loaded)
+    strategy_id = item.prereg.strategy(strategy).id
+    if not _run_one(item, data, strategy_id, "development", params, None, loaded, falsify=falsify):
+        raise typer.Exit(code=1)
 
 
 @app.command("validate")
@@ -150,6 +158,26 @@ def ledger_command(
         raise typer.Exit(code=1)
 
 
+@app.command("report")
+def report_command(
+    question: QuestionArgument,
+    run: Annotated[
+        list[str] | None,
+        typer.Option("--run", help="只看这些运行号；不给就看每个策略在每个窗口的最新一次。"),
+    ] = None,
+) -> None:
+    """报告第一屏：试验数、折算夏普、和同敞口基准的对照及其区间、剔除、随机择时、成本和推迟、规则。"""
+
+    loaded = load_settings()
+    try:
+        lines = question_report(lg.research_root(loaded), question, loaded.settings, run or [])
+    except (KeyError, OSError, ValueError, lg.LedgerError) as exc:
+        typer.echo(f"report: {str(exc).strip(chr(39))}")
+        raise typer.Exit(code=1) from None
+    for line in lines:
+        typer.echo(line)
+
+
 def _read_window(question: str, role: WindowRole, root: Path) -> None:
     loaded = load_settings()
     item = _question(loaded, question)
@@ -175,10 +203,19 @@ def _run_one(
     params: dict[str, Any] | None,
     permit: WindowPermit | None,
     loaded: LoadedSettings,
+    *,
+    falsify: bool = False,
 ) -> bool:
     try:
         recorded = lg.run_and_record(
-            item, data, strategy_id, role=role, params=params, permit=permit, loaded=loaded
+            item,
+            data,
+            strategy_id,
+            role=role,
+            params=params,
+            permit=permit,
+            loaded=loaded,
+            falsify=falsify,
         )
     except lg.TrialCapError as exc:
         typer.echo(f"{strategy_id}: refused, nothing ran: {exc}")
@@ -204,6 +241,18 @@ def _run_one(
         f" cvar5 rel {_pct(comparison['cvar_5pct_relative_improvement'])}"
         f" geo/yr {_pct(comparison['geometric_annual_return'])}"
     )
+    falsification = record["result"].get("falsification")
+    if falsification:
+        low, high = falsification["ci_low"], falsification["ci_high"]
+        typer.echo(
+            f"  falsification: maxDD CI {_pct(low['max_drawdown'])}..{_pct(high['max_drawdown'])}"
+            f" worst year {_pct(falsification['leave_year_min']['max_drawdown'])}"
+            f" placebo {_num(falsification['placebo_rank']['max_drawdown'])};"
+            f" geo/yr CI {_pct(low['geometric_annual_return'])}"
+            f"..{_pct(high['geometric_annual_return'])}"
+            f" placebo {_num(falsification['placebo_rank']['geometric_annual_return'])}"
+            f" (report {item.question_id} for the rest)"
+        )
     for rule in record.get("rules") or []:
         typer.echo(
             f"  rule {rule['metric']} {rule['op']} {rule['value']:g}:"

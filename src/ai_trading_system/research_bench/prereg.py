@@ -12,19 +12,34 @@ that approved it. The file is zone C.
 from __future__ import annotations
 
 import keyword
+import re
 from pathlib import Path
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from ai_trading_system.research_bench.falsify import (
+    PAIRED_SECTIONS,
+    cost_section,
+    delay_section,
+    paired_fields,
+)
+from ai_trading_system.research_bench.metrics import (
+    EXPOSURE_GAP_FIELDS,
+    comparison_fields,
+    summary_fields,
+)
+from ai_trading_system.research_bench.settings import BenchSettings
 from ai_trading_system.research_bench.simulate import Rebalance, Schedule
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 PREREG_FILE = "prereg.yaml"
 QUESTION_ID_PATTERN = r"^[A-Z][A-Z0-9]*-[A-Z0-9]+$"
 OWNER_DECISION_PATTERN = r"^owner_decision:[A-Z]+-[0-9]+:[0-9]{4}-[0-9]{2}-[0-9]{2}:[a-z0-9_]+$"
-# Rule metrics are read from these parts of a run result.
-RULE_SECTIONS = ("strategy", "comparison", "exposure_gap")
+# Rule metrics are read from these parts of a run result, and from the falsification sections
+# (``research_bench.falsify``); which cost and delay sections exist depends on the bench settings.
+RULE_SECTIONS = ("strategy", "comparison", "exposure_gap", *PAIRED_SECTIONS)
+_RULE_SECTION = re.compile(rf"^(?:{'|'.join(RULE_SECTIONS)}|cost_[0-9]+(?:p[0-9]+)?|delay_[0-9]+)$")
 
 
 class _Strict(BaseModel):
@@ -70,7 +85,8 @@ class StrategyEntry(_Strict):
 class Rule(_Strict):
     """``<section>.<field> <op> <value>`` on the run result. For example
     ``comparison.max_drawdown >= 0.05``: the strategy's drawdown at least 5 points shallower than
-    the matched benchmark's."""
+    the matched benchmark's; ``ci_low.max_drawdown > 0``: still shallower at the low end of the
+    bootstrap interval."""
 
     metric: str
     op: Literal[">=", "<=", ">", "<"]
@@ -81,14 +97,20 @@ class Rule(_Strict):
     @classmethod
     def _section(cls, value: str) -> str:
         section, _, name = value.partition(".")
-        if section not in RULE_SECTIONS or not name:
-            raise ValueError(f"metric must be <section>.<field> with section in {RULE_SECTIONS}")
+        if not _RULE_SECTION.match(section) or not name:
+            raise ValueError(
+                f"metric must be <section>.<field> with section in {RULE_SECTIONS},"
+                " cost_<bps> or delay_<days>"
+            )
         return value
 
 
 class ValidationSpec(_Strict):
     strategies: tuple[str, ...] = Field(min_length=1)
     rules: dict[str, tuple[Rule, ...]]
+    # Confidence of the bootstrap interval; the bench default when not given. Raise it to split
+    # the error rate across sub-questions (Bonferroni).
+    confidence: float | None = Field(default=None, gt=0, lt=1)
 
 
 class PriorExpectation(_Strict):
@@ -153,6 +175,36 @@ def load_prereg(path: Path) -> Prereg:
     if not isinstance(raw, dict):
         raise ValueError(f"preregistration root must be a mapping: {path}")
     return Prereg.model_validate(raw)
+
+
+def rule_sections(settings: BenchSettings) -> dict[str, tuple[str, ...]]:
+    """Every section a rule may read, with its fields, under these bench settings."""
+
+    compared = comparison_fields(settings)
+    sections: dict[str, tuple[str, ...]] = {
+        "strategy": summary_fields(settings),
+        "comparison": compared,
+        "exposure_gap": EXPOSURE_GAP_FIELDS,
+    }
+    sections.update({section: paired_fields(settings) for section in PAIRED_SECTIONS})
+    falsification = settings.falsification
+    sections.update({cost_section(bps): compared for bps in falsification.cost_bps})
+    sections.update({delay_section(days): compared for days in falsification.delay_days})
+    return sections
+
+
+def rule_problems(prereg: Prereg, settings: BenchSettings) -> list[str]:
+    """Rules naming a metric no run will have: they could never hold, so a validation read with
+    them would be wasted."""
+
+    sections = rule_sections(settings)
+    problems = []
+    for strategy_id, rules in prereg.validation.rules.items():
+        for rule in rules:
+            section, _, name = rule.metric.partition(".")
+            if name not in sections.get(section, ()):
+                problems.append(f"{strategy_id}: no metric {rule.metric}")
+    return problems
 
 
 def evaluate_rules(rules: tuple[Rule, ...], result: dict[str, Any]) -> list[dict[str, Any]]:

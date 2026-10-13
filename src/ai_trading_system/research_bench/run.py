@@ -4,7 +4,9 @@ The benchmarks are fixed and cannot be added after a run: the constant exposure 
 strategy's average exposure (the primary comparison), buy-and-hold QQQ, cash and, for questions
 that use leverage, fixed 2x and 3x. The development window is open; the validation and consistency
 windows open only with a permit that ``research_bench.ledger`` issues when it registers a read.
-Research runs go through the ledger (``run_and_record``), which records every run.
+Research runs go through the ledger (``run_and_record``), which records every run. On request
+a run also faces the standard falsification (``research_bench.falsify``); the ledger asks for it on
+every validation and consistency run.
 """
 
 from __future__ import annotations
@@ -26,6 +28,7 @@ from ai_trading_system.research_bench.checks import (
     strategy_targets,
 )
 from ai_trading_system.research_bench.data import BenchData
+from ai_trading_system.research_bench.falsify import FalsificationInputs, falsify
 from ai_trading_system.research_bench.metrics import compare, exposure_gap, summarize
 from ai_trading_system.research_bench.settings import (
     LoadedSettings,
@@ -91,6 +94,7 @@ class RunResult:
     comparison: dict[str, Any]
     exposure_gap: dict[str, float]
     fingerprint: str
+    falsification: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -119,7 +123,11 @@ def run_strategy(
     loaded: LoadedSettings | None = None,
     *,
     permit: WindowPermit | None = None,
+    falsification_confidence: float | None = None,
 ) -> RunResult:
+    """Evaluate one strategy; with ``falsification_confidence`` also run the standard
+    falsification at that confidence (it is not part of the fingerprint)."""
+
     loaded = loaded or load_settings()
     window = open_window(loaded, spec.question_type, spec.window_role, permit)
     params = _json_params(spec.params)
@@ -162,6 +170,23 @@ def run_strategy(
     benchmarks = {name: summarize(item, cash, loaded) for name, item in benchmark_sims.items()}
     comparison = compare(strategy_summary, benchmarks[PRIMARY_BENCHMARK], loaded)
     gap = exposure_gap(sim, float(sim.exposure.mean()), data.returns["qqq"])
+    falsification = None
+    if falsification_confidence is not None:
+        falsification = falsify(
+            FalsificationInputs(
+                returns=data.returns,
+                targets=targets,
+                start=window.start,
+                end=window.end,
+                rebalance=spec.rebalance,
+                delay_days=spec.delay_days,
+                cost_bps=cost_bps,
+                strategy=sim,
+                benchmark=benchmark_sims[PRIMARY_BENCHMARK],
+            ),
+            loaded,
+            falsification_confidence,
+        )
 
     spec_payload = spec_record(spec)
     window_record = {
@@ -198,6 +223,7 @@ def run_strategy(
         comparison=comparison,
         exposure_gap=gap,
         fingerprint=fingerprint,
+        falsification=falsification,
     )
 
 

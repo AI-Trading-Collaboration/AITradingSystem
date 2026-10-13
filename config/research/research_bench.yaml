@@ -43,5 +43,17 @@ episodes:
   - id: inflation_bear_2022
     start: "2022-01"
     end: "2022-12"
+# Standard falsification (S3c), run for every validated strategy and on request in development.
+# Statistics here annualize by 252 trading days. Each check compares the strategy with its matched
+# constant-exposure benchmark, as the main result does.
+falsification:
+  cost_bps: [4, 15, 25]             # rerun at each one-way cost
+  delay_days: [1, 2]                # rerun with trades one and two more days late
+  placebo_block_days: 21            # same-exposure random timing: the target path shuffled in blocks
+  placebo_draws: 1000
+  bootstrap_mean_block_days: 21     # stationary block bootstrap of the paired daily returns
+  bootstrap_draws: 10000
+  confidence: 0.95                  # a preregistration may raise it (Bonferroni across sub-questions)
+  seed: 20261013
 production_effect: none
 broker_action: none

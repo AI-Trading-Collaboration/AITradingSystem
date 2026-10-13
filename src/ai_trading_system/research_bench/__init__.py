@@ -9,7 +9,9 @@ run first checks that no target uses later data and that every declared paramete
 Data comes only from checked long-history snapshots (``research_data.qqq_long_history``). Research
 runs go through ``ledger.run_and_record``, which records every run (failed ones too) under
 ``research/<question>/``, counts trials against the preregistered cap, and opens the validation
-window once per question, only for an approved preregistration (S3b).
+window once per question, only for an approved preregistration (S3b). Validation and consistency
+runs always face the standard falsification (``falsify``): cost and delay reruns, leave-one-out,
+same-exposure random timing and a block bootstrap; ``report`` shows the first screen (S3c).
 """
 
 from ai_trading_system.research_bench.checks import Strategy

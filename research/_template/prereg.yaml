@@ -1,4 +1,4 @@
-# Preregistration template (TRADING-2565 S3b; format in src/ai_trading_system/research_bench/prereg.py).
+# Preregistration template (TRADING-2565 S3b, S3c; format in src/ai_trading_system/research_bench/prereg.py).
 #
 # Copy this directory to research/<question_id>/ and fill every field before the first development
 # run. Development runs are counted against trial_cap. Before the validation window can be read, this
@@ -24,11 +24,19 @@ strategies:
     leveraged_benchmarks: false     # true adds fixed 2x and 3x to the benchmarks
 validation:
   strategies: [example]             # each runs once on the validation window, with the params above
-  rules:                            # <section>.<field> <op> <value>; sections: strategy, comparison, exposure_gap
+  # <section>.<field> <op> <value>. Sections: strategy, comparison, exposure_gap, and the standard
+  # falsification every validation run faces: paired, ci_low, ci_high, leave_year_min/_max,
+  # leave_episode_min/_max, placebo_rank, cost_<bps>, delay_<days> (research_bench/falsify.py).
+  # A rule naming a metric no run has refuses the validation read.
+  rules:
     example:
       - {metric: comparison.cvar_5pct_relative_improvement, op: ">=", value: 0.10, note: left tail 10% milder than the matched benchmark}
       - {metric: comparison.max_drawdown, op: ">=", value: 0.05, note: drawdown at least 5 points shallower}
       - {metric: comparison.geometric_annual_return, op: ">=", value: -0.01, note: gives up at most 1 point a year}
+      - {metric: ci_low.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: still milder at the low end of the bootstrap interval}
+      - {metric: leave_year_min.max_drawdown, op: ">=", value: 0.0, note: no single year carries the drawdown result}
+      - {metric: cost_25.geometric_annual_return, op: ">=", value: -0.02, note: survives 25 bps}
+  confidence: 0.95                  # of the bootstrap interval; raise it to split the error across sub-questions
 sensitivity:                        # variants run on the development window; each one is a trial
   - window 63 days
 prior_expectation:                  # what earlier research leads us to expect, before any result

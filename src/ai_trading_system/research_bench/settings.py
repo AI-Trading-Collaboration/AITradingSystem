@@ -31,6 +31,19 @@ class EpisodeSpec(_Strict):
     end: str = Field(pattern=r"^\d{4}-\d{2}$")
 
 
+class FalsificationSettings(_Strict):
+    """The standard falsification every validated strategy faces (S3c)."""
+
+    cost_bps: tuple[float, ...] = Field(min_length=1)
+    delay_days: tuple[int, ...] = Field(min_length=1)
+    placebo_block_days: int = Field(gt=0)
+    placebo_draws: int = Field(gt=0)
+    bootstrap_mean_block_days: float = Field(gt=0)
+    bootstrap_draws: int = Field(gt=0)
+    confidence: float = Field(gt=0, lt=1)
+    seed: int = Field(ge=0)
+
+
 class BenchSettings(_Strict):
     schema_version: Literal["research_bench.v1"]
     cost_model: str = Field(min_length=1)
@@ -44,6 +57,7 @@ class BenchSettings(_Strict):
     rolling_percentile: float = Field(gt=0, lt=1)
     lookahead_cut_dates: int = Field(gt=0)
     episodes: tuple[EpisodeSpec, ...]
+    falsification: FalsificationSettings
     production_effect: Literal["none"]
     broker_action: Literal["none"]
 

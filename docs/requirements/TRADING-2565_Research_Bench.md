@@ -94,8 +94,38 @@
 - **区**：`research/*/prereg.yaml` 加进 C 区（模板也是）。策略模块、运行记录和读取记录留在 A 区，靠哈希链和 git 历史检查防删改。
 - **不变量**：`tests/invariants/test_research_ledger_invariants.py` 第 11 到 17 条，每条有反向对照；13 处变异都被抓到（`tests/invariants/README.md`）。
 
+## S3c 的实现（2026-10-13）
+
+- **标准证伪**（`falsify`）：每一项都和主结果一样，拿策略和同平均敞口的固定敞口基准比，只存汇总。
+  - 成本：按 4、15、25 bps 各重跑一次。4 是统一成本，所以 `cost_4` 就是主结果。
+  - 推迟：每笔交易再晚 1 天、2 天，各重跑一次。
+  - 逐年和逐段剔除：把一个日历年或一个固定下跌段，从策略、基准、现金三条日收益里同时去掉，再比一次。记录每年、每段的结果，以及每个指标在这些剔除里的最小值和最大值。
+  - 同敞口随机择时：把策略实际执行的目标敞口路径切成 21 天一块，随机重排 1,000 次，每次按策略同样的调仓、成本和推迟重新模拟。敞口分布和策略一样，只有时点是随机的。报告策略在这些随机择时里的排位（0 到 1，平局算一半）。
+  - 平稳块 bootstrap（Politis、Romano 1994）：平均块长 21 天，10,000 次，把策略、基准、现金的日收益成对重抽，给出差值的双侧区间。置信度默认 0.95，预注册可以改（例如按子问题个数做 Bonferroni）。
+  - 剔除、随机择时、bootstrap 都在日收益上算，几何年化按 252 个交易日。主结果的几何年化按日历年算，所以两者会差一点。
+  - 种子固定（配置的 `falsification.seed`），同样的输入得到同样的结果。
+- **什么时候跑**：
+  - 验证和一致性窗口的运行总是跑，关不掉。
+  - 开发窗口加 `run --falsify` 才跑，不算新试验。
+  - 一次完整证伪在云端约 45 秒，大部分花在 1,000 次随机择时的模拟上。
+- **判定规则能读证伪结果**：
+  - 可用的部分：`paired`、`ci_low`、`ci_high`、`leave_year_min`/`_max`、`leave_episode_min`/`_max`、`placebo_rank`、`cost_<bps>`、`delay_<天>`。
+  - 例如 `ci_low.max_drawdown > 0`：在 bootstrap 区间的下端，回撤仍比基准浅。
+  - 规则写了运行不会产出的指标，登记验证读取时就拒绝，不会白白用掉唯一的一次读取。规则能写的指标和运行实际产出的字段由测试核对。
+- **报告第一屏**（命令行 `report <题号>`，只用运行记录里的汇总）：
+  - 题目、快照、owner decision；本题和全局的试验数、读取、链是否完好。
+  - 每个策略在每个窗口最近一次成功的运行：折算夏普，以及和主对照的比较表。表按风险优先排：回撤、5% 和 1% 左尾、滚动 3 年低点、几何年化、夏普、波动。每行带 bootstrap 区间、逐年和逐段剔除的最差值、随机择时排位。
+  - 成本和推迟的重跑结果，判定规则逐条是否成立。
+- **pi 研究运行的 brief 模板**：`research/_template/brief.md`。
+  - 开发和验证分两次运行。验证那次只运行 `ledger`、`validate`、`report`，运行报告里的改动只应有新增的运行记录和一行读取记录。
+  - pi 不打开数据文件和运行记录，结果只看 `report`。
+  - 每个要验证的策略，开发时至少用预注册参数跑一次 `--falsify`，先确认证伪能跑通。
+- **和旧代码的关系**：思路来自 Composer v2 的证伪合同（TRADING-2555~2559，已归档）和 `backtest/robustness.py` 的同敞口随机、块 bootstrap。那两处接的是旧回测的结果类型，逐日打乱，只算总收益。评估台按自己的接口重写：按块打乱，保留敞口的短期持续性；bootstrap 成对重抽，覆盖全部风险指标。
+- **不变量**：`tests/invariants/test_research_falsify_invariants.py` 第 18 到 21 条，`test_research_ledger_invariants.py` 第 22 条，每条有反向对照，例如知道下一天收益的策略、只在一年或一段里赚钱的策略、比基准每天多一点固定收益的策略。变异证据在 `tests/invariants/README.md`。
+
 ## 进展
 
 - 2026-10-12：随 TRADING-2567 激活（READY）。production_effect=none；broker_action=none。
 - 2026-10-13：设计和分批定稿（项目文件 `knowledge/claude/qqq-options/s3-bench-and-q1-prereg-draft-2026-10-13.md`，含第一题预注册草稿）。S3a 为 TRADING-2565-01（C 区）。production_effect=none；broker_action=none。
 - 2026-10-13：S3a（TRADING-2565-01）Baker 按结果 tree 1dcf95e3 事先批准，排在 OPS-085-01 之后发布。S3b 写好：运行登记、试验计数、折算夏普、验证窗口读取登记、预注册格式和模板，打包等 S3a 发布后的 main。production_effect=none；broker_action=none。
+- 2026-10-13：S3b（TRADING-2565-02）Baker 按结果 tree d2f4d858 事先批准，排在 S3a 之后发布。S3c 写好：标准证伪、报告第一屏、pi 研究运行的 brief 模板，打包等 S3b 发布后的 main。production_effect=none；broker_action=none。

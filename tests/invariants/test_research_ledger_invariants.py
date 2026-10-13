@@ -15,6 +15,9 @@ for a question whose rules were fixed first. Each guard has a negative control.
 16. The deflated Sharpe ratio matches the paper's worked example and a hand computation.
 17. In this repository, every question's records and reads are intact, git history never changed
     or removed one, and a decision cites only recorded runs and registered reads.
+22. Validation and consistency runs always face the standard falsification (S3c), and their rules
+    are judged on it; a rule naming a metric no run has refuses the read before it is registered.
+    (18-21, the falsification itself: ``test_research_falsify_invariants.py``.)
 """
 
 from __future__ import annotations
@@ -22,6 +25,7 @@ from __future__ import annotations
 import json
 import math
 import subprocess
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -54,7 +58,18 @@ from ai_trading_system.research_bench.deflated import (
     probabilistic_sharpe,
 )
 
-LOADED = load_settings()
+FULL = load_settings()
+# Fewer placebo and bootstrap draws than the bench uses: the same code paths, faster.
+LOADED = replace(
+    FULL,
+    settings=FULL.settings.model_copy(
+        update={
+            "falsification": FULL.settings.falsification.model_copy(
+                update={"placebo_draws": 10, "bootstrap_draws": 200}
+            )
+        }
+    ),
+)
 QUESTION = "QQQ-T1"
 DECISION = "owner_decision:TRADING-2567:2026-10-13:qqq_t1_prereg"
 STRATEGY_MODULE = """
@@ -76,7 +91,15 @@ def broken(inputs, params):
 """
 
 
-def _prereg(cap: int = 3, decision: str | None = DECISION) -> dict[str, Any]:
+RULES: list[dict[str, Any]] = [
+    {"metric": "comparison.max_drawdown", "op": ">=", "value": 0.05},
+    {"metric": "comparison.cvar_5pct_relative_improvement", "op": ">=", "value": 0.1},
+]
+
+
+def _prereg(
+    cap: int = 3, decision: str | None = DECISION, rules: list[dict[str, Any]] | None = None
+) -> dict[str, Any]:
     return {
         "schema_version": "research_prereg.v1",
         "question_id": QUESTION,
@@ -96,16 +119,7 @@ def _prereg(cap: int = 3, decision: str | None = DECISION) -> dict[str, Any]:
         ],
         "validation": {
             "strategies": ["q1a"],
-            "rules": {
-                "q1a": [
-                    {"metric": "comparison.max_drawdown", "op": ">=", "value": 0.05},
-                    {
-                        "metric": "comparison.cvar_5pct_relative_improvement",
-                        "op": ">=",
-                        "value": 0.1,
-                    },
-                ]
-            },
+            "rules": {"q1a": RULES if rules is None else rules},
         },
         "prior_expectation": {
             "effect": "lower drawdown and left tail, similar geometric return",
@@ -336,24 +350,32 @@ def test_the_validation_window_is_read_once(tmp_path: Path) -> None:
 # 15 ----------------------------------------------------------------------------------------------
 
 
-def _longest_list(value: Any) -> int:
+def _largest(value: Any) -> int:
+    """The most entries in any list or mapping inside a record."""
+
     if isinstance(value, dict):
-        return max([0, *(_longest_list(item) for item in value.values())])
+        return max([len(value), *(_largest(item) for item in value.values())])
     if isinstance(value, list):
-        return max([len(value), *(_longest_list(item) for item in value)])
+        return max([len(value), *(_largest(item) for item in value)])
     return 0
 
 
 def test_records_hold_summaries_only(tmp_path: Path) -> None:
     question = load_question(_repo(tmp_path))
     run_and_record(question, DATA, "q1a", loaded=LOADED)
-    path = question.directory.joinpath("runs", "0001.json")
-    record = json.loads(path.read_bytes())
-    assert _longest_list(record) < 30
-    assert path.stat().st_size < 20_000
-    # Negative control: a record carrying a daily series is caught.
+    run_and_record(question, DATA, "q1a", loaded=LOADED, falsify=True)
+    plain, falsified = (
+        question.directory.joinpath("runs", name) for name in ("0001.json", "0002.json")
+    )
+    for path, size in ((plain, 20_000), (falsified, 80_000)):
+        record = json.loads(path.read_bytes())
+        assert _largest(record) < 60
+        assert path.stat().st_size < size
+    # Negative controls: a daily series, as a list or keyed by date, is caught.
     record["result"]["daily"] = list(range(len(DATA.returns)))
-    assert _longest_list(record) >= 30
+    assert _largest(record) >= 60
+    record["result"]["daily"] = {str(day.date()): 0.0 for day in DATA.returns.index}
+    assert _largest(record) >= 60
 
 
 # 16 ----------------------------------------------------------------------------------------------
@@ -420,3 +442,52 @@ def test_history_and_admission_checks_catch_rewrites(tmp_path: Path) -> None:
         problems
     )
     assert any("rewrites earlier lines" in problem for problem in problems)
+
+
+# 22 ----------------------------------------------------------------------------------------------
+
+
+def test_validation_and_consistency_runs_always_face_the_falsification(tmp_path: Path) -> None:
+    unknown = {"metric": "cost_30.max_drawdown", "op": ">=", "value": 0.0}
+    directory = _repo(tmp_path, rules=[*RULES, unknown])
+    _approve(directory)
+    with pytest.raises(LedgerError, match="no metric cost_30.max_drawdown"):
+        register_read(load_question(directory), "validation", LOADED)
+    assert lg.window_reads(directory) == []
+
+    falsified_rules = [
+        *RULES,
+        {"metric": "ci_low.max_drawdown", "op": ">", "value": -1.0},
+        {"metric": "placebo_rank.max_drawdown", "op": ">=", "value": 0.0},
+        {"metric": "cost_25.geometric_annual_return", "op": "<", "value": 1.0},
+        {"metric": "leave_year_min.cvar_5pct_relative_improvement", "op": ">", "value": -10.0},
+    ]
+    directory.joinpath("prereg.yaml").write_text(
+        yaml.safe_dump(_prereg(rules=falsified_rules), sort_keys=False), encoding="utf-8"
+    )
+    _approve(directory)
+    question = load_question(directory)
+    development = run_and_record(question, DATA, "q1a", loaded=LOADED).record
+    assert development["result"]["falsification"] is None
+
+    permit = register_read(question, "validation", LOADED)
+    record = run_and_record(
+        question, DATA, "q1a", role="validation", permit=permit, loaded=LOADED, falsify=False
+    ).record
+    falsification = record["result"]["falsification"]
+    assert record["falsification_confidence"] == LOADED.settings.falsification.confidence
+    assert falsification["settings"]["placebo_draws"] == 10
+    observed = {rule["metric"]: rule["observed"] for rule in record["rules"]}
+    assert observed["ci_low.max_drawdown"] == falsification["ci_low"]["max_drawdown"]
+    assert observed["placebo_rank.max_drawdown"] == falsification["placebo_rank"]["max_drawdown"]
+    assert observed["cost_25.geometric_annual_return"] == (
+        falsification["cost_25"]["geometric_annual_return"]
+    )
+    assert all(isinstance(value, float) for value in observed.values())
+    assert [rule["holds"] for rule in record["rules"]][2:] == [True, True, True, True]
+
+    consistency = register_read(question, "consistency_check", LOADED)
+    record = run_and_record(
+        question, DATA, "q1a", role="consistency_check", permit=consistency, loaded=LOADED
+    ).record
+    assert record["result"]["falsification"]["placebo_rank"]

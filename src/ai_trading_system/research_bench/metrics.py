@@ -30,6 +30,35 @@ COMPARED_FIELDS: tuple[str, ...] = (
     "annual_turnover",
     "annual_cost",
 )
+# Numeric fields of a summary besides the left-tail ones (``cvar_field`` of each configured level).
+SUMMARY_FIELDS: tuple[str, ...] = (
+    "return_days",
+    "years",
+    *COMPARED_FIELDS,
+    "sharpe_daily",
+    "excess_skewness",
+    "excess_kurtosis",
+)
+EXPOSURE_GAP_FIELDS: tuple[str, ...] = (
+    "reference_exposure",
+    "missed_upside",
+    "avoided_downside",
+    "extra_upside",
+    "extra_downside",
+)
+
+
+def summary_fields(settings: BenchSettings) -> tuple[str, ...]:
+    """Every numeric field of ``summarize`` (rules may name these under ``strategy``)."""
+
+    return (*SUMMARY_FIELDS, *(cvar_field(level) for level in settings.cvar_levels))
+
+
+def comparison_fields(settings: BenchSettings) -> tuple[str, ...]:
+    """Every field of ``compare``."""
+
+    tails = [cvar_field(level) for level in settings.cvar_levels]
+    return (*COMPARED_FIELDS, *tails, *(f"{tail}_relative_improvement" for tail in tails))
 
 
 def summarize(sim: Simulation, cash_returns: pd.Series, loaded: LoadedSettings) -> dict[str, Any]:
