@@ -6,6 +6,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.paths import glob_root, join_root, state_dir
 from ai_trading_system.platform.artifacts import sha256_path, write_json_atomic, write_text_atomic
 
 SCHEMA_VERSION = "1.0"
@@ -49,7 +50,7 @@ BODY_EXCERPT_MAX_CHARS = 500
 BODY_APPROVAL_REVIEW_THRESHOLD_CHARS = 8000
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_DATA_ROOT = REPO_ROOT / "data"
+DEFAULT_DATA_ROOT = state_dir(REPO_ROOT, "data")
 
 SAFETY_TRUE_FIELDS = (
     "manual_review_only",
@@ -622,7 +623,7 @@ def _resolve_operator_brief_json_path(
             purpose="operator brief json",
         )
     root = data_root / "derived" / "operator_briefs"
-    default_path = root / f"daily_trading_system_operator_brief_{as_of.isoformat()}.json"
+    default_path = join_root(root, f"daily_trading_system_operator_brief_{as_of.isoformat()}.json")
     return (
         _latest_dated_or_latest(
             root=root,
@@ -680,7 +681,7 @@ def _resolve_notification_draft_metadata_path(
             purpose="notification draft metadata",
         )
     root = default_notification_root(data_root)
-    default_path = root / f"operator_brief_notification_draft_{as_of.isoformat()}.json"
+    default_path = join_root(root, f"operator_brief_notification_draft_{as_of.isoformat()}.json")
     return (
         _latest_dated_or_latest(
             root=root,
@@ -704,14 +705,14 @@ def _latest_dated_or_latest(
     if not root.exists():
         return default_path
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob(f"{prefix}*.json"):
+    for path in glob_root(root, f"{prefix}*.json"):
         raw_date = path.stem.removeprefix(prefix)
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and parsed <= as_of:
             candidates.append((parsed, path))
     if candidates:
         return max(candidates, key=lambda item: item[0])[1]
-    latest = root / latest_name
+    latest = join_root(root, latest_name)
     return latest if latest.exists() else default_path
 
 
@@ -747,9 +748,9 @@ def _resolve_repo_path(
     if path_value.is_absolute():
         candidate = path_value
     elif path_value.parts and path_value.parts[0] == data_root.name:
-        candidate = project_root / path_value
+        candidate = join_root(project_root, path_value)
     else:
-        project_candidate = project_root / path_value
+        project_candidate = join_root(project_root, path_value)
         data_candidate = data_root / path_value
         candidate = (
             project_candidate if project_candidate.exists() or allow_missing else data_candidate
@@ -1282,7 +1283,7 @@ def _normalize_data_root(data_root: Path) -> Path:
     value = Path(data_root)
     if value.is_absolute():
         return value.resolve(strict=False)
-    return (Path.cwd() / value).resolve(strict=False)
+    return join_root(Path.cwd(), value).resolve(strict=False)
 
 
 def _project_root_from_data_root(data_root: Path) -> Path:

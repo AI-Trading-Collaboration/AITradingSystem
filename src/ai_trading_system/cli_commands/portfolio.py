@@ -17,6 +17,7 @@ from ai_trading_system.cli_commands.portfolio_artifacts import (
     _resolve_portfolio_turnover_attribution_path,
 )
 from ai_trading_system.config import PROJECT_ROOT, load_industry_chain, load_watchlist
+from ai_trading_system.paths import state_dir
 from ai_trading_system.portfolio_exposure import (
     build_portfolio_exposure_report,
     default_portfolio_exposure_report_path,
@@ -63,7 +64,7 @@ from ai_trading_system.trading_engine.portfolio_turnover_attribution import (
 console = Console()
 portfolio_app = typer.Typer(help="真实组合持仓和暴露解释。", no_args_is_help=True)
 DEFAULT_PORTFOLIO_POSITIONS_PATH = (
-    PROJECT_ROOT / "data" / "external" / "portfolio_positions" / "current_positions.csv"
+    state_dir(PROJECT_ROOT, "data") / "external" / "portfolio_positions" / "current_positions.csv"
 )
 
 
@@ -91,7 +92,7 @@ def portfolio_exposure_command(
         watchlist=load_watchlist(),
     )
     report_path = output_path or default_portfolio_exposure_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         evaluation_date,
     )
     write_portfolio_exposure_report(report, report_path)

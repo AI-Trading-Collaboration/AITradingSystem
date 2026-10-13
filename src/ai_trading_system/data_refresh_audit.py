@@ -24,6 +24,7 @@ from ai_trading_system.data_source_fallback_policy import (
     DEFAULT_DATA_SOURCE_FALLBACK_DIR,
     latest_data_source_fallback_policy_summary,
 )
+from ai_trading_system.paths import relative_to_root, state_dir
 from ai_trading_system.platform.artifacts import (
     write_json_atomic_without_trailing_newline,
     write_text_atomic,
@@ -51,7 +52,9 @@ DATA_REFRESH_AUDIT_POLICY_VERSION = "data_refresh_audit_policy_v1"
 PRODUCTION_EFFECT = "none"
 
 DEFAULT_DATA_REFRESH_AUDIT_DIR = PROJECT_ROOT / "reports" / "data_governance" / "data_refresh_audit"
-DEFAULT_VALIDATION_AUDIT_DIR = PROJECT_ROOT / "artifacts" / "data_refresh_audit" / "validation"
+DEFAULT_VALIDATION_AUDIT_DIR = (
+    state_dir(PROJECT_ROOT, "artifacts") / "data_refresh_audit" / "validation"
+)
 LATEST_POINTER_NAME = "latest_data_refresh_audit.json"
 LATEST_VALIDATE_DATA_AUDIT_POINTER_NAME = "latest_validate_data_audit.json"
 
@@ -312,7 +315,7 @@ def build_validate_data_audit_record(
 
 def _project_relative_path(path: Path) -> str:
     try:
-        return path.resolve().relative_to(PROJECT_ROOT.resolve()).as_posix()
+        return relative_to_root(path.resolve(), PROJECT_ROOT.resolve()).as_posix()
     except (OSError, ValueError):
         return str(path)
 
@@ -322,7 +325,7 @@ def build_data_refresh_audit_payload(
     as_of: date,
     validation_audit_dir: Path = DEFAULT_VALIDATION_AUDIT_DIR,
     market_refresh_root: Path | None = None,
-    price_cache_path: Path = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    price_cache_path: Path = state_dir(PROJECT_ROOT, "data") / "raw" / "prices_daily.csv",
     fallback_policy_report_path: Path | None = None,
     fallback_policy_output_dir: Path = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
     cache_catalog_report_path: Path | None = None,
@@ -457,7 +460,7 @@ def build_and_write_data_refresh_audit(
     output_dir: Path = DEFAULT_DATA_REFRESH_AUDIT_DIR,
     validation_audit_dir: Path = DEFAULT_VALIDATION_AUDIT_DIR,
     market_refresh_root: Path | None = None,
-    price_cache_path: Path = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    price_cache_path: Path = state_dir(PROJECT_ROOT, "data") / "raw" / "prices_daily.csv",
     fallback_policy_report_path: Path | None = None,
     fallback_policy_output_dir: Path = DEFAULT_DATA_SOURCE_FALLBACK_DIR,
     cache_catalog_report_path: Path | None = None,

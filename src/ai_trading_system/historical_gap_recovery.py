@@ -14,6 +14,7 @@ import yaml
 from ai_trading_system.daily_input_capture import (
     validate_daily_input_capture_recovery_queue,
 )
+from ai_trading_system.paths import join_root, relative_to_root, rglob_root, state_dir
 from ai_trading_system.platform.artifacts import (
     StrictJsonContractError,
     load_strict_json_text,
@@ -147,7 +148,7 @@ class HistoricalGapRecoveryBuild:
 
 
 def default_historical_gap_recovery_output_root(project_root: Path) -> Path:
-    return project_root / "outputs" / "replays" / "historical_gap_recovery"
+    return state_dir(project_root, "outputs") / "replays" / "historical_gap_recovery"
 
 
 def build_historical_gap_recovery(
@@ -208,7 +209,7 @@ def build_historical_gap_recovery(
         contract_root = final_root / "contract"
         source_root = final_root / "source"
         write_bytes_atomic(contract_root / live_policy_path.name, policy_bytes)
-        schema_path = root / SCHEMA_RELATIVE_PATH
+        schema_path = join_root(root, SCHEMA_RELATIVE_PATH)
         schema_bytes = _read_regular_file(schema_path, "reviewed schema")
         write_bytes_atomic(contract_root / schema_path.name, schema_bytes)
         write_bytes_atomic(source_root / "recovery_queue.json", queue_bytes)
@@ -388,7 +389,7 @@ def validate_historical_gap_recovery(
         _validate_owner_decision_id(expected_owner_decision_id)
         root = _validate_directory(bundle_path, "bundle")
         project = project_root.resolve(strict=True)
-        payload, _ = _load_strict_mapping(root / PAYLOAD_FILENAME, PAYLOAD_FILENAME)
+        payload, _ = _load_strict_mapping(join_root(root, PAYLOAD_FILENAME), PAYLOAD_FILENAME)
         observed_date = _parse_date(payload.get("session_date"), "payload.session_date")
         component_id = _required_text(payload.get("component_id"), "payload.component_id")
         _validate_payload_constants(
@@ -492,11 +493,11 @@ def validate_historical_gap_recovery(
 
         live_guards = _capture_guards(expected_guard_paths, project_root=project)
         guard_before = _load_strict_list(
-            root / GUARD_BEFORE_FILENAME,
+            join_root(root, GUARD_BEFORE_FILENAME),
             GUARD_BEFORE_FILENAME,
         )
         guard_after = _load_strict_list(
-            root / GUARD_AFTER_FILENAME,
+            join_root(root, GUARD_AFTER_FILENAME),
             GUARD_AFTER_FILENAME,
         )
         guard_payload = _require_mapping(
@@ -511,18 +512,18 @@ def validate_historical_gap_recovery(
             raise HistoricalGapRecoveryError("HISTORICAL_GAP_GUARD_UNCHANGED_FALSE")
         _validate_pointer(
             guard_payload.get("before_snapshot"),
-            path=root / GUARD_BEFORE_FILENAME,
+            path=join_root(root, GUARD_BEFORE_FILENAME),
             root=root,
         )
         _validate_pointer(
             guard_payload.get("after_snapshot"),
-            path=root / GUARD_AFTER_FILENAME,
+            path=join_root(root, GUARD_AFTER_FILENAME),
             root=root,
         )
         checks.append("canonical_guard_before_after_and_live_identity")
 
         expected_markdown = render_historical_gap_recovery(payload)
-        actual_markdown = _read_regular_file(root / MARKDOWN_FILENAME, MARKDOWN_FILENAME)
+        actual_markdown = _read_regular_file(join_root(root, MARKDOWN_FILENAME), MARKDOWN_FILENAME)
         if actual_markdown != expected_markdown.encode("utf-8"):
             raise HistoricalGapRecoveryError("HISTORICAL_GAP_MARKDOWN_DRIFT")
         _validate_existing_validation_views(root)
@@ -1121,11 +1122,11 @@ def _validate_bundle_membership(root: Path, *, artifact_map: Mapping[str, Path])
         }
     )
     observed: set[str] = set()
-    for path in root.rglob("*"):
+    for path in rglob_root(root, "*"):
         if path.is_symlink():
             raise HistoricalGapRecoveryError(f"HISTORICAL_GAP_BUNDLE_SYMLINK:{path}")
         if path.is_file():
-            observed.add(path.relative_to(root).as_posix())
+            observed.add(relative_to_root(path, root).as_posix())
     unexpected = sorted(observed - allowed)
     missing = sorted(set(artifact_map) - observed)
     if unexpected or missing:
@@ -1143,7 +1144,7 @@ def _source_artifact_records(root: Path) -> list[dict[str, object]]:
     )
     return [
         {
-            "path": path.relative_to(root).as_posix(),
+            "path": relative_to_root(path, root).as_posix(),
             "sha256": sha256_bytes(_read_regular_file(path, "source artifact")),
             "size_bytes": path.stat().st_size,
         }
@@ -1324,8 +1325,8 @@ def _validate_schema_snapshot(path: Path) -> None:
 
 
 def _validate_existing_validation_views(root: Path) -> None:
-    json_path = root / VALIDATION_FILENAME
-    markdown_path = root / VALIDATION_MARKDOWN_FILENAME
+    json_path = join_root(root, VALIDATION_FILENAME)
+    markdown_path = join_root(root, VALIDATION_MARKDOWN_FILENAME)
     if json_path.exists() != markdown_path.exists():
         raise HistoricalGapRecoveryError("HISTORICAL_GAP_VALIDATION_VIEW_PARTIAL")
     if not json_path.exists():
@@ -1369,9 +1370,9 @@ def _load_strict_json(path: Path, label: str) -> tuple[object, bytes]:
 
 
 def _resolve_policy_path(path: Path | None, *, project_root: Path) -> Path:
-    candidate = path if path is not None else project_root / DEFAULT_POLICY_RELATIVE_PATH
+    candidate = path if path is not None else join_root(project_root, DEFAULT_POLICY_RELATIVE_PATH)
     if not candidate.is_absolute():
-        candidate = project_root / candidate
+        candidate = join_root(project_root, candidate)
     resolved = candidate.resolve(strict=True)
     if not resolved.is_relative_to(project_root):
         raise HistoricalGapRecoveryError("HISTORICAL_GAP_POLICY_OUTSIDE_PROJECT")
@@ -1394,7 +1395,7 @@ def _validate_output_root(path: Path) -> None:
 
 
 def _contained_member(root: Path, relative: Path) -> Path:
-    candidate = (root / relative).resolve(strict=True)
+    candidate = (join_root(root, relative)).resolve(strict=True)
     if not candidate.is_relative_to(root):
         raise HistoricalGapRecoveryError("HISTORICAL_GAP_MEMBER_OUTSIDE_ROOT")
     return candidate
@@ -1405,7 +1406,7 @@ def _project_member(project_root: Path, value: object) -> Path:
     pure = PurePosixPath(raw)
     if pure.is_absolute() or ".." in pure.parts or "\\" in raw:
         raise HistoricalGapRecoveryError(f"HISTORICAL_GAP_PROJECT_PATH_INVALID:{raw}")
-    candidate = (project_root / Path(*pure.parts)).resolve(strict=True)
+    candidate = (join_root(project_root, Path(*pure.parts))).resolve(strict=True)
     if not candidate.is_relative_to(project_root):
         raise HistoricalGapRecoveryError(f"HISTORICAL_GAP_PROJECT_PATH_ESCAPE:{raw}")
     return candidate
@@ -1415,7 +1416,7 @@ def _bundle_member(root: Path, value: str) -> Path:
     pure = PurePosixPath(value)
     if pure.is_absolute() or ".." in pure.parts or "\\" in value:
         raise HistoricalGapRecoveryError(f"HISTORICAL_GAP_BUNDLE_PATH_INVALID:{value}")
-    candidate = (root / Path(*pure.parts)).resolve(strict=True)
+    candidate = (join_root(root, Path(*pure.parts))).resolve(strict=True)
     if not candidate.is_relative_to(root):
         raise HistoricalGapRecoveryError(f"HISTORICAL_GAP_BUNDLE_PATH_ESCAPE:{value}")
     return candidate
@@ -1441,7 +1442,7 @@ def _read_regular_file(path: Path, label: str) -> bytes:
 def _display_path(path: Path, *, project_root: Path) -> str:
     resolved = path.resolve(strict=False)
     if resolved.is_relative_to(project_root):
-        return resolved.relative_to(project_root).as_posix()
+        return relative_to_root(resolved, project_root).as_posix()
     return str(resolved)
 
 

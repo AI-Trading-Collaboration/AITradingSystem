@@ -27,6 +27,7 @@ from ai_trading_system.external_request_cache_revalidation_coordination import (
     ExternalRequestRevalidationCoordinator,
     RevalidationProbe,
 )
+from ai_trading_system.paths import join_root, relative_to_root, state_dir
 from ai_trading_system.platform.artifacts import (
     ArtifactWriteResult,
     write_bytes_atomic,
@@ -40,7 +41,9 @@ EXTERNAL_REQUEST_CACHE_NEGATIVE_OBSERVATION_SCHEMA_VERSION = (
 )
 EXTERNAL_REQUEST_CACHE_INVALIDATION_SCHEMA_VERSION = "external_request_cache_invalidation.v1"
 EXTERNAL_REQUEST_CACHE_LIFECYCLE_EVENT_SCHEMA_VERSION = "external_request_cache_lifecycle_event.v1"
-DEFAULT_EXTERNAL_REQUEST_CACHE_DIR = PROJECT_ROOT / "data" / "raw" / "external_request_cache"
+DEFAULT_EXTERNAL_REQUEST_CACHE_DIR = (
+    state_dir(PROJECT_ROOT, "data") / "raw" / "external_request_cache"
+)
 ExternalRequestCacheLookupStatus = Literal[
     "HIT",
     "MISS",
@@ -1296,11 +1299,11 @@ def _resolve_contained_path(root: Path, raw_path: Any) -> Path | None:
     if not isinstance(raw_path, str) or not raw_path.strip():
         return None
     path = Path(raw_path)
-    candidate = path if path.is_absolute() else root / path
+    candidate = path if path.is_absolute() else join_root(root, path)
     try:
         resolved_root = root.resolve()
         resolved = candidate.resolve()
-        resolved.relative_to(resolved_root)
+        relative_to_root(resolved, resolved_root)
     except (OSError, ValueError):
         return None
     return resolved

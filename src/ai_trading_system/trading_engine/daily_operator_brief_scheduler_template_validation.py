@@ -10,6 +10,7 @@ from typing import Any
 
 import yaml
 
+from ai_trading_system.paths import join_root, relative_to_root, state_dir
 from ai_trading_system.yaml_loader import safe_load_yaml_text
 
 SCHEMA_VERSION = "1.0"
@@ -215,7 +216,7 @@ CRON_FIELD_RE = re.compile(r"^[\d*/,\-?]+$")
 
 
 def default_data_root(repo_root: Path = REPO_ROOT) -> Path:
-    return repo_root / "data"
+    return state_dir(repo_root, "data")
 
 
 def default_templates_root(repo_root: Path = REPO_ROOT, data_root: Path | None = None) -> Path:
@@ -1308,7 +1309,7 @@ def _sha256_file(path: Path) -> str:
 
 def _resolve_path(repo_root: Path, path: Path | str) -> Path:
     value = Path(str(path))
-    return _resolved(value if value.is_absolute() else repo_root / value)
+    return _resolved(value if value.is_absolute() else join_root(repo_root, value))
 
 
 def _resolve_optional_path(repo_root: Path, path: Path | str | None) -> Path | None:
@@ -1331,7 +1332,7 @@ def _is_relative_to(path: Path, parent: Path) -> bool:
 
 def _display_path(path: Path, repo_root: Path) -> str:
     try:
-        return path.relative_to(repo_root).as_posix()
+        return relative_to_root(path, repo_root).as_posix()
     except ValueError:
         return str(path)
 

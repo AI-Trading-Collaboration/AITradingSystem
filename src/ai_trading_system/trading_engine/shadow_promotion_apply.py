@@ -9,6 +9,7 @@ from typing import Any
 
 import yaml
 
+from ai_trading_system.paths import join_root, state_dir
 from ai_trading_system.yaml_loader import safe_load_yaml_text
 
 SCHEMA_VERSION = "1.0"
@@ -54,7 +55,7 @@ APPLY_DECISIONS = {
 }
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_DATA_ROOT = REPO_ROOT / "data"
+DEFAULT_DATA_ROOT = state_dir(REPO_ROOT, "data")
 DEFAULT_PRODUCTION_PROFILE_PATH = REPO_ROOT / "config" / "weights" / "weight_profile_current.yaml"
 
 # These candidates represent project-supported profile weight containers. They are
@@ -1430,7 +1431,9 @@ def _path_matches(declared: str, actual_path: Path) -> bool:
     declared_path = Path(declared)
     candidates = [declared_path]
     if not declared_path.is_absolute():
-        candidates.extend([REPO_ROOT / declared_path, Path.cwd() / declared_path])
+        candidates.extend(
+            [join_root(REPO_ROOT, declared_path), join_root(Path.cwd(), declared_path)]
+        )
     actual_resolved = actual_path.resolve(strict=False)
     actual_text = _normalized_path_text(actual_path)
     declared_text = _normalized_path_text(declared_path)
@@ -1443,8 +1446,8 @@ def _declared_path(value: str) -> Path:
     path = Path(value)
     if path.is_absolute():
         return path
-    cwd_path = Path.cwd() / path
-    repo_path = REPO_ROOT / path
+    cwd_path = join_root(Path.cwd(), path)
+    repo_path = join_root(REPO_ROOT, path)
     if cwd_path.exists():
         return cwd_path
     return repo_path

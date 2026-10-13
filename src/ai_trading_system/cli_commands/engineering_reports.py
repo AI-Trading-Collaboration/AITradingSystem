@@ -9,6 +9,7 @@ import typer
 from rich.console import Console
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 from ai_trading_system.reports.artifact_lifecycle_inventory import (
     build_artifact_lifecycle_inventory_payload,
     default_artifact_lifecycle_inventory_json_path,
@@ -105,8 +106,7 @@ def engineering_surface_inventory_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     project_root: Annotated[
         Path,
@@ -178,8 +178,7 @@ def validate_engineering_surface_inventory_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -260,8 +259,7 @@ def artifact_lifecycle_inventory_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     project_root: Annotated[
         Path,
@@ -334,8 +332,7 @@ def validate_artifact_lifecycle_inventory_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -409,8 +406,7 @@ def engineering_stage_b_readiness_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     project_root: Annotated[
         Path,
@@ -487,8 +483,7 @@ def validate_engineering_stage_b_readiness_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -561,14 +556,12 @@ def engineering_closeout_release_candidate_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     validation_runtime_dir: Annotated[
         Path,
         typer.Option(help="validation runtime artifact 根目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "validation_runtime",
     project_root: Annotated[
         Path,
@@ -649,8 +642,7 @@ def validate_engineering_closeout_release_candidate_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,

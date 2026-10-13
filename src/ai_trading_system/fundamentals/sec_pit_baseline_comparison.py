@@ -17,17 +17,20 @@ from ai_trading_system.fundamentals.sec_pit_aliases import (
     load_ticker_aliases,
 )
 from ai_trading_system.fundamentals.sec_pit_backfill import SEC_PIT_BACKTEST_DATA_GRADE
+from ai_trading_system.paths import glob_root, join_root, state_dir
 
 SEC_PIT_BASELINE_COMPARISON_TASK_ID = "TRADING-041"
 SEC_PIT_BASELINE_COMPARISON_REPORT_TYPE = "sec_pit_baseline_comparison"
 SEC_PIT_BASELINE_COMPARISON_PRODUCTION_EFFECT = "none"
 
 DEFAULT_SEC_PIT_BASELINE_COMPARISON_OUTPUT_DIR = (
-    PROJECT_ROOT / "outputs" / "sec_pit_baseline_comparison"
+    state_dir(PROJECT_ROOT, "outputs") / "sec_pit_baseline_comparison"
 )
-DEFAULT_SEC_PIT_EVALUATION_DIR = PROJECT_ROOT / "outputs" / "sec_pit_evaluation"
-DEFAULT_BASELINE_SCORE_DIR = PROJECT_ROOT / "outputs" / "daily_score"
-DEFAULT_PROCESSED_BASELINE_SCORE_PATH = PROJECT_ROOT / "data" / "processed" / "scores_daily.csv"
+DEFAULT_SEC_PIT_EVALUATION_DIR = state_dir(PROJECT_ROOT, "outputs") / "sec_pit_evaluation"
+DEFAULT_BASELINE_SCORE_DIR = state_dir(PROJECT_ROOT, "outputs") / "daily_score"
+DEFAULT_PROCESSED_BASELINE_SCORE_PATH = (
+    state_dir(PROJECT_ROOT, "data") / "processed" / "scores_daily.csv"
+)
 
 COMPARISON_STATUSES: tuple[str, ...] = (
     "OK",
@@ -432,10 +435,12 @@ def _load_sec_pit_evaluation_inputs(root: Path, end: date) -> _SecPitEvaluationI
 def _empty_sec_inputs(root: Path, end: date) -> _SecPitEvaluationInputs:
     suffix = end.isoformat()
     return _SecPitEvaluationInputs(
-        summary_path=root / f"sec_pit_evaluation_summary_{suffix}.json",
-        feature_effectiveness_path=root / f"sec_pit_feature_effectiveness_{suffix}.csv",
-        signal_attribution_path=root / f"sec_pit_signal_attribution_{suffix}.csv",
-        shadow_candidate_weights_path=root / f"sec_pit_shadow_candidate_weights_{suffix}.csv",
+        summary_path=join_root(root, f"sec_pit_evaluation_summary_{suffix}.json"),
+        feature_effectiveness_path=join_root(root, f"sec_pit_feature_effectiveness_{suffix}.csv"),
+        signal_attribution_path=join_root(root, f"sec_pit_signal_attribution_{suffix}.csv"),
+        shadow_candidate_weights_path=join_root(
+            root, f"sec_pit_shadow_candidate_weights_{suffix}.csv"
+        ),
         summary={},
         feature_effectiveness=pd.DataFrame(),
         signal_attribution=pd.DataFrame(),
@@ -476,7 +481,7 @@ def _empty_baseline_inputs(root: Path) -> _BaselineInputs:
 
 def _is_default_baseline_score_dir(root: Path) -> bool:
     path = Path(root)
-    normalized = path if path.is_absolute() else PROJECT_ROOT / path
+    normalized = path if path.is_absolute() else join_root(PROJECT_ROOT, path)
     return normalized.resolve() == DEFAULT_BASELINE_SCORE_DIR.resolve()
 
 
@@ -487,31 +492,31 @@ def _baseline_path(root: Path, end: date) -> Path:
         return root / "scores_daily.csv"
     direct_candidates = [
         root / "scores_daily.csv",
-        root / f"scores_daily_{end.isoformat()}.csv",
-        root / f"daily_score_baseline_{end.isoformat()}.csv",
-        root / f"baseline_scores_{end.isoformat()}.csv",
+        join_root(root, f"scores_daily_{end.isoformat()}.csv"),
+        join_root(root, f"daily_score_baseline_{end.isoformat()}.csv"),
+        join_root(root, f"baseline_scores_{end.isoformat()}.csv"),
     ]
     for path in direct_candidates:
         if path.exists():
             return path
     dated: list[tuple[date, Path]] = []
     for pattern in ("scores_*.csv", "daily_score_*.csv", "baseline_scores_*.csv"):
-        for path in root.glob(pattern):
+        for path in glob_root(root, pattern):
             parsed = _date_from_stem(path.stem)
             if parsed is not None and parsed <= end:
                 dated.append((parsed, path))
     if dated:
         return max(dated, key=lambda item: item[0])[1]
-    csv_files = sorted(root.glob("*.csv"))
+    csv_files = sorted(glob_root(root, "*.csv"))
     return csv_files[0] if csv_files else root / "scores_daily.csv"
 
 
 def _latest_dated_path(root: Path, prefix: str, suffix: str, end: date) -> Path:
-    default_path = root / f"{prefix}{end.isoformat()}{suffix}"
+    default_path = join_root(root, f"{prefix}{end.isoformat()}{suffix}")
     if not root.exists():
         return default_path
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob(f"{prefix}*{suffix}"):
+    for path in glob_root(root, f"{prefix}*{suffix}"):
         raw_date = path.stem.removeprefix(prefix)
         parsed = _parse_date(raw_date)
         if parsed is not None and parsed <= end:

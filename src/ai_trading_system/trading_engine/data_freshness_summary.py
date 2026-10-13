@@ -9,6 +9,7 @@ from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.paths import state_dir
 from ai_trading_system.platform.artifacts import sha256_path, write_json_atomic, write_text_atomic
 
 SCHEMA_VERSION = "1.0"
@@ -49,7 +50,7 @@ SUMMARY_CRITICAL = "CRITICAL"
 SUMMARY_UNKNOWN = "UNKNOWN"
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_DATA_ROOT = REPO_ROOT / "data"
+DEFAULT_DATA_ROOT = state_dir(REPO_ROOT, "data")
 DATE_PATTERN = re.compile(r"(?P<year>\d{4})[-_](?P<month>\d{2})[-_](?P<day>\d{2})")
 
 READ_ONLY_SOURCE_IDS = {

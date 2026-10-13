@@ -11,6 +11,7 @@ from typing import Any, Literal, cast
 import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 from ai_trading_system.shadow.lineage import git_commit_sha, sha256_file
 from ai_trading_system.shadow_weight_profiles import (
     DEFAULT_SHADOW_PARAMETER_PROMOTION_CONTRACT_PATH,
@@ -25,10 +26,10 @@ from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SCHEMA_VERSION = 1
 DEFAULT_SHADOW_ITERATION_REGISTRY_PATH = (
-    PROJECT_ROOT / "data" / "processed" / "shadow_iteration_registry.csv"
+    state_dir(PROJECT_ROOT, "data") / "processed" / "shadow_iteration_registry.csv"
 )
-DEFAULT_SHADOW_ITERATION_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
-DEFAULT_SHADOW_ITERATION_RUN_ROOT = PROJECT_ROOT / "outputs" / "shadow_iterations"
+DEFAULT_SHADOW_ITERATION_REPORT_DIR = state_dir(PROJECT_ROOT, "outputs") / "reports"
+DEFAULT_SHADOW_ITERATION_RUN_ROOT = state_dir(PROJECT_ROOT, "outputs") / "shadow_iterations"
 
 CandidateType = Literal["weight_only", "gate_only", "weight_gate_bundle"]
 ForwardShadowAction = Literal[

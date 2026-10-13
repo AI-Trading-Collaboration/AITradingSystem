@@ -14,15 +14,18 @@ from ai_trading_system.fundamentals.sec_pit_aliases import (
     load_ticker_aliases,
 )
 from ai_trading_system.fundamentals.sec_pit_evaluation import DEFAULT_SEC_PIT_FEATURE_PANEL_PATH
+from ai_trading_system.paths import state_dir
 
 SEC_PIT_BASELINE_COVERAGE_TASK_ID = "TRADING-045"
 SEC_PIT_BASELINE_COVERAGE_REPORT_TYPE = "sec_pit_baseline_coverage"
 DEFAULT_SEC_PIT_BASELINE_COVERAGE_OUTPUT_DIR = (
-    PROJECT_ROOT / "outputs" / "sec_pit_baseline_coverage"
+    state_dir(PROJECT_ROOT, "outputs") / "sec_pit_baseline_coverage"
 )
-DEFAULT_SEC_PIT_BASELINE_SCORE_PATH = PROJECT_ROOT / "data" / "processed" / "scores_daily.csv"
+DEFAULT_SEC_PIT_BASELINE_SCORE_PATH = (
+    state_dir(PROJECT_ROOT, "data") / "processed" / "scores_daily.csv"
+)
 LEGACY_SEC_PIT_FEATURE_PANEL_PATH = (
-    PROJECT_ROOT / "data" / "processed" / "sec_pit" / "sec_pit_feature_panel.csv"
+    state_dir(PROJECT_ROOT, "data") / "processed" / "sec_pit" / "sec_pit_feature_panel.csv"
 )
 
 COVERAGE_STATUS_OK_MIN = 0.90

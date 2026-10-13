@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 
 SCHEMA_VERSION = 1
 REPORT_TYPE = "research_governance_summary"
@@ -79,8 +80,8 @@ def default_research_governance_summary_report_path(output_dir: Path, as_of: dat
 def default_research_governance_specs(
     project_root: Path = PROJECT_ROOT,
 ) -> tuple[GovernanceArtifactSpec, ...]:
-    reports_dir = project_root / "outputs" / "reports"
-    backtests_dir = project_root / "outputs" / "backtests"
+    reports_dir = state_dir(project_root, "outputs") / "reports"
+    backtests_dir = state_dir(project_root, "outputs") / "backtests"
     return (
         GovernanceArtifactSpec(
             "parameter_governance",
@@ -113,7 +114,7 @@ def default_research_governance_specs(
             "sec_pit_backfill",
             "SEC PIT Backfill Validation",
             "aits sec-pit backfill",
-            project_root / "outputs" / "reports" / "sec_pit_backfill",
+            state_dir(project_root, "outputs") / "reports" / "sec_pit_backfill",
             "sec_pit_validation_",
             ".json",
             GROUP_CANDIDATE_RESEARCH,
@@ -149,7 +150,7 @@ def default_research_governance_specs(
             "sec_pit_evaluation",
             "SEC PIT Evaluation",
             "aits sec-pit evaluate",
-            project_root / "outputs" / "sec_pit_evaluation",
+            state_dir(project_root, "outputs") / "sec_pit_evaluation",
             "sec_pit_evaluation_summary_",
             ".json",
             GROUP_CANDIDATE_RESEARCH,
@@ -158,7 +159,7 @@ def default_research_governance_specs(
             "sec_pit_baseline_comparison",
             "SEC PIT Baseline Comparison",
             "aits sec-pit compare-baseline",
-            project_root / "outputs" / "sec_pit_baseline_comparison",
+            state_dir(project_root, "outputs") / "sec_pit_baseline_comparison",
             "sec_pit_baseline_comparison_summary_",
             ".json",
             GROUP_CANDIDATE_RESEARCH,
@@ -167,7 +168,7 @@ def default_research_governance_specs(
             "sec_pit_real_run_diagnostics",
             "SEC PIT Real Run Diagnostics",
             "aits sec-pit diagnose-run",
-            project_root / "outputs" / "sec_pit_diagnostics",
+            state_dir(project_root, "outputs") / "sec_pit_diagnostics",
             "sec_pit_real_run_diagnostics_",
             ".json",
             GROUP_CANDIDATE_RESEARCH,
@@ -176,7 +177,7 @@ def default_research_governance_specs(
             "sec_pit_candidate_review",
             "SEC PIT Candidate Review",
             "aits sec-pit review-candidates",
-            project_root / "outputs" / "sec_pit_candidate_review",
+            state_dir(project_root, "outputs") / "sec_pit_candidate_review",
             "sec_pit_candidate_review_summary_",
             ".json",
             GROUP_CANDIDATE_RESEARCH,
@@ -185,7 +186,7 @@ def default_research_governance_specs(
             "sec_pit_baseline_coverage",
             "SEC PIT Baseline Coverage",
             "aits sec-pit audit-baseline-coverage",
-            project_root / "outputs" / "sec_pit_baseline_coverage",
+            state_dir(project_root, "outputs") / "sec_pit_baseline_coverage",
             "sec_pit_baseline_coverage_summary_",
             ".json",
             GROUP_BLOCKED,
@@ -194,7 +195,7 @@ def default_research_governance_specs(
             "sec_pit_shadow_observe",
             "SEC PIT Shadow Observe",
             "aits sec-pit shadow-observe",
-            project_root / "outputs" / "sec_pit_shadow_observe",
+            state_dir(project_root, "outputs") / "sec_pit_shadow_observe",
             "sec_pit_shadow_observe_summary_",
             ".json",
             GROUP_SHADOW_OBSERVE,
@@ -203,7 +204,7 @@ def default_research_governance_specs(
             "sec_pit_shadow_monitor",
             "SEC PIT Shadow Monitor",
             "aits sec-pit shadow-monitor",
-            project_root / "outputs" / "sec_pit_shadow_monitor",
+            state_dir(project_root, "outputs") / "sec_pit_shadow_monitor",
             "sec_pit_shadow_monitor_summary_",
             ".json",
             GROUP_SHADOW_OBSERVE,

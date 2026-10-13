@@ -10,6 +10,7 @@ from typing import Any
 import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import glob_root, state_dir
 from ai_trading_system.shadow.lineage import git_commit_sha, sha256_file
 from ai_trading_system.trading_engine.parameters.parameter_loader import (
     DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
@@ -66,7 +67,7 @@ class SignalSnapshotRun:
 
 
 def default_signal_snapshot_root() -> Path:
-    return PROJECT_ROOT / "artifacts" / "signal_snapshots"
+    return state_dir(PROJECT_ROOT, "artifacts") / "signal_snapshots"
 
 
 def default_signal_snapshot_dir(output_root: Path, as_of: date) -> Path:
@@ -83,7 +84,7 @@ def default_signal_snapshot_markdown_path(output_root: Path, as_of: date) -> Pat
 
 def latest_signal_snapshot_path(output_root: Path | None = None) -> Path | None:
     root = output_root or default_signal_snapshot_root()
-    candidates = sorted(root.glob("*/signal_snapshot.json"))
+    candidates = sorted(glob_root(root, "*/signal_snapshot.json"))
     if not candidates:
         return None
     return max(candidates, key=lambda path: path.stat().st_mtime)
@@ -99,7 +100,7 @@ def run_signal_snapshot_build(
     price_derived_only: bool = False,
 ) -> SignalSnapshotRun:
     root = output_root or (
-        PROJECT_ROOT / "outputs" / "dry_runs" / "signal_snapshots"
+        state_dir(PROJECT_ROOT, "outputs") / "dry_runs" / "signal_snapshots"
         if dry_run
         else default_signal_snapshot_root()
     )

@@ -8,6 +8,8 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.paths import state_dir
+
 DAILY_WEIGHT_ADJUSTMENT_SCHEMA_VERSION = 1
 DAILY_WEIGHT_ADJUSTMENT_REPORT_TYPE = "daily_weight_adjustment_summary"
 MODE_OBSERVE_ONLY = "observe_only"
@@ -47,7 +49,7 @@ def default_daily_weight_adjustment_summary_json_path(
 def build_daily_weight_adjustment_summary_payload(
     *,
     as_of: date,
-    reports_dir: Path = REPO_ROOT / "outputs" / "reports",
+    reports_dir: Path = state_dir(REPO_ROOT, "outputs") / "reports",
     weight_adjustment_candidates_path: Path | None = None,
     weight_adjustment_candidates_md_path: Path | None = None,
     weight_candidate_evaluation_path: Path | None = None,
@@ -251,7 +253,7 @@ def build_daily_weight_adjustment_summary_payload(
 def write_daily_weight_adjustment_summary_report(
     *,
     as_of: date,
-    reports_dir: Path = REPO_ROOT / "outputs" / "reports",
+    reports_dir: Path = state_dir(REPO_ROOT, "outputs") / "reports",
     weight_adjustment_candidates_path: Path | None = None,
     weight_adjustment_candidates_md_path: Path | None = None,
     weight_candidate_evaluation_path: Path | None = None,

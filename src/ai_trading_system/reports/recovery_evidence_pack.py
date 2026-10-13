@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 from ai_trading_system.reports.research_monthly_review_pack import (
     PRODUCTION_EFFECT,
     _int,
@@ -224,7 +225,9 @@ def build_recovery_evidence_pack_payload(
 ) -> dict[str, Any]:
     if report_index_payload is None:
         source_path = report_index_path or (
-            project_root / "outputs" / "reports" / f"report_index_{as_of.isoformat()}.json"
+            state_dir(project_root, "outputs")
+            / "reports"
+            / f"report_index_{as_of.isoformat()}.json"
         )
         report_index_payload = _read_json_mapping(source_path)
         report_index_path = source_path

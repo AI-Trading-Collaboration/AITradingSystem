@@ -22,6 +22,7 @@ from ai_trading_system.official_policy_sources import (
     OfficialPolicyCandidate,
     load_official_policy_candidates_csv,
 )
+from ai_trading_system.paths import join_root, relative_to_root, state_dir
 from ai_trading_system.platform.artifacts import (
     canonical_json_bytes,
     load_strict_json_path,
@@ -394,7 +395,7 @@ def load_daily_input_capture_policy(
         if not isinstance(value, str) or not value:
             raise ValueError(f"daily input capture policy path missing: {key}")
         candidate = Path(value)
-        return candidate if candidate.is_absolute() else project_root / candidate
+        return candidate if candidate.is_absolute() else join_root(project_root, candidate)
 
     tracking_value = raw.get("tracking_start")
     if isinstance(tracking_value, date):
@@ -452,7 +453,7 @@ def build_daily_input_capture_components(
 ) -> tuple[CaptureComponent, ...]:
     as_of_text = as_of.isoformat()
     required = set(policy.required_components)
-    market_raw_dir = project_root / "data" / "raw"
+    market_raw_dir = state_dir(project_root, "data") / "raw"
     market_command = [
         "aits",
         "download-data",
@@ -1847,7 +1848,7 @@ def load_verified_official_policy_capture(
         relative_path = Path(relative_text)
         if relative_path.is_absolute() or ".." in relative_path.parts:
             raise ValueError("official-policy capture artifact path 越界")
-        resolved = (project_root / relative_path).resolve()
+        resolved = (join_root(project_root, relative_path)).resolve()
         if resolved in artifacts_by_path:
             raise ValueError("official-policy capture artifact path 重复")
         artifacts_by_path[resolved] = record
@@ -1981,7 +1982,7 @@ def _load_verified_official_policy_download_rows(
             raise ValueError(f"official-policy download manifest 证据无效：row {index}")
         output_path = Path(output_text)
         if not output_path.is_absolute():
-            output_path = project_root / output_path
+            output_path = join_root(project_root, output_path)
         resolved = output_path.resolve()
         if not resolved.is_relative_to(raw_root):
             raise ValueError(f"official-policy raw payload path 越界：row {index}")
@@ -2017,7 +2018,7 @@ def _validate_official_policy_candidates(
             raise ValueError(f"official-policy candidate 安全边界不匹配：{candidate.candidate_id}")
         raw_path = candidate.raw_payload_path
         if not raw_path.is_absolute():
-            raw_path = project_root / raw_path
+            raw_path = join_root(project_root, raw_path)
         resolved = raw_path.resolve()
         if not resolved.is_relative_to(raw_root):
             raise ValueError(f"official-policy candidate raw path 越界：{candidate.candidate_id}")
@@ -2134,7 +2135,7 @@ def build_daily_input_capture_recovery_queue(
         if isinstance(manifest_path_value, str) and manifest_path_value:
             manifest_path = Path(manifest_path_value)
             if not manifest_path.is_absolute():
-                manifest_path = project_root / manifest_path
+                manifest_path = join_root(project_root, manifest_path)
             try:
                 manifest = load_strict_json_path(manifest_path)
             except (OSError, ValueError):
@@ -2408,7 +2409,7 @@ def _validate_artifact_record(
     if relative.is_absolute() or ".." in relative.parts:
         issues.append({"code": "ARTIFACT_PATH_ESCAPE", "message": relative_text})
         return
-    path = project_root / relative
+    path = join_root(project_root, relative)
     resolved_path = path.resolve()
     if allowed_roots and not any(
         resolved_path.is_relative_to(root.resolve()) for root in allowed_roots
@@ -2432,7 +2433,7 @@ def _execution_command(command: Sequence[str]) -> tuple[str, ...]:
 
 def _relative_path(path: Path, project_root: Path) -> str:
     try:
-        return path.resolve().relative_to(project_root.resolve()).as_posix()
+        return relative_to_root(path.resolve(), project_root.resolve()).as_posix()
     except ValueError:
         return str(path.resolve())
 

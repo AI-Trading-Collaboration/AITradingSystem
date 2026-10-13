@@ -13,8 +13,9 @@ from ai_trading_system.official_policy_sources import (
     OFFICIAL_POLICY_CANDIDATE_COLUMNS,
     default_official_policy_candidates_path,
 )
+from ai_trading_system.paths import state_dir
 
-DEFAULT_RISK_EVENT_TRIAGE_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
+DEFAULT_RISK_EVENT_TRIAGE_REPORT_DIR = state_dir(PROJECT_ROOT, "outputs") / "reports"
 RISK_EVENT_CANDIDATE_TRIAGE_SCHEMA_VERSION = "official_policy_candidate_triage.v1"
 
 TRIAGE_BUCKET_ORDER = {

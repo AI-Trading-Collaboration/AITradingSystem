@@ -35,54 +35,65 @@ from ai_trading_system.data_source_subscription_audit import (
     DEFAULT_SOURCE_REQUIREMENT_MATRIX_PATH,
     REPRESENTATIVE_UNIVERSE,
 )
+from ai_trading_system.paths import state_dir
 from ai_trading_system.research_acceleration import REGRET_TAXONOMY
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_SOURCE_QUALIFICATION_V2_OUTPUT_ROOT = (
-    PROJECT_ROOT / "outputs" / "data_quality" / "current_subscription_source_qualification"
+    state_dir(PROJECT_ROOT, "outputs")
+    / "data_quality"
+    / "current_subscription_source_qualification"
 )
 DEFAULT_CONTROLLED_STRATEGY_RESEARCH_OUTPUT_ROOT = (
-    PROJECT_ROOT / "outputs" / "controlled_strategy_research"
+    state_dir(PROJECT_ROOT, "outputs") / "controlled_strategy_research"
 )
 DEFAULT_CURRENT_SUBSCRIPTION_QUALIFICATION_BATCH_OUTPUT_ROOT = (
-    PROJECT_ROOT / "outputs" / "data_quality" / "current_subscription_source_qualification_batch"
+    state_dir(PROJECT_ROOT, "outputs")
+    / "data_quality"
+    / "current_subscription_source_qualification_batch"
 )
 DEFAULT_CONTROLLED_BENCHMARK_BATCH_OUTPUT_ROOT = (
-    PROJECT_ROOT / "outputs" / "research_runs" / "controlled_benchmark_batch"
+    state_dir(PROJECT_ROOT, "outputs") / "research_runs" / "controlled_benchmark_batch"
 )
 DEFAULT_FORWARD_DRY_RUN_ARCHIVE_OUTPUT_ROOT = (
-    PROJECT_ROOT / "outputs" / "forward_evidence" / "daily_archive"
+    state_dir(PROJECT_ROOT, "outputs") / "forward_evidence" / "daily_archive"
 )
 DEFAULT_MARKETSTACK_COVERAGE_EXPANSION_OUTPUT_ROOT = (
-    PROJECT_ROOT / "outputs" / "data_quality" / "marketstack_reconciliation"
+    state_dir(PROJECT_ROOT, "outputs") / "data_quality" / "marketstack_reconciliation"
 )
-DEFAULT_FMP_PIT_REVIEW_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "data_quality" / "fmp_pit_review"
+DEFAULT_FMP_PIT_REVIEW_OUTPUT_ROOT = (
+    state_dir(PROJECT_ROOT, "outputs") / "data_quality" / "fmp_pit_review"
+)
 DEFAULT_REVERSE_DIAGNOSTICS_OUTPUT_ROOT = (
-    PROJECT_ROOT / "outputs" / "research_acceleration" / "reverse_diagnostics"
+    state_dir(PROJECT_ROOT, "outputs") / "research_acceleration" / "reverse_diagnostics"
 )
 DEFAULT_REGRET_CASEBOOK_OUTPUT_ROOT = (
-    PROJECT_ROOT / "outputs" / "research_acceleration" / "regret_casebook"
+    state_dir(PROJECT_ROOT, "outputs") / "research_acceleration" / "regret_casebook"
 )
 DEFAULT_CONTROLLED_RESEARCH_REVIEW_OUTPUT_ROOT = (
-    PROJECT_ROOT / "outputs" / "research_ops" / "review_board"
+    state_dir(PROJECT_ROOT, "outputs") / "research_ops" / "review_board"
 )
 DEFAULT_DATA_SOURCE_USAGE_POLICY_PATH = (
-    PROJECT_ROOT / "config" / "data" / "data_source_usage_policy.yaml"
+    state_dir(PROJECT_ROOT / "config", "data") / "data_source_usage_policy.yaml"
 )
 DEFAULT_FMP_PRICE_CORPORATE_ACTION_CONFIG_PATH = (
-    PROJECT_ROOT / "config" / "data" / "source_qualification" / "fmp_price_corporate_action.yaml"
+    state_dir(PROJECT_ROOT / "config", "data")
+    / "source_qualification"
+    / "fmp_price_corporate_action.yaml"
 )
 DEFAULT_MARKETSTACK_RECONCILIATION_CONFIG_PATH = (
-    PROJECT_ROOT / "config" / "data" / "source_qualification" / "marketstack_reconciliation.yaml"
+    state_dir(PROJECT_ROOT / "config", "data")
+    / "source_qualification"
+    / "marketstack_reconciliation.yaml"
 )
 DEFAULT_ASSET_MASTER_QUALIFICATION_CONFIG_PATH = (
-    PROJECT_ROOT / "config" / "data" / "asset_master_qualification.yaml"
+    state_dir(PROJECT_ROOT / "config", "data") / "asset_master_qualification.yaml"
 )
 DEFAULT_SEC_FUNDAMENTAL_PIT_CONFIG_PATH = (
-    PROJECT_ROOT / "config" / "data" / "source_qualification" / "sec_fundamental_pit.yaml"
+    state_dir(PROJECT_ROOT / "config", "data") / "source_qualification" / "sec_fundamental_pit.yaml"
 )
 DEFAULT_MACRO_RISK_CONFIG_PATH = (
-    PROJECT_ROOT / "config" / "data" / "source_qualification" / "macro_risk.yaml"
+    state_dir(PROJECT_ROOT / "config", "data") / "source_qualification" / "macro_risk.yaml"
 )
 DEFAULT_LABEL_BOUNDARY_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "research" / "label_boundary_qualification.yaml"
@@ -93,9 +104,11 @@ DEFAULT_COST_LIQUIDITY_QUALIFICATION_CONFIG_PATH = (
 DEFAULT_CONTROLLED_RESEARCH_PILOT_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "research" / "controlled_strategy_research_pilot.yaml"
 )
-DEFAULT_PRICES_PATH = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
-DEFAULT_MARKETSTACK_PRICES_PATH = PROJECT_ROOT / "data" / "raw" / "prices_marketstack_daily.csv"
-DEFAULT_RATES_PATH = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv"
+DEFAULT_PRICES_PATH = state_dir(PROJECT_ROOT, "data") / "raw" / "prices_daily.csv"
+DEFAULT_MARKETSTACK_PRICES_PATH = (
+    state_dir(PROJECT_ROOT, "data") / "raw" / "prices_marketstack_daily.csv"
+)
+DEFAULT_RATES_PATH = state_dir(PROJECT_ROOT, "data") / "raw" / "rates_daily.csv"
 
 DEFAULT_CURRENT_SUBSCRIPTION_COVERAGE_MATRIX_PATH = (
     DEFAULT_CURRENT_SUBSCRIPTION_COVERAGE_OUTPUT_ROOT

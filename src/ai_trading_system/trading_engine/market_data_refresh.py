@@ -13,6 +13,7 @@ import pandas as pd
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data.market_data import PriceDataProvider, PriceRequest
 from ai_trading_system.external_request_cache import sanitize_diagnostic_text
+from ai_trading_system.paths import glob_root, rglob_root, state_dir
 from ai_trading_system.shadow.lineage import git_commit_sha, git_worktree_dirty
 from ai_trading_system.trading_engine.data.price_history_repair import (
     PRICE_CACHE_OUTPUT_COLUMNS,
@@ -53,7 +54,7 @@ MARKET_DATA_REFRESH_REPORT_TYPE = "market_data_refresh"
 MARKET_DATA_REFRESH_PLAN_REPORT_TYPE = "market_data_refresh_plan"
 MARKET_DATA_REFRESH_ALIAS_REPORT_TYPE = "market_data_refresh_report"
 DEFAULT_MARKET_DATA_REFRESH_CONFIG_PATH = (
-    PROJECT_ROOT / "config" / "data" / "market_data_refresh.yaml"
+    state_dir(PROJECT_ROOT / "config", "data") / "market_data_refresh.yaml"
 )
 
 REFRESH_NOT_NEEDED = "NOT_NEEDED"
@@ -96,7 +97,7 @@ class MarketDataRefreshRun:
 
 
 def default_market_data_refresh_root() -> Path:
-    return PROJECT_ROOT / "artifacts" / "data_refresh"
+    return state_dir(PROJECT_ROOT, "artifacts") / "data_refresh"
 
 
 def default_market_data_refresh_dir(output_root: Path, as_of: date) -> Path:
@@ -127,7 +128,7 @@ def market_data_refresh_report_alias_paths(
 
 def latest_market_data_refresh_path(output_root: Path | None = None) -> Path | None:
     root = output_root or default_market_data_refresh_root()
-    candidates = sorted(root.glob("*/market_data_refresh_summary.json"))
+    candidates = sorted(glob_root(root, "*/market_data_refresh_summary.json"))
     if not candidates:
         return None
     return max(candidates, key=lambda path: path.stat().st_mtime)
@@ -139,7 +140,7 @@ def latest_market_data_refresh_path_on_or_before(
 ) -> Path | None:
     root = output_root or default_market_data_refresh_root()
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/market_data_refresh_summary.json"):
+    for path in glob_root(root, "*/market_data_refresh_summary.json"):
         parsed = _parse_date(path.parent.name)
         if parsed is not None and parsed <= as_of:
             candidates.append((parsed, path))
@@ -657,7 +658,7 @@ def _execute_market_data_refresh(
             manifest_run = refresh_backtest_manifest(
                 as_of=target_date,
                 config_path=_shadow_backtest_config_path(config),
-                output_root=PROJECT_ROOT / "artifacts",
+                output_root=state_dir(PROJECT_ROOT, "artifacts"),
                 dry_run=False,
                 generated_at=generated_at,
             )
@@ -882,7 +883,7 @@ def _fetch_from_audited_fmp_raw_cache(
     artifacts: list[dict[str, Any]] = []
     if not root.exists():
         return pd.DataFrame(columns=PRICE_CACHE_OUTPUT_COLUMNS), []
-    for metadata_path in root.rglob("metadata.json"):
+    for metadata_path in rglob_root(root, "metadata.json"):
         metadata = _read_json(metadata_path)
         params = _mapping(_mapping(metadata.get("request_identity")).get("params"))
         if str(params.get("symbol") or "") != source_symbol:
@@ -1457,8 +1458,7 @@ def _supporting_artifacts(
     target_date = _parse_date(plan_input.get("required_target_date"))
     if target_date is not None:
         manifest_path = (
-            PROJECT_ROOT
-            / "artifacts"
+            state_dir(PROJECT_ROOT, "artifacts")
             / "backtest_snapshots"
             / target_date.isoformat()
             / "backtest_input_manifest.json"
@@ -1843,7 +1843,7 @@ def _prices_path(config: dict[str, Any]) -> Path:
     return (
         resolve_project_path(str(raw))
         if raw
-        else PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
+        else state_dir(PROJECT_ROOT, "data") / "raw" / "prices_daily.csv"
     )
 
 
@@ -1852,7 +1852,7 @@ def _price_cache_registry_path(config: dict[str, Any]) -> Path:
     return (
         resolve_project_path(str(raw))
         if raw
-        else PROJECT_ROOT / "artifacts" / "data_registry" / "price_cache_registry.json"
+        else state_dir(PROJECT_ROOT, "artifacts") / "data_registry" / "price_cache_registry.json"
     )
 
 
@@ -1883,14 +1883,14 @@ def _external_request_cache_dir(config: dict[str, Any]) -> Path:
     return (
         resolve_project_path(str(raw))
         if raw
-        else PROJECT_ROOT / "data" / "raw" / "external_request_cache"
+        else state_dir(PROJECT_ROOT, "data") / "raw" / "external_request_cache"
     )
 
 
 def _output_root(config: dict[str, Any], *, dry_run: bool) -> Path:
     key = "dry_run_dir" if dry_run else "market_data_refresh_dir"
     default = (
-        PROJECT_ROOT / "outputs" / "dry_runs" / "data_refresh"
+        state_dir(PROJECT_ROOT, "outputs") / "dry_runs" / "data_refresh"
         if dry_run
         else default_market_data_refresh_root()
     )

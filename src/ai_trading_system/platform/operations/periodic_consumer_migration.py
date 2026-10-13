@@ -38,6 +38,7 @@ from ai_trading_system.contracts.workflow import (
     WorkflowStepSpec,
 )
 from ai_trading_system.core.production_effect import ProductionEffect
+from ai_trading_system.paths import join_root, relative_to_root, state_dir
 from ai_trading_system.platform.artifacts import write_json_atomic
 from ai_trading_system.platform.operations.periodic_control import (
     PeriodicOperationsControlPolicy,
@@ -60,7 +61,7 @@ G4A_EXPECTED_LEGACY_ADAPTER_PATHS = (
 )
 
 DEFAULT_NATIVE_PERIODIC_CONSUMER_PARITY_PLAN_ROOT = (
-    PROJECT_ROOT / "outputs" / "run_control" / "periodic" / "plans"
+    state_dir(PROJECT_ROOT, "outputs") / "run_control" / "periodic" / "plans"
 )
 
 # G4A freezes existing direct imports. Any additional caller is migration debt, not
@@ -511,7 +512,7 @@ def default_native_periodic_consumer_parity_plan_path(
     as_of: date,
     root: Path = DEFAULT_NATIVE_PERIODIC_CONSUMER_PARITY_PLAN_ROOT,
 ) -> Path:
-    return root / f"native_periodic_consumer_parity_{as_of.isoformat()}.json"
+    return join_root(root, f"native_periodic_consumer_parity_{as_of.isoformat()}.json")
 
 
 def write_native_periodic_consumer_parity_plan(
@@ -695,7 +696,7 @@ def assess_legacy_adapter_direct_callers(
     scan_blockers: list[str] = []
     for source_root in (project_root / "src", project_root / "tests"):
         for path in sorted(source_root.rglob("*.py")):
-            relative = path.relative_to(project_root).as_posix()
+            relative = relative_to_root(path, project_root).as_posix()
             try:
                 tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
             except (OSError, SyntaxError, UnicodeDecodeError):

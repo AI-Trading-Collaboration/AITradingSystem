@@ -17,8 +17,9 @@ from ai_trading_system.market_evidence import (
     write_market_evidence_validation_report,
     write_market_evidence_yaml,
 )
+from ai_trading_system.paths import state_dir
 
-DEFAULT_MARKET_EVIDENCE_PATH = PROJECT_ROOT / "data" / "external" / "market_evidence"
+DEFAULT_MARKET_EVIDENCE_PATH = state_dir(PROJECT_ROOT, "data") / "external" / "market_evidence"
 
 console = Console()
 evidence_app = typer.Typer(help="新市场信息 evidence 账本。", no_args_is_help=True)
@@ -42,7 +43,7 @@ def validate_market_evidence(
     """校验新市场信息 evidence 账本。"""
     validation_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_market_evidence_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         validation_date,
     )
     report = validate_market_evidence_store(
@@ -78,7 +79,7 @@ def import_market_evidence_command(
     """从 CSV 导入 market_evidence YAML。"""
     import_report = import_market_evidence_csv(input_path)
     import_report_output = report_path or (
-        PROJECT_ROOT / "outputs" / "reports" / f"market_evidence_import_{date.today()}.md"
+        state_dir(PROJECT_ROOT, "outputs") / "reports" / f"market_evidence_import_{date.today()}.md"
     )
     write_market_evidence_import_report(import_report, import_report_output)
     if not import_report.passed:

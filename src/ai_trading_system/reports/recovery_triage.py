@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import join_root, state_dir
 from ai_trading_system.reports.research_governance_recovery_pack import (
     SOURCE_REPORT_SPECS,
 )
@@ -258,8 +259,7 @@ def build_recovery_blocker_triage_payload(
     if recovery_pack_payload is None:
         if recovery_pack_path is None:
             recovery_pack_path = (
-                PROJECT_ROOT
-                / "outputs"
+                state_dir(PROJECT_ROOT, "outputs")
                 / "reports"
                 / f"research_governance_recovery_pack_{as_of.isoformat()}.json"
             )
@@ -400,7 +400,9 @@ def build_report_index_warning_triage_payload(
     if report_index_payload is None:
         if report_index_path is None:
             report_index_path = (
-                PROJECT_ROOT / "outputs" / "reports" / f"report_index_{as_of.isoformat()}.json"
+                state_dir(PROJECT_ROOT, "outputs")
+                / "reports"
+                / f"report_index_{as_of.isoformat()}.json"
             )
         report_index_payload = _read_json_mapping(report_index_path)
 
@@ -521,8 +523,7 @@ def build_recovery_pack_source_depth_audit_payload(
     if recovery_pack_payload is None:
         if recovery_pack_path is None:
             recovery_pack_path = (
-                project_root
-                / "outputs"
+                state_dir(project_root, "outputs")
                 / "reports"
                 / f"research_governance_recovery_pack_{as_of.isoformat()}.json"
             )
@@ -2135,7 +2136,7 @@ def _pack_report_index_path(payload: Mapping[str, Any], project_root: Path) -> P
     path = Path(raw_path)
     if path.is_absolute():
         return path
-    return project_root / path
+    return join_root(project_root, path)
 
 
 def _path_or_none(value: str) -> Path | None:

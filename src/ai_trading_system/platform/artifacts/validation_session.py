@@ -22,6 +22,8 @@ from time import perf_counter
 from typing import Any, Literal, ParamSpec, TypeVar
 from zoneinfo import ZoneInfo
 
+from ai_trading_system.paths import glob_root, join_root, rglob_root
+
 _P = ParamSpec("_P")
 _R = TypeVar("_R")
 _ValidationKey = tuple[int, str, str]
@@ -268,7 +270,7 @@ def _is_link_or_junction(path: Path) -> bool:
             or ".." in expanded_parts
         ):
             return True
-        lexical = expanded if expanded.is_absolute() else Path.cwd() / expanded
+        lexical = expanded if expanded.is_absolute() else join_root(Path.cwd(), expanded)
         if len(lexical.parts) > _MAX_BOUND_PATH_COMPONENTS:
             return True
         # Inside one fingerprint computation an entry already verified to be a non-link (with
@@ -852,7 +854,7 @@ def _observe_explicit_directory(
     observed[root] = _ObservedPath("DIRECTORY")
     try:
         entries = []
-        for index, entry in enumerate(root.rglob("*")):
+        for index, entry in enumerate(rglob_root(root, "*")):
             if index >= _MAX_RECURSIVE_DIRECTORY_ENTRIES:
                 raise _UncacheableFingerprintScope(
                     f"recursive artifact directory exceeds entry limit: {root}"
@@ -954,7 +956,7 @@ def _inventory_entries(inventory: ArtifactFingerprintInventory) -> list[Path]:
     entries: set[Path] = set()
     try:
         for pattern in sorted(set(inventory.patterns)):
-            for path in root.glob(pattern):
+            for path in glob_root(root, pattern):
                 if _is_link_or_junction(path):
                     raise _UncacheableFingerprintScope(
                         f"linked inventory entry is not cacheable: {path}"
@@ -1566,7 +1568,7 @@ def _validation_kwargs(
             or artifact_id_path.parts[0] in {".", ".."}
         ):
             raise ValueError("legacy artifact_id must be one non-empty path segment")
-        if _resolved(root / artifact_id).parent != _resolved(root):
+        if _resolved(join_root(root, artifact_id)).parent != _resolved(root):
             raise ValueError("legacy artifact_id must remain directly under root")
         if validator_key in call_kwargs and call_kwargs[validator_key] != artifact_id:
             raise ValueError(f"validator kwargs conflict for {validator_key}")
@@ -1609,9 +1611,9 @@ def cached_artifact_validation(
     )
     resolved_artifact_root = artifact_root
     if resolved_artifact_root is None and root is not None and artifact_id is not None:
-        resolved_artifact_root = root / artifact_id
+        resolved_artifact_root = join_root(root, artifact_id)
     elif resolved_artifact_root is not None and root is not None and artifact_id is not None:
-        if _resolved(resolved_artifact_root) != _resolved(root / artifact_id):
+        if _resolved(resolved_artifact_root) != _resolved(join_root(root, artifact_id)):
             raise ValueError("artifact_root conflicts with legacy root/artifact_id")
     if resolved_artifact_root is None:
         raise ValueError("artifact_root is required for generic validator kwargs")

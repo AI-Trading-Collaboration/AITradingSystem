@@ -16,6 +16,7 @@ from ai_trading_system.execution_policy import (
     validate_execution_policy,
     write_execution_policy_report,
 )
+from ai_trading_system.paths import state_dir
 
 console = Console()
 execution_app = typer.Typer(help="Advisory execution policy 和执行纪律。", no_args_is_help=True)
@@ -43,7 +44,7 @@ def validate_execution_policy_command(
         as_of=validation_date,
     )
     report_path = output_path or default_execution_policy_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         validation_date,
     )
     write_execution_policy_report(report, report_path)

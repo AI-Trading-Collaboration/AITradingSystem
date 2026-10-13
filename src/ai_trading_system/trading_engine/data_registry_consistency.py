@@ -9,6 +9,7 @@ from typing import Any
 import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 from ai_trading_system.shadow.lineage import git_commit_sha, git_worktree_dirty
 from ai_trading_system.trading_engine.backtest_input_diagnostics import (
     DEFAULT_REQUIRED_BACKTEST_ASSETS,
@@ -110,7 +111,7 @@ def run_data_registry_consistency(
     output_root: Path | None = None,
     generated_at: datetime | None = None,
 ) -> DataRegistryConsistencyRun:
-    root = output_root or (PROJECT_ROOT / "artifacts")
+    root = output_root or (state_dir(PROJECT_ROOT, "artifacts"))
     payload = build_data_registry_consistency_payload(
         as_of=as_of,
         config_path=config_path,
@@ -137,7 +138,7 @@ def build_data_registry_consistency_payload(
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(tz=UTC)
-    root = output_root or (PROJECT_ROOT / "artifacts")
+    root = output_root or (state_dir(PROJECT_ROOT, "artifacts"))
     resolved_config_path = resolve_project_path(str(config_path))
     config = load_shadow_backtest_config(resolved_config_path)
     prices_path = resolve_project_path(config.data.prices_path)
@@ -399,7 +400,7 @@ def latest_valid_backtest_manifest_context(
     as_of: date | None = None,
     expected_prices_path: Path | None = None,
 ) -> BacktestManifestContext:
-    root = output_root or (PROJECT_ROOT / "artifacts")
+    root = output_root or (state_dir(PROJECT_ROOT, "artifacts"))
     candidates: list[tuple[date, Path, dict[str, Any], tuple[str, ...]]] = []
     for path in (root / "backtest_snapshots").glob("*/backtest_input_manifest.json"):
         manifest_date = _date_from_parent(path)
@@ -452,7 +453,7 @@ def latest_backtest_manifest_context(
     as_of: date | None = None,
     expected_prices_path: Path | None = None,
 ) -> BacktestManifestContext:
-    root = output_root or (PROJECT_ROOT / "artifacts")
+    root = output_root or (state_dir(PROJECT_ROOT, "artifacts"))
     candidates: list[tuple[date, Path]] = []
     for path in (root / "backtest_snapshots").glob("*/backtest_input_manifest.json"):
         manifest_date = _date_from_parent(path)

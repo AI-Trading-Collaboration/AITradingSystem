@@ -12,10 +12,11 @@ from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.decision_outcomes import load_decision_snapshots
 from ai_trading_system.feedback_sample_policy import load_feedback_sample_policy
 from ai_trading_system.market_evidence import load_market_evidence_store
+from ai_trading_system.paths import state_dir
 from ai_trading_system.prediction_ledger import DEFAULT_PREDICTION_OUTCOMES_PATH
 from ai_trading_system.rule_experiments import DEFAULT_RULE_EXPERIMENT_LEDGER_PATH
 
-DEFAULT_FEEDBACK_LOOP_REVIEW_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
+DEFAULT_FEEDBACK_LOOP_REVIEW_REPORT_DIR = state_dir(PROJECT_ROOT, "outputs") / "reports"
 
 
 @dataclass(frozen=True)

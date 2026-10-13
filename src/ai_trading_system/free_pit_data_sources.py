@@ -33,21 +33,24 @@ from ai_trading_system.free_data_connectors import (
     FredConnector,
     OfficialMacroCalendarConnector,
 )
+from ai_trading_system.paths import state_dir
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_FREE_DATA_SOURCE_REGISTRY_PATH = (
-    PROJECT_ROOT / "config" / "data" / "free_data_source_registry.yaml"
+    state_dir(PROJECT_ROOT / "config", "data") / "free_data_source_registry.yaml"
 )
 DEFAULT_FREE_FEATURE_POLICY_PATH = PROJECT_ROOT / "config" / "research" / "free_feature_policy.yaml"
 DEFAULT_PARTICIPATION_PROXY_REGISTRY_PATH = (
     PROJECT_ROOT / "config" / "research" / "participation_proxy_free_registry.yaml"
 )
-DEFAULT_RATES_PATH = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv"
-DEFAULT_PRICES_PATH = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
-DEFAULT_MARKETSTACK_PRICES_PATH = PROJECT_ROOT / "data" / "raw" / "prices_marketstack_daily.csv"
-DEFAULT_MANIFEST_PATH = PROJECT_ROOT / "data" / "raw" / "download_manifest.csv"
-DEFAULT_FREE_SOURCE_OUTPUT_ROOT = PROJECT_ROOT / "data" / "processed" / "free_sources"
-DEFAULT_FREE_FEATURE_OUTPUT_ROOT = PROJECT_ROOT / "data" / "features"
+DEFAULT_RATES_PATH = state_dir(PROJECT_ROOT, "data") / "raw" / "rates_daily.csv"
+DEFAULT_PRICES_PATH = state_dir(PROJECT_ROOT, "data") / "raw" / "prices_daily.csv"
+DEFAULT_MARKETSTACK_PRICES_PATH = (
+    state_dir(PROJECT_ROOT, "data") / "raw" / "prices_marketstack_daily.csv"
+)
+DEFAULT_MANIFEST_PATH = state_dir(PROJECT_ROOT, "data") / "raw" / "download_manifest.csv"
+DEFAULT_FREE_SOURCE_OUTPUT_ROOT = state_dir(PROJECT_ROOT, "data") / "processed" / "free_sources"
+DEFAULT_FREE_FEATURE_OUTPUT_ROOT = state_dir(PROJECT_ROOT, "data") / "features"
 DEFAULT_RESEARCH_DOCS_ROOT = PROJECT_ROOT / "docs" / "research"
 DEFAULT_RESEARCH_INPUTS_ROOT = PROJECT_ROOT / "inputs" / "research_reviews"
 

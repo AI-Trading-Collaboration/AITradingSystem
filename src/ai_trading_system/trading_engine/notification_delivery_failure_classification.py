@@ -5,6 +5,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.paths import glob_root, join_root, state_dir
 from ai_trading_system.platform.artifacts import write_json_atomic, write_text_atomic
 
 SCHEMA_VERSION = "1.0"
@@ -69,17 +70,23 @@ TRANSIENT_REASON_TOKENS = (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_OUTPUT_DIR = REPO_ROOT / "outputs" / "notification_delivery_failure_classification"
+DEFAULT_OUTPUT_DIR = (
+    state_dir(REPO_ROOT, "outputs") / "notification_delivery_failure_classification"
+)
 
 
 def default_failure_classification_output_dir(project_root: Path = REPO_ROOT) -> Path:
-    return project_root / "outputs" / "notification_delivery_failure_classification"
+    return state_dir(project_root, "outputs") / "notification_delivery_failure_classification"
 
 
 def default_delivery_audit_roots(project_root: Path = REPO_ROOT) -> tuple[Path, Path]:
     return (
-        project_root / "data" / "derived" / "operator_briefs" / "notifications" / "delivery_audit",
-        project_root / "outputs" / "notification_delivery_audit_summary",
+        state_dir(project_root, "data")
+        / "derived"
+        / "operator_briefs"
+        / "notifications"
+        / "delivery_audit",
+        state_dir(project_root, "outputs") / "notification_delivery_audit_summary",
     )
 
 
@@ -261,7 +268,7 @@ def find_latest_notification_delivery_audit_summary(
     for root in default_delivery_audit_roots(project_root):
         if not root.exists():
             continue
-        for path in root.glob("notification_delivery_audit_summary_*.json"):
+        for path in glob_root(root, "notification_delivery_audit_summary_*.json"):
             parsed = _audit_date_from_path(path)
             if parsed is None:
                 continue
@@ -434,8 +441,7 @@ def _resolve_source_path(
         return latest
     fallback_date = as_of or generated_at.date()
     return (
-        project_root
-        / "data"
+        state_dir(project_root, "data")
         / "derived"
         / "operator_briefs"
         / "notifications"
@@ -871,14 +877,14 @@ def _resolve_project_path(project_root: Path, value: Path) -> Path:
     path = Path(value)
     if path.is_absolute():
         return path.resolve(strict=False)
-    return (project_root / path).resolve(strict=False)
+    return (join_root(project_root, path)).resolve(strict=False)
 
 
 def _normalize_path(path: Path) -> Path:
     value = Path(path)
     if value.is_absolute():
         return value.resolve(strict=False)
-    return (Path.cwd() / value).resolve(strict=False)
+    return join_root(Path.cwd(), value).resolve(strict=False)
 
 
 def _parse_iso_date(value: str) -> date | None:

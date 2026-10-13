@@ -9,6 +9,7 @@ import pandas as pd
 
 from ai_trading_system.backtest.daily import BacktestRegimeContext
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 from ai_trading_system.scoring.daily import (
     COMPONENT_LABELS,
     SOURCE_TYPE_LABELS,
@@ -18,8 +19,10 @@ from ai_trading_system.scoring.daily import (
 from ai_trading_system.scoring.position_model import PositionBand
 
 SCHEMA_VERSION = 1
-DEFAULT_BELIEF_STATE_DIR = PROJECT_ROOT / "data" / "processed" / "belief_state"
-DEFAULT_BELIEF_STATE_HISTORY_PATH = PROJECT_ROOT / "data" / "processed" / "belief_state_history.csv"
+DEFAULT_BELIEF_STATE_DIR = state_dir(PROJECT_ROOT, "data") / "processed" / "belief_state"
+DEFAULT_BELIEF_STATE_HISTORY_PATH = (
+    state_dir(PROJECT_ROOT, "data") / "processed" / "belief_state_history.csv"
+)
 
 
 def default_belief_state_path(output_dir: Path, as_of: date) -> Path:

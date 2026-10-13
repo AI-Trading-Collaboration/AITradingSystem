@@ -12,6 +12,7 @@ from typing import Any
 import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT, DataSourceConfig, DataSourcesConfig
+from ai_trading_system.paths import join_root
 
 DOWNLOAD_MANIFEST_REQUIRED_COLUMNS = (
     "downloaded_at",
@@ -841,7 +842,7 @@ def _has_glob(path: str) -> bool:
 
 def _resolve_path(path: str, project_root: Path) -> Path:
     candidate = Path(path)
-    return candidate if candidate.is_absolute() else project_root / candidate
+    return candidate if candidate.is_absolute() else join_root(project_root, candidate)
 
 
 def _csv_row_count(path: Path) -> int | None:

@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 
 SHADOW_BACKTEST_REPORT_TYPE = "shadow_parameter_backtest"
 SHADOW_BACKTEST_SCHEMA_VERSION = 1
@@ -275,7 +276,7 @@ def write_shadow_backtest_report_alias(
 
 
 def default_formal_shadow_backtest_root() -> Path:
-    return PROJECT_ROOT / "artifacts" / "shadow_backtest"
+    return state_dir(PROJECT_ROOT, "artifacts") / "shadow_backtest"
 
 
 def _mapping(value: object) -> dict[str, Any]:

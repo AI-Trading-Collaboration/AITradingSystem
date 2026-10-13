@@ -15,6 +15,7 @@ from ai_trading_system.config import (
     DataSourceConfig,
     DataSourcesConfig,
 )
+from ai_trading_system.paths import join_root, relative_to_root, state_dir
 
 PIT_SNAPSHOT_MANIFEST_COLUMNS = (
     "snapshot_id",
@@ -111,12 +112,12 @@ PIT_SOURCE_TYPES = {
     "manual_input",
 }
 
-DEFAULT_PIT_SNAPSHOT_DIR = PROJECT_ROOT / "data" / "raw" / "pit_snapshots"
+DEFAULT_PIT_SNAPSHOT_DIR = state_dir(PROJECT_ROOT, "data") / "raw" / "pit_snapshots"
 DEFAULT_PIT_SNAPSHOT_MANIFEST_PATH = DEFAULT_PIT_SNAPSHOT_DIR / "manifest.csv"
 DEFAULT_CUMULATIVE_PIT_SNAPSHOT_MANIFEST_PATH = (
     DEFAULT_PIT_SNAPSHOT_DIR / "cumulative_manifest.csv"
 )
-DEFAULT_PIT_RAW_ROOT = PROJECT_ROOT / "data" / "raw"
+DEFAULT_PIT_RAW_ROOT = state_dir(PROJECT_ROOT, "data") / "raw"
 PIT_SNAPSHOT_SCHEMA_VERSION = "1"
 PIT_SNAPSHOT_PARSER_VERSION = "pit_snapshot_manifest_v1"
 PIT_SNAPSHOT_KINDS = (
@@ -1163,12 +1164,12 @@ def _resolve_payload_path(value: str, input_path: Path, project_root: Path) -> P
     manifest_relative = input_path.parent / raw_path
     if manifest_relative.exists():
         return manifest_relative
-    return project_root / raw_path
+    return join_root(project_root, raw_path)
 
 
 def _display_path(path: Path, project_root: Path) -> str:
     try:
-        return path.resolve().relative_to(project_root.resolve()).as_posix()
+        return relative_to_root(path.resolve(), project_root.resolve()).as_posix()
     except ValueError:
         return str(path)
 

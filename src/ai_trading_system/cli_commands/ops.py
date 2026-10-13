@@ -109,6 +109,7 @@ from ai_trading_system.order_intent_candidates import (
     default_order_intent_candidates_path,
     write_order_intent_candidates_json,
 )
+from ai_trading_system.paths import join_root, relative_to_root, state_dir
 from ai_trading_system.pipeline_health import (
     PipelineArtifactSpec,
     build_pipeline_health_report,
@@ -291,29 +292,25 @@ def pipeline_health_command(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="标准化日线利率 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "rates_daily.csv",
     features_path: Annotated[
         Path,
         typer.Option(help="每日特征 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "processed"
     / "features_daily.csv",
     scores_path: Annotated[
         Path,
         typer.Option(help="每日评分 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "processed"
     / "scores_daily.csv",
     data_quality_report_path: Annotated[
@@ -377,15 +374,15 @@ def pipeline_health_command(
         else None
     )
     quality_report = data_quality_report_path or default_quality_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         health_date,
     )
     daily_report = daily_report_path or default_daily_score_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         health_date,
     )
     report_path = output_path or default_pipeline_health_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         health_date,
     )
     pit_normalized = pit_normalized_path or default_fmp_forward_pit_normalized_path(
@@ -395,16 +392,16 @@ def pipeline_health_command(
     pit_validation_report = (
         pit_validation_report_path
         or default_pit_snapshot_validation_report_path(
-            PROJECT_ROOT / "outputs" / "reports",
+            state_dir(PROJECT_ROOT, "outputs") / "reports",
             health_date,
         )
     )
     pit_fetch_report = pit_fetch_report_path or default_fmp_forward_pit_fetch_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         health_date,
     )
     pipeline_alert_report_path = alert_output_path or default_pipeline_health_alert_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         health_date,
     )
     pit_checks = build_pit_snapshot_health_checks(
@@ -725,7 +722,7 @@ def daily_ops_plan_command(
     )
 
     report_path = output_path or default_daily_ops_plan_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         plan_date,
     )
     write_daily_ops_plan(plan, report_path, env=os.environ)
@@ -2071,8 +2068,7 @@ def daily_ops_run_command(
     run_output_root: Annotated[
         Path,
         typer.Option(help="Canonical run bundle 根目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "runs",
     run_id: Annotated[
         str | None,
@@ -2154,7 +2150,7 @@ def daily_ops_run_command(
     except (OSError, ValueError, StrictJsonContractError) as exc:
         raise typer.BadParameter(str(exc)) from exc
 
-    reports_dir = PROJECT_ROOT / "outputs" / "reports"
+    reports_dir = state_dir(PROJECT_ROOT, "outputs") / "reports"
     plan_report_path = plan_output_path or default_daily_ops_plan_path(
         run_paths.reports_dir,
         plan_date,
@@ -2931,13 +2927,13 @@ def periodic_dispatch_command(
         policy=periodic_policy,
     )
     plan_path = output_path or default_periodic_operations_plan_path(
-        PROJECT_ROOT / "outputs" / "run_control" / "periodic" / "plans",
+        state_dir(PROJECT_ROOT, "outputs") / "run_control" / "periodic" / "plans",
         dispatch_date,
     )
     write_periodic_operations_plan(plan, plan_path)
     runtime_policy = load_operations_runtime_control_policy()
     control = OperationsRunControl(
-        root=PROJECT_ROOT / "outputs" / "run_control" / "periodic",
+        root=state_dir(PROJECT_ROOT, "outputs") / "run_control" / "periodic",
         policy=runtime_policy,
     )
     results = dispatch_periodic_operations_plan(
@@ -3335,9 +3331,9 @@ def _validate_discovered_data_quality_preflight(
             "DQ_AS_OF_MISMATCH",
             "discovery, receipt, and preflight as_of values must match validate_data",
         )
-    expected_receipt_path = (root / Path(pointer.receipt_path)).resolve()
+    expected_receipt_path = (join_root(root, Path(pointer.receipt_path))).resolve()
     try:
-        expected_receipt_path.relative_to(root)
+        relative_to_root(expected_receipt_path, root)
     except ValueError as exc:
         raise DataQualityExecutionError(
             "DQ_RECEIPT_ID_MISMATCH",

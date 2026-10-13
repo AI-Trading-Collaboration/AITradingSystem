@@ -31,6 +31,7 @@ from ai_trading_system.heuristic_governance import (
     write_heuristic_governance_json,
     write_heuristic_governance_report,
 )
+from ai_trading_system.paths import state_dir
 from ai_trading_system.reports.report_index import DEFAULT_REPORT_REGISTRY_PATH
 
 console = Console()
@@ -110,7 +111,7 @@ def documentation_contract_command(
         if latest
         else (_parse_date(as_of) if as_of else date.today())
     )
-    reports_dir = PROJECT_ROOT / "outputs" / "reports"
+    reports_dir = state_dir(PROJECT_ROOT, "outputs") / "reports"
     markdown_output = output_path or default_documentation_contract_report_path(
         reports_dir,
         report_date,
@@ -173,7 +174,7 @@ def heuristic_governance_audit_command(
 ) -> None:
     """扫描投资解释路径的未登记 numeric literal，并校验 policy metadata。"""
     report_date = _parse_date(as_of) if as_of else date.today()
-    reports_dir = PROJECT_ROOT / "outputs" / "reports"
+    reports_dir = state_dir(PROJECT_ROOT, "outputs") / "reports"
     markdown_output = output_path or default_heuristic_governance_report_path(
         reports_dir,
         report_date,

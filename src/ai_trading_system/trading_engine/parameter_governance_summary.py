@@ -8,6 +8,7 @@ from typing import Any
 
 import yaml
 
+from ai_trading_system.paths import glob_root, join_root, state_dir
 from ai_trading_system.platform.artifacts import write_json_atomic, write_text_atomic
 from ai_trading_system.yaml_loader import safe_load_yaml_text
 
@@ -46,7 +47,7 @@ LIFECYCLE_DECISION_COMPLETE_WITH_ROLLBACK = "COMPLETE_WITH_ROLLBACK"
 LIFECYCLE_DECISION_SAFETY_ANOMALY = "SAFETY_ANOMALY"
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_DATA_ROOT = REPO_ROOT / "data"
+DEFAULT_DATA_ROOT = state_dir(REPO_ROOT, "data")
 DEFAULT_PRODUCTION_PROFILE_PATH = REPO_ROOT / "config" / "weights" / "weight_profile_current.yaml"
 DEFAULT_LOOKBACK_DAYS = 14
 
@@ -541,12 +542,12 @@ def _latest_dated_artifact(
     as_of: date,
     lookback_days: int,
 ) -> tuple[Path, date | None]:
-    default_path = root / f"{prefix}{as_of.isoformat()}.json"
+    default_path = join_root(root, f"{prefix}{as_of.isoformat()}.json")
     start = as_of - timedelta(days=lookback_days - 1)
     if not root.exists():
         return default_path, as_of
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob(f"{prefix}*.json"):
+    for path in glob_root(root, f"{prefix}*.json"):
         raw_date = path.stem.removeprefix(prefix)
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and start <= parsed <= as_of:

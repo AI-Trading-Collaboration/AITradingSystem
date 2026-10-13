@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import join_root, state_dir
 
 SCHEMA_VERSION = 1
 REPORT_TYPE = "reader_brief_consistency_pack"
@@ -135,7 +136,9 @@ def build_reader_brief_consistency_payload(
 ) -> dict[str, Any]:
     if report_index_payload is None:
         source_path = report_index_path or (
-            project_root / "outputs" / "reports" / f"report_index_{as_of.isoformat()}.json"
+            state_dir(project_root, "outputs")
+            / "reports"
+            / f"report_index_{as_of.isoformat()}.json"
         )
         report_index_payload = _read_json_mapping(source_path)
         report_index_path = source_path
@@ -1133,7 +1136,7 @@ def _resolve_path(value: str, project_root: Path) -> Path | None:
         return None
     path = Path(value)
     if not path.is_absolute():
-        path = project_root / path
+        path = join_root(project_root, path)
     return path
 
 

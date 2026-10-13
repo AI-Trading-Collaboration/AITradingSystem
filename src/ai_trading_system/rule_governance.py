@@ -11,6 +11,7 @@ import yaml
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import join_root
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_RULE_CARDS_PATH = PROJECT_ROOT / "config" / "rule_cards.yaml"
@@ -660,7 +661,7 @@ def _check_rule_card(
             )
         )
     for raw_path in card.source_config_paths:
-        resolved = project_root / raw_path
+        resolved = join_root(project_root, raw_path)
         if not resolved.exists():
             issues.append(
                 RuleGovernanceIssue(

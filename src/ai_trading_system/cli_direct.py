@@ -53,6 +53,7 @@ from ai_trading_system.data.quality_execution_discovery import (
     DiscoveredDataQualityExecution,
     load_default_data_quality_execution_discovery,
 )
+from ai_trading_system.paths import join_root, state_args, state_dir
 from ai_trading_system.platform.operations.periodic_consumer_migration import (
     NativeConsumerExpectedContext,
     NativeParityRunnerResult,
@@ -70,7 +71,7 @@ from ai_trading_system.scheduled_tasks import load_scheduled_tasks_config
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    args = list(sys.argv[1:] if argv is None else argv)
+    args = state_args(list(sys.argv[1:] if argv is None else argv))
     try:
         _dispatch(args)
     except typer.Exit as exc:
@@ -156,7 +157,9 @@ def _dispatch_daily_score_with_consumer_authorization(
             "daily discovery pointer differs from strict preflight",
         )
 
-    publication = publication_resolver(output_dir=root / Path(policy.publication_output_dir))
+    publication = publication_resolver(
+        output_dir=join_root(root, Path(policy.publication_output_dir))
+    )
     attestation = build_data_quality_consumer_authorization_attestation(
         policy=policy,
         preflight=preflight,
@@ -222,7 +225,7 @@ def _dispatch_daily_score_with_consumer_authorization(
         project_root=root,
     )
     control = runtime_control or OperationsRunControl(
-        root=root / "outputs/run_control/periodic/daily_score_consumer",
+        root=state_dir(root, "outputs/run_control/periodic/daily_score_consumer"),
         policy=load_operations_runtime_control_policy(),
     )
 
@@ -482,7 +485,7 @@ def _dispatch(args: list[str]) -> None:
             output_dir=_path_option_with_default(
                 args,
                 "--output-dir",
-                fundamentals_cli.PROJECT_ROOT / "data" / "raw" / "sec_companyfacts",
+                state_dir(fundamentals_cli.PROJECT_ROOT, "data") / "raw" / "sec_companyfacts",
             ),
             user_agent=_option(args, "--user-agent") or os.getenv("SEC_USER_AGENT"),
         )
@@ -493,7 +496,7 @@ def _dispatch(args: list[str]) -> None:
             input_dir=_path_option_with_default(
                 args,
                 "--input-dir",
-                fundamentals_cli.PROJECT_ROOT / "data" / "raw" / "sec_companyfacts",
+                state_dir(fundamentals_cli.PROJECT_ROOT, "data") / "raw" / "sec_companyfacts",
             ),
         )
         return
@@ -509,7 +512,7 @@ def _dispatch(args: list[str]) -> None:
             output_dir=_path_option_with_default(
                 args,
                 "--output-dir",
-                valuation_cli.PROJECT_ROOT / "data" / "external" / "valuation_snapshots",
+                state_dir(valuation_cli.PROJECT_ROOT, "data") / "external" / "valuation_snapshots",
             ),
             analyst_history_dir=_path_option_with_default(
                 args,
@@ -544,7 +547,7 @@ def _dispatch(args: list[str]) -> None:
             download_manifest_path=_path_option_with_default(
                 args,
                 "--download-manifest-path",
-                risk_events_cli.PROJECT_ROOT / "data" / "raw" / "download_manifest.csv",
+                state_dir(risk_events_cli.PROJECT_ROOT, "data") / "raw" / "download_manifest.csv",
             ),
             output_path=_optional_path(args, "--output-path"),
         )
@@ -578,7 +581,9 @@ def _dispatch(args: list[str]) -> None:
                 ),
                 valuation_path=(
                     _optional_path(args, "--valuation-path")
-                    or score_daily_cli.PROJECT_ROOT / "data" / "external" / "valuation_snapshots"
+                    or state_dir(score_daily_cli.PROJECT_ROOT, "data")
+                    / "external"
+                    / "valuation_snapshots"
                 ),
                 official_policy_capture_manifest_path=_optional_path(
                     args,

@@ -11,6 +11,7 @@ from rich.table import Table
 
 from ai_trading_system.config import PROJECT_ROOT, load_universe, load_watchlist
 from ai_trading_system.fmp_forward_pit import DEFAULT_FMP_FORWARD_PIT_NORMALIZED_DIR
+from ai_trading_system.paths import state_dir
 from ai_trading_system.valuation import (
     build_valuation_review_report,
     default_valuation_review_report_path,
@@ -48,13 +49,13 @@ console = Console()
 valuation_app = typer.Typer(help="估值、预期和拥挤度快照管理。", no_args_is_help=True)
 
 DEFAULT_FMP_ANALYST_ESTIMATE_HISTORY_DIR = default_fmp_analyst_estimate_history_dir(
-    PROJECT_ROOT / "data" / "raw"
+    state_dir(PROJECT_ROOT, "data") / "raw"
 )
 DEFAULT_FMP_HISTORICAL_VALUATION_RAW_DIR = default_fmp_historical_valuation_raw_dir(
-    PROJECT_ROOT / "data" / "raw"
+    state_dir(PROJECT_ROOT, "data") / "raw"
 )
 DEFAULT_EODHD_EARNINGS_TRENDS_RAW_DIR = default_eodhd_earnings_trends_raw_dir(
-    PROJECT_ROOT / "data" / "raw"
+    state_dir(PROJECT_ROOT, "data") / "raw"
 )
 
 
@@ -67,8 +68,7 @@ def fetch_fmp_valuations(
     output_dir: Annotated[
         Path,
         typer.Option(help="写入 FMP 估值快照 YAML 的目录。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "external"
     / "valuation_snapshots",
     analyst_history_dir: Annotated[
@@ -87,10 +87,7 @@ def fetch_fmp_valuations(
     valuation_history_dir: Annotated[
         Path | None,
         typer.Option(
-            help=(
-                "读取历史 FMP valuation YAML 的文件或目录；"
-                "未提供时沿用 output-dir。"
-            )
+            help=("读取历史 FMP valuation YAML 的文件或目录；" "未提供时沿用 output-dir。")
         ),
     ] = None,
     as_of: Annotated[
@@ -125,11 +122,11 @@ def fetch_fmp_valuations(
         raise typer.Exit(code=1)
 
     fetch_report_output = output_path or default_fmp_valuation_fetch_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         fetch_date,
     )
     validation_output = validation_report_path or default_valuation_validation_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         fetch_date,
     )
 
@@ -199,8 +196,7 @@ def fetch_fmp_valuation_history(
     output_dir: Annotated[
         Path,
         typer.Option(help="写入历史估值快照 YAML 的目录。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "external"
     / "valuation_snapshots",
     raw_output_dir: Annotated[
@@ -243,11 +239,11 @@ def fetch_fmp_valuation_history(
         raise typer.Exit(code=1)
 
     fetch_report_output = output_path or default_fmp_historical_valuation_fetch_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         fetch_date,
     )
     validation_output = validation_report_path or default_valuation_validation_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         fetch_date,
     )
 
@@ -317,8 +313,7 @@ def fetch_eodhd_valuation_trends(
     output_dir: Annotated[
         Path,
         typer.Option(help="写入 EODHD trend 合并估值快照 YAML 的目录。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "external"
     / "valuation_snapshots",
     base_valuation_dir: Annotated[
@@ -357,11 +352,11 @@ def fetch_eodhd_valuation_trends(
         raise typer.Exit(code=1)
 
     fetch_report_output = output_path or default_eodhd_earnings_trends_fetch_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         fetch_date,
     )
     validation_output = validation_report_path or default_valuation_validation_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         fetch_date,
     )
     base_input_dir = base_valuation_dir or output_dir
@@ -448,7 +443,7 @@ def validate_fmp_analyst_history_command(
     """校验 FMP analyst-estimates 原始历史缓存。"""
     validation_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_fmp_analyst_history_validation_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         validation_date,
     )
     selected_tickers = _parse_csv_items(tickers) if tickers else None
@@ -485,8 +480,7 @@ def import_valuation_csv(
     output_dir: Annotated[
         Path,
         typer.Option(help="写入估值快照 YAML 的目录。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "external"
     / "valuation_snapshots",
     as_of: Annotated[
@@ -505,10 +499,10 @@ def import_valuation_csv(
     """导入结构化估值 CSV，并写入可审计估值快照 YAML。"""
     import_date = _parse_date(as_of) if as_of else date.today()
     import_report_output = output_path or (
-        PROJECT_ROOT / "outputs" / "reports" / f"valuation_import_{import_date}.md"
+        state_dir(PROJECT_ROOT, "outputs") / "reports" / f"valuation_import_{import_date}.md"
     )
     validation_output = validation_report_path or default_valuation_validation_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         import_date,
     )
     import_report = import_valuation_snapshots_from_csv(input_path)
@@ -552,8 +546,7 @@ def list_valuations(
     input_path: Annotated[
         Path,
         typer.Option(help="估值快照 YAML 文件或目录路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "external"
     / "valuation_snapshots",
 ) -> None:
@@ -600,8 +593,7 @@ def validate_valuations(
     input_path: Annotated[
         Path,
         typer.Option(help="估值快照 YAML 文件或目录路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "external"
     / "valuation_snapshots",
     as_of: Annotated[
@@ -616,7 +608,7 @@ def validate_valuations(
     """校验估值、预期和拥挤度快照。"""
     validation_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_valuation_validation_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         validation_date,
     )
     report = validate_valuation_snapshot_store(
@@ -642,8 +634,7 @@ def review_valuations(
     input_path: Annotated[
         Path,
         typer.Option(help="估值快照 YAML 文件或目录路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "external"
     / "valuation_snapshots",
     as_of: Annotated[
@@ -658,7 +649,7 @@ def review_valuations(
     """复核估值、预期和拥挤度快照。"""
     review_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_valuation_review_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         review_date,
     )
     validation_report = validate_valuation_snapshot_store(

@@ -155,6 +155,7 @@ from ai_trading_system.historical_inputs import (
     build_historical_risk_event_occurrence_review_report,
     build_historical_valuation_review_report,
 )
+from ai_trading_system.paths import state_dir
 from ai_trading_system.pit_snapshots import (
     DEFAULT_CUMULATIVE_PIT_SNAPSHOT_MANIFEST_PATH,
     DEFAULT_PIT_RAW_ROOT,
@@ -215,15 +216,13 @@ def backtest(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="标准化日线利率 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "rates_daily.csv",
     start: Annotated[
@@ -455,15 +454,13 @@ def backtest(
     sec_companyfacts_dir: Annotated[
         Path,
         typer.Option(help="SEC companyfacts 原始 JSON 缓存目录。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "sec_companyfacts",
     tsm_ir_input_path: Annotated[
         Path,
         typer.Option(help="TSMC IR 季度指标 CSV，用于补齐 TSM point-in-time 回测基本面。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "processed"
     / "tsm_ir_quarterly_metrics.csv",
     sec_companyfacts_validation_report_path: Annotated[
@@ -488,8 +485,7 @@ def backtest(
     valuation_path: Annotated[
         Path,
         typer.Option(help="估值快照 YAML 文件或目录路径，用于 point-in-time 回测评分。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "external"
     / "valuation_snapshots",
     risk_events_path: Annotated[
@@ -656,29 +652,29 @@ def backtest(
         raise typer.Exit(code=1)
 
     quality_output = quality_report_path or default_quality_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         quality_date,
     )
     backtest_daily_output = daily_output_path or default_backtest_daily_path(
-        PROJECT_ROOT / "outputs" / "backtests",
+        state_dir(PROJECT_ROOT, "outputs") / "backtests",
         start_date,
         end_date,
     )
     backtest_input_coverage_output = (
         input_coverage_output_path
         or default_backtest_input_coverage_path(
-            PROJECT_ROOT / "outputs" / "backtests",
+            state_dir(PROJECT_ROOT, "outputs") / "backtests",
             start_date,
             end_date,
         )
     )
     backtest_report_output = report_path or default_backtest_report_path(
-        PROJECT_ROOT / "outputs" / "backtests",
+        state_dir(PROJECT_ROOT, "outputs") / "backtests",
         start_date,
         end_date,
     )
     backtest_robustness_output = robustness_report_path or default_backtest_robustness_report_path(
-        PROJECT_ROOT / "outputs" / "backtests",
+        state_dir(PROJECT_ROOT, "outputs") / "backtests",
         start_date,
         end_date,
     )
@@ -686,7 +682,7 @@ def backtest(
         backtest_robustness_output.with_suffix(".json")
         if should_write_robustness_markdown
         else default_backtest_robustness_summary_path(
-            PROJECT_ROOT / "outputs" / "backtests",
+            state_dir(PROJECT_ROOT, "outputs") / "backtests",
             start_date,
             end_date,
         )
@@ -694,7 +690,7 @@ def backtest(
     backtest_lag_sensitivity_output = (
         lag_sensitivity_report_path
         or default_backtest_lag_sensitivity_report_path(
-            PROJECT_ROOT / "outputs" / "backtests",
+            state_dir(PROJECT_ROOT, "outputs") / "backtests",
             start_date,
             end_date,
         )
@@ -703,7 +699,7 @@ def backtest(
         backtest_lag_sensitivity_output.with_suffix(".json")
         if should_write_lag_sensitivity_markdown
         else default_backtest_lag_sensitivity_summary_path(
-            PROJECT_ROOT / "outputs" / "backtests",
+            state_dir(PROJECT_ROOT, "outputs") / "backtests",
             start_date,
             end_date,
         )
@@ -711,12 +707,12 @@ def backtest(
     backtest_feature_availability_output = (
         feature_availability_report_path
         or default_feature_availability_report_path(
-            PROJECT_ROOT / "outputs" / "backtests",
+            state_dir(PROJECT_ROOT, "outputs") / "backtests",
             quality_date,
         )
     )
     backtest_promotion_output = promotion_report_path or default_model_promotion_report_path(
-        PROJECT_ROOT / "outputs" / "backtests",
+        state_dir(PROJECT_ROOT, "outputs") / "backtests",
         start_date,
         end_date,
     )
@@ -724,13 +720,13 @@ def backtest(
         backtest_promotion_output.with_suffix(".json")
         if promotion_report or promotion_report_path is not None
         else default_model_promotion_summary_path(
-            PROJECT_ROOT / "outputs" / "backtests",
+            state_dir(PROJECT_ROOT, "outputs") / "backtests",
             start_date,
             end_date,
         )
     )
     backtest_audit_output = audit_output_path or default_backtest_audit_report_path(
-        PROJECT_ROOT / "outputs" / "backtests",
+        state_dir(PROJECT_ROOT, "outputs") / "backtests",
         start_date,
         end_date,
     )
@@ -740,14 +736,14 @@ def backtest(
     sec_companyfacts_validation_output = (
         sec_companyfacts_validation_report_path
         or default_sec_companyfacts_validation_report_path(
-            PROJECT_ROOT / "outputs" / "reports",
+            state_dir(PROJECT_ROOT, "outputs") / "reports",
             quality_date,
         )
     )
     watchlist_lifecycle_report_output = (
         watchlist_lifecycle_report_path
         or default_watchlist_lifecycle_report_path(
-            PROJECT_ROOT / "outputs" / "reports",
+            state_dir(PROJECT_ROOT, "outputs") / "reports",
             quality_date,
         )
     )
@@ -1538,7 +1534,7 @@ def backtest_gate_attribution(
     """基于已生成回测 CSV 输出 gate 与事件效果归因报告。"""
     report_date = _parse_date(as_of) if as_of else date.today()
     selected_daily_path = backtest_daily_path or _latest_backtest_daily_path(
-        PROJECT_ROOT / "outputs" / "backtests"
+        state_dir(PROJECT_ROOT, "outputs") / "backtests"
     )
     if selected_daily_path is None:
         console.print("[red]未找到 backtest_daily_*.csv；请先运行 aits backtest。[/red]")
@@ -1551,7 +1547,7 @@ def backtest_gate_attribution(
         left_tail_threshold=left_tail_threshold,
     )
     report_output = output_path or default_gate_event_attribution_report_path(
-        PROJECT_ROOT / "outputs" / "backtests",
+        state_dir(PROJECT_ROOT, "outputs") / "backtests",
         report,
     )
     report_output = write_gate_event_attribution_report(report, report_output)
@@ -1571,15 +1567,13 @@ def backtest_input_gaps(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径，用于确定回测 signal_date。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="标准化日线利率 CSV 路径，用于数据质量门禁。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "rates_daily.csv",
     start: Annotated[
@@ -1611,8 +1605,7 @@ def backtest_input_gaps(
     valuation_path: Annotated[
         Path,
         typer.Option(help="估值快照 YAML 文件或目录路径，用于历史覆盖诊断。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "external"
     / "valuation_snapshots",
     risk_events_path: Annotated[
@@ -1659,11 +1652,11 @@ def backtest_input_gaps(
     end_date = _parse_date(end) if end else date.today()
     quality_date = _parse_date(quality_as_of) if quality_as_of else date.today()
     quality_output = quality_report_path or default_quality_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         quality_date,
     )
     gap_output = output_path or default_backtest_input_gap_report_path(
-        PROJECT_ROOT / "outputs" / "backtests",
+        state_dir(PROJECT_ROOT, "outputs") / "backtests",
         start_date,
         end_date,
     )
@@ -1797,7 +1790,7 @@ def backtest_pit_coverage(
     """评估 forward-only PIT 快照积累进度和回测输入等级升级日期。"""
     coverage_date = _parse_date(as_of) if as_of else date.today()
     coverage_output = output_path or default_backtest_pit_coverage_report_path(
-        PROJECT_ROOT / "outputs" / "backtests",
+        state_dir(PROJECT_ROOT, "outputs") / "backtests",
         coverage_date,
     )
     policy = load_backtest_validation_policy().pit_coverage

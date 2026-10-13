@@ -9,6 +9,7 @@ import typer
 from rich.console import Console
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 from ai_trading_system.reports.canonical_system_status import (
     build_canonical_system_status_payload,
     default_canonical_system_doctor_json_path,
@@ -39,8 +40,7 @@ def system_status_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="status artifact 输出目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     project_root: Annotated[
         Path,
@@ -106,8 +106,7 @@ def system_doctor_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="doctor artifact 输出目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     project_root: Annotated[
         Path,

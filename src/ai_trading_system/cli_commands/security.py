@@ -9,6 +9,7 @@ from rich.console import Console
 
 from ai_trading_system import secret_hygiene
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import cli_path, state_dir
 from ai_trading_system.secret_hygiene import (
     SecretScanMode,
     default_secret_scan_report_path,
@@ -53,9 +54,9 @@ def security_scan_secrets_command(
 ) -> None:
     """扫描可提交或报告文件中的疑似 secret literal。"""
     scan_date = _parse_date(as_of) if as_of else date.today()
-    selected_paths = tuple(Path(item) for item in _parse_csv_items(scan_paths))
+    selected_paths = tuple(cli_path(item) for item in _parse_csv_items(scan_paths))
     report_path = output_path or default_secret_scan_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         scan_date,
     )
     effective_cache_path = cache_path

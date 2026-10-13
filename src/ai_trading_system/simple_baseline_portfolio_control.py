@@ -16,17 +16,20 @@ from ai_trading_system.data_foundation import (
     utc_now_iso,
     write_foundation_artifact_pair,
 )
+from ai_trading_system.paths import state_dir
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_SIMPLE_BASELINE_REGISTRY_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "research" / "simple_baseline_strategy_registry.yaml"
 )
 DEFAULT_SIMPLE_BASELINE_OUTPUT_ROOT = (
-    PROJECT_ROOT / "outputs" / "research_strategies" / "simple_baselines"
+    state_dir(PROJECT_ROOT, "outputs") / "research_strategies" / "simple_baselines"
 )
-DEFAULT_PRICES_PATH = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
-DEFAULT_MARKETSTACK_PRICES_PATH = PROJECT_ROOT / "data" / "raw" / "prices_marketstack_daily.csv"
-DEFAULT_RATES_PATH = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv"
+DEFAULT_PRICES_PATH = state_dir(PROJECT_ROOT, "data") / "raw" / "prices_daily.csv"
+DEFAULT_MARKETSTACK_PRICES_PATH = (
+    state_dir(PROJECT_ROOT, "data") / "raw" / "prices_marketstack_daily.csv"
+)
+DEFAULT_RATES_PATH = state_dir(PROJECT_ROOT, "data") / "raw" / "rates_daily.csv"
 DEFAULT_SIMPLE_BASELINE_MASTER_REVIEW_DOC_PATH = (
     PROJECT_ROOT / "docs" / "research" / "simple_baseline_portfolio_control_master_review.md"
 )

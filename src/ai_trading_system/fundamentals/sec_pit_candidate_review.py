@@ -19,11 +19,14 @@ from ai_trading_system.fundamentals.sec_pit_baseline_comparison import (
 from ai_trading_system.fundamentals.sec_pit_real_run_diagnostics import (
     DEFAULT_SEC_PIT_DIAGNOSTICS_OUTPUT_DIR,
 )
+from ai_trading_system.paths import glob_root, join_root, state_dir
 
 SEC_PIT_CANDIDATE_REVIEW_TASK_ID = "TRADING-043"
 SEC_PIT_CANDIDATE_REVIEW_REPORT_TYPE = "sec_pit_candidate_review"
 SEC_PIT_CANDIDATE_REVIEW_PRODUCTION_EFFECT = "none"
-DEFAULT_SEC_PIT_CANDIDATE_REVIEW_OUTPUT_DIR = PROJECT_ROOT / "outputs" / "sec_pit_candidate_review"
+DEFAULT_SEC_PIT_CANDIDATE_REVIEW_OUTPUT_DIR = (
+    state_dir(PROJECT_ROOT, "outputs") / "sec_pit_candidate_review"
+)
 
 REVIEW_STATUSES: tuple[str, ...] = (
     "OK",
@@ -1487,16 +1490,16 @@ def _artifact_path(summary: dict[str, Any], key: str, default: Path) -> Path:
     if not raw:
         return default
     path = Path(str(raw))
-    return path if path.is_absolute() else PROJECT_ROOT / path
+    return path if path.is_absolute() else join_root(PROJECT_ROOT, path)
 
 
 def _latest_dated_path(root: Path, prefix: str, suffix: str, end: date | None) -> Path:
     default_end = end or date.max
-    default_path = root / f"{prefix}{default_end.isoformat()}{suffix}"
+    default_path = join_root(root, f"{prefix}{default_end.isoformat()}{suffix}")
     if not root.exists():
         return default_path
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob(f"{prefix}*{suffix}"):
+    for path in glob_root(root, f"{prefix}*{suffix}"):
         raw_date = path.stem.removeprefix(prefix)
         parsed = _parse_date(raw_date)
         if parsed is not None and (end is None or parsed <= end):

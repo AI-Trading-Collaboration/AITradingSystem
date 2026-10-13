@@ -20,6 +20,7 @@ from ai_trading_system.industry_chain import (
     validate_industry_chain_config,
     write_industry_chain_validation_report,
 )
+from ai_trading_system.paths import state_dir
 
 console = Console()
 industry_chain_app = typer.Typer(help="产业链节点和因果图管理。", no_args_is_help=True)
@@ -82,7 +83,7 @@ def validate_industry_chain(
     watchlist = load_watchlist(watchlist_path)
     validation_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_industry_chain_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         validation_date,
     )
 

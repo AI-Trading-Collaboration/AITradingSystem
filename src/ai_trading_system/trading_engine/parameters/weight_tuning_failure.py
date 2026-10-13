@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import glob_root, join_root, state_dir
 from ai_trading_system.trading_engine.parameters.weight_tuning import (
     default_weight_tuning_candidates_path,
     default_weight_tuning_root,
@@ -76,7 +77,7 @@ class WeightTuningFailureRun:
 
 
 def default_weight_tuning_failure_root() -> Path:
-    return PROJECT_ROOT / "artifacts" / "weight_tuning_failure"
+    return state_dir(PROJECT_ROOT, "artifacts") / "weight_tuning_failure"
 
 
 def default_weight_tuning_failure_dir(output_root: Path, as_of: date) -> Path:
@@ -103,7 +104,7 @@ def default_weight_tuning_failure_debug_path(output_root: Path, as_of: date) -> 
 
 def latest_weight_tuning_failure_path(output_root: Path | None = None) -> Path | None:
     root = output_root or default_weight_tuning_failure_root()
-    candidates = sorted(root.glob("*/weight_tuning_failure_summary.json"))
+    candidates = sorted(glob_root(root, "*/weight_tuning_failure_summary.json"))
     if not candidates:
         return None
     return max(candidates, key=lambda path: path.stat().st_mtime)
@@ -115,7 +116,7 @@ def latest_weight_tuning_failure_path_on_or_before(
 ) -> Path | None:
     root = output_root or default_weight_tuning_failure_root()
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/weight_tuning_failure_summary.json"):
+    for path in glob_root(root, "*/weight_tuning_failure_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -691,7 +692,7 @@ def _resolve_summary_path(*, as_of: date | None, summary_path: Path | None) -> P
         return summary_path
     root = default_weight_tuning_root()
     if as_of is not None:
-        return root / as_of.isoformat() / "weight_tuning_summary.json"
+        return join_root(root, as_of.isoformat()) / "weight_tuning_summary.json"
     return latest_weight_tuning_path(root)
 
 
@@ -721,7 +722,7 @@ def _resolve_candidates_path(
     if candidate_text:
         path = Path(candidate_text)
         if not path.is_absolute():
-            path = PROJECT_ROOT / path
+            path = join_root(PROJECT_ROOT, path)
         if path.exists():
             return path
     return default_weight_tuning_candidates_path(summary_path.parent.parent, as_of)
@@ -1489,9 +1490,9 @@ def _summary_date(summary: Mapping[str, Any], source_path: Path, *, fallback: da
 
 
 def _latest_artifact_path(root_name: str, as_of: date, filename: str) -> str:
-    root = PROJECT_ROOT / "artifacts" / root_name
+    root = state_dir(PROJECT_ROOT, "artifacts") / root_name
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob(f"*/{filename}"):
+    for path in glob_root(root, f"*/{filename}"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:

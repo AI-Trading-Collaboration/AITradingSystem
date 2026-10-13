@@ -9,16 +9,21 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import glob_root, join_root, state_dir
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SCHEMA_VERSION = "1.0"
 
-DEFAULT_PIT_FEATURE_STORE_CONFIG_PATH = PROJECT_ROOT / "config" / "data" / "pit_feature_store.yaml"
-DEFAULT_FEATURE_AVAILABILITY_CONTRACTS_PATH = (
-    PROJECT_ROOT / "config" / "data" / "feature_availability_contracts.yaml"
+DEFAULT_PIT_FEATURE_STORE_CONFIG_PATH = (
+    state_dir(PROJECT_ROOT / "config", "data") / "pit_feature_store.yaml"
 )
-DEFAULT_ASSET_MASTER_PATH = PROJECT_ROOT / "config" / "data" / "asset_master.yaml"
-DEFAULT_UNIVERSE_DEFINITIONS_PATH = PROJECT_ROOT / "config" / "data" / "universe_definitions.yaml"
+DEFAULT_FEATURE_AVAILABILITY_CONTRACTS_PATH = (
+    state_dir(PROJECT_ROOT / "config", "data") / "feature_availability_contracts.yaml"
+)
+DEFAULT_ASSET_MASTER_PATH = state_dir(PROJECT_ROOT / "config", "data") / "asset_master.yaml"
+DEFAULT_UNIVERSE_DEFINITIONS_PATH = (
+    state_dir(PROJECT_ROOT / "config", "data") / "universe_definitions.yaml"
+)
 DEFAULT_COST_MODEL_PATH = PROJECT_ROOT / "config" / "trading" / "cost_model.yaml"
 DEFAULT_LIQUIDITY_MODEL_PATH = PROJECT_ROOT / "config" / "trading" / "liquidity_model.yaml"
 DEFAULT_REGIME_LABEL_DEFINITIONS_PATH = (
@@ -35,29 +40,35 @@ DEFAULT_CASE_LIBRARY_CONFIG_PATH = (
 )
 
 DEFAULT_PIT_FEATURE_STORE_OUTPUT_ROOT = (
-    PROJECT_ROOT / "outputs" / "data_quality" / "pit_feature_store"
+    state_dir(PROJECT_ROOT, "outputs") / "data_quality" / "pit_feature_store"
 )
-DEFAULT_ASSET_MASTER_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "data_quality" / "asset_master"
-DEFAULT_COST_LIQUIDITY_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "data_quality" / "cost_liquidity"
-DEFAULT_RESEARCH_LABEL_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "research_labels"
-DEFAULT_RESEARCH_RUN_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "research_runs"
-DEFAULT_RESEARCH_EXECUTION_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "research_execution"
-DEFAULT_FORWARD_EVIDENCE_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "forward_evidence"
-DEFAULT_RESEARCH_CASE_LIBRARY_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "research_case_library"
+DEFAULT_ASSET_MASTER_OUTPUT_ROOT = (
+    state_dir(PROJECT_ROOT, "outputs") / "data_quality" / "asset_master"
+)
+DEFAULT_COST_LIQUIDITY_OUTPUT_ROOT = (
+    state_dir(PROJECT_ROOT, "outputs") / "data_quality" / "cost_liquidity"
+)
+DEFAULT_RESEARCH_LABEL_OUTPUT_ROOT = state_dir(PROJECT_ROOT, "outputs") / "research_labels"
+DEFAULT_RESEARCH_RUN_OUTPUT_ROOT = state_dir(PROJECT_ROOT, "outputs") / "research_runs"
+DEFAULT_RESEARCH_EXECUTION_OUTPUT_ROOT = state_dir(PROJECT_ROOT, "outputs") / "research_execution"
+DEFAULT_FORWARD_EVIDENCE_OUTPUT_ROOT = state_dir(PROJECT_ROOT, "outputs") / "forward_evidence"
+DEFAULT_RESEARCH_CASE_LIBRARY_OUTPUT_ROOT = (
+    state_dir(PROJECT_ROOT, "outputs") / "research_case_library"
+)
 DEFAULT_DATA_FOUNDATION_ACCEPTANCE_CONFIG_PATH = (
-    PROJECT_ROOT / "config" / "data" / "data_foundation_acceptance.yaml"
+    state_dir(PROJECT_ROOT / "config", "data") / "data_foundation_acceptance.yaml"
 )
 DEFAULT_DATA_FOUNDATION_ACCEPTANCE_OUTPUT_ROOT = (
-    PROJECT_ROOT / "outputs" / "data_quality" / "data_foundation_acceptance"
+    state_dir(PROJECT_ROOT, "outputs") / "data_quality" / "data_foundation_acceptance"
 )
 DEFAULT_DATA_SOURCE_QUALIFICATION_OUTPUT_ROOT = (
-    PROJECT_ROOT / "outputs" / "data_quality" / "data_source_qualification"
+    state_dir(PROJECT_ROOT, "outputs") / "data_quality" / "data_source_qualification"
 )
 DEFAULT_DATA_SOURCE_REMEDIATION_EXECUTION_OUTPUT_ROOT = (
-    PROJECT_ROOT / "outputs" / "data_quality" / "data_source_remediation_execution"
+    state_dir(PROJECT_ROOT, "outputs") / "data_quality" / "data_source_remediation_execution"
 )
 DEFAULT_DATA_SOURCE_REQUIREMENTS_OUTPUT_ROOT = (
-    PROJECT_ROOT / "outputs" / "data_quality" / "data_source_requirements"
+    state_dir(PROJECT_ROOT, "outputs") / "data_quality" / "data_source_requirements"
 )
 DEFAULT_DATA_FOUNDATION_ACCEPTANCE_REPORT_PATH = (
     DEFAULT_DATA_FOUNDATION_ACCEPTANCE_OUTPUT_ROOT / "data_foundation_acceptance_report.json"
@@ -2301,17 +2312,19 @@ def _acceptance_source_evidence(source: Mapping[str, Any]) -> dict[str, Any]:
     paths: list[str] = []
     path_value = _text(source.get("path"))
     if path_value:
-        path = PROJECT_ROOT / path_value
+        path = join_root(PROJECT_ROOT, path_value)
         if path.exists():
             paths.append(str(path))
     quality_report = _text(source.get("quality_report"))
     if quality_report:
-        path = PROJECT_ROOT / quality_report
+        path = join_root(PROJECT_ROOT, quality_report)
         if path.exists():
             paths.append(str(path))
     glob_value = _text(source.get("glob"))
     if glob_value:
-        paths.extend(str(path) for path in sorted(PROJECT_ROOT.glob(glob_value.replace("\\", "/"))))
+        paths.extend(
+            str(path) for path in sorted(glob_root(PROJECT_ROOT, glob_value.replace("\\", "/")))
+        )
     return {"exists": bool(paths), "paths": paths}
 
 
@@ -2321,7 +2334,7 @@ def _acceptance_price_cache_coverage(
     requested_tickers: Sequence[str],
 ) -> dict[str, Any]:
     path_value = _text(source.get("path"))
-    path = PROJECT_ROOT / path_value if path_value else Path()
+    path = join_root(PROJECT_ROOT, path_value) if path_value else Path()
     found_symbols: set[str] = set()
     first_date = None
     last_date = None

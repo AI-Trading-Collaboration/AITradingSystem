@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 from ai_trading_system.reports import owner_decision_audit_log as owner_log
 from ai_trading_system.reports.research_governance_recovery_pack import (
     latest_research_governance_recovery_pack_json_path,
@@ -1351,7 +1352,7 @@ def build_governance_status_snapshot_payload(
 def build_decision_stage_review_payloads(
     *,
     as_of: date,
-    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+    reports_dir: Path = state_dir(PROJECT_ROOT, "outputs") / "reports",
     report_index_path: Path | None = None,
     recovery_pack_path: Path | None = None,
     report_quality_gate_path: Path | None = None,

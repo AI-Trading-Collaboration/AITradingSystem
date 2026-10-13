@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 from ai_trading_system.reports.recovery_triage import (
     latest_report_index_warning_triage_json_path,
 )
@@ -87,7 +88,7 @@ def build_report_index_warning_cleanup_payload(
     report_index_warning_triage_path: Path | None = None,
     report_index_payload: Mapping[str, Any] | None = None,
     report_index_path: Path | None = None,
-    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+    reports_dir: Path = state_dir(PROJECT_ROOT, "outputs") / "reports",
 ) -> dict[str, Any]:
     warning_triage_path, warning_triage = _payload_or_latest(
         report_index_warning_triage_payload,

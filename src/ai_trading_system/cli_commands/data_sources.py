@@ -29,6 +29,7 @@ from ai_trading_system.data_sources import (
     write_data_source_health_report,
     write_data_sources_validation_report,
 )
+from ai_trading_system.paths import state_dir
 from ai_trading_system.pit_source_manifest import (
     DEFAULT_PIT_SOURCE_MANIFEST_DIR,
     build_and_write_pit_source_manifest,
@@ -101,7 +102,7 @@ def validate_data_sources(
     """校验数据源目录、审计字段和来源限制。"""
     validation_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_data_sources_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         validation_date,
     )
     report = validate_data_sources_config(
@@ -129,8 +130,7 @@ def data_source_health(
     manifest_path: Annotated[
         Path,
         typer.Option(help="download_manifest.csv 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "download_manifest.csv",
     as_of: Annotated[
@@ -145,7 +145,7 @@ def data_source_health(
     """生成 provider health 和 reconciliation 覆盖报告。"""
     evaluation_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_data_source_health_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         evaluation_date,
     )
     report = build_data_source_health_report(
@@ -170,15 +170,13 @@ def yahoo_price_diagnostic(
     prices_path: Annotated[
         Path,
         typer.Option(help="FMP 主价格缓存 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="FRED 宏观序列 CSV 路径，用于复用数据质量报告。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "rates_daily.csv",
     marketstack_prices_path: Annotated[
@@ -215,7 +213,7 @@ def yahoo_price_diagnostic(
     diagnostic_date = _parse_date(as_of) if as_of else date.today()
     secondary_path = marketstack_prices_path or _marketstack_prices_path(prices_path)
     report_path = output_path or default_yahoo_price_diagnostic_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         diagnostic_date,
     )
     quality_report = validate_data_cache(
@@ -267,8 +265,7 @@ def pit_source_manifest_report(
     download_manifest_path: Annotated[
         Path,
         typer.Option(help="download_manifest.csv 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "download_manifest.csv",
     as_of: Annotated[
@@ -404,7 +401,7 @@ def _marketstack_prices_path(prices_path: Path) -> Path:
 
 
 def _requires_marketstack_prices(prices_path: Path) -> bool:
-    default_prices_path = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
+    default_prices_path = state_dir(PROJECT_ROOT, "data") / "raw" / "prices_daily.csv"
     try:
         return prices_path.resolve() == default_prices_path.resolve()
     except OSError:

@@ -11,12 +11,13 @@ from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.parameter_replay import (
     default_parameter_replay_summary_path,
 )
+from ai_trading_system.paths import state_dir
 
 SCHEMA_VERSION = 1
 DEFAULT_PARAMETER_CANDIDATE_LEDGER_PATH = (
-    PROJECT_ROOT / "data" / "processed" / "parameter_candidates.json"
+    state_dir(PROJECT_ROOT, "data") / "processed" / "parameter_candidates.json"
 )
-DEFAULT_PARAMETER_CANDIDATE_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
+DEFAULT_PARAMETER_CANDIDATE_REPORT_DIR = state_dir(PROJECT_ROOT, "outputs") / "reports"
 CANDIDATE_EVALUATION_CATEGORIES = frozenset(
     {"module_weight_perturbation", "rebalance_frequency", "cost", "window"}
 )
@@ -254,7 +255,7 @@ def build_parameter_candidate_ledger(
             + ", ".join(sorted(CANDIDATE_EVALUATION_MODES))
         )
     replay_path = parameter_replay_summary_path or default_parameter_replay_summary_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         as_of,
     )
     payload = _read_json_object(replay_path)

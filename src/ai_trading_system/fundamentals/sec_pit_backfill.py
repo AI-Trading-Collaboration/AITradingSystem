@@ -29,15 +29,16 @@ from ai_trading_system.external_request_cache import (
     lookup_external_request_cache,
     write_external_request_cache_response,
 )
+from ai_trading_system.paths import state_dir
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SEC_PIT_TASK_ID = "TRADING-039"
 SEC_PIT_BACKTEST_DATA_GRADE = "B_RECONSTRUCTED_SEC_FILING_PIT"
 SEC_PIT_CURRENT_HISTORY_GRADE = "C_CURRENT_HISTORY_APPROX"
 DEFAULT_SEC_PIT_BACKFILL_CONFIG_PATH = PROJECT_ROOT / "config" / "sec_pit_backfill.yaml"
-DEFAULT_SEC_EDGAR_RAW_DIR = PROJECT_ROOT / "data" / "raw" / "sec_edgar"
-DEFAULT_SEC_EDGAR_PROCESSED_DIR = PROJECT_ROOT / "data" / "processed" / "sec_edgar"
-DEFAULT_SEC_PIT_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports" / "sec_pit_backfill"
+DEFAULT_SEC_EDGAR_RAW_DIR = state_dir(PROJECT_ROOT, "data") / "raw" / "sec_edgar"
+DEFAULT_SEC_EDGAR_PROCESSED_DIR = state_dir(PROJECT_ROOT, "data") / "processed" / "sec_edgar"
+DEFAULT_SEC_PIT_REPORT_DIR = state_dir(PROJECT_ROOT, "outputs") / "reports" / "sec_pit_backfill"
 SEC_PIT_RAW_MANIFEST_COLUMNS = (
     "downloaded_at",
     "provider",

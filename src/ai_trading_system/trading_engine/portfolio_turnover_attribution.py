@@ -11,6 +11,7 @@ from typing import Any
 import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import glob_root, join_root, state_dir
 from ai_trading_system.trading_engine.parameters import shadow_backtest as shadow_backtest_module
 from ai_trading_system.trading_engine.parameters.parameter_loader import (
     DEFAULT_PRODUCTION_PARAMETERS_PATH,
@@ -85,7 +86,7 @@ class PortfolioTurnoverAttributionRun:
 
 
 def default_portfolio_turnover_attribution_root() -> Path:
-    return PROJECT_ROOT / "artifacts" / "portfolio_turnover_attribution"
+    return state_dir(PROJECT_ROOT, "artifacts") / "portfolio_turnover_attribution"
 
 
 def default_portfolio_turnover_attribution_dir(output_root: Path, as_of: date) -> Path:
@@ -126,7 +127,7 @@ def latest_portfolio_turnover_attribution_path(
     output_root: Path | None = None,
 ) -> Path | None:
     root = output_root or default_portfolio_turnover_attribution_root()
-    candidates = sorted(root.glob("*/portfolio_turnover_attribution_summary.json"))
+    candidates = sorted(glob_root(root, "*/portfolio_turnover_attribution_summary.json"))
     if not candidates:
         return None
     return max(candidates, key=lambda path: path.stat().st_mtime)
@@ -138,7 +139,7 @@ def latest_portfolio_turnover_attribution_path_on_or_before(
 ) -> Path | None:
     root = output_root or default_portfolio_turnover_attribution_root()
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/portfolio_turnover_attribution_summary.json"):
+    for path in glob_root(root, "*/portfolio_turnover_attribution_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -795,9 +796,9 @@ def _resolve_weight_tuning_summary_path(
 ) -> Path | None:
     if weight_tuning_path is not None:
         return weight_tuning_path
-    root = PROJECT_ROOT / "artifacts" / "weight_tuning"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "weight_tuning"
     if as_of is not None:
-        return root / as_of.isoformat() / "weight_tuning_summary.json"
+        return join_root(root, as_of.isoformat()) / "weight_tuning_summary.json"
     return latest_weight_tuning_path(root)
 
 
@@ -839,7 +840,7 @@ def _resolve_candidates_path(
     if candidate_text:
         path = Path(candidate_text)
         if not path.is_absolute():
-            path = PROJECT_ROOT / path
+            path = join_root(PROJECT_ROOT, path)
         if path.exists():
             return path
     return default_weight_tuning_candidates_path(summary_path.parent.parent, as_of)
@@ -1187,7 +1188,7 @@ def _run_replay(
     )
     signal_snapshot_path = Path(str(inputs.get("signal_snapshot") or ""))
     if not signal_snapshot_path.is_absolute():
-        signal_snapshot_path = PROJECT_ROOT / signal_snapshot_path
+        signal_snapshot_path = join_root(PROJECT_ROOT, signal_snapshot_path)
     signal_snapshot_payload = load_signal_snapshot_payload(signal_snapshot_path)
     if not signal_snapshot_payload:
         return {

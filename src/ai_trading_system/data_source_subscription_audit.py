@@ -10,13 +10,13 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 
 DEFAULT_CURRENT_SUBSCRIPTION_COVERAGE_OUTPUT_ROOT = (
-    PROJECT_ROOT / "outputs" / "data_quality" / "current_subscription_data_coverage"
+    state_dir(PROJECT_ROOT, "outputs") / "data_quality" / "current_subscription_data_coverage"
 )
 DEFAULT_SOURCE_REQUIREMENT_MATRIX_PATH = (
-    PROJECT_ROOT
-    / "outputs"
+    state_dir(PROJECT_ROOT, "outputs")
     / "data_quality"
     / "data_source_requirements"
     / "data_source_requirement_matrix.json"

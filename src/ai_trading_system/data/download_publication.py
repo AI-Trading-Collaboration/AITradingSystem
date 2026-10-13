@@ -30,6 +30,7 @@ from ai_trading_system.data.immutable_publish import (
     validate_named_snapshot,
     write_contained_artifact_bytes,
 )
+from ai_trading_system.paths import join_root, relative_to_root
 from ai_trading_system.platform.artifacts import canonical_json_bytes, sha256_bytes
 from ai_trading_system.trading_calendar import is_us_equity_trading_day
 
@@ -377,7 +378,7 @@ def resolve_named_download_publication(
     root = _prepare_root(output_dir, create=False)
     try:
         snapshot = validate_named_snapshot(
-            store_root=root / _PUBLICATION_ROOT,
+            store_root=join_root(root, _PUBLICATION_ROOT),
             dataset_id=_DATASET_ID,
             pointer_id=pointer_id,
             expected_pointer_sha256=expected_pointer_sha256,
@@ -395,7 +396,7 @@ def resolve_named_download_publication(
     outer_previous_pointer_sha256, outer_manifest_raw = _locked_outer_publication(root, snapshot)
     transaction_raw = _read_required(
         root,
-        snapshot.payload_path.relative_to(root).as_posix(),
+        relative_to_root(snapshot.payload_path, root).as_posix(),
         "DOWNLOAD_TRANSACTION_MISSING",
     )
     _verify_bytes(
@@ -429,7 +430,7 @@ def resolve_named_download_publication(
         _fail("DOWNLOAD_OUTER_PUBLICATION_BINDING_MISMATCH", "named outer publication changed")
     anchor_raw = _read_required(
         root,
-        snapshot.commit_anchor.pointer_path.relative_to(root).as_posix(),
+        relative_to_root(snapshot.commit_anchor.pointer_path, root).as_posix(),
         "DOWNLOAD_NAMED_COMMIT_ANCHOR_CHANGED",
     )
     if _sha256(anchor_raw) != snapshot.commit_anchor.pointer_sha256:
@@ -448,7 +449,7 @@ def resolve_download_publication_if_present(
     if not os.path.lexists(output_dir):
         return None
     root = _prepare_root(output_dir, create=False)
-    if not os.path.lexists(root / Path(_CURRENT_POINTER)):
+    if not os.path.lexists(join_root(root, Path(_CURRENT_POINTER))):
         return None
     resolved, _, _ = _resolve_validated_generation(root)
     return resolved
@@ -462,7 +463,7 @@ def _resolve_validated_generation(
         root,
         current,
     )
-    transaction_relative = current.payload_path.relative_to(root).as_posix()
+    transaction_relative = relative_to_root(current.payload_path, root).as_posix()
     transaction_raw = _read_required(
         root,
         transaction_relative,
@@ -500,7 +501,7 @@ def _resolve_validated_generation(
 def _validated_current_snapshot(root: Path) -> ValidatedCurrentSnapshot:
     try:
         return validate_current_snapshot(
-            store_root=root / _PUBLICATION_ROOT,
+            store_root=join_root(root, _PUBLICATION_ROOT),
             evidence_root=root,
             dataset_id=_DATASET_ID,
         )
@@ -508,7 +509,7 @@ def _validated_current_snapshot(root: Path) -> ValidatedCurrentSnapshot:
         raise DownloadPublicationIntegrityError(
             "DOWNLOAD_DISCOVERY_INVALID",
             str(exc),
-            path=getattr(exc, "path", root / Path(_CURRENT_POINTER)),
+            path=getattr(exc, "path", join_root(root, Path(_CURRENT_POINTER))),
         ) from exc
 
 
@@ -516,7 +517,7 @@ def _locked_outer_publication(
     root: Path,
     current: ValidatedSnapshot,
 ) -> tuple[str | None, bytes]:
-    pointer_relative = current.pointer_path.relative_to(root).as_posix()
+    pointer_relative = relative_to_root(current.pointer_path, root).as_posix()
     pointer_raw = _read_required(
         root,
         pointer_relative,
@@ -563,9 +564,9 @@ def _locked_outer_publication(
         "outer.manifest.path",
     )
     manifest_relative = (PurePosixPath(_PUBLICATION_ROOT) / PurePosixPath(manifest_path)).as_posix()
-    if (root / Path(manifest_relative)).resolve(strict=False) != current.manifest_path.resolve(
+    if (join_root(root, Path(manifest_relative))).resolve(
         strict=False
-    ):
+    ) != current.manifest_path.resolve(strict=False):
         _fail(
             "DOWNLOAD_OUTER_PUBLICATION_BINDING_MISMATCH",
             "outer manifest path differs from public validation",
@@ -729,7 +730,7 @@ def _assert_legacy_bootstrap_precondition(
 
 
 def _read_legacy_bootstrap_member(root: Path, relative_path: str) -> bytes | None:
-    path = root / relative_path
+    path = join_root(root, relative_path)
     if not os.path.lexists(path):
         return None
     try:
@@ -764,7 +765,7 @@ def _publication_base(
     bytes | None,
     DownloadLegacyBootstrapPrecondition | None,
 ]:
-    pointer_path = root / Path(_CURRENT_POINTER)
+    pointer_path = join_root(root, Path(_CURRENT_POINTER))
     if not os.path.lexists(pointer_path):
         effective_precondition = (
             legacy_bootstrap_precondition or _capture_legacy_bootstrap_precondition(root)
@@ -992,7 +993,7 @@ def _publish_with_canonical_snapshot(
         pre_commit_validator = validate_legacy_bootstrap_precondition
     try:
         publish_result = publish_immutable_snapshot(
-            store_root=root / _PUBLICATION_ROOT,
+            store_root=join_root(root, _PUBLICATION_ROOT),
             evidence_root=root,
             request=request,
             payload=transaction_raw,
@@ -1008,7 +1009,7 @@ def _publish_with_canonical_snapshot(
         raise DownloadPublicationIntegrityError(
             "DOWNLOAD_DISCOVERY_COMMIT_FAILED",
             str(exc),
-            path=getattr(exc, "path", root / Path(_CURRENT_POINTER)),
+            path=getattr(exc, "path", join_root(root, Path(_CURRENT_POINTER))),
             commit_state=commit_state,
         ) from exc
 
@@ -1018,7 +1019,7 @@ def _publish_with_canonical_snapshot(
         raise DownloadPublicationIntegrityError(
             "DOWNLOAD_POST_COMMIT_ATTESTATION_FAILED",
             str(exc),
-            path=root / Path(_CURRENT_POINTER),
+            path=join_root(root, Path(_CURRENT_POINTER)),
             commit_state="POINTER_COMMITTED",
         ) from exc
     if (
@@ -1033,7 +1034,7 @@ def _publish_with_canonical_snapshot(
                 f"published_transaction={transaction_id}; "
                 f"observed_transaction={canonical.transaction_id}"
             ),
-            path=root / Path(_CURRENT_POINTER),
+            path=join_root(root, Path(_CURRENT_POINTER)),
             commit_state="POINTER_COMMITTED",
         )
     compatibility_candidates = {item.filename: item.content for item in artifacts} | {
@@ -1300,7 +1301,7 @@ def _validate_current_predecessor_bindings(
     )
     if not canonical_sources:
         return None
-    if not os.path.lexists(root / Path(_CURRENT_POINTER)):
+    if not os.path.lexists(join_root(root, Path(_CURRENT_POINTER))):
         _fail(
             "DOWNLOAD_PREDECESSOR_BINDING_MISMATCH",
             "canonical predecessor source requires a current publication",
@@ -1313,14 +1314,14 @@ def _validate_current_predecessor_bindings(
             str(exc),
             path=exc.path,
         ) from exc
-    transaction_path = predecessor.transaction_manifest_path.relative_to(root).as_posix()
+    transaction_path = relative_to_root(predecessor.transaction_manifest_path, root).as_posix()
     artifact_paths = {
-        "prices": predecessor.prices_path.relative_to(root).as_posix(),
-        "rates": predecessor.rates_path.relative_to(root).as_posix(),
+        "prices": relative_to_root(predecessor.prices_path, root).as_posix(),
+        "rates": relative_to_root(predecessor.rates_path, root).as_posix(),
     }
     if predecessor.secondary_prices_path is not None:
-        artifact_paths["secondary_prices"] = predecessor.secondary_prices_path.relative_to(
-            root
+        artifact_paths["secondary_prices"] = relative_to_root(
+            predecessor.secondary_prices_path, root
         ).as_posix()
     for source in canonical_sources:
         parameters = source.request_parameters
@@ -2000,7 +2001,7 @@ def _legacy_manifest_records_from_payloads(
                     separators=(",", ":"),
                     allow_nan=False,
                 ),
-                "output_path": str(root / filename),
+                "output_path": str(join_root(root, filename)),
                 "row_count": artifact_rows,
                 "checksum_sha256": artifact_digest,
             }
@@ -2400,7 +2401,7 @@ def _validate_transaction(
             _fail("DOWNLOAD_ARTIFACT_ROW_COUNT_MISMATCH", role)
         if role in artifact_paths:
             _fail("DOWNLOAD_ARTIFACT_SET_MISMATCH", role)
-        artifact_paths[role] = root / Path(immutable_path)
+        artifact_paths[role] = join_root(root, Path(immutable_path))
         artifact_sha256[role] = digest
         artifact_row_count[role] = rows
         artifact_sources[role] = set(source_event_ids)
@@ -2505,7 +2506,7 @@ def _validate_transaction(
             discovery_pointer_sha256=current.pointer_sha256,
             prices_path=artifact_paths["prices"],
             rates_path=artifact_paths["rates"],
-            manifest_path=root / Path(manifest_path),
+            manifest_path=join_root(root, Path(manifest_path)),
             secondary_prices_path=artifact_paths.get("secondary_prices"),
             legacy_prices_path=root / "prices_daily.csv",
             legacy_rates_path=root / "rates_daily.csv",
@@ -2882,7 +2883,7 @@ def _retire_compatibility_artifact(root: Path, relative_path: str) -> None:
     """Remove one root-contained fixed-path projection that is absent canonically."""
 
     normalized = _portable_relative(relative_path, "legacy_retirement.path")
-    target = root / Path(normalized)
+    target = join_root(root, Path(normalized))
     if target.parent != root:
         _fail("DOWNLOAD_ARTIFACT_PATH_MISMATCH", normalized)
     if not os.path.lexists(target):
@@ -2922,7 +2923,7 @@ def _write(root: Path, relative_path: str, content: bytes, *, immutable: bool) -
         raise DownloadPublicationIntegrityError(
             "DOWNLOAD_PUBLICATION_STORAGE_INVALID",
             str(exc),
-            path=getattr(exc, "path", root / Path(relative_path)),
+            path=getattr(exc, "path", join_root(root, Path(relative_path))),
         ) from exc
 
 
@@ -2933,12 +2934,12 @@ def _read_required(root: Path, relative_path: str, code: str) -> bytes:
         raise DownloadPublicationIntegrityError(
             code,
             str(exc),
-            path=getattr(exc, "path", root / Path(relative_path)),
+            path=getattr(exc, "path", join_root(root, Path(relative_path))),
         ) from exc
 
 
 def _read_optional(root: Path, relative_path: str) -> bytes | None:
-    path = root / Path(relative_path)
+    path = join_root(root, Path(relative_path))
     if not os.path.lexists(path):
         return None
     return _read_required(root, relative_path, "DOWNLOAD_PUBLICATION_INPUT_INVALID")
@@ -3303,8 +3304,8 @@ def _legacy_projection_matches(
     elif os.path.lexists(root / "prices_marketstack_daily.csv"):
         return False
     for immutable, legacy in pairs:
-        immutable_relative = immutable.relative_to(root).as_posix()
-        legacy_relative = legacy.relative_to(root).as_posix()
+        immutable_relative = relative_to_root(immutable, root).as_posix()
+        legacy_relative = relative_to_root(legacy, root).as_posix()
         immutable_raw = (
             validated_manifest_raw
             if immutable == resolved.manifest_path and validated_manifest_raw is not None

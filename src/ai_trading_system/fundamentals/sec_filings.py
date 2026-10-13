@@ -25,9 +25,10 @@ from ai_trading_system.fundamentals.sec_metrics import (
     SecFundamentalMetricRow,
     load_sec_fundamental_metric_rows_csv,
 )
+from ai_trading_system.paths import state_dir
 
-DEFAULT_SEC_SUBMISSIONS_DIR = PROJECT_ROOT / "data" / "raw" / "sec_submissions"
-DEFAULT_SEC_FILING_ARCHIVE_DIR = PROJECT_ROOT / "data" / "raw" / "sec_filings"
+DEFAULT_SEC_SUBMISSIONS_DIR = state_dir(PROJECT_ROOT, "data") / "raw" / "sec_submissions"
+DEFAULT_SEC_FILING_ARCHIVE_DIR = state_dir(PROJECT_ROOT, "data") / "raw" / "sec_filings"
 
 
 @dataclass(frozen=True)

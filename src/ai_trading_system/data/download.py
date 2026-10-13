@@ -59,6 +59,7 @@ from ai_trading_system.external_request_cache import (
     external_request_cache_trace,
     sanitize_diagnostic_text,
 )
+from ai_trading_system.paths import join_root, rglob_root
 from ai_trading_system.platform.artifacts import sha256_bytes
 from ai_trading_system.trading_calendar import is_us_equity_trading_day
 
@@ -963,7 +964,7 @@ def _read_legacy_bootstrap_artifact(
     root: Path,
     relative_path: str,
 ) -> bytes | None:
-    path = root / relative_path
+    path = join_root(root, relative_path)
     if not os.path.lexists(path):
         return None
     try:
@@ -1858,7 +1859,7 @@ def _latest_external_request_metadata(
     if not root.exists():
         return None
     latest: tuple[datetime, Mapping[str, Any]] | None = None
-    for path in root.rglob("metadata.json"):
+    for path in rglob_root(root, "metadata.json"):
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):

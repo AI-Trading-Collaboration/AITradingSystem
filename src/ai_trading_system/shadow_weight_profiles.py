@@ -13,6 +13,7 @@ import yaml
 from pydantic import BaseModel, Field, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 from ai_trading_system.shadow.lineage import (
     git_commit_sha as _git_commit_sha,
 )
@@ -51,11 +52,15 @@ DEFAULT_SHADOW_PARAMETER_PROMOTION_CONTRACT_PATH = (
     PROJECT_ROOT / "config" / "weights" / "shadow_parameter_promotion_contract.yaml"
 )
 DEFAULT_SHADOW_WEIGHT_PROFILE_OBSERVATION_LEDGER_PATH = (
-    PROJECT_ROOT / "data" / "processed" / "shadow_weight_profile_observations.csv"
+    state_dir(PROJECT_ROOT, "data") / "processed" / "shadow_weight_profile_observations.csv"
 )
-DEFAULT_SHADOW_WEIGHT_PROFILE_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
-DEFAULT_SHADOW_PARAMETER_SEARCH_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "parameter_search"
-DEFAULT_DECISION_SNAPSHOT_SEARCH_DIR = PROJECT_ROOT / "data" / "processed" / "decision_snapshots"
+DEFAULT_SHADOW_WEIGHT_PROFILE_REPORT_DIR = state_dir(PROJECT_ROOT, "outputs") / "reports"
+DEFAULT_SHADOW_PARAMETER_SEARCH_OUTPUT_ROOT = (
+    state_dir(PROJECT_ROOT, "outputs") / "parameter_search"
+)
+DEFAULT_DECISION_SNAPSHOT_SEARCH_DIR = (
+    state_dir(PROJECT_ROOT, "data") / "processed" / "decision_snapshots"
+)
 PRODUCTION_OBSERVED_GATE_PROFILE_ID = "production_observed_gates"
 SHADOW_PARAMETER_SEARCH_RESOLVER_VERSION = "shadow_parameter_search_v2"
 
@@ -1172,7 +1177,7 @@ def build_shadow_weight_performance_report(
     as_of: date,
     since: date | None = None,
     observation_ledger_path: Path = DEFAULT_SHADOW_WEIGHT_PROFILE_OBSERVATION_LEDGER_PATH,
-    prices_path: Path = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    prices_path: Path = state_dir(PROJECT_ROOT, "data") / "raw" / "prices_daily.csv",
     strategy_ticker: str = "SMH",
     horizon_days: int = 1,
     cost_bps: float = 5.0,
@@ -1419,7 +1424,7 @@ def build_shadow_parameter_search_report(
     start: date,
     end: date,
     decision_snapshot_path: Path = DEFAULT_DECISION_SNAPSHOT_SEARCH_DIR,
-    prices_path: Path = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    prices_path: Path = state_dir(PROJECT_ROOT, "data") / "raw" / "prices_daily.csv",
     search_space_path: Path = DEFAULT_SHADOW_PARAMETER_SEARCH_SPACE_PATH,
     objective_path: Path = DEFAULT_SHADOW_PARAMETER_OBJECTIVE_PATH,
     output_dir: Path | None = None,

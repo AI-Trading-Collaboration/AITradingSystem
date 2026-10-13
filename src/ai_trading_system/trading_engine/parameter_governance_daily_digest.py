@@ -6,6 +6,7 @@ from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.paths import glob_root, state_dir
 from ai_trading_system.platform.artifacts import write_json_atomic, write_text_atomic
 
 SCHEMA_VERSION = "1.0"
@@ -46,7 +47,7 @@ ACTION_ROLLBACK_REVIEW_REQUIRED = "ROLLBACK_REVIEW_REQUIRED"
 ACTION_URGENT = "URGENT"
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_DATA_ROOT = REPO_ROOT / "data"
+DEFAULT_DATA_ROOT = state_dir(REPO_ROOT, "data")
 
 PIPELINE_CONTRACT: dict[str, Any] = {
     "reads_existing_artifacts_only": True,
@@ -490,7 +491,7 @@ def _latest_dated_artifact(
         return default_path
     earliest = as_of - timedelta(days=lookback_days - 1)
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob(f"{prefix}*{suffix}"):
+    for path in glob_root(root, f"{prefix}*{suffix}"):
         raw_date = path.name.removeprefix(prefix).removesuffix(suffix)
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and earliest <= parsed <= as_of:

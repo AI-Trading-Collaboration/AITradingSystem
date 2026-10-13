@@ -75,6 +75,7 @@ from ai_trading_system.official_policy_sources import (
     default_official_policy_candidates_path,
     default_official_policy_fetch_report_path,
 )
+from ai_trading_system.paths import state_dir
 from ai_trading_system.pipeline_health import default_pipeline_health_report_path
 from ai_trading_system.pit_snapshots import default_pit_snapshot_validation_report_path
 from ai_trading_system.platform.artifacts import (
@@ -441,9 +442,9 @@ def build_daily_ops_plan(
     ):
         raise ValueError("risk_event_openai_precheck_max_candidates must be non-negative")
 
-    raw_dir = project_root / "data" / "raw"
-    processed_dir = project_root / "data" / "processed"
-    reports_dir = project_root / "outputs" / "reports"
+    raw_dir = state_dir(project_root, "data") / "raw"
+    processed_dir = state_dir(project_root, "data") / "processed"
+    reports_dir = state_dir(project_root, "outputs") / "reports"
     as_of_text = as_of.isoformat()
     market_session = us_equity_market_session(as_of)
     download_end = as_of if market_session.is_trading_day else market_session.previous_trading_day
@@ -519,7 +520,7 @@ def build_daily_ops_plan(
     valuation_snapshots_dir = (
         capture_paths.valuation_dir
         if capture_active
-        else project_root / "data" / "external" / "valuation_snapshots"
+        else state_dir(project_root, "data") / "external" / "valuation_snapshots"
     )
     fmp_analyst_history_dir = (
         capture_paths.analyst_history_dir
@@ -592,7 +593,7 @@ def build_daily_ops_plan(
         download_end,
         project_root=project_root,
     )
-    forward_dry_run_root = project_root / "outputs" / "forward_evidence" / "daily_archive"
+    forward_dry_run_root = state_dir(project_root, "outputs") / "forward_evidence" / "daily_archive"
     forward_dry_run_json = forward_dry_run_root / f"forward_evidence_dry_run_{as_of_text}.json"
     forward_dry_run_md = forward_dry_run_root / f"forward_evidence_dry_run_{as_of_text}.md"
     forward_dry_run_ledger = forward_dry_run_root / "forward_evidence_dry_run_ledger.jsonl"
@@ -600,8 +601,8 @@ def build_daily_ops_plan(
     score_change_json = default_score_change_attribution_json_path(reports_dir, as_of)
     market_panel_report = default_market_panel_report_path(reports_dir, as_of)
     market_panel_json = default_market_panel_json_path(reports_dir, as_of)
-    market_data_freshness_root = project_root / "artifacts" / "data_freshness"
-    market_data_refresh_root = project_root / "artifacts" / "data_refresh"
+    market_data_freshness_root = state_dir(project_root, "artifacts") / "data_freshness"
+    market_data_refresh_root = state_dir(project_root, "artifacts") / "data_refresh"
     market_data_freshness_json = default_market_data_freshness_json_path(
         market_data_freshness_root,
         as_of,
@@ -1265,12 +1266,10 @@ def build_daily_ops_plan(
                 ),
                 required_env_vars=(),
                 produced_paths=(
-                    project_root
-                    / "outputs"
+                    state_dir(project_root, "outputs")
                     / "sec_pit_shadow_observe"
                     / f"sec_pit_shadow_observe_summary_{as_of_text}.json",
-                    project_root
-                    / "outputs"
+                    state_dir(project_root, "outputs")
                     / "sec_pit_shadow_observe"
                     / f"sec_pit_shadow_observe_summary_{as_of_text}.md",
                 ),
@@ -1300,12 +1299,10 @@ def build_daily_ops_plan(
                 ),
                 required_env_vars=(),
                 produced_paths=(
-                    project_root
-                    / "outputs"
+                    state_dir(project_root, "outputs")
                     / "sec_pit_shadow_monitor"
                     / f"sec_pit_shadow_monitor_summary_{as_of_text}.json",
-                    project_root
-                    / "outputs"
+                    state_dir(project_root, "outputs")
                     / "sec_pit_shadow_monitor"
                     / f"sec_pit_shadow_monitor_summary_{as_of_text}.md",
                 ),
@@ -1619,14 +1616,16 @@ def run_daily_ops_plan(
     resolved_diagnostics_dir = (
         diagnostics_dir
         if diagnostics_dir is not None
-        else project_root / "outputs" / "reports" / "diagnostics" / "daily_ops"
+        else state_dir(project_root, "outputs") / "reports" / "diagnostics" / "daily_ops"
     )
     checked_env = dict(os.environ if env is None else env)
     checked_env["PYTHONFAULTHANDLER"] = "1"
     checked_env["PYTHONMALLOC"] = "malloc"
     checked_env["PYTHONDONTWRITEBYTECODE"] = "1"
     run_pycache_token = f"run_{started_at.strftime('%Y%m%dT%H%M%S%fZ')}_{os.getpid()}"
-    pycache_prefix = project_root / "outputs" / "tmp" / "pycache" / "daily_run" / run_pycache_token
+    pycache_prefix = (
+        state_dir(project_root, "outputs") / "tmp" / "pycache" / "daily_run" / run_pycache_token
+    )
     pycache_prefix.mkdir(parents=True, exist_ok=True)
     checked_env["PYTHONPYCACHEPREFIX"] = str(pycache_prefix)
     _purge_source_pycache_dirs(project_root)
@@ -1970,7 +1969,7 @@ def run_daily_ops_plan_controlled(
         root=(
             run_control_root
             if run_control_root is not None
-            else project_root / "outputs" / "run_control" / "daily"
+            else state_dir(project_root, "outputs") / "run_control" / "daily"
         ),
         policy=policy,
     )
@@ -2104,7 +2103,7 @@ def _apply_daily_ops_completion_callback(
         resolved_diagnostics_dir = (
             diagnostics_dir
             if diagnostics_dir is not None
-            else project_root / "outputs" / "reports" / "diagnostics" / "daily_ops"
+            else state_dir(project_root, "outputs") / "reports" / "diagnostics" / "daily_ops"
         )
         diagnostic_path = _write_step_failure_diagnostic(
             step=finalization_step,
@@ -2954,10 +2953,10 @@ def _build_pre_run_input_artifacts(
 
 
 def _pre_run_input_paths(plan: DailyOpsPlan, project_root: Path) -> tuple[Path, ...]:
-    raw_dir = project_root / "data" / "raw"
-    processed_dir = project_root / "data" / "processed"
-    reports_dir = project_root / "outputs" / "reports"
-    external_dir = project_root / "data" / "external"
+    raw_dir = state_dir(project_root, "data") / "raw"
+    processed_dir = state_dir(project_root, "data") / "processed"
+    reports_dir = state_dir(project_root, "outputs") / "reports"
+    external_dir = state_dir(project_root, "data") / "external"
     as_of = plan.as_of
     paths = [
         raw_dir / "prices_daily.csv",

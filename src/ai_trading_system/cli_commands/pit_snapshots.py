@@ -33,6 +33,7 @@ from ai_trading_system.fmp_forward_pit import (
     write_fmp_forward_pit_normalized_csv_from_payloads,
     write_fmp_forward_pit_raw_payloads,
 )
+from ai_trading_system.paths import state_dir
 from ai_trading_system.pit_snapshots import (
     DEFAULT_CUMULATIVE_PIT_SNAPSHOT_MANIFEST_PATH,
     DEFAULT_PIT_RAW_ROOT,
@@ -54,13 +55,13 @@ console = Console()
 pit_snapshots_app = typer.Typer(help="Forward-only PIT raw snapshot 归档。", no_args_is_help=True)
 
 DEFAULT_FMP_ANALYST_ESTIMATE_HISTORY_DIR = default_fmp_analyst_estimate_history_dir(
-    PROJECT_ROOT / "data" / "raw"
+    state_dir(PROJECT_ROOT, "data") / "raw"
 )
 DEFAULT_FMP_HISTORICAL_VALUATION_RAW_DIR = default_fmp_historical_valuation_raw_dir(
-    PROJECT_ROOT / "data" / "raw"
+    state_dir(PROJECT_ROOT, "data") / "raw"
 )
 DEFAULT_EODHD_EARNINGS_TRENDS_RAW_DIR = default_eodhd_earnings_trends_raw_dir(
-    PROJECT_ROOT / "data" / "raw"
+    state_dir(PROJECT_ROOT, "data") / "raw"
 )
 
 
@@ -103,7 +104,7 @@ def validate_pit_snapshots_command(
     """校验 forward-only PIT raw snapshot manifest。"""
     validation_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_pit_snapshot_validation_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         validation_date,
     )
     report = validate_pit_snapshot_manifest(
@@ -219,7 +220,7 @@ def build_pit_snapshot_manifest_command(
     )
     manifest_path = write_pit_snapshot_manifest(records, output_path)
     report_path = validation_report_path or default_pit_snapshot_validation_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         manifest_date,
     )
     report = validate_pit_snapshot_manifest(
@@ -278,7 +279,7 @@ def build_cumulative_pit_snapshot_manifest_command(
         raise typer.Exit(code=1) from exc
     manifest_path = write_pit_snapshot_manifest(records, output_path)
     report_path = validation_report_path or default_pit_snapshot_validation_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         manifest_date,
     )
     report = validate_pit_snapshot_manifest(
@@ -364,7 +365,7 @@ def fetch_fmp_forward_pit_command(
         _parse_csv_items(tickers) if tickers else load_universe().ai_chain.get("core_watchlist", [])
     )
     fetch_report_output = output_path or default_fmp_forward_pit_fetch_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         fetch_date,
     )
     normalized_output = normalized_output_path or default_fmp_forward_pit_normalized_path(
@@ -372,7 +373,7 @@ def fetch_fmp_forward_pit_command(
         fetch_date,
     )
     pit_report_output = pit_validation_report_path or default_pit_snapshot_validation_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         fetch_date,
     )
 

@@ -61,6 +61,7 @@ from ai_trading_system.fundamentals.sec_metrics import (
 )
 from ai_trading_system.historical_inputs import risk_event_occurrence_store_as_of
 from ai_trading_system.ops_daily import _join_command, default_daily_ops_run_metadata_path
+from ai_trading_system.paths import join_root, relative_to_root, state_dir
 from ai_trading_system.pipeline_health import default_pipeline_health_report_path
 from ai_trading_system.pit_snapshots import default_pit_snapshot_validation_report_path
 from ai_trading_system.portfolio_exposure import default_portfolio_exposure_report_path
@@ -241,7 +242,7 @@ class HistoricalReplayWindowRun:
 
 
 def default_historical_replay_output_root(project_root: Path = PROJECT_ROOT) -> Path:
-    return project_root / "outputs" / "replays"
+    return state_dir(project_root, "outputs") / "replays"
 
 
 def run_historical_day_replay(
@@ -755,8 +756,8 @@ def build_replay_production_diff(
     project_root: Path,
     paths: ReplayPaths,
 ) -> ReplayProductionDiff:
-    reports_dir = project_root / "outputs" / "reports"
-    processed_dir = project_root / "data" / "processed"
+    reports_dir = state_dir(project_root, "outputs") / "reports"
+    processed_dir = state_dir(project_root, "data") / "processed"
     artifacts = [
         _compare_file_artifact(
             artifact_id="daily_score_report",
@@ -882,9 +883,9 @@ def _prepare_replay_inputs(
 ) -> tuple[list[ReplayInputRecord], list[str]]:
     records: list[ReplayInputRecord] = []
     errors: list[str] = []
-    raw_dir = project_root / "data" / "raw"
-    processed_dir = project_root / "data" / "processed"
-    reports_dir = project_root / "outputs" / "reports"
+    raw_dir = state_dir(project_root, "data") / "raw"
+    processed_dir = state_dir(project_root, "data") / "processed"
+    reports_dir = state_dir(project_root, "outputs") / "reports"
     pit_input_cutoff = min(visible_at, _default_visible_at(as_of))
     openai_input_cutoff = min(visible_at, _default_visible_at(as_of))
 
@@ -969,8 +970,7 @@ def _prepare_replay_inputs(
             artifact_id="pit_validation_report",
             artifact_class="pit_report",
             source_path=default_pit_snapshot_validation_report_path(reports_dir, as_of),
-            replay_path=paths.input_root
-            / "outputs"
+            replay_path=state_dir(paths.input_root, "outputs")
             / "reports"
             / f"pit_snapshots_validation_{as_of.isoformat()}.md",
             errors=errors,
@@ -981,8 +981,7 @@ def _prepare_replay_inputs(
             artifact_id="fmp_forward_pit_fetch_report",
             artifact_class="pit_report",
             source_path=default_fmp_forward_pit_fetch_report_path(reports_dir, as_of),
-            replay_path=paths.input_root
-            / "outputs"
+            replay_path=state_dir(paths.input_root, "outputs")
             / "reports"
             / f"fmp_forward_pit_fetch_{as_of.isoformat()}.md",
             errors=errors,
@@ -990,8 +989,8 @@ def _prepare_replay_inputs(
     )
     records.append(
         _filter_valuation_snapshots(
-            source_dir=project_root / "data" / "external" / "valuation_snapshots",
-            replay_dir=paths.input_root / "data" / "external" / "valuation_snapshots",
+            source_dir=state_dir(project_root, "data") / "external" / "valuation_snapshots",
+            replay_dir=state_dir(paths.input_root, "data") / "external" / "valuation_snapshots",
             as_of=as_of,
             errors=errors,
         )
@@ -1011,8 +1010,7 @@ def _prepare_replay_inputs(
             artifact_id="valuation_fetch_report",
             artifact_class="valuation_report",
             source_path=default_fmp_valuation_fetch_report_path(reports_dir, as_of),
-            replay_path=paths.input_root
-            / "outputs"
+            replay_path=state_dir(paths.input_root, "outputs")
             / "reports"
             / f"fmp_valuation_fetch_{as_of.isoformat()}.md",
         )
@@ -1022,32 +1020,31 @@ def _prepare_replay_inputs(
             artifact_id="valuation_validation_report",
             artifact_class="valuation_report",
             source_path=default_valuation_validation_report_path(reports_dir, as_of),
-            replay_path=paths.input_root
-            / "outputs"
+            replay_path=state_dir(paths.input_root, "outputs")
             / "reports"
             / f"valuation_validation_{as_of.isoformat()}.md",
         )
     )
     records.append(
         _filter_risk_event_occurrences(
-            source_dir=project_root / "data" / "external" / "risk_event_occurrences",
-            replay_dir=paths.input_root / "data" / "external" / "risk_event_occurrences",
+            source_dir=state_dir(project_root, "data") / "external" / "risk_event_occurrences",
+            replay_dir=state_dir(paths.input_root, "data") / "external" / "risk_event_occurrences",
             as_of=as_of,
             errors=errors,
         )
     )
     records.append(
         _filter_trade_theses(
-            source_path=project_root / "data" / "external" / "trade_theses",
-            replay_dir=paths.input_root / "data" / "external" / "trade_theses",
+            source_path=state_dir(project_root, "data") / "external" / "trade_theses",
+            replay_dir=state_dir(paths.input_root, "data") / "external" / "trade_theses",
             as_of=as_of,
             errors=errors,
         )
     )
     records.append(
         _filter_trade_records(
-            source_path=project_root / "data" / "external" / "trades",
-            replay_dir=paths.input_root / "data" / "external" / "trades",
+            source_path=state_dir(project_root, "data") / "external" / "trades",
+            replay_dir=state_dir(paths.input_root, "data") / "external" / "trades",
             as_of=as_of,
             errors=errors,
         )
@@ -1166,7 +1163,7 @@ def _score_daily_command(
         "--belief-state-path",
         str(
             default_belief_state_path(
-                paths.output_root / "data" / "processed" / "belief_state",
+                state_dir(paths.output_root, "data") / "processed" / "belief_state",
                 as_of,
             )
         ),
@@ -1195,19 +1192,19 @@ def _score_daily_command(
         "--risk-event-occurrence-report-path",
         str(default_risk_event_occurrence_report_path(reports, as_of)),
         "--risk-event-occurrences-path",
-        str(paths.input_root / "data" / "external" / "risk_event_occurrences"),
+        str(state_dir(paths.input_root, "data") / "external" / "risk_event_occurrences"),
         "--risk-event-prereview-queue-path",
         str(paths.data_processed_dir / RISK_EVENT_PREREVIEW_QUEUE_NAME),
         "--risk-event-openai-precheck-report-path",
         str(default_risk_event_openai_prereview_report_path(reports, as_of)),
         "--thesis-path",
-        str(paths.input_root / "data" / "external" / "trade_theses"),
+        str(state_dir(paths.input_root, "data") / "external" / "trade_theses"),
         "--execution-policy-report-path",
         str(default_execution_policy_report_path(reports, as_of)),
         "--valuation-path",
-        str(paths.input_root / "data" / "external" / "valuation_snapshots"),
+        str(state_dir(paths.input_root, "data") / "external" / "valuation_snapshots"),
         "--trades-path",
-        str(paths.input_root / "data" / "external" / "trades"),
+        str(state_dir(paths.input_root, "data") / "external" / "trades"),
         "--skip-risk-event-openai-precheck",
     ]
     if full_universe:
@@ -1237,7 +1234,7 @@ def _dashboard_command(paths: ReplayPaths, as_of: date) -> tuple[str, ...]:
         "--belief-state-path",
         str(
             default_belief_state_path(
-                paths.output_root / "data" / "processed" / "belief_state",
+                state_dir(paths.output_root, "data") / "processed" / "belief_state",
                 as_of,
             )
         ),
@@ -1284,15 +1281,13 @@ def _pipeline_health_command(
         ),
         "--pit-validation-report-path",
         str(
-            paths.input_root
-            / "outputs"
+            state_dir(paths.input_root, "outputs")
             / "reports"
             / f"pit_snapshots_validation_{as_of.isoformat()}.md"
         ),
         "--pit-fetch-report-path",
         str(
-            paths.input_root
-            / "outputs"
+            state_dir(paths.input_root, "outputs")
             / "reports"
             / f"fmp_forward_pit_fetch_{as_of.isoformat()}.md"
         ),
@@ -1815,7 +1810,7 @@ def _load_fmp_forward_pit_raw_payload(
     project_root: Path,
 ) -> FmpForwardPitRawPayload | None:
     path = Path(raw_payload_path)
-    resolved_path = path if path.is_absolute() else project_root / path
+    resolved_path = path if path.is_absolute() else join_root(project_root, path)
     if not resolved_path.exists():
         return None
     raw = _read_yaml_mapping(resolved_path)
@@ -2647,7 +2642,7 @@ def _candidate_openai_cache_paths(
         if raw_cache_path.is_absolute():
             add(raw_cache_path)
         else:
-            add(project_root / raw_cache_path)
+            add(join_root(project_root, raw_cache_path))
             add(source_processed_dir / raw_cache_path)
 
     cache_key = str(record.get("cache_key") or "").strip()
@@ -2829,14 +2824,14 @@ def _build_replay_paths(
     root = output_root / as_of.isoformat() / resolved_run_id
     input_root = root / "input"
     output = root / "output"
-    reports = output / "outputs" / "reports"
+    reports = state_dir(output, "outputs") / "reports"
     return ReplayPaths(
         run_id=resolved_run_id,
         root=root,
         input_root=input_root,
         output_root=output,
-        data_raw_dir=input_root / "data" / "raw",
-        data_processed_dir=output / "data" / "processed",
+        data_raw_dir=state_dir(input_root, "data") / "raw",
+        data_processed_dir=state_dir(output, "data") / "processed",
         reports_dir=reports,
         logs_dir=root / "logs",
         input_manifest_csv_path=root / "input_freeze_manifest.csv",
@@ -2897,7 +2892,7 @@ def _resolve_replay_visible_at(
 
 def _production_visibility_cutoff(as_of: date, project_root: Path) -> datetime | None:
     metadata_path = default_daily_ops_run_metadata_path(
-        project_root / "outputs" / "reports",
+        state_dir(project_root, "outputs") / "reports",
         as_of,
     )
     if not metadata_path.exists():
@@ -3372,7 +3367,7 @@ def _trace_bundle_path(paths: ReplayPaths, as_of: date) -> Path:
 
 def _decision_snapshot_path(paths: ReplayPaths, as_of: date) -> Path:
     return default_decision_snapshot_path(
-        paths.output_root / DEFAULT_DECISION_SNAPSHOT_DIR.relative_to(PROJECT_ROOT),
+        paths.output_root / relative_to_root(DEFAULT_DECISION_SNAPSHOT_DIR, PROJECT_ROOT),
         as_of,
     )
 

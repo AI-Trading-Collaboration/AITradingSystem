@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Literal, Protocol
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 from ai_trading_system.trading_engine.schemas.market import MarketSnapshot
 from ai_trading_system.trading_engine.schemas.order_intent_candidate import (
     OrderIntentCandidate,
@@ -43,7 +44,7 @@ class HistoricalPriceMarketSnapshotProvider:
         self.prices_path = (
             Path(prices_path)
             if prices_path is not None
-            else (PROJECT_ROOT / "data" / "raw" / "prices_daily.csv")
+            else (state_dir(PROJECT_ROOT, "data") / "raw" / "prices_daily.csv")
         )
 
     def resolve(

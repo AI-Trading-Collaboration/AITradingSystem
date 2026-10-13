@@ -12,6 +12,7 @@ from numbers import Integral, Real
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.paths import join_root, relative_to_root
 from ai_trading_system.trading_calendar import NYSE_REGULAR_HOLIDAY_CALENDAR_SOURCE
 from ai_trading_system.us_equity_special_closure_policy import (
     load_us_equity_special_closure_policy_by_identity,
@@ -882,9 +883,9 @@ def _function_ast_hash(source_path: Path, function_name: str) -> str:
 
 
 def _resolve_bound_path(project_root: Path, relative_path: str) -> Path:
-    candidate = (project_root / relative_path).resolve()
+    candidate = (join_root(project_root, relative_path)).resolve()
     try:
-        candidate.relative_to(project_root)
+        relative_to_root(candidate, project_root)
     except ValueError as exc:
         raise DataQualityAttributionContractError(
             "BOUND_PATH_OUTSIDE_PROJECT",

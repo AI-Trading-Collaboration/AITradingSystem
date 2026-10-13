@@ -20,9 +20,12 @@ from typing import Any, Protocol
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data.download import write_download_manifest
 from ai_trading_system.external_request_cache import cached_urllib_get
+from ai_trading_system.paths import state_dir
 
-DEFAULT_OFFICIAL_POLICY_RAW_DIR = PROJECT_ROOT / "data" / "raw" / "official_policy_sources"
-DEFAULT_OFFICIAL_POLICY_PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
+DEFAULT_OFFICIAL_POLICY_RAW_DIR = (
+    state_dir(PROJECT_ROOT, "data") / "raw" / "official_policy_sources"
+)
+DEFAULT_OFFICIAL_POLICY_PROCESSED_DIR = state_dir(PROJECT_ROOT, "data") / "processed"
 OFFICIAL_POLICY_CANDIDATE_SCHEMA_VERSION = "official_policy_source_candidates.v1"
 OFFICIAL_POLICY_CANDIDATE_COLUMNS = (
     "candidate_id",

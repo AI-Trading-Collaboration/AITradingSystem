@@ -8,6 +8,7 @@ from typing import Any
 
 import yaml
 
+from ai_trading_system.paths import glob_root, state_dir
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SCHEMA_VERSION = "1.0"
@@ -90,7 +91,7 @@ def default_comparison_root(data_root: Path) -> Path:
 def build_shadow_promotion_proposal_payload(
     *,
     as_of: date,
-    data_root: Path = REPO_ROOT / "data",
+    data_root: Path = state_dir(REPO_ROOT, "data"),
     lookback_days: int = 7,
     production_profile_path: Path = DEFAULT_PRODUCTION_PROFILE_PATH,
     policy_path: Path = DEFAULT_POLICY_PATH,
@@ -276,7 +277,7 @@ def build_shadow_promotion_proposal_payload(
 def write_shadow_promotion_proposal_report(
     *,
     as_of: date,
-    data_root: Path = REPO_ROOT / "data",
+    data_root: Path = state_dir(REPO_ROOT, "data"),
     lookback_days: int = 7,
     production_profile_path: Path = DEFAULT_PRODUCTION_PROFILE_PATH,
     policy_path: Path = DEFAULT_POLICY_PATH,
@@ -946,7 +947,7 @@ def _latest_dated_path(*, root: Path, prefix: str, as_of: date, default_path: Pa
     if not root.exists():
         return default_path
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob(f"{prefix}*.json"):
+    for path in glob_root(root, f"{prefix}*.json"):
         parsed = _parse_iso_date(path.stem.removeprefix(prefix))
         if parsed is not None and parsed <= as_of:
             candidates.append((parsed, path))

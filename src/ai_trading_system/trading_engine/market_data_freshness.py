@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import glob_root, state_dir
 from ai_trading_system.shadow.lineage import git_commit_sha, git_worktree_dirty
 from ai_trading_system.trading_calendar import (
     NYSE_REGULAR_HOLIDAY_CALENDAR_SOURCE,
@@ -34,7 +35,7 @@ MARKET_DATA_FRESHNESS_SCHEMA_VERSION = 1
 MARKET_DATA_FRESHNESS_REPORT_TYPE = "market_data_freshness"
 MARKET_DATA_FRESHNESS_ALIAS_REPORT_TYPE = "market_data_freshness_report"
 DEFAULT_MARKET_DATA_FRESHNESS_CONFIG_PATH = (
-    PROJECT_ROOT / "config" / "data" / "market_data_freshness.yaml"
+    state_dir(PROJECT_ROOT / "config", "data") / "market_data_freshness.yaml"
 )
 
 FRESHNESS_OK = "OK"
@@ -84,7 +85,7 @@ class MarketDataFreshnessRun:
 
 
 def default_market_data_freshness_root() -> Path:
-    return PROJECT_ROOT / "artifacts" / "data_freshness"
+    return state_dir(PROJECT_ROOT, "artifacts") / "data_freshness"
 
 
 def default_market_data_freshness_dir(output_root: Path, as_of: date) -> Path:
@@ -115,7 +116,7 @@ def market_data_freshness_report_alias_paths(
 
 def latest_market_data_freshness_path(output_root: Path | None = None) -> Path | None:
     root = output_root or default_market_data_freshness_root()
-    candidates = sorted(root.glob("*/market_data_freshness_summary.json"))
+    candidates = sorted(glob_root(root, "*/market_data_freshness_summary.json"))
     if not candidates:
         return None
     return max(candidates, key=lambda path: path.stat().st_mtime)
@@ -127,7 +128,7 @@ def latest_market_data_freshness_path_on_or_before(
 ) -> Path | None:
     root = output_root or default_market_data_freshness_root()
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/market_data_freshness_summary.json"):
+    for path in glob_root(root, "*/market_data_freshness_summary.json"):
         parsed = _parse_date(path.parent.name)
         if parsed is not None and parsed <= as_of:
             candidates.append((parsed, path))
@@ -953,7 +954,7 @@ def _prices_path(config: dict[str, Any]) -> Path:
     raw = _input(config, "prices_path")
     if raw:
         return resolve_project_path(str(raw))
-    return PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
+    return state_dir(PROJECT_ROOT, "data") / "raw" / "prices_daily.csv"
 
 
 def _artifact_root(config: dict[str, Any]) -> Path:
@@ -961,7 +962,7 @@ def _artifact_root(config: dict[str, Any]) -> Path:
     if raw:
         path = resolve_project_path(str(raw))
         return path.parent if path.name == "backtest_snapshots" else path
-    return PROJECT_ROOT / "artifacts"
+    return state_dir(PROJECT_ROOT, "artifacts")
 
 
 def _price_cache_registry_path(config: dict[str, Any]) -> Path:
@@ -969,7 +970,7 @@ def _price_cache_registry_path(config: dict[str, Any]) -> Path:
     return (
         resolve_project_path(str(raw))
         if raw
-        else PROJECT_ROOT / "artifacts" / "data_registry" / "price_cache_registry.json"
+        else state_dir(PROJECT_ROOT, "artifacts") / "data_registry" / "price_cache_registry.json"
     )
 
 
@@ -978,14 +979,14 @@ def _download_manifest_path(config: dict[str, Any]) -> Path:
     return (
         resolve_project_path(str(raw))
         if raw
-        else PROJECT_ROOT / "data" / "raw" / "download_manifest.csv"
+        else state_dir(PROJECT_ROOT, "data") / "raw" / "download_manifest.csv"
     )
 
 
 def _output_root(config: dict[str, Any], *, dry_run: bool) -> Path:
     key = "dry_run_dir" if dry_run else "market_data_freshness_dir"
     default = (
-        PROJECT_ROOT / "outputs" / "dry_runs" / "data_freshness"
+        state_dir(PROJECT_ROOT, "outputs") / "dry_runs" / "data_freshness"
         if dry_run
         else default_market_data_freshness_root()
     )

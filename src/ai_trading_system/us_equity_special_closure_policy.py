@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
+from ai_trading_system.paths import join_root
 from ai_trading_system.yaml_loader import (
     StrictYamlError,
     StrictYamlOptions,
@@ -32,8 +33,8 @@ CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH = Path(
 US_EQUITY_SPECIAL_CLOSURE_ARCHIVE_1_0_0_SHA256 = (
     "c0469a17a775df2dcde503c254c22db0cc7d8ad6e3a5884f2ed43c88e4dfbda4"
 )
-DEFAULT_US_EQUITY_SPECIAL_CLOSURE_POLICY_PATH = (
-    PROJECT_ROOT / CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH
+DEFAULT_US_EQUITY_SPECIAL_CLOSURE_POLICY_PATH = join_root(
+    PROJECT_ROOT, CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH
 )
 US_EQUITY_SPECIAL_CLOSURE_SCHEMA_VERSION = "us_equity_special_closure_registry.v1"
 US_EQUITY_SPECIAL_CLOSURE_POLICY_ID = "us_equity_special_closure_registry"
@@ -231,15 +232,13 @@ def load_us_equity_special_closure_policy_by_identity(
 ) -> UsEquitySpecialClosurePolicy:
     """Resolve current or archived reviewed calendar bytes by exact identity."""
 
-    candidates = [
-        project_root / CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH
-    ]
+    candidates = [join_root(project_root, CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH)]
     if (
         policy_version == "1.0.0"
         and policy_sha256 == US_EQUITY_SPECIAL_CLOSURE_ARCHIVE_1_0_0_SHA256
     ):
         candidates.append(
-            project_root / US_EQUITY_SPECIAL_CLOSURE_ARCHIVE_1_0_0_RELATIVE_PATH
+            join_root(project_root, US_EQUITY_SPECIAL_CLOSURE_ARCHIVE_1_0_0_RELATIVE_PATH)
         )
     for candidate in candidates:
         loaded = load_us_equity_special_closure_policy(candidate)

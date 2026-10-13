@@ -18,14 +18,19 @@ from ai_trading_system.feedback_sample_policy import (
     load_feedback_sample_policy,
     sample_floor_summary,
 )
+from ai_trading_system.paths import state_dir
 
-DEFAULT_PREDICTION_LEDGER_PATH = PROJECT_ROOT / "data" / "processed" / "prediction_ledger.csv"
-DEFAULT_PREDICTION_OUTCOMES_PATH = PROJECT_ROOT / "data" / "processed" / "prediction_outcomes.csv"
-DEFAULT_PARAMETER_SHADOW_PREDICTION_LEDGER_PATH = (
-    PROJECT_ROOT / "data" / "processed" / "prediction_ledger_flow_validation.csv"
+DEFAULT_PREDICTION_LEDGER_PATH = (
+    state_dir(PROJECT_ROOT, "data") / "processed" / "prediction_ledger.csv"
 )
-DEFAULT_SHADOW_RUN_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
-DEFAULT_SHADOW_MATURITY_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
+DEFAULT_PREDICTION_OUTCOMES_PATH = (
+    state_dir(PROJECT_ROOT, "data") / "processed" / "prediction_outcomes.csv"
+)
+DEFAULT_PARAMETER_SHADOW_PREDICTION_LEDGER_PATH = (
+    state_dir(PROJECT_ROOT, "data") / "processed" / "prediction_ledger_flow_validation.csv"
+)
+DEFAULT_SHADOW_RUN_REPORT_DIR = state_dir(PROJECT_ROOT, "outputs") / "reports"
+DEFAULT_SHADOW_MATURITY_REPORT_DIR = state_dir(PROJECT_ROOT, "outputs") / "reports"
 PREDICTION_LEDGER_COLUMNS = (
     "prediction_id",
     "run_id",

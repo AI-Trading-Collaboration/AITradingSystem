@@ -26,6 +26,7 @@ from ai_trading_system.data.immutable_publish import (
 from ai_trading_system.data.immutable_publish import (
     delete_contained_artifact_bytes as delete_contained_artifact_bytes,
 )
+from ai_trading_system.paths import join_root, relative_to_root
 from ai_trading_system.platform.artifacts import canonical_json_bytes, sha256_bytes
 
 DURABILITY_POLICY_SCHEMA_VERSION = "data_foundation_durability_policy.v1"
@@ -827,7 +828,7 @@ def validate_durability_attestation(value: Mapping[str, object]) -> None:
 def _store_inventory(root: Path, managed_roots: Sequence[str]) -> tuple[StoreObject, ...]:
     items: list[StoreObject] = []
     for managed in managed_roots:
-        base = root / managed
+        base = join_root(root, managed)
         if not os.path.lexists(base):
             continue
         metadata = base.lstat()
@@ -850,7 +851,7 @@ def _store_inventory(root: Path, managed_roots: Sequence[str]) -> tuple[StoreObj
                 _validate_no_link(metadata, path)
                 if not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1:
                     _fail("GC_ENTRY_INVALID", str(path))
-                relative = path.relative_to(root).as_posix()
+                relative = relative_to_root(path, root).as_posix()
                 content = read_contained_artifact_bytes(root=root, relative_path=relative)
                 items.append(
                     StoreObject(
@@ -878,7 +879,7 @@ def _current_pointer_state(root: Path) -> list[dict[str, object]]:
         _validate_no_link(metadata, path)
         if path.suffix != ".json" or not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1:
             _fail("CURRENT_POINTER_ENTRY_INVALID", str(path))
-        relative = path.relative_to(root).as_posix()
+        relative = relative_to_root(path, root).as_posix()
         content = read_contained_artifact_bytes(root=root, relative_path=relative)
         state.append(
             {
@@ -928,7 +929,7 @@ def _reachable_pointer_history(
         current = _canonical_mapping(
             read_contained_artifact_bytes(
                 root=root,
-                relative_path=path.relative_to(root).as_posix(),
+                relative_path=relative_to_root(path, root).as_posix(),
             ),
             "CURRENT_POINTER_INVALID",
         )

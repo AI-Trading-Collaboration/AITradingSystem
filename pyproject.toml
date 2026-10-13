@@ -81,6 +81,10 @@ extend-exclude = '''
 select = ["E", "F", "I", "UP", "B"]
 ignore = []
 
+[tool.ruff.lint.flake8-bugbear]
+# Path helpers that return a fixed path for the process, like the pathlib expressions they replace.
+extend-immutable-calls = ["ai_trading_system.paths.state_dir", "ai_trading_system.paths.join_root"]
+
 [tool.mypy]
 python_version = "3.11"
 strict = true

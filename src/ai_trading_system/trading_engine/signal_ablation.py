@@ -11,6 +11,7 @@ import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data.quality import default_quality_report_path
+from ai_trading_system.paths import glob_root, state_dir
 from ai_trading_system.shadow.lineage import git_commit_sha, git_worktree_dirty, sha256_file
 from ai_trading_system.trading_engine.backtest_input_diagnostics import (
     run_backtest_input_diagnostics,
@@ -102,7 +103,7 @@ class SignalAblationRun:
 
 
 def default_signal_ablation_root() -> Path:
-    return PROJECT_ROOT / "artifacts" / "signal_ablation"
+    return state_dir(PROJECT_ROOT, "artifacts") / "signal_ablation"
 
 
 def default_signal_ablation_dir(output_root: Path, as_of: date) -> Path:
@@ -119,7 +120,7 @@ def default_signal_ablation_markdown_path(output_root: Path, as_of: date) -> Pat
 
 def latest_signal_ablation_path(output_root: Path | None = None) -> Path | None:
     root = output_root or default_signal_ablation_root()
-    candidates = sorted(root.glob("*/signal_ablation_summary.json"))
+    candidates = sorted(glob_root(root, "*/signal_ablation_summary.json"))
     if not candidates:
         return None
     return max(candidates, key=lambda path: path.stat().st_mtime)
@@ -1751,8 +1752,7 @@ def _baseline_source_path(
 ) -> Path:
     if dry_run:
         return (
-            PROJECT_ROOT
-            / "outputs"
+            state_dir(PROJECT_ROOT, "outputs")
             / "dry_runs"
             / "shadow_backtest"
             / "shadow_backtest"
@@ -1768,19 +1768,19 @@ def _baseline_source_path(
 
 def _data_quality_report_dir(shadow_config: ShadowBacktestConfig, *, dry_run: bool) -> Path:
     if dry_run:
-        return PROJECT_ROOT / "outputs" / "dry_runs" / "signal_ablation" / "reports"
+        return state_dir(PROJECT_ROOT, "outputs") / "dry_runs" / "signal_ablation" / "reports"
     return resolve_project_path(shadow_config.data.data_quality_report_dir)
 
 
 def _diagnostic_output_root(shadow_config: ShadowBacktestConfig, *, dry_run: bool) -> Path:
     if dry_run:
-        return PROJECT_ROOT / "outputs" / "dry_runs" / "signal_ablation"
+        return state_dir(PROJECT_ROOT, "outputs") / "dry_runs" / "signal_ablation"
     return resolve_project_path(shadow_config.output.shadow_backtest_dir).parent
 
 
 def _output_root(config: SignalAblationConfig, *, dry_run: bool) -> Path:
     if dry_run:
-        return PROJECT_ROOT / "outputs" / "dry_runs" / "signal_ablation"
+        return state_dir(PROJECT_ROOT, "outputs") / "dry_runs" / "signal_ablation"
     return resolve_project_path(config.output.signal_ablation_dir)
 
 

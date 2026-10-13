@@ -10,6 +10,7 @@ from rich.console import Console
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.decision_snapshots import DEFAULT_DECISION_SNAPSHOT_DIR
+from ai_trading_system.paths import state_dir
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_INDEX_WAIVER_PATH,
     DEFAULT_REPORT_REGISTRY_PATH,
@@ -81,7 +82,7 @@ def report_index_command(
         )
     else:
         report_date = _parse_date(as_of) if as_of else date.today()
-    reports_dir = project_root / "outputs" / "reports"
+    reports_dir = state_dir(project_root, "outputs") / "reports"
     html_output = output_path or default_report_index_html_path(reports_dir, report_date)
     json_output = json_output_path or default_report_index_json_path(reports_dir, report_date)
     try:
@@ -119,8 +120,7 @@ def waiver_inventory_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     registry_path: Annotated[
         Path,
@@ -189,8 +189,7 @@ def validate_waiver_inventory_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,

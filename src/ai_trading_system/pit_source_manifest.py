@@ -23,6 +23,7 @@ from ai_trading_system.data_source_fallback_policy import (
     DEFAULT_DATA_SOURCE_FALLBACK_DIR,
     latest_data_source_fallback_policy_summary,
 )
+from ai_trading_system.paths import join_root
 
 PIT_SOURCE_MANIFEST_SCHEMA_VERSION = 1
 PIT_SOURCE_MANIFEST_REPORT_TYPE = "pit_source_manifest"
@@ -1375,7 +1376,7 @@ def _template_to_glob(path: str) -> str:
 
 def _resolve_path(path: str, project_root: Path) -> Path:
     candidate = Path(path)
-    return candidate if candidate.is_absolute() else project_root / candidate
+    return candidate if candidate.is_absolute() else join_root(project_root, candidate)
 
 
 def _has_glob(value: str) -> bool:

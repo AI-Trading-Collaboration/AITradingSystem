@@ -6,6 +6,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.paths import glob_root, join_root, state_dir
 from ai_trading_system.platform.artifacts import sha256_path, write_json_atomic, write_text_atomic
 
 SCHEMA_VERSION = "1.0"
@@ -77,7 +78,7 @@ DRAFT_HASH_VOLATILE_KEYS = {
 }
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_DATA_ROOT = REPO_ROOT / "data"
+DEFAULT_DATA_ROOT = state_dir(REPO_ROOT, "data")
 
 OUTPUT_SAFETY_TRUE_FIELDS = (
     "manual_review_only",
@@ -1355,7 +1356,7 @@ def _resolve_latest_or_explicit(
     if not root.exists():
         return default_path
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob(f"{prefix}*.json"):
+    for path in glob_root(root, f"{prefix}*.json"):
         raw_date = path.stem.removeprefix(prefix)
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and parsed <= as_of:
@@ -1459,12 +1460,12 @@ def _resolve_input_path(data_root: Path, value: Path | str) -> Path:
     if path.is_absolute():
         return path.resolve(strict=False)
     project_root = _project_root_from_data_root(data_root)
-    candidates = [project_root / path, data_root / path, Path.cwd() / path]
+    candidates = [join_root(project_root, path), data_root / path, join_root(Path.cwd(), path)]
     for candidate in candidates:
         if candidate.exists():
             return candidate.resolve(strict=False)
     if path.parts and path.parts[0] == data_root.name:
-        return (project_root / path).resolve(strict=False)
+        return (join_root(project_root, path)).resolve(strict=False)
     return (data_root / path).resolve(strict=False)
 
 
@@ -1472,7 +1473,7 @@ def _normalize_data_root(data_root: Path) -> Path:
     value = Path(data_root)
     if value.is_absolute():
         return value.resolve(strict=False)
-    return (Path.cwd() / value).resolve(strict=False)
+    return join_root(Path.cwd(), value).resolve(strict=False)
 
 
 def _project_root_from_data_root(data_root: Path) -> Path:

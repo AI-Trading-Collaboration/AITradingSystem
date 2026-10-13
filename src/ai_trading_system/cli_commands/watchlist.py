@@ -14,6 +14,7 @@ from ai_trading_system.config import (
     load_universe,
     load_watchlist,
 )
+from ai_trading_system.paths import state_dir
 from ai_trading_system.watchlist import (
     default_watchlist_report_path,
     validate_watchlist_config,
@@ -91,7 +92,7 @@ def validate_watchlist(
     watchlist = load_watchlist(config_path)
     validation_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_watchlist_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         validation_date,
     )
 
@@ -136,7 +137,7 @@ def validate_watchlist_lifecycle_command(
     watchlist = load_watchlist(watchlist_path)
     validation_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_watchlist_lifecycle_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         validation_date,
     )
     report = validate_watchlist_lifecycle(

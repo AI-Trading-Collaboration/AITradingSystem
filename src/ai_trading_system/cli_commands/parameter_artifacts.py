@@ -6,6 +6,7 @@ from pathlib import Path
 import typer
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import join_root, state_dir
 from ai_trading_system.trading_engine.parameters.weight_stability import (
     latest_weight_stability_path,
 )
@@ -43,40 +44,42 @@ def _resolve_shadow_backtest_summary_path(*, latest: bool, as_of: str | None) ->
 
 
 def _resolve_weight_tuning_path(*, latest: bool, as_of: str | None) -> Path:
-    root = PROJECT_ROOT / "artifacts" / "weight_tuning"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "weight_tuning"
     if latest or as_of is None:
         latest_path = latest_weight_tuning_path(root)
         if latest_path is None:
             raise typer.BadParameter(f"未找到 weight tuning artifact：{root}")
         return latest_path
-    return root / _parse_date(as_of).isoformat() / "weight_tuning_summary.json"
+    return join_root(root, _parse_date(as_of).isoformat()) / "weight_tuning_summary.json"
 
 
 def _resolve_weight_tuning_failure_path(*, latest: bool, as_of: str | None) -> Path:
-    root = PROJECT_ROOT / "artifacts" / "weight_tuning_failure"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "weight_tuning_failure"
     if latest or as_of is None:
         latest_path = latest_weight_tuning_failure_path(root)
         if latest_path is None:
             raise typer.BadParameter(f"未找到 weight tuning failure artifact：{root}")
         return latest_path
-    return root / _parse_date(as_of).isoformat() / "weight_tuning_failure_summary.json"
+    return join_root(root, _parse_date(as_of).isoformat()) / "weight_tuning_failure_summary.json"
 
 
 def _resolve_weight_stability_path(*, latest: bool, as_of: str | None) -> Path:
-    root = PROJECT_ROOT / "artifacts" / "weight_stability"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "weight_stability"
     if latest or as_of is None:
         latest_path = latest_weight_stability_path(root)
         if latest_path is None:
             raise typer.BadParameter(f"未找到 weight stability artifact：{root}")
         return latest_path
-    return root / _parse_date(as_of).isoformat() / "weight_stability_summary.json"
+    return join_root(root, _parse_date(as_of).isoformat()) / "weight_stability_summary.json"
 
 
 def _resolve_weight_stability_readiness_path(*, latest: bool, as_of: str | None) -> Path:
-    root = PROJECT_ROOT / "artifacts" / "weight_stability_readiness"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "weight_stability_readiness"
     if latest or as_of is None:
         latest_path = latest_weight_stability_readiness_path(root)
         if latest_path is None:
             raise typer.BadParameter(f"未找到 weight stability readiness artifact：{root}")
         return latest_path
-    return root / _parse_date(as_of).isoformat() / "weight_stability_readiness_summary.json"
+    return (
+        join_root(root, _parse_date(as_of).isoformat()) / "weight_stability_readiness_summary.json"
+    )

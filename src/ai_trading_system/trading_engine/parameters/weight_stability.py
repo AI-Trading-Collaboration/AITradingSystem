@@ -10,6 +10,7 @@ from typing import Any
 import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import glob_root, state_dir
 from ai_trading_system.shadow.lineage import sha256_file
 from ai_trading_system.trading_engine.parameters.parameter_loader import resolve_project_path
 from ai_trading_system.trading_engine.parameters.weight_stability_readiness import (
@@ -48,7 +49,7 @@ class WeightStabilityRun:
 
 
 def default_weight_stability_root() -> Path:
-    return PROJECT_ROOT / "artifacts" / "weight_stability"
+    return state_dir(PROJECT_ROOT, "artifacts") / "weight_stability"
 
 
 def default_weight_stability_dir(output_root: Path, as_of: date) -> Path:
@@ -75,7 +76,7 @@ def default_recommended_stable_shadow_weights_path(output_root: Path, as_of: dat
 
 def latest_weight_stability_path(output_root: Path | None = None) -> Path | None:
     root = output_root or default_weight_stability_root()
-    candidates = sorted(root.glob("*/weight_stability_summary.json"))
+    candidates = sorted(glob_root(root, "*/weight_stability_summary.json"))
     if not candidates:
         return None
     return max(candidates, key=lambda path: path.stat().st_mtime)
@@ -87,7 +88,7 @@ def latest_weight_stability_path_on_or_before(
 ) -> Path | None:
     root = output_root or default_weight_stability_root()
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/weight_stability_summary.json"):
+    for path in glob_root(root, "*/weight_stability_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -753,9 +754,9 @@ def _previous_turnover_context(as_of: date) -> dict[str, Any]:
 
 
 def _latest_turnover_attribution_path(as_of: date) -> Path | None:
-    root = PROJECT_ROOT / "artifacts" / "portfolio_turnover_attribution"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "portfolio_turnover_attribution"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/portfolio_turnover_attribution_summary.json"):
+    for path in glob_root(root, "*/portfolio_turnover_attribution_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -864,7 +865,7 @@ def _safety_payload() -> dict[str, Any]:
 
 def _output_root(config: Mapping[str, Any], *, dry_run: bool) -> Path:
     if dry_run:
-        return PROJECT_ROOT / "outputs" / "dry_runs" / "weight_stability"
+        return state_dir(PROJECT_ROOT, "outputs") / "dry_runs" / "weight_stability"
     output = _mapping(config.get("output"))
     return resolve_project_path(
         str(output.get("weight_stability_dir") or default_weight_stability_root())

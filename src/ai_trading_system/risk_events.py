@@ -23,6 +23,7 @@ from ai_trading_system.config import (
     WatchlistConfig,
     configured_price_tickers,
 )
+from ai_trading_system.paths import join_root
 from ai_trading_system.source_policy import (
     evidence_grade_allows_automatic_scoring,
     evidence_grade_allows_position_gate,
@@ -450,7 +451,9 @@ def quarantine_unknown_risk_event_occurrence(
     if not root.is_dir():
         raise ValueError("occurrence_root must be a directory")
     requested_source = Path(source_path)
-    source = requested_source if requested_source.is_absolute() else root / requested_source
+    source = (
+        requested_source if requested_source.is_absolute() else join_root(root, requested_source)
+    )
     source = source.resolve(strict=False)
     if source.parent != root:
         raise ValueError("occurrence source must be a direct child of occurrence_root")

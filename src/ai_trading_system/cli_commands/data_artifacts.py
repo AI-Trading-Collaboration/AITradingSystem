@@ -6,6 +6,7 @@ from pathlib import Path
 import typer
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import join_root, state_dir
 from ai_trading_system.trading_engine.market_data_freshness import (
     latest_market_data_freshness_path,
 )
@@ -22,20 +23,20 @@ def _parse_date(value: str) -> date:
 
 
 def _resolve_market_data_freshness_path(*, latest: bool, as_of: str | None) -> Path:
-    root = PROJECT_ROOT / "artifacts" / "data_freshness"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "data_freshness"
     if latest or as_of is None:
         latest_path = latest_market_data_freshness_path(root)
         if latest_path is None:
             raise typer.BadParameter(f"未找到 market data freshness artifact：{root}")
         return latest_path
-    return root / _parse_date(as_of).isoformat() / "market_data_freshness_summary.json"
+    return join_root(root, _parse_date(as_of).isoformat()) / "market_data_freshness_summary.json"
 
 
 def _resolve_market_data_refresh_path(*, latest: bool, as_of: str | None) -> Path:
-    root = PROJECT_ROOT / "artifacts" / "data_refresh"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "data_refresh"
     if latest or as_of is None:
         latest_path = latest_market_data_refresh_path(root)
         if latest_path is None:
             raise typer.BadParameter(f"未找到 market data refresh artifact：{root}")
         return latest_path
-    return root / _parse_date(as_of).isoformat() / "market_data_refresh_summary.json"
+    return join_root(root, _parse_date(as_of).isoformat()) / "market_data_refresh_summary.json"

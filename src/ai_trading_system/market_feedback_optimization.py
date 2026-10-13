@@ -27,6 +27,7 @@ from ai_trading_system.parameter_governance import (
     default_parameter_governance_summary_path,
 )
 from ai_trading_system.parameter_replay import default_parameter_replay_summary_path
+from ai_trading_system.paths import state_dir
 from ai_trading_system.prediction_ledger import DEFAULT_PREDICTION_OUTCOMES_PATH
 from ai_trading_system.rule_experiments import DEFAULT_RULE_EXPERIMENT_LEDGER_PATH
 from ai_trading_system.weight_calibration import (
@@ -34,7 +35,7 @@ from ai_trading_system.weight_calibration import (
     DEFAULT_EFFECTIVE_WEIGHTS_PATH,
 )
 
-DEFAULT_MARKET_FEEDBACK_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
+DEFAULT_MARKET_FEEDBACK_REPORT_DIR = state_dir(PROJECT_ROOT, "outputs") / "reports"
 DEFAULT_MARKET_FEEDBACK_REPLAY_START = PRIMARY_RESEARCH_START_DATE
 
 
@@ -142,20 +143,20 @@ def build_market_feedback_optimization_report(
     replay_end = replay_end or as_of
     sample_policy = load_feedback_sample_policy(sample_policy_path)
     data_quality_report_path = data_quality_report_path or (
-        PROJECT_ROOT / "outputs" / "reports" / f"data_quality_{as_of.isoformat()}.md"
+        state_dir(PROJECT_ROOT, "outputs") / "reports" / f"data_quality_{as_of.isoformat()}.md"
     )
     shadow_maturity_report_path = shadow_maturity_report_path or (
-        PROJECT_ROOT / "outputs" / "reports" / f"shadow_maturity_{as_of.isoformat()}.md"
+        state_dir(PROJECT_ROOT, "outputs") / "reports" / f"shadow_maturity_{as_of.isoformat()}.md"
     )
     parameter_replay_summary_path = parameter_replay_summary_path or (
         default_parameter_replay_summary_path(
-            PROJECT_ROOT / "outputs" / "reports",
+            state_dir(PROJECT_ROOT, "outputs") / "reports",
             as_of,
         )
     )
     parameter_governance_summary_path = parameter_governance_summary_path or (
         default_parameter_governance_summary_path(
-            PROJECT_ROOT / "outputs" / "reports",
+            state_dir(PROJECT_ROOT, "outputs") / "reports",
             as_of,
         )
     )

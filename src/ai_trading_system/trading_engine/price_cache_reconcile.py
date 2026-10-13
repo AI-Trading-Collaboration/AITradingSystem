@@ -10,6 +10,7 @@ from typing import Any
 import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import rglob_root, state_dir
 from ai_trading_system.shadow.lineage import git_commit_sha, git_worktree_dirty
 from ai_trading_system.trading_engine.backtest_input_diagnostics import (
     BacktestInputDiagnosticsRun,
@@ -80,7 +81,7 @@ def default_price_cache_reconcile_markdown_path(output_root: Path, as_of: date) 
 
 
 def default_price_cache_registry_path(output_root: Path | None = None) -> Path:
-    root = output_root or (PROJECT_ROOT / "artifacts")
+    root = output_root or (state_dir(PROJECT_ROOT, "artifacts"))
     return root / "data_registry" / "price_cache_registry.json"
 
 
@@ -95,7 +96,7 @@ def run_price_cache_reconcile(
     symbols: tuple[str, ...] = (),
     generated_at: datetime | None = None,
 ) -> PriceCacheReconcileRun:
-    root = output_root or (PROJECT_ROOT / "artifacts")
+    root = output_root or (state_dir(PROJECT_ROOT, "artifacts"))
     generated = generated_at or datetime.now(tz=UTC)
     resolved_config_path = resolve_project_path(config_path)
     config = load_shadow_backtest_config(resolved_config_path)
@@ -271,7 +272,7 @@ def refresh_backtest_manifest(
     dry_run: bool = False,
     generated_at: datetime | None = None,
 ) -> BacktestManifestRefreshRun:
-    root = output_root or (PROJECT_ROOT / "artifacts")
+    root = output_root or (state_dir(PROJECT_ROOT, "artifacts"))
     generated = generated_at or datetime.now(tz=UTC)
     resolved_config_path = resolve_project_path(config_path)
     before = build_data_registry_consistency_payload(
@@ -567,8 +568,7 @@ def _cached_fmp_repaired_prices(
     target_date: date,
 ) -> tuple[pd.DataFrame, list[dict[str, Any]]]:
     root = (
-        PROJECT_ROOT
-        / "data"
+        state_dir(PROJECT_ROOT, "data")
         / "raw"
         / "external_request_cache"
         / FMP_PROVIDER.replace(" ", "_")
@@ -578,7 +578,7 @@ def _cached_fmp_repaired_prices(
     artifacts: list[dict[str, Any]] = []
     if not root.exists():
         return pd.DataFrame(columns=PRICE_CACHE_OUTPUT_COLUMNS), artifacts
-    for metadata_path in root.rglob("metadata.json"):
+    for metadata_path in rglob_root(root, "metadata.json"):
         metadata = _read_json(metadata_path)
         params = _mapping(_mapping(metadata.get("request_identity")).get("params"))
         if _text(params.get("symbol")) != source_symbol:

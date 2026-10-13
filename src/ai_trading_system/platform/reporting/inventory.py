@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import relative_to_root
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_REPORTING_ARCHITECTURE_POLICY_PATH = (
@@ -310,7 +311,7 @@ def assert_frozen_reporting_inventory(
 
 def _project_path(path: Path) -> str:
     try:
-        return path.resolve().relative_to(PROJECT_ROOT.resolve()).as_posix()
+        return relative_to_root(path.resolve(), PROJECT_ROOT.resolve()).as_posix()
     except ValueError:
         return str(path)
 

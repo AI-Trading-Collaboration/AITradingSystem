@@ -8,6 +8,7 @@ from typing import Any
 
 import yaml
 
+from ai_trading_system.paths import state_dir
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SHADOW_WEIGHT_ITERATION_SCHEMA_VERSION = "1.0"
@@ -114,8 +115,8 @@ def default_shadow_weight_candidate_json_path(data_root: Path, as_of: date) -> P
 def build_daily_shadow_weight_iteration_payload(
     *,
     as_of: date,
-    reports_dir: Path = REPO_ROOT / "outputs" / "reports",
-    data_root: Path = REPO_ROOT / "data",
+    reports_dir: Path = state_dir(REPO_ROOT, "outputs") / "reports",
+    data_root: Path = state_dir(REPO_ROOT, "data"),
     policy_path: Path = DEFAULT_DAILY_SHADOW_WEIGHT_ITERATION_POLICY_PATH,
     production_profile_path: Path = DEFAULT_PRODUCTION_PROFILE_PATH,
     scheduler_dry_run_path: Path | None = None,
@@ -260,8 +261,8 @@ def build_daily_shadow_weight_iteration_payload(
 def write_daily_shadow_weight_iteration_report(
     *,
     as_of: date,
-    reports_dir: Path = REPO_ROOT / "outputs" / "reports",
-    data_root: Path = REPO_ROOT / "data",
+    reports_dir: Path = state_dir(REPO_ROOT, "outputs") / "reports",
+    data_root: Path = state_dir(REPO_ROOT, "data"),
     policy_path: Path = DEFAULT_DAILY_SHADOW_WEIGHT_ITERATION_POLICY_PATH,
     production_profile_path: Path = DEFAULT_PRODUCTION_PROFILE_PATH,
     scheduler_dry_run_path: Path | None = None,

@@ -8,6 +8,7 @@ from typing import Any
 
 import yaml
 
+from ai_trading_system.paths import state_dir
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SHADOW_VS_PRODUCTION_SCHEMA_VERSION = 1
@@ -40,8 +41,8 @@ def default_shadow_vs_production_comparison_json_path(data_root: Path, as_of: da
 def build_daily_shadow_vs_production_comparison_payload(
     *,
     as_of: date,
-    reports_dir: Path = REPO_ROOT / "outputs" / "reports",
-    data_root: Path = REPO_ROOT / "data",
+    reports_dir: Path = state_dir(REPO_ROOT, "outputs") / "reports",
+    data_root: Path = state_dir(REPO_ROOT, "data"),
     production_profile_path: Path = DEFAULT_PRODUCTION_PROFILE_PATH,
     scoring_rules_path: Path = DEFAULT_SCORING_RULES_PATH,
     current_shadow_weights_path: Path | None = None,
@@ -268,8 +269,8 @@ def build_daily_shadow_vs_production_comparison_payload(
 def write_daily_shadow_vs_production_comparison_report(
     *,
     as_of: date,
-    reports_dir: Path = REPO_ROOT / "outputs" / "reports",
-    data_root: Path = REPO_ROOT / "data",
+    reports_dir: Path = state_dir(REPO_ROOT, "outputs") / "reports",
+    data_root: Path = state_dir(REPO_ROOT, "data"),
     production_profile_path: Path = DEFAULT_PRODUCTION_PROFILE_PATH,
     scoring_rules_path: Path = DEFAULT_SCORING_RULES_PATH,
     current_shadow_weights_path: Path | None = None,

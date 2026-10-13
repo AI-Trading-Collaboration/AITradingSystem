@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 
 SCHEMA_VERSION = 1
 AUDIT_RECORD_SCHEMA_VERSION = "owner_decision_audit_record_v1"
@@ -23,7 +24,7 @@ PASS_STATUS = "PASS"
 FAIL_STATUS = "FAIL"
 
 DEFAULT_OWNER_DECISION_AUDIT_LOG_PATH = (
-    PROJECT_ROOT / "data" / "governance" / "owner_decision_audit_log.jsonl"
+    state_dir(PROJECT_ROOT, "data") / "governance" / "owner_decision_audit_log.jsonl"
 )
 
 OWNER_ACTIONS: tuple[str, ...] = (

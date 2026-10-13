@@ -9,10 +9,11 @@ from typing import Any
 import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 
 SCHEMA_VERSION = 1
 DEFAULT_DECISION_CAUSAL_CHAIN_PATH = (
-    PROJECT_ROOT / "data" / "processed" / "decision_causal_chains.json"
+    state_dir(PROJECT_ROOT, "data") / "processed" / "decision_causal_chains.json"
 )
 
 

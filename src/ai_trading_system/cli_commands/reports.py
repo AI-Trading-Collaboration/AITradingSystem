@@ -95,6 +95,7 @@ from ai_trading_system.order_intent_candidates import (
     default_order_intent_candidates_path,
     write_order_intent_candidates_json,
 )
+from ai_trading_system.paths import glob_root, state_dir
 from ai_trading_system.periodic_investment_review import (
     DEFAULT_PERIODIC_INVESTMENT_REVIEW_REPORT_DIR,
     DEFAULT_SCORES_DAILY_PATH,
@@ -568,9 +569,9 @@ def _resolve_signal_calibration_path(*, latest: bool, as_of: str | None) -> Path
 
 
 def _resolve_parameter_promotion_path(*, latest: bool, as_of: str | None) -> Path:
-    root = PROJECT_ROOT / "artifacts" / "parameter_promotion"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "parameter_promotion"
     if latest or as_of is None:
-        candidates = sorted(root.glob("*/parameter_promotion_decision.json"))
+        candidates = sorted(glob_root(root, "*/parameter_promotion_decision.json"))
         if not candidates:
             raise typer.BadParameter(f"未找到 parameter promotion artifact：{root}")
         return max(candidates, key=lambda path: path.stat().st_mtime)
@@ -783,7 +784,7 @@ def calculation_explainers_command(
         report_date,
     )
     resolved_output_path = output_path or default_calculation_explainers_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         report_date,
     )
     try:
@@ -825,8 +826,7 @@ def shadow_parameter_backtest_report_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 alias 输出目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
 ) -> None:
     """从正式 artifact 生成 shadow parameter backtest 报告 alias。"""
@@ -869,8 +869,7 @@ def parameter_promotion_report_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 alias 输出目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
 ) -> None:
     """从正式 artifact 生成 parameter promotion decision 报告 alias。"""
@@ -915,8 +914,7 @@ def signal_snapshot_report_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 alias 输出目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
 ) -> None:
     """从正式 artifact 生成 signal snapshot 报告 alias。"""
@@ -954,8 +952,7 @@ def signal_ablation_report_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 alias 输出目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
 ) -> None:
     """从正式 artifact 生成 signal ablation 报告 alias。"""
@@ -1008,8 +1005,7 @@ def signal_calibration_report_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 alias 输出目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
 ) -> None:
     """从正式 artifact 生成 signal calibration 报告 alias。"""
@@ -1058,8 +1054,7 @@ def portfolio_sensitivity_report_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 alias 输出目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
 ) -> None:
     """从正式 artifact 生成 portfolio sensitivity 报告 alias。"""
@@ -1111,8 +1106,7 @@ def portfolio_candidates_report_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 alias 输出目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
 ) -> None:
     """从正式 artifact 生成 portfolio candidates 报告 alias。"""
@@ -1164,8 +1158,7 @@ def portfolio_turnover_attribution_report_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 alias 输出目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
 ) -> None:
     """从正式 artifact 生成 portfolio turnover attribution 报告 alias。"""
@@ -1221,8 +1214,7 @@ def portfolio_candidate_review_report_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 alias 输出目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
 ) -> None:
     """从正式 artifact 生成 portfolio candidate review 报告 alias。"""
@@ -1283,8 +1275,7 @@ def portfolio_candidate_tracking_report_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 alias 输出目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
 ) -> None:
     """从正式 artifact 生成 portfolio candidate tracking 报告 alias。"""
@@ -1334,8 +1325,7 @@ def portfolio_tracking_review_report_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 alias 输出目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
 ) -> None:
     """从正式 artifact 生成 portfolio tracking review 报告 alias。"""
@@ -1388,8 +1378,7 @@ def weight_tuning_report_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 alias 输出目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
 ) -> None:
     """从正式 artifact 生成 weight tuning 报告 alias。"""
@@ -1441,8 +1430,7 @@ def weight_stability_report_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 alias 输出目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
 ) -> None:
     """从正式 artifact 生成 weight stability 报告 alias。"""
@@ -1494,8 +1482,7 @@ def weight_stability_readiness_report_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 alias 输出目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
 ) -> None:
     """从正式 artifact 生成 weight stability readiness 报告 alias。"""
@@ -1547,8 +1534,7 @@ def weight_tuning_failure_report_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 alias 输出目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
 ) -> None:
     """从正式 artifact 生成 weight tuning failure attribution 报告 alias。"""
@@ -1600,8 +1586,7 @@ def market_data_freshness_report_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 alias 输出目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
 ) -> None:
     """从正式 artifact 生成 market data freshness 报告 alias。"""
@@ -1653,8 +1638,7 @@ def market_data_refresh_report_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 alias 输出目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
 ) -> None:
     """从正式 artifact 生成 market data refresh 报告 alias。"""
@@ -1703,8 +1687,7 @@ def reader_brief_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="同日报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     decision_snapshot_path: Annotated[
         Path | None,
@@ -1873,8 +1856,7 @@ def validate_reader_brief_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="Reader Brief artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     reader_brief_json_path: Annotated[
         Path | None,
@@ -1959,8 +1941,7 @@ def reader_brief_consistency_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     report_index_path: Annotated[
         Path | None,
@@ -2043,8 +2024,7 @@ def validate_reader_brief_consistency_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -2129,8 +2109,7 @@ def production_boundary_static_scan_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     project_root: Annotated[
         Path,
@@ -2204,8 +2183,7 @@ def validate_production_boundary_static_scan_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -2296,8 +2274,7 @@ def owner_review_template_v2_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     json_output_path: Annotated[
         Path | None,
@@ -2345,8 +2322,7 @@ def validate_owner_review_template_v2_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -2503,8 +2479,7 @@ def owner_decision_audit_log_report_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     json_output_path: Annotated[
         Path | None,
@@ -2561,8 +2536,7 @@ def validate_owner_decision_audit_log_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -2650,8 +2624,7 @@ def research_monthly_review_pack_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     report_index_path: Annotated[
         Path | None,
@@ -2747,14 +2720,11 @@ def validate_research_monthly_review_pack_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
-        typer.Option(
-            help="Research monthly review pack JSON 路径；优先级高于 --latest/--as-of。"
-        ),
+        typer.Option(help="Research monthly review pack JSON 路径；优先级高于 --latest/--as-of。"),
     ] = None,
     json_output_path: Annotated[
         Path | None,
@@ -2845,8 +2815,7 @@ def paper_shadow_promotion_board_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     report_index_path: Annotated[
         Path | None,
@@ -2942,8 +2911,7 @@ def validate_paper_shadow_promotion_board_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -3036,8 +3004,7 @@ def candidate_rejection_postmortem_template_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     report_index_path: Annotated[
         Path | None,
@@ -3135,8 +3102,7 @@ def validate_candidate_rejection_postmortem_template_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -3229,8 +3195,7 @@ def decision_snapshot_lifecycle_policy_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     snapshot_dir: Annotated[
         Path,
@@ -3339,8 +3304,7 @@ def validate_decision_snapshot_lifecycle_policy_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -3448,8 +3412,7 @@ def extended_shadow_observation_clock_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     report_index_path: Annotated[
         Path | None,
@@ -3546,8 +3509,7 @@ def validate_extended_shadow_observation_clock_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -3653,8 +3615,7 @@ def extended_shadow_protocol_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     report_index_path: Annotated[
         Path | None,
@@ -3748,8 +3709,7 @@ def validate_extended_shadow_protocol_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -3840,8 +3800,7 @@ def research_roadmap_dashboard_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     report_index_path: Annotated[
         Path | None,
@@ -3950,8 +3909,7 @@ def validate_research_roadmap_dashboard_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -4044,8 +4002,7 @@ def research_governance_end_to_end_pack_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     report_index_path: Annotated[
         Path | None,
@@ -4141,8 +4098,7 @@ def validate_research_governance_end_to_end_pack_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -4244,8 +4200,7 @@ def research_governance_recovery_pack_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     report_index_path: Annotated[
         Path | None,
@@ -4345,14 +4300,11 @@ def validate_research_governance_recovery_pack_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
-        typer.Option(
-            help="Research governance recovery pack JSON 路径；优先于 --latest/--as-of。"
-        ),
+        typer.Option(help="Research governance recovery pack JSON 路径；优先于 --latest/--as-of。"),
     ] = None,
     json_output_path: Annotated[
         Path | None,
@@ -4478,8 +4430,7 @@ def recovery_blocker_triage_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     recovery_pack_path: Annotated[
         Path | None,
@@ -4569,8 +4520,7 @@ def validate_recovery_blocker_triage_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -4647,8 +4597,7 @@ def report_index_warning_triage_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     report_index_path: Annotated[
         Path | None,
@@ -4733,8 +4682,7 @@ def validate_report_index_warning_triage_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -4819,8 +4767,7 @@ def recovery_pack_source_depth_audit_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     recovery_pack_path: Annotated[
         Path | None,
@@ -4933,8 +4880,7 @@ def validate_recovery_pack_source_depth_audit_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -5014,8 +4960,7 @@ def recovery_owner_action_map_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     recovery_pack_path: Annotated[
         Path | None,
@@ -5143,8 +5088,7 @@ def validate_recovery_owner_action_map_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -5222,8 +5166,7 @@ def exact_blocker_warning_inventory_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     blocker_triage_path: Annotated[
         Path | None,
@@ -5345,8 +5288,7 @@ def validate_exact_blocker_warning_inventory_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -5426,8 +5368,7 @@ def remaining_blocker_resolution_ledger_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     recovery_pack_path: Annotated[
         Path | None,
@@ -5541,8 +5482,7 @@ def validate_remaining_blocker_resolution_ledger_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -5629,8 +5569,7 @@ def report_index_warning_cleanup_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     warning_triage_path: Annotated[
         Path | None,
@@ -5713,8 +5652,7 @@ def validate_report_index_warning_cleanup_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -5796,8 +5734,7 @@ def normal_paper_shadow_observation_clock_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     report_index_path: Annotated[
         Path | None,
@@ -5892,8 +5829,7 @@ def validate_normal_paper_shadow_observation_clock_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -5984,8 +5920,7 @@ def post_recovery_governance_pack_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     recovery_pack_path: Annotated[
         Path | None,
@@ -6095,8 +6030,7 @@ def validate_post_recovery_governance_pack_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -6227,8 +6161,7 @@ def decision_stage_review_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     report_index_path: Annotated[
         Path | None,
@@ -6305,8 +6238,7 @@ def eight_blocker_decision_review_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     recovery_pack_path: Annotated[
         Path | None,
@@ -6376,8 +6308,7 @@ def validate_eight_blocker_decision_review_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -6448,8 +6379,7 @@ def owner_decision_dry_run_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     decision_option: Annotated[
         str,
@@ -6596,8 +6526,7 @@ def recovery_governance_rerun_after_triage_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     report_index_path: Annotated[
         Path | None,
@@ -6777,8 +6706,7 @@ def recovery_evidence_pack_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     report_index_path: Annotated[
         Path | None,
@@ -6873,8 +6801,7 @@ def validate_recovery_evidence_pack_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -6968,8 +6895,7 @@ def research_safety_boundary_audit_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     report_index_path: Annotated[
         Path | None,
@@ -7064,8 +6990,7 @@ def validate_research_safety_boundary_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -7153,8 +7078,7 @@ def artifact_lineage_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     project_root: Annotated[
         Path,
@@ -7260,8 +7184,7 @@ def validate_artifact_lineage_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     artifact_lineage_json_path: Annotated[
         Path | None,
@@ -7347,8 +7270,7 @@ def task_register_consistency_run_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     project_root: Annotated[
         Path,
@@ -7434,8 +7356,7 @@ def task_register_consistency_report_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -7494,8 +7415,7 @@ def task_register_consistency_validate_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     source_json_path: Annotated[
         Path | None,
@@ -7584,8 +7504,7 @@ def report_quality_gate_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="报告 artifact 所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     project_root: Annotated[
         Path,
@@ -7730,7 +7649,7 @@ def score_change_attribution_command(
             snapshot_dir,
             report_date,
         )
-    reports_dir = PROJECT_ROOT / "outputs" / "reports"
+    reports_dir = state_dir(PROJECT_ROOT, "outputs") / "reports"
     markdown_output = output_path or default_score_change_attribution_report_path(
         reports_dir,
         report_date,
@@ -7776,15 +7695,13 @@ def market_panel_command(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="标准化 FRED 宏观序列 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "rates_daily.csv",
     output_path: Annotated[
@@ -7809,7 +7726,7 @@ def market_panel_command(
         )
     else:
         report_date = _parse_date(as_of) if as_of else date.today()
-    reports_dir = PROJECT_ROOT / "outputs" / "reports"
+    reports_dir = state_dir(PROJECT_ROOT, "outputs") / "reports"
     markdown_output = output_path or default_market_panel_report_path(reports_dir, report_date)
     json_output = json_output_path or default_market_panel_json_path(reports_dir, report_date)
     quality_report_path = data_quality_output_path or default_quality_report_path(
@@ -7901,7 +7818,7 @@ def research_governance_summary_command(
         )
     else:
         report_date = _parse_date(as_of) if as_of else date.today()
-    reports_dir = project_root / "outputs" / "reports"
+    reports_dir = state_dir(project_root, "outputs") / "reports"
     markdown_output = output_path or default_research_governance_summary_report_path(
         reports_dir,
         report_date,
@@ -7998,7 +7915,7 @@ def evidence_dashboard_command(
     """生成只读 evidence-first HTML dashboard。"""
     dashboard_date = _parse_date(as_of) if as_of else date.today()
     daily_path = daily_report_path or default_daily_score_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         dashboard_date,
     )
     trace_path = trace_bundle_path or default_report_trace_bundle_path(daily_path)
@@ -8007,11 +7924,11 @@ def evidence_dashboard_command(
         dashboard_date,
     )
     dashboard_output = output_path or default_evidence_dashboard_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         dashboard_date,
     )
     alert_path = alerts_report_path or default_alert_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         dashboard_date,
     )
     scores_path = scores_daily_path or DEFAULT_SCORES_DAILY_PATH
@@ -8020,11 +7937,11 @@ def evidence_dashboard_command(
     periodic_review_path = investment_review_path
     if daily_report_path is None:
         default_market_feedback_path = default_market_feedback_optimization_report_path(
-            PROJECT_ROOT / "outputs" / "reports",
+            state_dir(PROJECT_ROOT, "outputs") / "reports",
             dashboard_date,
         )
         default_loop_review_path = default_feedback_loop_review_report_path(
-            PROJECT_ROOT / "outputs" / "reports",
+            state_dir(PROJECT_ROOT, "outputs") / "reports",
             dashboard_date,
         )
         default_periodic_review_path = default_periodic_investment_review_report_path(
@@ -8042,7 +7959,9 @@ def evidence_dashboard_command(
             default_periodic_review_path if default_periodic_review_path.exists() else None
         )
     dashboard_json_output = json_output_path or (
-        default_evidence_dashboard_json_path(PROJECT_ROOT / "outputs" / "reports", dashboard_date)
+        default_evidence_dashboard_json_path(
+            state_dir(PROJECT_ROOT, "outputs") / "reports", dashboard_date
+        )
         if output_path is None
         else dashboard_output.with_suffix(".json")
     )
@@ -8096,8 +8015,7 @@ def daily_task_dashboard_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="同日子任务报告所在目录。"),
-    ] = PROJECT_ROOT
-    / "outputs"
+    ] = state_dir(PROJECT_ROOT, "outputs")
     / "reports",
     output_path: Annotated[
         Path | None,

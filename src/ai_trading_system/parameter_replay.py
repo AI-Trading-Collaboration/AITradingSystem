@@ -12,9 +12,10 @@ from ai_trading_system.config import (
     PROJECT_ROOT,
     load_backtest_validation_policy,
 )
+from ai_trading_system.paths import state_dir
 
-DEFAULT_PARAMETER_REPLAY_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
-DEFAULT_BACKTEST_ROBUSTNESS_DIR = PROJECT_ROOT / "outputs" / "backtests"
+DEFAULT_PARAMETER_REPLAY_REPORT_DIR = state_dir(PROJECT_ROOT, "outputs") / "reports"
+DEFAULT_BACKTEST_ROBUSTNESS_DIR = state_dir(PROJECT_ROOT, "outputs") / "backtests"
 PARAMETER_REPLAY_CATEGORIES = frozenset(
     {
         "module_weight_perturbation",

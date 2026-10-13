@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import glob_root, join_root, state_dir
 from ai_trading_system.trading_engine.backtest_input_diagnostics import (
     load_backtest_input_diagnostics,
 )
@@ -52,7 +53,7 @@ class WeightStabilityReadinessRun:
 
 
 def default_weight_stability_readiness_root() -> Path:
-    return PROJECT_ROOT / "artifacts" / "weight_stability_readiness"
+    return state_dir(PROJECT_ROOT, "artifacts") / "weight_stability_readiness"
 
 
 def default_weight_stability_readiness_dir(output_root: Path, as_of: date) -> Path:
@@ -75,7 +76,7 @@ def default_weight_stability_readiness_markdown_path(output_root: Path, as_of: d
 
 def latest_weight_stability_readiness_path(output_root: Path | None = None) -> Path | None:
     root = output_root or default_weight_stability_readiness_root()
-    candidates = sorted(root.glob("*/weight_stability_readiness_summary.json"))
+    candidates = sorted(glob_root(root, "*/weight_stability_readiness_summary.json"))
     if not candidates:
         return None
     return max(candidates, key=lambda path: path.stat().st_mtime)
@@ -87,7 +88,7 @@ def latest_weight_stability_readiness_path_on_or_before(
 ) -> Path | None:
     root = output_root or default_weight_stability_readiness_root()
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/weight_stability_readiness_summary.json"):
+    for path in glob_root(root, "*/weight_stability_readiness_summary.json"):
         parsed = _parse_date(path.parent.name)
         if parsed is not None and parsed <= as_of:
             candidates.append((parsed, path))
@@ -115,7 +116,7 @@ def run_weight_stability_readiness(
     generated_at: datetime | None = None,
 ) -> WeightStabilityReadinessRun:
     root = (
-        PROJECT_ROOT / "outputs" / "dry_runs" / "weight_stability_readiness"
+        state_dir(PROJECT_ROOT, "outputs") / "dry_runs" / "weight_stability_readiness"
         if dry_run
         else default_weight_stability_readiness_root()
     )
@@ -219,7 +220,7 @@ def build_weight_stability_readiness_payload(
     if as_of is None and not diagnostics_source.exists():
         diagnostics_source = (
             _latest_path(
-                root / "artifacts" / "data_quality",
+                state_dir(root, "artifacts") / "data_quality",
                 "backtest_input_diagnostics.json",
             )
             or diagnostics_source
@@ -227,7 +228,7 @@ def build_weight_stability_readiness_payload(
     if as_of is None and not stable_source.exists():
         stable_source = (
             _latest_path(
-                root / "artifacts" / "weight_stability",
+                state_dir(root, "artifacts") / "weight_stability",
                 "weight_stability_summary.json",
             )
             or stable_source
@@ -275,9 +276,9 @@ def build_weight_stability_readiness_payload(
     }
     eligibility = _stable_tuning_eligibility(checks)
     output_root_resolved = output_root or (
-        root / "outputs" / "dry_runs" / "weight_stability_readiness"
+        state_dir(root, "outputs") / "dry_runs" / "weight_stability_readiness"
         if dry_run
-        else root / "artifacts" / "weight_stability_readiness"
+        else state_dir(root, "artifacts") / "weight_stability_readiness"
     )
     output_artifacts = {
         "weight_stability_readiness_summary_json": str(
@@ -333,8 +334,7 @@ def build_weight_stability_readiness_payload(
                 str(diagnostics_source) if diagnostics_source.exists() else ""
             ),
             "backtest_input_manifest": str(
-                root
-                / "artifacts"
+                state_dir(root, "artifacts")
                 / "backtest_snapshots"
                 / resolved_as_of.isoformat()
                 / "backtest_input_manifest.json"
@@ -811,8 +811,7 @@ def _backtest_manifest_readiness(
     as_of: date,
 ) -> dict[str, Any]:
     manifest_path = (
-        root
-        / "artifacts"
+        state_dir(root, "artifacts")
         / "backtest_snapshots"
         / as_of.isoformat()
         / "backtest_input_manifest.json"
@@ -1152,14 +1151,14 @@ def _input_path(
     latest_when_missing: bool,
     latest_func: Any | None,
 ) -> Path:
-    dated = root / "artifacts" / directory / as_of.isoformat() / filename
+    dated = state_dir(root, "artifacts") / directory / as_of.isoformat() / filename
     if dated.exists() or not latest_when_missing:
         return dated
     if latest_func is not None and root == PROJECT_ROOT:
         latest = latest_func()
         if latest is not None:
             return latest
-    return _latest_path(root / "artifacts" / directory, filename) or dated
+    return _latest_path(state_dir(root, "artifacts") / directory, filename) or dated
 
 
 def _latest_input_date(
@@ -1178,10 +1177,16 @@ def _latest_input_date(
         signal_snapshot_path,
         backtest_diagnostics_path,
         stable_tuning_path,
-        _latest_path(root / "artifacts" / "data_freshness", "market_data_freshness_summary.json"),
-        _latest_path(root / "artifacts" / "data_quality", "backtest_input_diagnostics.json"),
-        _latest_path(root / "artifacts" / "signal_snapshots", "signal_snapshot.json"),
-        _latest_path(root / "artifacts" / "weight_stability", "weight_stability_summary.json"),
+        _latest_path(
+            state_dir(root, "artifacts") / "data_freshness", "market_data_freshness_summary.json"
+        ),
+        _latest_path(
+            state_dir(root, "artifacts") / "data_quality", "backtest_input_diagnostics.json"
+        ),
+        _latest_path(state_dir(root, "artifacts") / "signal_snapshots", "signal_snapshot.json"),
+        _latest_path(
+            state_dir(root, "artifacts") / "weight_stability", "weight_stability_summary.json"
+        ),
     ):
         if path is None:
             continue
@@ -1192,7 +1197,7 @@ def _latest_input_date(
 
 
 def _latest_path(root: Path, filename: str) -> Path | None:
-    candidates = sorted(root.glob(f"*/{filename}"))
+    candidates = sorted(glob_root(root, f"*/{filename}"))
     if not candidates:
         return None
     return max(candidates, key=lambda path: path.stat().st_mtime)
@@ -1204,7 +1209,7 @@ def _resolve_config_path(path: Path | str, root: Path) -> Path:
         return candidate
     if root == PROJECT_ROOT:
         return resolve_project_path(str(candidate))
-    return root / candidate
+    return join_root(root, candidate)
 
 
 def _plan_step(step: int, action: str, command: str, reason: str) -> dict[str, Any]:

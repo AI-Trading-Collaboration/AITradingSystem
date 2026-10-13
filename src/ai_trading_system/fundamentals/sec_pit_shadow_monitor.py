@@ -21,12 +21,15 @@ from ai_trading_system.fundamentals.sec_pit_shadow_observe import (
     DEFAULT_SEC_PIT_SHADOW_OBSERVE_OUTPUT_DIR,
     PRODUCTION_CONFIG_PATHS,
 )
+from ai_trading_system.paths import glob_root, join_root, state_dir
 
 SEC_PIT_SHADOW_MONITOR_TASK_ID = "TRADING-046"
 SEC_PIT_SHADOW_MONITOR_STATE_POLICY_TASK_ID = "TRADING-046A"
 SEC_PIT_SHADOW_MONITOR_REPORT_TYPE = "sec_pit_shadow_monitor"
 SEC_PIT_SHADOW_MONITOR_PRODUCTION_EFFECT = "none"
-DEFAULT_SEC_PIT_SHADOW_MONITOR_OUTPUT_DIR = PROJECT_ROOT / "outputs" / "sec_pit_shadow_monitor"
+DEFAULT_SEC_PIT_SHADOW_MONITOR_OUTPUT_DIR = (
+    state_dir(PROJECT_ROOT, "outputs") / "sec_pit_shadow_monitor"
+)
 
 MONITOR_STATUSES: tuple[str, ...] = (
     "INSUFFICIENT_MONITORING_SAMPLE",
@@ -1144,7 +1147,7 @@ def _shadow_observe_path(
     exact: bool,
 ) -> Path:
     if exact:
-        return root / f"{prefix}{monitor_date.isoformat()}{suffix}"
+        return join_root(root, f"{prefix}{monitor_date.isoformat()}{suffix}")
     return _latest_dated_path(root, prefix, suffix, monitor_date)
 
 
@@ -1155,11 +1158,11 @@ def _latest_dated_path(
     end: date | None,
 ) -> Path:
     default_end = end or date(1970, 1, 1)
-    default_path = root / f"{prefix}{default_end.isoformat()}{suffix}"
+    default_path = join_root(root, f"{prefix}{default_end.isoformat()}{suffix}")
     if not root.exists():
         return default_path
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob(f"{prefix}*{suffix}"):
+    for path in glob_root(root, f"{prefix}*{suffix}"):
         parsed = _date_from_prefixed_path(path, prefix)
         if parsed is not None and (end is None or parsed <= end):
             candidates.append((parsed, path))
@@ -1179,7 +1182,7 @@ def _artifact_path(summary: dict[str, Any], key: str, default: Path) -> Path:
     if not raw:
         return default
     path = Path(str(raw))
-    return path if path.is_absolute() else PROJECT_ROOT / path
+    return path if path.is_absolute() else join_root(PROJECT_ROOT, path)
 
 
 def _plan_row(plan: pd.DataFrame, metric: str) -> dict[str, Any]:

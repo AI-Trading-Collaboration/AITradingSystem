@@ -14,6 +14,7 @@ from typing import Any
 import yaml
 
 from ai_trading_system.config import PROJECT_ROOT, DataSourceConfig, DataSourcesConfig
+from ai_trading_system.paths import join_root, relative_to_root, state_dir
 from ai_trading_system.platform.artifacts import (
     write_json_atomic_without_trailing_newline,
     write_text_atomic,
@@ -30,7 +31,9 @@ DEFAULT_CACHE_CATALOG_DIR = PROJECT_ROOT / "reports" / "data_governance" / "cach
 DEFAULT_DATA_REFRESH_AUDIT_DIR = (
     PROJECT_ROOT / "reports" / "data_governance" / "data_refresh_audit"
 )
-DEFAULT_VALIDATE_DATA_AUDIT_DIR = PROJECT_ROOT / "artifacts" / "data_refresh_audit" / "validation"
+DEFAULT_VALIDATE_DATA_AUDIT_DIR = (
+    state_dir(PROJECT_ROOT, "artifacts") / "data_refresh_audit" / "validation"
+)
 LATEST_POINTER_NAME = "latest_cache_catalog.json"
 LATEST_DATA_REFRESH_AUDIT_POINTER_NAME = "latest_data_refresh_audit.json"
 LATEST_VALIDATE_DATA_AUDIT_POINTER_NAME = "latest_validate_data_audit.json"
@@ -1148,12 +1151,12 @@ def _resolve_entry_path(*, entry: Mapping[str, Any], project_root: Path) -> Path
 
 def _project_path(raw_path: str, project_root: Path) -> Path:
     path = Path(raw_path)
-    return path if path.is_absolute() else project_root / path
+    return path if path.is_absolute() else join_root(project_root, path)
 
 
 def _relative_path(path: Path, project_root: Path) -> str:
     try:
-        return str(path.relative_to(project_root))
+        return str(relative_to_root(path, project_root))
     except ValueError:
         return str(path)
 

@@ -32,18 +32,24 @@ from ai_trading_system.fundamentals.sec_pit_evaluation import (
 from ai_trading_system.fundamentals.sec_pit_real_run_diagnostics import (
     DEFAULT_SEC_PIT_DIAGNOSTICS_OUTPUT_DIR,
 )
+from ai_trading_system.paths import glob_root, join_root, state_dir
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SEC_PIT_SHADOW_OBSERVE_TASK_ID = "TRADING-044"
 SEC_PIT_SHADOW_OBSERVE_REPORT_TYPE = "sec_pit_shadow_observe"
 SEC_PIT_SHADOW_OBSERVE_PRODUCTION_EFFECT = "none"
 DEFAULT_SEC_PIT_SHADOW_OBSERVE_CONFIG_PATH = PROJECT_ROOT / "config" / "sec_pit_shadow_observe.yaml"
-DEFAULT_SEC_PIT_SHADOW_OBSERVE_OUTPUT_DIR = PROJECT_ROOT / "outputs" / "sec_pit_shadow_observe"
+DEFAULT_SEC_PIT_SHADOW_OBSERVE_OUTPUT_DIR = (
+    state_dir(PROJECT_ROOT, "outputs") / "sec_pit_shadow_observe"
+)
 DEFAULT_SEC_PIT_RESEARCH_BASELINE_SCORE_PATH = (
-    PROJECT_ROOT / "data" / "processed" / "research" / "scores_daily_backfill_sec_pit_2023_2026.csv"
+    state_dir(PROJECT_ROOT, "data")
+    / "processed"
+    / "research"
+    / "scores_daily_backfill_sec_pit_2023_2026.csv"
 )
 LEGACY_SEC_PIT_FEATURE_PANEL_PATH = (
-    PROJECT_ROOT / "data" / "processed" / "sec_pit" / "sec_pit_feature_panel.csv"
+    state_dir(PROJECT_ROOT, "data") / "processed" / "sec_pit" / "sec_pit_feature_panel.csv"
 )
 
 SHADOW_STATUSES: tuple[str, ...] = (
@@ -1972,7 +1978,7 @@ def _artifact_path(summary: dict[str, Any], key: str, default: Path) -> Path:
     if not raw:
         return default
     path = Path(str(raw))
-    return path if path.is_absolute() else PROJECT_ROOT / path
+    return path if path.is_absolute() else join_root(PROJECT_ROOT, path)
 
 
 def _latest_dated_path(
@@ -1982,11 +1988,11 @@ def _latest_dated_path(
     end: date | None,
 ) -> Path:
     default_end = end or date.max
-    default_path = root / f"{prefix}{default_end.isoformat()}{suffix}"
+    default_path = join_root(root, f"{prefix}{default_end.isoformat()}{suffix}")
     if not root.exists():
         return default_path
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob(f"{prefix}*{suffix}"):
+    for path in glob_root(root, f"{prefix}*{suffix}"):
         raw_date = path.stem.removeprefix(prefix)
         parsed = _parse_date(raw_date)
         if parsed is not None and (end is None or parsed <= end):
@@ -2003,27 +2009,27 @@ def _baseline_path(root: Path, end: date) -> Path:
         return root / "scores_daily.csv"
     for path in (
         root / "scores_daily.csv",
-        root / f"scores_daily_{end.isoformat()}.csv",
-        root / f"daily_score_baseline_{end.isoformat()}.csv",
-        root / f"baseline_scores_{end.isoformat()}.csv",
+        join_root(root, f"scores_daily_{end.isoformat()}.csv"),
+        join_root(root, f"daily_score_baseline_{end.isoformat()}.csv"),
+        join_root(root, f"baseline_scores_{end.isoformat()}.csv"),
     ):
         if path.exists():
             return path
     dated: list[tuple[date, Path]] = []
     for pattern in ("scores_*.csv", "daily_score_*.csv", "baseline_scores_*.csv"):
-        for path in root.glob(pattern):
+        for path in glob_root(root, pattern):
             parsed = _date_from_stem(path.stem)
             if parsed is not None and parsed <= end:
                 dated.append((parsed, path))
     if dated:
         return max(dated, key=lambda item: item[0])[1]
-    csv_files = sorted(root.glob("*.csv"))
+    csv_files = sorted(glob_root(root, "*.csv"))
     return csv_files[0] if csv_files else root / "scores_daily.csv"
 
 
 def _is_default_baseline_score_dir(root: Path) -> bool:
     path = Path(root)
-    normalized = path if path.is_absolute() else PROJECT_ROOT / path
+    normalized = path if path.is_absolute() else join_root(PROJECT_ROOT, path)
     return normalized.resolve() == DEFAULT_BASELINE_SCORE_DIR.resolve()
 
 

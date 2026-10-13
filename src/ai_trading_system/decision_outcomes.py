@@ -22,9 +22,12 @@ from ai_trading_system.feedback_sample_policy import (
     load_feedback_sample_policy,
     sample_floor_summary,
 )
+from ai_trading_system.paths import state_dir
 
 DEFAULT_OUTCOME_HORIZONS = (1, 5, 20, 60, 120)
-DEFAULT_DECISION_OUTCOMES_PATH = PROJECT_ROOT / "data" / "processed" / "decision_outcomes.csv"
+DEFAULT_DECISION_OUTCOMES_PATH = (
+    state_dir(PROJECT_ROOT, "data") / "processed" / "decision_outcomes.csv"
+)
 
 
 @dataclass(frozen=True)

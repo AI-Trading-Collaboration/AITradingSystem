@@ -12,6 +12,7 @@ import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data.quality import default_quality_report_path
+from ai_trading_system.paths import glob_root, state_dir
 from ai_trading_system.shadow.lineage import git_commit_sha, git_worktree_dirty
 from ai_trading_system.trading_engine.data_registry_consistency import (
     portfolio_sensitivity_data_gate_context,
@@ -77,7 +78,7 @@ class PortfolioCandidatesRun:
 
 
 def default_portfolio_candidates_root() -> Path:
-    return PROJECT_ROOT / "artifacts" / "portfolio_candidates"
+    return state_dir(PROJECT_ROOT, "artifacts") / "portfolio_candidates"
 
 
 def default_portfolio_candidates_dir(output_root: Path, as_of: date) -> Path:
@@ -103,7 +104,7 @@ def default_recommended_portfolio_candidate_path(output_root: Path, as_of: date)
 
 def latest_portfolio_candidates_path(output_root: Path | None = None) -> Path | None:
     root = output_root or default_portfolio_candidates_root()
-    candidates = sorted(root.glob("*/portfolio_candidates_summary.json"))
+    candidates = sorted(glob_root(root, "*/portfolio_candidates_summary.json"))
     if not candidates:
         return None
     return max(candidates, key=lambda path: path.stat().st_mtime)
@@ -115,7 +116,7 @@ def latest_portfolio_candidates_path_on_or_before(
 ) -> Path | None:
     root = output_root or default_portfolio_candidates_root()
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/portfolio_candidates_summary.json"):
+    for path in glob_root(root, "*/portfolio_candidates_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -1519,7 +1520,7 @@ def _base_blocked_payload(
 
 def _output_root(config: dict[str, Any], *, dry_run: bool) -> Path:
     if dry_run:
-        return PROJECT_ROOT / "outputs" / "dry_runs" / "portfolio_candidates"
+        return state_dir(PROJECT_ROOT, "outputs") / "dry_runs" / "portfolio_candidates"
     output = _mapping(config.get("output"))
     return resolve_project_path(
         str(output.get("portfolio_candidates_dir") or default_portfolio_candidates_root())
@@ -1533,7 +1534,7 @@ def _data_quality_report_dir(
     dry_run: bool,
 ) -> Path:
     if dry_run:
-        return PROJECT_ROOT / "outputs" / "dry_runs" / "portfolio_candidates" / "reports"
+        return state_dir(PROJECT_ROOT, "outputs") / "dry_runs" / "portfolio_candidates" / "reports"
     return resolve_project_path(str(shadow_config.data.data_quality_report_dir))
 
 
@@ -1553,11 +1554,11 @@ def _latest_shadow_backtest_path_from_config(config: dict[str, Any], as_of: date
     root = resolve_project_path(
         str(
             input_config.get("shadow_backtest_dir")
-            or PROJECT_ROOT / "artifacts" / "shadow_backtest"
+            or state_dir(PROJECT_ROOT, "artifacts") / "shadow_backtest"
         )
     )
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/shadow_backtest_summary.json"):
+    for path in glob_root(root, "*/shadow_backtest_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:

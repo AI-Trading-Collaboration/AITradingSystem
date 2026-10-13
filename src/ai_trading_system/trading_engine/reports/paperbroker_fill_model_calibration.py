@@ -8,6 +8,7 @@ from typing import Any
 
 import yaml
 
+from ai_trading_system.paths import state_dir
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 PAPERBROKER_FILL_MODEL_CALIBRATION_SCHEMA_VERSION = 1
@@ -69,7 +70,7 @@ def default_paperbroker_fill_model_calibration_json_path(
 def build_paperbroker_fill_model_calibration_payload(
     *,
     as_of: date,
-    reports_dir: Path = REPO_ROOT / "outputs" / "reports",
+    reports_dir: Path = state_dir(REPO_ROOT, "outputs") / "reports",
     policy_path: Path = DEFAULT_PAPERBROKER_FILL_MODEL_CALIBRATION_POLICY_PATH,
     max_comparisons: int | None = None,
     replay_json_path: Path | None = None,
@@ -216,7 +217,7 @@ def build_paperbroker_fill_model_calibration_payload(
 def write_paperbroker_fill_model_calibration_report(
     *,
     as_of: date,
-    reports_dir: Path = REPO_ROOT / "outputs" / "reports",
+    reports_dir: Path = state_dir(REPO_ROOT, "outputs") / "reports",
     policy_path: Path = DEFAULT_PAPERBROKER_FILL_MODEL_CALIBRATION_POLICY_PATH,
     max_comparisons: int | None = None,
     replay_json_path: Path | None = None,

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import glob_root, state_dir
 
 SCHEMA_VERSION = 1
 REPORT_TYPE = "engineering_closeout_release_candidate"
@@ -99,8 +100,10 @@ def build_engineering_closeout_release_candidate_payload(
     release_version: str | None = None,
     enforce_git_clean: bool = True,
 ) -> dict[str, Any]:
-    resolved_reports_dir = reports_dir or project_root / "outputs" / "reports"
-    resolved_runtime_dir = validation_runtime_dir or project_root / "outputs" / "validation_runtime"
+    resolved_reports_dir = reports_dir or state_dir(project_root, "outputs") / "reports"
+    resolved_runtime_dir = (
+        validation_runtime_dir or state_dir(project_root, "outputs") / "validation_runtime"
+    )
     release_tag_name = release_tag or f"engineering-closeout-{as_of.isoformat()}-rc1"
     release_version_name = release_version or f"0.1.0+engineering.closeout.{as_of:%Y%m%d}.rc1"
 
@@ -741,9 +744,7 @@ def _payload_status(payload: Mapping[str, Any]) -> str:
 
 def _latest_validation_tier_summary(root: Path, tier: str) -> Path | None:
     candidates = [
-        path
-        for path in root.glob(f"{tier}_*/test_runtime_summary.json")
-        if path.is_file()
+        path for path in glob_root(root, f"{tier}_*/test_runtime_summary.json") if path.is_file()
     ]
     if not candidates:
         return None
@@ -752,7 +753,7 @@ def _latest_validation_tier_summary(root: Path, tier: str) -> Path | None:
 
 def _latest_dated_path(root: Path, prefix: str, suffix: str) -> Path | None:
     candidates: list[tuple[date, float, Path]] = []
-    for path in root.glob(f"{prefix}*{suffix}"):
+    for path in glob_root(root, f"{prefix}*{suffix}"):
         if not path.is_file():
             continue
         if not re.match(r"\d{4}-\d{2}-\d{2}", path.name.removeprefix(prefix)):

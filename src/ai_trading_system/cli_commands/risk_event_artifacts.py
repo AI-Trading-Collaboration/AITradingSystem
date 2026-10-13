@@ -11,12 +11,15 @@ from ai_trading_system.llm_request_profiles import (
     LlmRequestProfile,
     load_llm_request_profiles,
 )
+from ai_trading_system.paths import join_root, state_dir
 
-DEFAULT_RISK_EVENT_OCCURRENCES_PATH = PROJECT_ROOT / "data" / "external" / "risk_event_occurrences"
-DEFAULT_RISK_EVENT_PREREVIEW_QUEUE_PATH = (
-    PROJECT_ROOT / "data" / "processed" / "risk_event_prereview_queue.json"
+DEFAULT_RISK_EVENT_OCCURRENCES_PATH = (
+    state_dir(PROJECT_ROOT, "data") / "external" / "risk_event_occurrences"
 )
-DEFAULT_OPENAI_REQUEST_CACHE_PATH = PROJECT_ROOT / DEFAULT_OPENAI_REQUEST_CACHE_DIR
+DEFAULT_RISK_EVENT_PREREVIEW_QUEUE_PATH = (
+    state_dir(PROJECT_ROOT, "data") / "processed" / "risk_event_prereview_queue.json"
+)
+DEFAULT_OPENAI_REQUEST_CACHE_PATH = join_root(PROJECT_ROOT, DEFAULT_OPENAI_REQUEST_CACHE_DIR)
 DEFAULT_RISK_EVENT_SINGLE_PREREVIEW_PROFILE = "risk_event_single_prereview"
 DEFAULT_RISK_EVENT_TRIAGED_PREREVIEW_PROFILE = "risk_event_triaged_official_candidates"
 DEFAULT_RISK_EVENT_DAILY_PREREVIEW_PROFILE = "risk_event_daily_official_precheck"

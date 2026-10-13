@@ -11,11 +11,12 @@ from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.parameter_candidates import (
     DEFAULT_PARAMETER_CANDIDATE_LEDGER_PATH,
 )
+from ai_trading_system.paths import join_root, state_dir
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SCHEMA_VERSION = 1
 DEFAULT_PARAMETER_GOVERNANCE_MANIFEST_PATH = PROJECT_ROOT / "config" / "parameter_governance.yaml"
-DEFAULT_PARAMETER_GOVERNANCE_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
+DEFAULT_PARAMETER_GOVERNANCE_REPORT_DIR = state_dir(PROJECT_ROOT, "outputs") / "reports"
 
 SOURCE_LEVELS = frozenset(
     {
@@ -716,7 +717,7 @@ def _project_path(value: str) -> Path:
     path = Path(value)
     if path.is_absolute():
         return path
-    return PROJECT_ROOT / path
+    return join_root(PROJECT_ROOT, path)
 
 
 def _required_string(payload: dict[str, Any], key: str) -> str:

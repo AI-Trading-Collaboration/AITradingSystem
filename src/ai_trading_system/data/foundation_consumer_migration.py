@@ -67,6 +67,7 @@ from ai_trading_system.data.quality_execution import (
     run_canonical_data_quality_execution,
     verify_data_quality_execution_receipt,
 )
+from ai_trading_system.paths import join_root, relative_to_root, state_dir
 from ai_trading_system.platform.artifacts import canonical_json_bytes
 from ai_trading_system.yaml_loader import safe_load_yaml_text
 
@@ -232,7 +233,7 @@ def load_consumer_migration_policy(
         raise DataFoundationConsumerMigrationError(
             "CONSUMER_MIGRATION_POLICY_INVALID",
             str(exc),
-            path=root / Path(relative),
+            path=join_root(root, Path(relative)),
         ) from exc
     payload = _mapping(value, "policy")
     _exact_fields(
@@ -374,7 +375,7 @@ def materialize_isolated_candidate(
     source_root = _resolved_plain_directory(source_project_root)
     output = _prepare_output_root(
         output_root,
-        root / Path(policy.allowed_output_parent),
+        join_root(root, Path(policy.allowed_output_parent)),
     )
     candidate_root = output / "candidate_project"
     candidate_root.mkdir()
@@ -553,7 +554,7 @@ def validate_candidate_copy_manifest(
             _fail(
                 "CONSUMER_MIGRATION_COPY_TAMPERED",
                 candidate_path,
-                path=root / Path(candidate_path),
+                path=join_root(root, Path(candidate_path)),
             )
 
 
@@ -570,7 +571,7 @@ def run_isolated_consumer_migration_rehearsal(
 ) -> dict[str, object]:
     root = project_root.resolve()
     policy = load_consumer_migration_policy(policy_path, project_root=root)
-    acl_policy = load_acl_policy(root / acl_policy_path)
+    acl_policy = load_acl_policy(join_root(root, acl_policy_path))
     _validate_capability_evidence(policy, project_root=root)
     materialized = materialize_isolated_candidate(
         source_project_root=source_project_root,
@@ -586,13 +587,13 @@ def run_isolated_consumer_migration_rehearsal(
     request = CanonicalDataQualityExecutionRequest(
         as_of=as_of,
         requested_window=DataQualityDateWindow(date(2021, 2, 22), as_of),
-        prices_path=candidate / "data/raw/prices_daily.csv",
-        rates_path=candidate / "data/raw/rates_daily.csv",
-        manifest_path=candidate / "data/raw/download_manifest.csv",
+        prices_path=state_dir(candidate, "data/raw/prices_daily.csv"),
+        rates_path=state_dir(candidate, "data/raw/rates_daily.csv"),
+        manifest_path=state_dir(candidate, "data/raw/download_manifest.csv"),
         expected_price_tickers=tuple(configured_price_tickers(universe)),
         expected_rate_series=tuple(configured_rate_series(universe)),
         execution_profile_id=policy.execution_profile_id,
-        secondary_prices_path=candidate / "data/raw/prices_marketstack_daily.csv",
+        secondary_prices_path=state_dir(candidate, "data/raw/prices_marketstack_daily.csv"),
         require_secondary_prices=True,
         policy_path=data_quality_policy_path,
     )
@@ -862,7 +863,7 @@ def verify_consumer_migration_attestation(
         != authorization.get("expires_at")
     ):
         _fail("CONSUMER_MIGRATION_AUTHORIZATION_MISMATCH", "authorization id mismatch")
-    acl_policy = load_acl_policy(root / acl_policy_path)
+    acl_policy = load_acl_policy(join_root(root, acl_policy_path))
     acl_payload = _mapping(payload.get("acl"), "acl")
     acl_attestation = _mapping(acl_payload.get("attestation"), "acl.attestation")
     validate_acl_attestation(
@@ -978,8 +979,8 @@ def validate_consumer_migration_bundle(
         bundle.get("migration_attestation"),
         "migration_attestation",
     )
-    attestation_path = root / Path(
-        _portable_path(attestation_binding.get("path"), "migration_attestation.path")
+    attestation_path = join_root(
+        root, Path(_portable_path(attestation_binding.get("path"), "migration_attestation.path"))
     )
     attestation_raw = attestation_path.read_bytes()
     if (
@@ -1008,8 +1009,8 @@ def validate_consumer_migration_bundle(
         bundle.get("consumer_read_rehearsal"),
         "consumer_read_rehearsal",
     )
-    read_path = root / Path(
-        _portable_path(read_binding.get("path"), "consumer_read_rehearsal.path")
+    read_path = join_root(
+        root, Path(_portable_path(read_binding.get("path"), "consumer_read_rehearsal.path"))
     )
     read_raw = read_path.read_bytes()
     read_receipt = _canonical_mapping(
@@ -1530,7 +1531,7 @@ def _validate_capability_evidence(
     project_root: Path,
 ) -> None:
     root = project_root.resolve()
-    d0c_path = root / Path(policy.capabilities.d0c_bundle_path)
+    d0c_path = join_root(root, Path(policy.capabilities.d0c_bundle_path))
     d0c_raw = _read_secure(
         root,
         policy.capabilities.d0c_bundle_path,
@@ -1578,7 +1579,7 @@ def _validate_capability_evidence(
     if durability.get("attestation_id") != d0c.get("durability_attestation_id"):
         _fail("CONSUMER_MIGRATION_D0C_EVIDENCE_INVALID", "attestation id mismatch")
 
-    d0d_path = root / Path(policy.capabilities.d0d_bundle_path)
+    d0d_path = join_root(root, Path(policy.capabilities.d0d_bundle_path))
     d0d_raw = _read_secure(
         root,
         policy.capabilities.d0d_bundle_path,
@@ -1588,7 +1589,7 @@ def _validate_capability_evidence(
         _fail("CONSUMER_MIGRATION_D0D_EVIDENCE_DRIFT", d0d_path.as_posix())
     d0d = validate_acl_rehearsal_bundle(
         d0d_path,
-        policy_path=root / DEFAULT_ACL_POLICY_PATH,
+        policy_path=join_root(root, DEFAULT_ACL_POLICY_PATH),
     )
     if d0d.get("bundle_id") != policy.capabilities.d0d_bundle_id:
         _fail("CONSUMER_MIGRATION_D0D_EVIDENCE_INVALID", "bundle id mismatch")
@@ -1955,9 +1956,9 @@ def _raise_nonfinite(value: str) -> NoReturn:
 
 
 def _repo_relative(root: Path, path: Path) -> str:
-    candidate = path if path.is_absolute() else root / path
+    candidate = path if path.is_absolute() else join_root(root, path)
     try:
-        return candidate.resolve(strict=False).relative_to(root.resolve()).as_posix()
+        return relative_to_root(candidate.resolve(strict=False), root.resolve()).as_posix()
     except ValueError as exc:
         raise DataFoundationConsumerMigrationError(
             "CONSUMER_MIGRATION_PATH_ESCAPE",

@@ -73,6 +73,7 @@ from ai_trading_system.fundamentals.tsm_ir import (
     write_tsm_ir_quarterly_metrics_csv,
     write_tsm_ir_quarterly_report,
 )
+from ai_trading_system.paths import state_dir
 
 console = Console()
 fundamentals_app = typer.Typer(help="基本面数据源下载和审计。", no_args_is_help=True)
@@ -151,8 +152,7 @@ def download_sec_companyfacts_command(
     output_dir: Annotated[
         Path,
         typer.Option(help="SEC companyfacts 原始 JSON 输出目录。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "sec_companyfacts",
     tickers: Annotated[
@@ -275,7 +275,7 @@ def download_sec_filing_archive_command(
 
     archive_date = _parse_date(as_of) if as_of else date.today()
     metrics_input = metrics_path or default_sec_fundamental_metrics_csv_path(
-        PROJECT_ROOT / "data" / "processed",
+        state_dir(PROJECT_ROOT, "data") / "processed",
         archive_date,
     )
     selected_tickers = _parse_csv_items(tickers) if tickers else None
@@ -320,11 +320,11 @@ def sec_accession_coverage_command(
     """检查 SEC 指标 CSV 已用 accession 的 submissions/archive 覆盖。"""
     coverage_date = _parse_date(as_of) if as_of else date.today()
     metrics_input = metrics_path or default_sec_fundamental_metrics_csv_path(
-        PROJECT_ROOT / "data" / "processed",
+        state_dir(PROJECT_ROOT, "data") / "processed",
         coverage_date,
     )
     report_output = output_path or default_sec_accession_coverage_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         coverage_date,
     )
     report = build_sec_accession_coverage_report(
@@ -353,8 +353,7 @@ def validate_sec_companyfacts_command(
     input_dir: Annotated[
         Path,
         typer.Option(help="SEC companyfacts 原始 JSON 输入目录。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "sec_companyfacts",
     as_of: Annotated[
@@ -369,7 +368,7 @@ def validate_sec_companyfacts_command(
     """校验 SEC companyfacts 原始缓存、CIK、taxonomy 和 manifest。"""
     validation_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_sec_companyfacts_validation_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         validation_date,
     )
     report = validate_sec_companyfacts_cache(
@@ -402,8 +401,7 @@ def extract_sec_metrics_command(
     input_dir: Annotated[
         Path,
         typer.Option(help="SEC companyfacts 原始 JSON 输入目录。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "sec_companyfacts",
     as_of: Annotated[
@@ -426,15 +424,15 @@ def extract_sec_metrics_command(
     """在 SEC 缓存校验通过后抽取结构化基本面指标。"""
     extraction_date = _parse_date(as_of) if as_of else date.today()
     validation_output = validation_report_path or default_sec_companyfacts_validation_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         extraction_date,
     )
     csv_output = output_path or default_sec_fundamental_metrics_csv_path(
-        PROJECT_ROOT / "data" / "processed",
+        state_dir(PROJECT_ROOT, "data") / "processed",
         extraction_date,
     )
     markdown_output = report_path or default_sec_fundamental_metrics_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         extraction_date,
     )
 
@@ -507,11 +505,11 @@ def validate_sec_metrics_command(
     """校验已抽取的 SEC 基本面指标 CSV。"""
     validation_date = _parse_date(as_of) if as_of else date.today()
     csv_input = input_path or default_sec_fundamental_metrics_csv_path(
-        PROJECT_ROOT / "data" / "processed",
+        state_dir(PROJECT_ROOT, "data") / "processed",
         validation_date,
     )
     report_output = output_path or default_sec_fundamental_metrics_validation_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         validation_date,
     )
     report = validate_sec_fundamental_metrics_csv(
@@ -575,22 +573,22 @@ def build_sec_features_command(
     """在 SEC 指标 CSV 校验通过后构建基本面比率特征。"""
     feature_date = _parse_date(as_of) if as_of else date.today()
     csv_input = input_path or default_sec_fundamental_metrics_csv_path(
-        PROJECT_ROOT / "data" / "processed",
+        state_dir(PROJECT_ROOT, "data") / "processed",
         feature_date,
     )
     validation_output = (
         validation_report_path
         or default_sec_fundamental_metrics_validation_report_path(
-            PROJECT_ROOT / "outputs" / "reports",
+            state_dir(PROJECT_ROOT, "outputs") / "reports",
             feature_date,
         )
     )
     feature_csv_output = output_path or default_sec_fundamental_features_csv_path(
-        PROJECT_ROOT / "data" / "processed",
+        state_dir(PROJECT_ROOT, "data") / "processed",
         feature_date,
     )
     feature_report_output = report_path or default_sec_fundamental_features_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         feature_date,
     )
 
@@ -684,10 +682,14 @@ def extract_tsm_ir_pdf_text_command(
     report_date = _parse_date(as_of) if as_of else date.today()
     extraction_datetime = _parse_datetime(extracted_at) if extracted_at else datetime.now(tz=UTC)
     text_output = output_path or (
-        PROJECT_ROOT / "data" / "external" / "fundamentals" / "tsm_ir" / f"{input_path.stem}.txt"
+        state_dir(PROJECT_ROOT, "data")
+        / "external"
+        / "fundamentals"
+        / "tsm_ir"
+        / f"{input_path.stem}.txt"
     )
     markdown_output = report_path or (
-        PROJECT_ROOT / "outputs" / "reports" / f"tsm_ir_pdf_text_{report_date}.md"
+        state_dir(PROJECT_ROOT, "outputs") / "reports" / f"tsm_ir_pdf_text_{report_date}.md"
     )
 
     report = extract_tsm_ir_pdf_text(
@@ -760,14 +762,13 @@ def import_tsm_ir_quarterly(
     captured_datetime = _parse_datetime(captured_at) if captured_at else datetime.now(tz=UTC)
     disclosed_date = _parse_date(filed_date) if filed_date else None
     csv_output = output_path or (
-        PROJECT_ROOT / "data" / "processed" / "tsm_ir_quarterly_metrics.csv"
+        state_dir(PROJECT_ROOT, "data") / "processed" / "tsm_ir_quarterly_metrics.csv"
     )
     normalized_period = fiscal_period.upper()
     if normalized_period not in {"Q1", "Q2", "Q3", "Q4"}:
         raise typer.BadParameter("财期必须是 Q1、Q2、Q3 或 Q4。")
     markdown_output = report_path or (
-        PROJECT_ROOT
-        / "outputs"
+        state_dir(PROJECT_ROOT, "outputs")
         / "reports"
         / f"tsm_ir_quarterly_{fiscal_year}_{normalized_period}_{import_date}.md"
     )
@@ -828,10 +829,10 @@ def import_tsm_ir_quarterly_batch(
     import_date = _parse_date(as_of) if as_of else date.today()
     captured_datetime = _parse_datetime(captured_at) if captured_at else datetime.now(tz=UTC)
     csv_output = output_path or (
-        PROJECT_ROOT / "data" / "processed" / "tsm_ir_quarterly_metrics.csv"
+        state_dir(PROJECT_ROOT, "data") / "processed" / "tsm_ir_quarterly_metrics.csv"
     )
     markdown_output = report_path or (
-        PROJECT_ROOT / "outputs" / "reports" / f"tsm_ir_quarterly_batch_{import_date}.md"
+        state_dir(PROJECT_ROOT, "outputs") / "reports" / f"tsm_ir_quarterly_batch_{import_date}.md"
     )
 
     report = build_tsm_ir_quarterly_batch_import_report(
@@ -923,19 +924,17 @@ def fetch_tsm_ir_quarterly(
         raise typer.BadParameter("财期必须是 Q1、Q2、Q3 或 Q4。")
 
     text_output = source_text_path or (
-        PROJECT_ROOT
-        / "data"
+        state_dir(PROJECT_ROOT, "data")
         / "external"
         / "fundamentals"
         / "tsm_ir"
         / f"{fiscal_year}_{normalized_period}_management_report_{import_date}.txt"
     )
     csv_output = output_path or (
-        PROJECT_ROOT / "data" / "processed" / "tsm_ir_quarterly_metrics.csv"
+        state_dir(PROJECT_ROOT, "data") / "processed" / "tsm_ir_quarterly_metrics.csv"
     )
     markdown_output = report_path or (
-        PROJECT_ROOT
-        / "outputs"
+        state_dir(PROJECT_ROOT, "outputs")
         / "reports"
         / f"tsm_ir_quarterly_{fiscal_year}_{normalized_period}_{import_date}.md"
     )
@@ -987,8 +986,7 @@ def merge_tsm_ir_sec_metrics(
     input_path: Annotated[
         Path,
         typer.Option(help="TSMC IR 季度指标 CSV 输入路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "processed"
     / "tsm_ir_quarterly_metrics.csv",
     sec_companies_path: Annotated[
@@ -1037,14 +1035,14 @@ def merge_tsm_ir_sec_metrics(
         )
 
     sec_input = sec_input_path or default_sec_fundamental_metrics_csv_path(
-        PROJECT_ROOT / "data" / "processed",
+        state_dir(PROJECT_ROOT, "data") / "processed",
         merge_date,
     )
     csv_output = output_path or sec_input
     validation_output = (
         validation_report_path
         or default_sec_fundamental_metrics_validation_report_path(
-            PROJECT_ROOT / "outputs" / "reports",
+            state_dir(PROJECT_ROOT, "outputs") / "reports",
             merge_date,
         )
     )

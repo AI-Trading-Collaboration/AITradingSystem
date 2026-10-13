@@ -7,6 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from ai_trading_system.paths import join_root
 from ai_trading_system.trading_engine.schemas.broker_order import BrokerOrder
 from ai_trading_system.trading_engine.schemas.execution_report import ExecutionReport
 from ai_trading_system.trading_engine.schemas.order_intent import OrderIntent
@@ -177,7 +178,7 @@ def replay_intent_audit_trace(
     root = Path(root_dir)
     trace: dict[str, list[dict[str, Any]]] = {stream: [] for stream in AUDIT_STREAMS}
     for stream in AUDIT_STREAMS:
-        for path in _stream_paths(root / stream, as_of=as_of):
+        for path in _stream_paths(join_root(root, stream), as_of=as_of):
             for record in read_jsonl(path):
                 if _record_matches_intent(record, intent_id):
                     trace[stream].append(record)

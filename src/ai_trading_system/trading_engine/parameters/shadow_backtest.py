@@ -21,6 +21,7 @@ from ai_trading_system.data.quality import (
     validate_data_cache,
     write_data_quality_report,
 )
+from ai_trading_system.paths import glob_root, state_dir
 from ai_trading_system.shadow.lineage import git_commit_sha, git_worktree_dirty, sha256_file
 from ai_trading_system.trading_engine.backtesting.portfolio_simulator import (
     PortfolioSimulationResult,
@@ -645,8 +646,7 @@ def _promotion_decision_payload(
 ) -> dict[str, object]:
     payload = decision.to_dict()
     ablation_path = (
-        PROJECT_ROOT
-        / "artifacts"
+        state_dir(PROJECT_ROOT, "artifacts")
         / "signal_ablation"
         / as_of.isoformat()
         / "signal_ablation_summary.json"
@@ -917,17 +917,16 @@ def _promotion_decision_payload(
 
 def _latest_signal_calibration_supporting_path(as_of: date) -> Path | None:
     exact_path = (
-        PROJECT_ROOT
-        / "artifacts"
+        state_dir(PROJECT_ROOT, "artifacts")
         / "signal_calibration"
         / as_of.isoformat()
         / "signal_calibration_summary.json"
     )
     if exact_path.exists():
         return exact_path
-    root = PROJECT_ROOT / "artifacts" / "signal_calibration"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "signal_calibration"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/signal_calibration_summary.json"):
+    for path in glob_root(root, "*/signal_calibration_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -940,9 +939,9 @@ def _latest_signal_calibration_supporting_path(as_of: date) -> Path | None:
 
 
 def _latest_portfolio_sensitivity_supporting_path(as_of: date) -> Path | None:
-    root = PROJECT_ROOT / "artifacts" / "portfolio_sensitivity"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "portfolio_sensitivity"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/portfolio_sensitivity_summary.json"):
+    for path in glob_root(root, "*/portfolio_sensitivity_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -955,9 +954,9 @@ def _latest_portfolio_sensitivity_supporting_path(as_of: date) -> Path | None:
 
 
 def _latest_portfolio_candidates_supporting_path(as_of: date) -> Path | None:
-    root = PROJECT_ROOT / "artifacts" / "portfolio_candidates"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "portfolio_candidates"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/portfolio_candidates_summary.json"):
+    for path in glob_root(root, "*/portfolio_candidates_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -970,9 +969,9 @@ def _latest_portfolio_candidates_supporting_path(as_of: date) -> Path | None:
 
 
 def _latest_portfolio_candidate_review_supporting_path(as_of: date) -> Path | None:
-    root = PROJECT_ROOT / "artifacts" / "portfolio_candidate_reviews"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "portfolio_candidate_reviews"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/portfolio_candidate_review_decision.json"):
+    for path in glob_root(root, "*/portfolio_candidate_review_decision.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -985,9 +984,9 @@ def _latest_portfolio_candidate_review_supporting_path(as_of: date) -> Path | No
 
 
 def _latest_portfolio_candidate_tracking_supporting_path(as_of: date) -> Path | None:
-    root = PROJECT_ROOT / "artifacts" / "portfolio_candidate_tracking"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "portfolio_candidate_tracking"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/portfolio_candidate_tracking_summary.json"):
+    for path in glob_root(root, "*/portfolio_candidate_tracking_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -1000,9 +999,9 @@ def _latest_portfolio_candidate_tracking_supporting_path(as_of: date) -> Path | 
 
 
 def _latest_portfolio_tracking_review_supporting_path(as_of: date) -> Path | None:
-    root = PROJECT_ROOT / "artifacts" / "portfolio_tracking_reviews"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "portfolio_tracking_reviews"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/portfolio_tracking_review_summary.json"):
+    for path in glob_root(root, "*/portfolio_tracking_review_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -1015,9 +1014,9 @@ def _latest_portfolio_tracking_review_supporting_path(as_of: date) -> Path | Non
 
 
 def _latest_weight_tuning_supporting_path(as_of: date) -> Path | None:
-    root = PROJECT_ROOT / "artifacts" / "weight_tuning"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "weight_tuning"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/weight_tuning_summary.json"):
+    for path in glob_root(root, "*/weight_tuning_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -1030,9 +1029,9 @@ def _latest_weight_tuning_supporting_path(as_of: date) -> Path | None:
 
 
 def _latest_weight_tuning_failure_supporting_path(as_of: date) -> Path | None:
-    root = PROJECT_ROOT / "artifacts" / "weight_tuning_failure"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "weight_tuning_failure"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/weight_tuning_failure_summary.json"):
+    for path in glob_root(root, "*/weight_tuning_failure_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -1045,9 +1044,9 @@ def _latest_weight_tuning_failure_supporting_path(as_of: date) -> Path | None:
 
 
 def _latest_weight_stability_supporting_path(as_of: date) -> Path | None:
-    root = PROJECT_ROOT / "artifacts" / "weight_stability"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "weight_stability"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/weight_stability_summary.json"):
+    for path in glob_root(root, "*/weight_stability_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -1060,9 +1059,9 @@ def _latest_weight_stability_supporting_path(as_of: date) -> Path | None:
 
 
 def _latest_weight_stability_readiness_supporting_path(as_of: date) -> Path | None:
-    root = PROJECT_ROOT / "artifacts" / "weight_stability_readiness"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "weight_stability_readiness"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/weight_stability_readiness_summary.json"):
+    for path in glob_root(root, "*/weight_stability_readiness_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -1071,16 +1070,16 @@ def _latest_weight_stability_readiness_supporting_path(as_of: date) -> Path | No
             candidates.append((candidate_date, path))
     if candidates:
         return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
-    latest_candidates = sorted(root.glob("*/weight_stability_readiness_summary.json"))
+    latest_candidates = sorted(glob_root(root, "*/weight_stability_readiness_summary.json"))
     if not latest_candidates:
         return None
     return max(latest_candidates, key=lambda path: path.stat().st_mtime)
 
 
 def _latest_portfolio_turnover_attribution_supporting_path(as_of: date) -> Path | None:
-    root = PROJECT_ROOT / "artifacts" / "portfolio_turnover_attribution"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "portfolio_turnover_attribution"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/portfolio_turnover_attribution_summary.json"):
+    for path in glob_root(root, "*/portfolio_turnover_attribution_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -1093,9 +1092,9 @@ def _latest_portfolio_turnover_attribution_supporting_path(as_of: date) -> Path 
 
 
 def _latest_market_data_freshness_supporting_path(as_of: date) -> Path | None:
-    root = PROJECT_ROOT / "artifacts" / "data_freshness"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "data_freshness"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/market_data_freshness_summary.json"):
+    for path in glob_root(root, "*/market_data_freshness_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -1108,9 +1107,9 @@ def _latest_market_data_freshness_supporting_path(as_of: date) -> Path | None:
 
 
 def _latest_market_data_refresh_supporting_path(as_of: date) -> Path | None:
-    root = PROJECT_ROOT / "artifacts" / "data_refresh"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "data_refresh"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/market_data_refresh_summary.json"):
+    for path in glob_root(root, "*/market_data_refresh_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -1912,7 +1911,7 @@ def _date_range_from_rows(rows: tuple[dict[str, object], ...]) -> str:
 
 def _output_roots(config: ShadowBacktestConfig, *, dry_run: bool) -> dict[str, Path]:
     if dry_run:
-        root = PROJECT_ROOT / "outputs" / "dry_runs" / "shadow_backtest"
+        root = state_dir(PROJECT_ROOT, "outputs") / "dry_runs" / "shadow_backtest"
         return {
             "shadow_backtest_dir": root / "shadow_backtest",
             "shadow_parameters_dir": root / "shadow_parameters",

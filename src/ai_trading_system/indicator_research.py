@@ -21,6 +21,7 @@ from ai_trading_system.config import (
     load_scoring_rules,
 )
 from ai_trading_system.feature_availability import DEFAULT_FEATURE_AVAILABILITY_CONFIG_PATH
+from ai_trading_system.paths import join_root, state_dir
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SCHEMA_VERSION = "1.0"
@@ -32,15 +33,17 @@ DEFAULT_THRESHOLD_REGISTRY_PATH = PROJECT_ROOT / "config" / "research" / "thresh
 DEFAULT_PIT_FEATURE_CONTRACT_REGISTRY_PATH = (
     PROJECT_ROOT / "config" / "research" / "pit_feature_availability_contracts.yaml"
 )
-DEFAULT_INDICATOR_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "research_indicators"
-DEFAULT_DAILY_INDICATOR_TRACE_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "reports"
+DEFAULT_INDICATOR_OUTPUT_ROOT = state_dir(PROJECT_ROOT, "outputs") / "research_indicators"
+DEFAULT_DAILY_INDICATOR_TRACE_OUTPUT_ROOT = state_dir(PROJECT_ROOT, "outputs") / "reports"
 DEFAULT_DYNAMIC_ALLOCATION_POLICY_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "etf_portfolio" / "dynamic_allocation_policy.yaml"
 )
 DEFAULT_TREND_CALIBRATION_POLICY_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "etf_portfolio" / "trend_calibration.yaml"
 )
-DEFAULT_DYNAMIC_TREND_COVERAGE_EXTENSION_ROOT = PROJECT_ROOT / "outputs" / "research_campaigns"
+DEFAULT_DYNAMIC_TREND_COVERAGE_EXTENSION_ROOT = (
+    state_dir(PROJECT_ROOT, "outputs") / "research_campaigns"
+)
 
 CONTROL_ONLY_DATA_QUALITY_STATUS = "NOT_REQUIRED_CONFIG_ONLY"
 SAFETY_BOUNDARY = {
@@ -11314,7 +11317,7 @@ def _resolve_trace_source_path(parent_trace_path: Path, source_path_text: str) -
     candidates = [source_path]
     if not source_path.is_absolute():
         candidates = [
-            PROJECT_ROOT / source_path,
+            join_root(PROJECT_ROOT, source_path),
             parent_trace_path.parent / source_path,
         ]
     for candidate in candidates:
@@ -11516,7 +11519,12 @@ def _lineage_repair_artifact_record(
 
 def _lineage_repair_source_path(row_date: str, *, gate_audit_root: Path | None) -> Path:
     if gate_audit_root is None:
-        return PROJECT_ROOT / "outputs" / "reports" / row_date / "daily_indicator_weight_trace.json"
+        return (
+            state_dir(PROJECT_ROOT, "outputs")
+            / "reports"
+            / row_date
+            / "daily_indicator_weight_trace.json"
+        )
     return gate_audit_root / row_date / "daily_indicator_weight_trace.json"
 
 

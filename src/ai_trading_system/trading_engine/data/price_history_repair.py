@@ -17,6 +17,7 @@ from ai_trading_system.data.market_data import (
     PriceRequest,
     YFinancePriceProvider,
 )
+from ai_trading_system.paths import state_dir
 from ai_trading_system.trading_engine.backtest_input_diagnostics import (
     BacktestInputDiagnosticsRun,
     run_backtest_input_diagnostics,
@@ -128,7 +129,7 @@ def repair_backtest_price_history(
     price_only: bool = False,
     generated_at: datetime | None = None,
 ) -> PriceHistoryRepairRun:
-    root = output_root or (PROJECT_ROOT / "artifacts")
+    root = output_root or (state_dir(PROJECT_ROOT, "artifacts"))
     generated = generated_at or datetime.now(tz=UTC)
     initial = run_backtest_input_diagnostics(
         as_of=as_of,

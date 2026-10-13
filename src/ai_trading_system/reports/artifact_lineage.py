@@ -9,6 +9,7 @@ from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.core import ArtifactRef
+from ai_trading_system.paths import join_root
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_INDEX_WAIVER_PATH,
     DEFAULT_REPORT_REGISTRY_PATH,
@@ -908,7 +909,7 @@ def _resolve_path(raw: str, project_root: Path) -> Path | None:
     if not raw:
         return None
     path = Path(raw)
-    return path if path.is_absolute() else project_root / path
+    return path if path.is_absolute() else join_root(project_root, path)
 
 
 def _safety_boundary() -> dict[str, Any]:

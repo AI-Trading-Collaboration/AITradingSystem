@@ -12,6 +12,7 @@ from enum import StrEnum
 from pathlib import Path
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 
 SECRET_PATTERNS = (
     re.compile(
@@ -50,7 +51,7 @@ SCANNED_SUFFIXES = {
 IGNORED_PARTS = {".git", ".mypy_cache", ".pytest_cache", ".ruff_cache", "__pycache__"}
 SECRET_SCAN_CACHE_SCHEMA_VERSION = "secret_scan_cache.v1"
 DEFAULT_SECRET_SCAN_CACHE_PATH = (
-    PROJECT_ROOT / "data" / "cache" / "secret_hygiene" / "scan_cache.json"
+    state_dir(PROJECT_ROOT, "data") / "cache" / "secret_hygiene" / "scan_cache.json"
 )
 # Operational bound, not an investment threshold: once the last full scan is this old the cache is
 # ignored and every file is read again, so an edit that kept both size and mtime is still caught

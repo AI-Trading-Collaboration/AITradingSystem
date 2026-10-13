@@ -19,6 +19,7 @@ from uuid import uuid4
 import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import join_root, state_dir
 from ai_trading_system.platform.artifacts import canonical_json_bytes, write_json_atomic
 
 POLICY_SCHEMA_VERSION = "external_request_cache_revalidation_coordination_policy.v1"
@@ -26,9 +27,7 @@ LEASE_EVENT_SCHEMA_VERSION = "external_request_cache_revalidation_lease_event.v1
 LEASE_POINTER_SCHEMA_VERSION = "external_request_cache_revalidation_lease_pointer.v1"
 REPLAY_SCHEMA_VERSION = "external_request_cache_revalidation_lease_replay.v1"
 DEFAULT_POLICY_PATH = (
-    PROJECT_ROOT
-    / "config"
-    / "data"
+    state_dir(PROJECT_ROOT / "config", "data")
     / "external_request_cache_revalidation_coordination_policy.yaml"
 )
 
@@ -1094,7 +1093,7 @@ def _required_datetime(payload: Mapping[str, Any], field: str) -> datetime:
 def _contained_event_path(root: Path, value: Any) -> Path | None:
     if not isinstance(value, str) or not value.startswith("events/"):
         return None
-    candidate = (root / value).resolve()
+    candidate = (join_root(root, value)).resolve()
     try:
         candidate.relative_to((root / "events").resolve())
     except ValueError:

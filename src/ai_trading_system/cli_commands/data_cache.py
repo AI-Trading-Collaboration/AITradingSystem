@@ -53,6 +53,7 @@ from ai_trading_system.external_request_cache import (
     invalidate_external_request_cache,
     sanitize_diagnostic_text,
 )
+from ai_trading_system.paths import join_root, state_dir
 from ai_trading_system.trading_calendar import resolve_default_data_quality_as_of
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
@@ -74,7 +75,9 @@ ALLOWED_DATA_QUALITY_EXECUTION_PROFILE_IDS = frozenset(
 # their rows and nothing after DQ has to fetch them. A ticker new to the cache starts this many
 # calendar days before the end date: enough for the shadow backtest's 1008-session history and
 # inside the five years of history that the FMP Starter plan serves.
-SHADOW_TRACKING_ASSETS_CONFIG_PATH = PROJECT_ROOT / "config" / "data" / "market_data_freshness.yaml"
+SHADOW_TRACKING_ASSETS_CONFIG_PATH = (
+    state_dir(PROJECT_ROOT / "config", "data") / "market_data_freshness.yaml"
+)
 AUXILIARY_PRICE_HISTORY_CALENDAR_DAYS = 1600
 
 
@@ -145,8 +148,7 @@ def download_data(
     output_dir: Annotated[
         Path,
         typer.Option(help="输出缓存目录。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw",
     full_universe: Annotated[
         bool,
@@ -236,7 +238,7 @@ def download_data(
         )
     except Exception as exc:
         report_path = failure_report_path or default_download_failure_report_path(
-            PROJECT_ROOT / "outputs" / "reports",
+            state_dir(PROJECT_ROOT, "outputs") / "reports",
             end_date,
         )
         write_download_failure_report(
@@ -323,15 +325,13 @@ def validate_data(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="标准化 FRED 宏观序列 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "rates_daily.csv",
     as_of: Annotated[
@@ -395,7 +395,7 @@ def validate_data(
         _parse_date(as_of) if as_of else resolve_default_data_quality_as_of(observed_at)
     )
     report_path = output_path or default_quality_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         validation_date,
     )
 
@@ -453,7 +453,7 @@ def validate_data(
             started_at=execution.receipt.started_at,
             ended_at=execution.receipt.ended_at,
             execution_result=execution,
-            output_dir=(PROJECT_ROOT / "artifacts" / "data_refresh_audit" / "validation"),
+            output_dir=(state_dir(PROJECT_ROOT, "artifacts") / "data_refresh_audit" / "validation"),
         )
     except (DataQualityExecutionError, OSError) as exc:
         code = getattr(exc, "code", "DQ_RECEIPT_FIELDS_INVALID")
@@ -554,7 +554,7 @@ def _budget_violation_reasons(budget: dict[str, object]) -> list[str]:
 
 
 def _resolve_project_input_path(path: Path) -> Path:
-    candidate = path if path.is_absolute() else PROJECT_ROOT / path
+    candidate = path if path.is_absolute() else join_root(PROJECT_ROOT, path)
     return candidate.resolve(strict=False)
 
 
@@ -567,8 +567,8 @@ def _is_daily_default_data_quality_profile(
 ) -> bool:
     if full_universe or backtest_manifest_path is not None:
         return False
-    expected_prices = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
-    expected_rates = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv"
+    expected_prices = state_dir(PROJECT_ROOT, "data") / "raw" / "prices_daily.csv"
+    expected_rates = state_dir(PROJECT_ROOT, "data") / "raw" / "rates_daily.csv"
     try:
         return (
             prices_path.resolve() == expected_prices.resolve()

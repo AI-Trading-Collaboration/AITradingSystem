@@ -8,10 +8,11 @@ from statistics import mean
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 
 SCHEMA_VERSION = 1
 DEFAULT_DECISION_LEARNING_QUEUE_PATH = (
-    PROJECT_ROOT / "data" / "processed" / "decision_learning_queue.json"
+    state_dir(PROJECT_ROOT, "data") / "processed" / "decision_learning_queue.json"
 )
 
 

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import glob_root, join_root, state_dir
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_INDEX_WAIVER_PATH,
     DEFAULT_REPORT_REGISTRY_PATH,
@@ -632,7 +633,7 @@ def _run_manifest_records(
     records: list[dict[str, Any]] = []
     seen: set[Path] = set()
     for pattern in patterns:
-        for path in sorted(project_root.glob(pattern)):
+        for path in sorted(glob_root(project_root, pattern)):
             if not path.is_file() or path in seen:
                 continue
             seen.add(path)
@@ -677,7 +678,9 @@ def _validation_tier_summary(project_root: Path, required_tiers: Sequence[str]) 
     available_tiers = sorted(set(re.findall(r'"([^"]+)": TierSpec\(', text)))
     missing_tiers = [tier for tier in required_tiers if tier not in available_tiers]
     runtime_summaries = list(
-        (project_root / "outputs" / "validation_runtime").glob("**/test_runtime_summary.json")
+        (state_dir(project_root, "outputs") / "validation_runtime").glob(
+            "**/test_runtime_summary.json"
+        )
     )
     return {
         "runner_path": str(runner_path),
@@ -760,7 +763,7 @@ def _project_path(
     if value in (None, ""):
         return project_root if default is None else default
     path = Path(str(value))
-    return path if path.is_absolute() else project_root / path
+    return path if path.is_absolute() else join_root(project_root, path)
 
 
 def _resolve_path(path: Path) -> Path:
@@ -785,7 +788,7 @@ def _report_path(record: Mapping[str, Any], project_root: Path) -> Path | None:
     if not raw:
         return None
     path = Path(raw)
-    return path if path.is_absolute() else project_root / path
+    return path if path.is_absolute() else join_root(project_root, path)
 
 
 def _readiness_status(

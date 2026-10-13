@@ -7,6 +7,8 @@ from html import escape
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.paths import state_dir
+
 SCHEMA_VERSION = "1.0"
 REPORT_TYPE = "parameter_governance_web_view"
 TASK_ID = "TRADING-020"
@@ -21,7 +23,7 @@ INPUT_INVALID = "INPUT_INVALID"
 ERROR = "ERROR"
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_DATA_ROOT = REPO_ROOT / "data"
+DEFAULT_DATA_ROOT = state_dir(REPO_ROOT, "data")
 
 PIPELINE_CONTRACT: dict[str, Any] = {
     "reads_governance_summary_only": True,

@@ -33,11 +33,12 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data.market_data import FredRateProvider, RateDataProvider, RateRequest
+from ai_trading_system.paths import join_root, state_dir
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_SPEC_PATH = PROJECT_ROOT / "config" / "research" / "qqq_long_history.yaml"
-DEFAULT_SNAPSHOT_ROOT = PROJECT_ROOT / "data" / "raw" / "research" / "qqq_long_history"
-DEFAULT_PRICES_PATH = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
+DEFAULT_SNAPSHOT_ROOT = state_dir(PROJECT_ROOT, "data") / "raw" / "research" / "qqq_long_history"
+DEFAULT_PRICES_PATH = state_dir(PROJECT_ROOT, "data") / "raw" / "prices_daily.csv"
 SNAPSHOT_SCHEMA_VERSION = "qqq_long_history_snapshot.v1"
 CHECK_SCHEMA_VERSION = "qqq_long_history_check.v4"
 LATEST_POINTER = "LATEST"
@@ -198,10 +199,10 @@ def fetch_snapshot(
     payload = _series_csv_bytes(frame)
     digest = _sha256_bytes(payload)
     snapshot_id = f"qlh-{end:%Y%m%d}-{digest[:12]}"
-    snapshot_dir = root / snapshot_id
+    snapshot_dir = join_root(root, snapshot_id)
     series_path = snapshot_dir / SERIES_FILE
     if series_path.exists() and _sha256_bytes(series_path.read_bytes()) == digest:
-        _write_text(root / LATEST_POINTER, snapshot_id + "\n")
+        _write_text(join_root(root, LATEST_POINTER), snapshot_id + "\n")
         return snapshot_dir
     snapshot_dir.mkdir(parents=True, exist_ok=True)
     series_path.write_bytes(payload)
@@ -230,7 +231,7 @@ def fetch_snapshot(
         },
     }
     _write_text(snapshot_dir / MANIFEST_FILE, json.dumps(manifest, indent=2, sort_keys=True) + "\n")
-    _write_text(root / LATEST_POINTER, snapshot_id + "\n")
+    _write_text(join_root(root, LATEST_POINTER), snapshot_id + "\n")
     return snapshot_dir
 
 
@@ -238,11 +239,11 @@ def resolve_snapshot_dir(
     root: Path = DEFAULT_SNAPSHOT_ROOT, snapshot_id: str | None = None
 ) -> Path:
     if snapshot_id is None:
-        pointer = root / LATEST_POINTER
+        pointer = join_root(root, LATEST_POINTER)
         if not pointer.exists():
             raise FileNotFoundError(f"no snapshot yet under {root}; run fetch first")
         snapshot_id = pointer.read_text(encoding="utf-8").strip()
-    snapshot_dir = root / snapshot_id
+    snapshot_dir = join_root(root, snapshot_id)
     if not (snapshot_dir / MANIFEST_FILE).exists():
         raise FileNotFoundError(f"snapshot {snapshot_id} has no manifest under {root}")
     return snapshot_dir

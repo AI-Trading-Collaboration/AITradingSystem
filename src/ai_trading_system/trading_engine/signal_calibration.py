@@ -14,6 +14,7 @@ import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data.quality import default_quality_report_path
+from ai_trading_system.paths import glob_root, state_dir
 from ai_trading_system.shadow.lineage import git_commit_sha, git_worktree_dirty, sha256_file
 from ai_trading_system.trading_engine.parameters import shadow_backtest as shadow_backtest_module
 from ai_trading_system.trading_engine.parameters.parameter_loader import (
@@ -74,7 +75,7 @@ class SignalCalibrationRun:
 
 
 def default_signal_calibration_root() -> Path:
-    return PROJECT_ROOT / "artifacts" / "signal_calibration"
+    return state_dir(PROJECT_ROOT, "artifacts") / "signal_calibration"
 
 
 def default_signal_calibration_dir(output_root: Path, as_of: date) -> Path:
@@ -95,7 +96,7 @@ def default_recommended_profile_path(output_root: Path, as_of: date) -> Path:
 
 def latest_signal_calibration_path(output_root: Path | None = None) -> Path | None:
     root = output_root or default_signal_calibration_root()
-    candidates = sorted(root.glob("*/signal_calibration_summary.json"))
+    candidates = sorted(glob_root(root, "*/signal_calibration_summary.json"))
     if not candidates:
         return None
     return max(candidates, key=lambda path: path.stat().st_mtime)
@@ -107,7 +108,7 @@ def latest_signal_calibration_path_on_or_before(
 ) -> Path | None:
     root = output_root or default_signal_calibration_root()
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/signal_calibration_summary.json"):
+    for path in glob_root(root, "*/signal_calibration_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -1454,7 +1455,7 @@ def _failed_signal(reason: str) -> dict[str, Any]:
 
 def _output_root(config: dict[str, Any], *, dry_run: bool) -> Path:
     if dry_run:
-        return PROJECT_ROOT / "outputs" / "dry_runs" / "signal_calibration"
+        return state_dir(PROJECT_ROOT, "outputs") / "dry_runs" / "signal_calibration"
     output = _mapping(config.get("output"))
     return resolve_project_path(
         str(output.get("signal_calibration_dir") or default_signal_calibration_root())
@@ -1463,7 +1464,7 @@ def _output_root(config: dict[str, Any], *, dry_run: bool) -> Path:
 
 def _data_quality_report_dir(config: dict[str, Any], shadow_config: Any, *, dry_run: bool) -> Path:
     if dry_run:
-        return PROJECT_ROOT / "outputs" / "dry_runs" / "signal_calibration" / "reports"
+        return state_dir(PROJECT_ROOT, "outputs") / "dry_runs" / "signal_calibration" / "reports"
     return resolve_project_path(str(shadow_config.data.data_quality_report_dir))
 
 

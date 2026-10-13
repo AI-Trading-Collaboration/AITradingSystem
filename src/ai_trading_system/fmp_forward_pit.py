@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any, Protocol, cast
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import relative_to_root, state_dir
 from ai_trading_system.platform.artifacts import (
     load_strict_json_path,
     write_bytes_atomic,
@@ -67,8 +68,10 @@ FMP_FORWARD_PIT_NORMALIZED_COLUMNS = (
 )
 FMP_FORWARD_PIT_SOURCE_ID = "fmp_valuation_expectations"
 FMP_FORWARD_PIT_NORMALIZATION_VERSION = "fmp_forward_pit_v1"
-DEFAULT_FMP_FORWARD_PIT_RAW_DIR = PROJECT_ROOT / "data" / "raw" / "fmp_forward_pit"
-DEFAULT_FMP_FORWARD_PIT_NORMALIZED_DIR = PROJECT_ROOT / "data" / "processed" / "pit_snapshots"
+DEFAULT_FMP_FORWARD_PIT_RAW_DIR = state_dir(PROJECT_ROOT, "data") / "raw" / "fmp_forward_pit"
+DEFAULT_FMP_FORWARD_PIT_NORMALIZED_DIR = (
+    state_dir(PROJECT_ROOT, "data") / "processed" / "pit_snapshots"
+)
 
 
 class FmpForwardPitIssueSeverity(StrEnum):
@@ -1273,7 +1276,7 @@ def _id_token(value: str) -> str:
 
 def _display_path(path: Path, project_root: Path) -> Path:
     try:
-        return Path(path.resolve().relative_to(project_root.resolve()).as_posix())
+        return Path(relative_to_root(path.resolve(), project_root.resolve()).as_posix())
     except ValueError:
         return path
 

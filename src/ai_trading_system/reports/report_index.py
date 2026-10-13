@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import join_root
 from ai_trading_system.trading_calendar import is_us_equity_trading_day
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
@@ -546,7 +547,9 @@ def _latest_artifact(
     include_after_as_of = artifact_selection_policy == "latest_available"
     for raw_pattern in artifact_globs:
         pattern_path = Path(raw_pattern)
-        pattern = str(pattern_path if pattern_path.is_absolute() else project_root / pattern_path)
+        pattern = str(
+            pattern_path if pattern_path.is_absolute() else join_root(project_root, pattern_path)
+        )
         for path in _glob_paths(pattern):
             if not path.is_file():
                 continue

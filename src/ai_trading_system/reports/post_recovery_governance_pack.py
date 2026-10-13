@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 from ai_trading_system.reports.normal_paper_shadow_observation_clock import (
     OBSERVATION_PERIOD_MET,
     latest_normal_paper_shadow_observation_clock_json_path,
@@ -105,7 +106,7 @@ def build_post_recovery_governance_pack_payload(
     normal_observation_clock_path: Path | None = None,
     owner_decision_audit_log_payload: Mapping[str, Any] | None = None,
     owner_decision_audit_log_path: Path | None = None,
-    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+    reports_dir: Path = state_dir(PROJECT_ROOT, "outputs") / "reports",
 ) -> dict[str, Any]:
     recovery_pack_path, recovery_pack = _payload_or_latest(
         recovery_pack_payload,

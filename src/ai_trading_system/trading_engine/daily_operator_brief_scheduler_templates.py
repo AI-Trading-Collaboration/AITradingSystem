@@ -8,6 +8,8 @@ from html import escape as html_escape
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.paths import join_root, relative_to_root, state_dir
+
 try:  # pragma: no cover - depends on local timezone database availability.
     from zoneinfo import ZoneInfo
 except ImportError:  # pragma: no cover - Python 3.11 in this project provides zoneinfo.
@@ -119,7 +121,7 @@ UNSAFE_OUTPUT_PATH_MARKERS = (
 
 
 def default_scheduler_template_root(repo_root: Path = REPO_ROOT) -> Path:
-    return repo_root / "data" / "derived" / "operator_briefs" / "scheduler_templates"
+    return state_dir(repo_root, "data") / "derived" / "operator_briefs" / "scheduler_templates"
 
 
 def default_scheduler_template_json_path(repo_root: Path, as_of: date) -> Path:
@@ -902,7 +904,7 @@ def _active_template_lines(text: str) -> list[str]:
 
 def _resolve_output_root(*, repo_root: Path, output_root: Path | None) -> Path:
     value = output_root or default_scheduler_template_root(repo_root)
-    return _resolved(value if value.is_absolute() else repo_root / value)
+    return _resolved(value if value.is_absolute() else join_root(repo_root, value))
 
 
 def _is_safe_output_root(*, repo_root: Path, output_root: Path) -> bool:
@@ -1125,7 +1127,7 @@ def _write_text(path: Path, text: str) -> None:
 
 def _display_path(path: Path, repo_root: Path) -> str:
     try:
-        return path.relative_to(repo_root).as_posix()
+        return relative_to_root(path, repo_root).as_posix()
     except ValueError:
         return str(path)
 

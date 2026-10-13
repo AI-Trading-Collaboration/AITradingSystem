@@ -23,6 +23,7 @@ from ai_trading_system.data.quality import (
     write_data_quality_report,
 )
 from ai_trading_system.data.secondary_prices import optional_secondary_prices_path
+from ai_trading_system.paths import state_dir
 from ai_trading_system.trade_review import (
     build_trade_review_report,
     default_trade_review_report_path,
@@ -42,22 +43,19 @@ def review_trades(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="标准化日线利率 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "rates_daily.csv",
     input_path: Annotated[
         Path,
         typer.Option(help="交易记录 YAML 文件或目录路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "external"
     / "trades",
     as_of: Annotated[
@@ -92,11 +90,11 @@ def review_trades(
         raise typer.BadParameter("至少需要一个归因基准标的。")
 
     quality_output = quality_report_path or default_quality_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         review_date,
     )
     report_output = output_path or default_trade_review_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         review_date,
     )
 

@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Literal
 
 from ai_trading_system.catalyst_calendar import CatalystCalendarValidationReport
+from ai_trading_system.paths import state_dir
 from ai_trading_system.pipeline_health import (
     PipelineHealthReport,
     PipelineHealthSeverity,
@@ -15,7 +16,7 @@ from ai_trading_system.scoring.daily import DailyScoreReport, PreviousDailyScore
 AlertCategory = Literal["data_system", "investment_risk"]
 AlertSeverity = Literal["info", "warning", "high", "critical"]
 
-DEFAULT_ALERT_REPORT_DIR = Path(__file__).resolve().parents[2] / "outputs" / "reports"
+DEFAULT_ALERT_REPORT_DIR = state_dir(Path(__file__).resolve().parents[2], "outputs") / "reports"
 ROUTINE_POSITION_GATE_IDS = {"score_model", "portfolio_limits"}
 
 

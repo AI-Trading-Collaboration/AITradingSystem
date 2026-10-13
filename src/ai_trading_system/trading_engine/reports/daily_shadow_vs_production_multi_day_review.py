@@ -7,6 +7,8 @@ from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.paths import state_dir
+
 SCHEMA_VERSION = "1.0"
 REPORT_TYPE = "shadow_vs_production_multi_day_review"
 TASK_ID = "TRADING-018C2"
@@ -50,7 +52,7 @@ def build_shadow_vs_production_multi_day_review_payload(
     *,
     as_of: date,
     lookback_days: int = 7,
-    data_root: Path = REPO_ROOT / "data",
+    data_root: Path = state_dir(REPO_ROOT, "data"),
     output_json_path: Path | None = None,
     output_md_path: Path | None = None,
     generated_at: datetime | None = None,
@@ -213,7 +215,7 @@ def write_shadow_vs_production_multi_day_review_report(
     *,
     as_of: date,
     lookback_days: int = 7,
-    data_root: Path = REPO_ROOT / "data",
+    data_root: Path = state_dir(REPO_ROOT, "data"),
     output_json_path: Path | None = None,
     output_md_path: Path | None = None,
     generated_at: datetime | None = None,

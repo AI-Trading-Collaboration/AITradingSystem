@@ -43,6 +43,7 @@ from ai_trading_system.official_policy_sources import (
     load_official_policy_candidates_csv,
     write_official_policy_fetch_report,
 )
+from ai_trading_system.paths import state_dir
 from ai_trading_system.risk_event_candidate_triage import (
     default_risk_event_candidate_triage_csv_path,
     default_risk_event_candidate_triage_input_path,
@@ -166,7 +167,7 @@ def validate_risk_events(
     universe = load_universe()
     validation_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_risk_events_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         validation_date,
     )
     report = validate_risk_events_config(
@@ -287,7 +288,7 @@ def quarantine_unknown_risk_event_occurrence_command(
 
     validation_date = _parse_date(as_of)
     report_path = validation_report_path or default_risk_event_occurrence_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         validation_date,
     )
     risk_events = load_risk_events(config_path)
@@ -406,7 +407,7 @@ def record_risk_event_review_attestation_command(
     written_path = write_risk_event_review_attestation(attestation, output_dir)
 
     report_path = output_path or default_risk_event_occurrence_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         review_date,
     )
     validation_report = validate_risk_event_occurrence_store(
@@ -465,10 +466,12 @@ def import_risk_event_occurrences_csv_command(
     """导入人工复核后的风险事件发生记录 CSV，并写入可审计 YAML。"""
     import_date = _parse_date(as_of) if as_of else date.today()
     import_report_output = output_path or (
-        PROJECT_ROOT / "outputs" / "reports" / f"risk_event_occurrence_import_{import_date}.md"
+        state_dir(PROJECT_ROOT, "outputs")
+        / "reports"
+        / f"risk_event_occurrence_import_{import_date}.md"
     )
     validation_output = validation_report_path or default_risk_event_occurrence_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         import_date,
     )
     import_report = import_risk_event_occurrences_csv(input_path)
@@ -547,7 +550,9 @@ def fetch_official_policy_sources_command(
     download_manifest_path: Annotated[
         Path,
         typer.Option(help="统一 download_manifest.csv 路径。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "download_manifest.csv",
+    ] = state_dir(PROJECT_ROOT, "data")
+    / "raw"
+    / "download_manifest.csv",
     congress_api_key_env: Annotated[
         str,
         typer.Option(help="读取 Congress.gov API key 的环境变量名。"),
@@ -562,7 +567,7 @@ def fetch_official_policy_sources_command(
     since_date = _parse_date(since) if since else None
     selected_source_ids = _parse_csv_items(source_ids) if source_ids else None
     report_path = output_path or default_official_policy_fetch_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         fetch_date,
     )
     report = fetch_official_policy_sources(
@@ -626,7 +631,7 @@ def triage_official_policy_candidates_command(
     )
     report = triage_official_policy_candidates(candidate_input_path, as_of=triage_date)
     report_path = output_path or default_risk_event_candidate_triage_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         report.as_of,
     )
     csv_path = triage_output_path or default_risk_event_candidate_triage_csv_path(
@@ -782,8 +787,7 @@ def precheck_triaged_official_candidates_with_openai_command(
     )
     selected_buckets = tuple(_parse_csv_items(triage_buckets))
     report_path = output_path or (
-        PROJECT_ROOT
-        / "outputs"
+        state_dir(PROJECT_ROOT, "outputs")
         / "reports"
         / f"risk_event_prereview_triaged_openai_{precheck_date.isoformat()}.md"
     )
@@ -904,11 +908,11 @@ def apply_llm_formal_assessment_command(
     if next_review_days < 0:
         raise typer.BadParameter("next_review_days 不能为负数。")
     report_path = output_path or default_llm_formal_assessment_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         assessment_date,
     )
     validation_output = validation_report_path or default_risk_event_occurrence_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         assessment_date,
     )
     try:
@@ -1060,7 +1064,7 @@ def precheck_risk_events_with_openai_command(
         raise typer.BadParameter("OpenAI 请求缓存 TTL 小时数必须为正数。")
     precheck_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_risk_event_openai_prereview_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         precheck_date,
     )
     try:
@@ -1134,7 +1138,7 @@ def import_risk_event_prereview_csv_command(
     """导入 OpenAI 风险事件预审结果，并写入人工复核队列。"""
     import_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_risk_event_prereview_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         import_date,
     )
     import_report = import_risk_event_prereview_csv(
@@ -1187,7 +1191,7 @@ def validate_risk_event_occurrences(
     """校验实际发生的风险事件记录，并生成可供日报评分引用的报告。"""
     validation_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_risk_event_occurrence_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         validation_date,
     )
     validation_report = validate_risk_event_occurrence_store(

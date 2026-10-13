@@ -25,6 +25,7 @@ from ai_trading_system.config import (
     load_risk_events,
     load_watchlist,
 )
+from ai_trading_system.paths import state_dir
 
 console = Console()
 catalysts_app = typer.Typer(help="未来催化剂日历和事件前复核。", no_args_is_help=True)
@@ -73,7 +74,7 @@ def validate_catalysts_command(
         windows=window_values,
     )
     report_path = output_path or default_catalyst_calendar_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         validation_date,
     )
     write_catalyst_calendar_report(report, report_path)
@@ -120,7 +121,7 @@ def upcoming_catalysts_command(
         windows=window_values,
     )
     report_path = output_path or default_catalyst_calendar_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         validation_date,
     )
     write_catalyst_calendar_report(report, report_path)

@@ -8,6 +8,7 @@ import typer
 from rich.console import Console
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import join_root, state_dir
 from ai_trading_system.trading_engine.parameters import (
     DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
     DEFAULT_SIGNAL_ABLATION_CONFIG_PATH,
@@ -57,7 +58,7 @@ def _resolve_signal_snapshot_path(*, latest: bool, as_of: str | None) -> Path:
 
 
 def _resolve_signal_ablation_path(*, latest: bool, as_of: str | None) -> Path:
-    root = PROJECT_ROOT / "artifacts" / "signal_ablation"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "signal_ablation"
     if latest:
         latest_path = latest_signal_ablation_path(root)
         if latest_path is None:
@@ -65,7 +66,7 @@ def _resolve_signal_ablation_path(*, latest: bool, as_of: str | None) -> Path:
         return latest_path
     if not as_of:
         raise typer.BadParameter("需要 --latest、--date/--as-of 或 --input-path。")
-    return root / _parse_date(as_of).isoformat() / "signal_ablation_summary.json"
+    return join_root(root, _parse_date(as_of).isoformat()) / "signal_ablation_summary.json"
 
 
 @signals_app.command("build-snapshot")

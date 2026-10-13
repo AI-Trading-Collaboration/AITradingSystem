@@ -15,6 +15,7 @@ from ai_trading_system.config import (
     load_industry_chain,
     load_watchlist,
 )
+from ai_trading_system.paths import state_dir
 from ai_trading_system.thesis import (
     build_thesis_review_report,
     default_thesis_review_report_path,
@@ -34,8 +35,7 @@ def list_theses(
     input_path: Annotated[
         Path,
         typer.Option(help="交易 thesis YAML 文件或目录路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "external"
     / "trade_theses",
 ) -> None:
@@ -77,8 +77,7 @@ def validate_theses(
     input_path: Annotated[
         Path,
         typer.Option(help="交易 thesis YAML 文件或目录路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "external"
     / "trade_theses",
     watchlist_path: Annotated[
@@ -101,7 +100,7 @@ def validate_theses(
     """校验交易 thesis 的结构、引用和复核约束。"""
     validation_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_thesis_validation_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         validation_date,
     )
     store = load_trade_thesis_store(input_path)
@@ -128,8 +127,7 @@ def review_theses(
     input_path: Annotated[
         Path,
         typer.Option(help="交易 thesis YAML 文件或目录路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "external"
     / "trade_theses",
     watchlist_path: Annotated[
@@ -152,7 +150,7 @@ def review_theses(
     """复核交易 thesis 的验证指标、证伪条件和风险事件状态。"""
     review_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_thesis_review_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         review_date,
     )
     store = load_trade_thesis_store(input_path)

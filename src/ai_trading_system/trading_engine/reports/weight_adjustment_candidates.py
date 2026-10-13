@@ -9,6 +9,7 @@ from typing import Any
 
 import yaml
 
+from ai_trading_system.paths import state_dir
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 WEIGHT_ADJUSTMENT_CANDIDATE_SCHEMA_VERSION = 1
@@ -66,7 +67,7 @@ def default_weight_adjustment_candidates_json_path(reports_dir: Path, as_of: dat
 def build_weight_adjustment_candidates_payload(
     *,
     as_of: date,
-    reports_dir: Path = REPO_ROOT / "outputs" / "reports",
+    reports_dir: Path = state_dir(REPO_ROOT, "outputs") / "reports",
     policy_path: Path = DEFAULT_WEIGHT_ADJUSTMENT_CANDIDATE_POLICY_PATH,
     daily_decision_summary_path: Path | None = None,
     paper_signal_quality_path: Path | None = None,
@@ -234,7 +235,7 @@ def build_weight_adjustment_candidates_payload(
 def write_weight_adjustment_candidates_report(
     *,
     as_of: date,
-    reports_dir: Path = REPO_ROOT / "outputs" / "reports",
+    reports_dir: Path = state_dir(REPO_ROOT, "outputs") / "reports",
     policy_path: Path = DEFAULT_WEIGHT_ADJUSTMENT_CANDIDATE_POLICY_PATH,
     daily_decision_summary_path: Path | None = None,
     paper_signal_quality_path: Path | None = None,

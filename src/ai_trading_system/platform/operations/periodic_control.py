@@ -17,6 +17,7 @@ from ai_trading_system.contracts.operations import (
 )
 from ai_trading_system.contracts.status import CanonicalStatus
 from ai_trading_system.contracts.workflow import WorkflowCadence
+from ai_trading_system.paths import join_root
 from ai_trading_system.platform.artifacts import write_json_atomic
 from ai_trading_system.platform.operations.runtime_control import OperationsRunControl
 from ai_trading_system.trading_calendar import is_us_equity_trading_day
@@ -182,7 +183,7 @@ def build_periodic_due_contexts_from_daily(
 
 
 def default_periodic_operations_plan_path(root: Path, as_of: date) -> Path:
-    return root / f"periodic_operations_plan_{as_of.isoformat()}.json"
+    return join_root(root, f"periodic_operations_plan_{as_of.isoformat()}.json")
 
 
 def write_periodic_operations_plan(plan: PeriodicOperationsPlan, path: Path) -> Path:

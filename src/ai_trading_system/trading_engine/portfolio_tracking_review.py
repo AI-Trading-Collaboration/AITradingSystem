@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import glob_root, state_dir
 from ai_trading_system.shadow.lineage import git_commit_sha, git_worktree_dirty, sha256_file
 from ai_trading_system.trading_engine.parameters.parameter_loader import resolve_project_path
 from ai_trading_system.trading_engine.portfolio_candidate_tracking import (
@@ -66,7 +67,7 @@ class PortfolioTrackingReviewRun:
 
 
 def default_portfolio_tracking_review_root() -> Path:
-    return PROJECT_ROOT / "artifacts" / "portfolio_tracking_reviews"
+    return state_dir(PROJECT_ROOT, "artifacts") / "portfolio_tracking_reviews"
 
 
 def default_portfolio_tracking_review_dir(output_root: Path, as_of: date) -> Path:
@@ -99,7 +100,7 @@ def portfolio_tracking_review_report_alias_paths(
 
 def latest_portfolio_tracking_review_path(output_root: Path | None = None) -> Path | None:
     root = output_root or default_portfolio_tracking_review_root()
-    candidates = sorted(root.glob("*/portfolio_tracking_review_summary.json"))
+    candidates = sorted(glob_root(root, "*/portfolio_tracking_review_summary.json"))
     if not candidates:
         return None
     return max(candidates, key=lambda path: path.stat().st_mtime)
@@ -111,7 +112,7 @@ def latest_portfolio_tracking_review_path_on_or_before(
 ) -> Path | None:
     root = output_root or default_portfolio_tracking_review_root()
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/portfolio_tracking_review_summary.json"):
+    for path in glob_root(root, "*/portfolio_tracking_review_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -1414,7 +1415,7 @@ def _tracking_start_date(
 
 def _latest_tracking_date(root: Path) -> date | None:
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/portfolio_candidate_tracking_summary.json"):
+    for path in glob_root(root, "*/portfolio_candidate_tracking_summary.json"):
         try:
             candidates.append((date.fromisoformat(path.parent.name), path))
         except ValueError:
@@ -1438,12 +1439,12 @@ def _input_root(config: dict[str, Any], key: str) -> Path:
     default_map = {
         "portfolio_candidate_tracking_dir": default_portfolio_candidate_tracking_root(),
         "portfolio_candidate_reviews_dir": (
-            PROJECT_ROOT / "artifacts" / "portfolio_candidate_reviews"
+            state_dir(PROJECT_ROOT, "artifacts") / "portfolio_candidate_reviews"
         ),
-        "portfolio_candidates_dir": PROJECT_ROOT / "artifacts" / "portfolio_candidates",
-        "market_data_freshness_dir": PROJECT_ROOT / "artifacts" / "data_freshness",
-        "market_data_refresh_dir": PROJECT_ROOT / "artifacts" / "data_refresh",
-        "backtest_snapshot_dir": PROJECT_ROOT / "artifacts" / "backtest_snapshots",
+        "portfolio_candidates_dir": state_dir(PROJECT_ROOT, "artifacts") / "portfolio_candidates",
+        "market_data_freshness_dir": state_dir(PROJECT_ROOT, "artifacts") / "data_freshness",
+        "market_data_refresh_dir": state_dir(PROJECT_ROOT, "artifacts") / "data_refresh",
+        "backtest_snapshot_dir": state_dir(PROJECT_ROOT, "artifacts") / "backtest_snapshots",
     }
     return resolve_project_path(str(value)) if value else default_map[key]
 
@@ -1452,7 +1453,7 @@ def _output_root(config: dict[str, Any], *, dry_run: bool) -> Path:
     output = _mapping(config.get("output"))
     key = "dry_run_dir" if dry_run else "portfolio_tracking_reviews_dir"
     default = (
-        PROJECT_ROOT / "outputs" / "dry_runs" / "portfolio_tracking_reviews"
+        state_dir(PROJECT_ROOT, "outputs") / "dry_runs" / "portfolio_tracking_reviews"
         if dry_run
         else default_portfolio_tracking_review_root()
     )

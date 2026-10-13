@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import join_root, state_dir
 from ai_trading_system.reports.engineering_closeout import (
     latest_engineering_surface_inventory_json_path,
 )
@@ -172,7 +173,7 @@ def build_canonical_system_status_payload(
     )
     reports = _records(report_index.get("reports"))
     report_lookup = {_text(report.get("report_id")): report for report in reports}
-    reports_dir = project_root / "outputs" / "reports"
+    reports_dir = state_dir(project_root, "outputs") / "reports"
     surface_inventory = _load_json_from_record(
         report_lookup.get("engineering_surface_inventory"),
         fallback=latest_engineering_surface_inventory_json_path(reports_dir),
@@ -849,9 +850,11 @@ def _schema_config_summary(project_root: Path) -> dict[str, Any]:
 
 
 def _reproducibility_summary(project_root: Path) -> dict[str, Any]:
-    daily_manifests = list((project_root / "outputs").glob("daily/**/manifest.json"))
+    daily_manifests = list((state_dir(project_root, "outputs")).glob("daily/**/manifest.json"))
     validation_manifests = list(
-        (project_root / "outputs" / "validation_runtime").glob("*/test_runtime_summary.json")
+        (state_dir(project_root, "outputs") / "validation_runtime").glob(
+            "*/test_runtime_summary.json"
+        )
     )
     return {
         "daily_run_manifest_count": len(daily_manifests),
@@ -932,7 +935,7 @@ def _report_index_source_record(
     try:
         path = str(
             default_report_index_json_path(
-                project_root / "outputs" / "reports",
+                state_dir(project_root, "outputs") / "reports",
                 date.fromisoformat(_text(report_index.get("as_of"))),
             )
         )
@@ -1020,7 +1023,7 @@ def _report_path(record: Mapping[str, Any] | None, project_root: Path) -> Path |
     if not raw:
         return None
     path = Path(raw)
-    return path if path.is_absolute() else project_root / path
+    return path if path.is_absolute() else join_root(project_root, path)
 
 
 def _append_check(

@@ -37,6 +37,7 @@ from ai_trading_system.features.market import (
     write_feature_summary,
     write_features_csv,
 )
+from ai_trading_system.paths import state_dir
 
 console = Console()
 
@@ -49,15 +50,13 @@ def build_features(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="标准化日线利率 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "rates_daily.csv",
     as_of: Annotated[
@@ -67,8 +66,7 @@ def build_features(
     output_path: Annotated[
         Path,
         typer.Option(help="特征 CSV 输出路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "processed"
     / "features_daily.csv",
     report_path: Annotated[
@@ -106,17 +104,17 @@ def build_features(
     )
     expected_rate_series = configured_rate_series(universe)
     quality_output = quality_report_path or default_quality_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         feature_date,
     )
     feature_report_output = report_path or default_feature_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         feature_date,
     )
     feature_availability_output = (
         feature_availability_report_path
         or default_feature_availability_report_path(
-            PROJECT_ROOT / "outputs" / "reports",
+            state_dir(PROJECT_ROOT, "outputs") / "reports",
             feature_date,
         )
     )

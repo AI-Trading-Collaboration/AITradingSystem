@@ -26,14 +26,15 @@ from ai_trading_system.llm_request_profiles import (
     LlmRequestProfile,
     load_llm_request_profiles,
 )
+from ai_trading_system.paths import join_root, state_dir
 
 console = Console()
 llm_app = typer.Typer(help="LLM 结构化预审和待复核队列。", no_args_is_help=True)
 
 DEFAULT_LLM_CLAIM_PREREVIEW_QUEUE_PATH = (
-    PROJECT_ROOT / "data" / "processed" / "llm_claim_prereview_queue.json"
+    state_dir(PROJECT_ROOT, "data") / "processed" / "llm_claim_prereview_queue.json"
 )
-DEFAULT_OPENAI_REQUEST_CACHE_PATH = PROJECT_ROOT / DEFAULT_OPENAI_REQUEST_CACHE_DIR
+DEFAULT_OPENAI_REQUEST_CACHE_PATH = join_root(PROJECT_ROOT, DEFAULT_OPENAI_REQUEST_CACHE_DIR)
 DEFAULT_LLM_CLAIM_PREREVIEW_PROFILE = "llm_claim_prereview"
 
 
@@ -141,7 +142,7 @@ def precheck_llm_claims_command(
         raise typer.BadParameter("OpenAI 请求缓存 TTL 小时数必须为正数。")
     report_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_llm_claim_precheck_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         report_date,
     )
     try:

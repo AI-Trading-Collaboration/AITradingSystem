@@ -10,6 +10,7 @@ from typing import Any
 
 import yaml
 
+from ai_trading_system.paths import state_dir
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 WEIGHT_CANDIDATE_EVALUATION_SCHEMA_VERSION = 1
@@ -85,7 +86,7 @@ def default_weight_candidate_evaluation_json_path(reports_dir: Path, as_of: date
 def build_weight_candidate_evaluation_payload(
     *,
     as_of: date,
-    reports_dir: Path = REPO_ROOT / "outputs" / "reports",
+    reports_dir: Path = state_dir(REPO_ROOT, "outputs") / "reports",
     policy_path: Path = DEFAULT_WEIGHT_CANDIDATE_EVALUATION_POLICY_PATH,
     weight_adjustment_candidates_path: Path | None = None,
     paper_signal_quality_path: Path | None = None,
@@ -302,7 +303,7 @@ def build_weight_candidate_evaluation_payload(
 def write_weight_candidate_evaluation_report(
     *,
     as_of: date,
-    reports_dir: Path = REPO_ROOT / "outputs" / "reports",
+    reports_dir: Path = state_dir(REPO_ROOT, "outputs") / "reports",
     policy_path: Path = DEFAULT_WEIGHT_CANDIDATE_EVALUATION_POLICY_PATH,
     weight_adjustment_candidates_path: Path | None = None,
     paper_signal_quality_path: Path | None = None,

@@ -8,6 +8,8 @@ from enum import StrEnum
 from hashlib import sha256
 from pathlib import Path
 
+from ai_trading_system.paths import join_root
+
 
 class PipelineHealthSeverity(StrEnum):
     ERROR = "ERROR"
@@ -551,7 +553,7 @@ def _resolve_payload_path(value: str, manifest_path: Path, project_root: Path) -
     manifest_relative = manifest_path.parent / path
     if manifest_relative.exists():
         return manifest_relative
-    return project_root / path
+    return join_root(project_root, path)
 
 
 def _file_sha256(path: Path) -> str | None:

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DATA-023
+area: 数据工程/代码根和状态根分开（数据根可配置）
+priority: P1
+status: IN_PROGRESS
+next_owner: Claude（DATA-023-02 C 区补丁）；Baker（按 tree 批准 DATA-023-02）
+next_step: 详细见 docs/requirements/DATA-023_Code_Root_And_State_Root.md；DATA-023-01（B 区路径模块和 195 个文件改写）发布后做 DATA-023-02：8 个 C 区文件改写，DQ 归因就绪清单和利率归因复核包重新生成并重新绑定，Baker 按 tree 批准
+acceptance: 不设置 AITS_STATE_ROOT 时行为不变（PR 套件无新增失败）；云端对照运行中旧布局与代码目录加单独状态根两种方式的 daily-plan 和 27 步退出码、产出文件和内容一致且代码目录无写入；ship 门禁通过；DATA-023-02 发布后 tests/test_paths.py 的 PENDING_ZONE_C 为空
+notes: 2026-10-13：owner_decision:DATA-023:2026-10-13:state_root_separation（Baker 卡片「直接做发布包」「连根目录一起改」）；DATA-023-01 在云端完成并测试，由本机 pi 应用并经 ship B 区门禁发布；发布包、scripts/ops 包装脚本和数据登记表另立任务；production_effect=none；broker_action=none

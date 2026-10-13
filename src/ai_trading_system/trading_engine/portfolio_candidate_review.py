@@ -10,6 +10,7 @@ from typing import Any
 import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import glob_root, join_root, relative_to_root, state_dir
 from ai_trading_system.shadow.lineage import git_commit_sha, git_worktree_dirty, sha256_file
 from ai_trading_system.trading_engine.parameters.parameter_loader import resolve_project_path
 from ai_trading_system.trading_engine.portfolio_candidates import (
@@ -55,7 +56,7 @@ class PortfolioCandidateDecisionRun:
 
 
 def default_portfolio_candidate_reviews_root() -> Path:
-    return PROJECT_ROOT / "artifacts" / "portfolio_candidate_reviews"
+    return state_dir(PROJECT_ROOT, "artifacts") / "portfolio_candidate_reviews"
 
 
 def default_portfolio_candidate_review_dir(output_root: Path, as_of: date) -> Path:
@@ -106,7 +107,7 @@ def latest_portfolio_candidate_review_decision_path(
     output_root: Path | None = None,
 ) -> Path | None:
     root = output_root or default_portfolio_candidate_reviews_root()
-    candidates = sorted(root.glob("*/portfolio_candidate_review_decision.json"))
+    candidates = sorted(glob_root(root, "*/portfolio_candidate_review_decision.json"))
     if not candidates:
         return None
     return max(candidates, key=lambda path: path.stat().st_mtime)
@@ -118,7 +119,7 @@ def latest_portfolio_candidate_review_decision_path_on_or_before(
 ) -> Path | None:
     root = output_root or default_portfolio_candidate_reviews_root()
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/portfolio_candidate_review_decision.json"):
+    for path in glob_root(root, "*/portfolio_candidate_review_decision.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -1123,14 +1124,14 @@ def _output_root(config: dict[str, Any]) -> Path:
 def _input_root(config: dict[str, Any], key: str) -> Path:
     input_config = _mapping(config.get("input"))
     default_map = {
-        "portfolio_candidates_dir": PROJECT_ROOT / "artifacts" / "portfolio_candidates",
-        "portfolio_sensitivity_dir": PROJECT_ROOT / "artifacts" / "portfolio_sensitivity",
-        "signal_calibration_dir": PROJECT_ROOT / "artifacts" / "signal_calibration",
-        "signal_ablation_dir": PROJECT_ROOT / "artifacts" / "signal_ablation",
-        "signal_snapshot_dir": PROJECT_ROOT / "artifacts" / "signal_snapshots",
-        "backtest_snapshot_dir": PROJECT_ROOT / "artifacts" / "backtest_snapshots",
-        "price_cache_reconcile_dir": PROJECT_ROOT / "artifacts" / "data_quality",
-        "shadow_backtest_dir": PROJECT_ROOT / "artifacts" / "shadow_backtest",
+        "portfolio_candidates_dir": state_dir(PROJECT_ROOT, "artifacts") / "portfolio_candidates",
+        "portfolio_sensitivity_dir": state_dir(PROJECT_ROOT, "artifacts") / "portfolio_sensitivity",
+        "signal_calibration_dir": state_dir(PROJECT_ROOT, "artifacts") / "signal_calibration",
+        "signal_ablation_dir": state_dir(PROJECT_ROOT, "artifacts") / "signal_ablation",
+        "signal_snapshot_dir": state_dir(PROJECT_ROOT, "artifacts") / "signal_snapshots",
+        "backtest_snapshot_dir": state_dir(PROJECT_ROOT, "artifacts") / "backtest_snapshots",
+        "price_cache_reconcile_dir": state_dir(PROJECT_ROOT, "artifacts") / "data_quality",
+        "shadow_backtest_dir": state_dir(PROJECT_ROOT, "artifacts") / "shadow_backtest",
     }
     value = input_config.get(key)
     return resolve_project_path(str(value)) if value else default_map[key]
@@ -1145,11 +1146,11 @@ def _production_parameters_path(config: dict[str, Any]) -> Path:
 
 
 def _latest_artifact_on_or_before(root: Path, file_name: str, as_of: date) -> Path | None:
-    exact = root / as_of.isoformat() / file_name
+    exact = join_root(root, as_of.isoformat()) / file_name
     if exact.exists():
         return exact
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob(f"*/{file_name}"):
+    for path in glob_root(root, f"*/{file_name}"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -1191,7 +1192,7 @@ def _git_path_modified(path: Path) -> bool:
     if not path.exists():
         return False
     try:
-        relative = path.resolve().relative_to(PROJECT_ROOT.resolve())
+        relative = relative_to_root(path.resolve(), PROJECT_ROOT.resolve())
     except ValueError:
         return False
     try:

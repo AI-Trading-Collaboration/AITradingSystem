@@ -7,6 +7,7 @@ from typing import Any
 from urllib.parse import quote
 
 from ai_trading_system.core import ArtifactRef, ProductionEffect
+from ai_trading_system.paths import state_dir
 
 ORDER_INTENT_CANDIDATES_SCHEMA_VERSION = 1
 MANDATORY_BLOCKERS = ("trading_engine_not_enabled", "manual_approval_required")
@@ -299,8 +300,7 @@ def _resolve_decision_snapshot_path(
         if isinstance(artifact_path, str) and artifact_path:
             return Path(artifact_path)
     return (
-        project_root
-        / "data"
+        state_dir(project_root, "data")
         / "processed"
         / "decision_snapshots"
         / f"decision_snapshot_{as_of.isoformat()}.json"

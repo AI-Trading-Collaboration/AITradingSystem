@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 from ai_trading_system.reports.normal_paper_shadow_observation_clock import (
     latest_normal_paper_shadow_observation_clock_json_path,
 )
@@ -130,7 +131,7 @@ def build_exact_blocker_warning_inventory_payload(
     normal_observation_clock_path: Path | None = None,
     owner_action_map_payload: Mapping[str, Any] | None = None,
     owner_action_map_path: Path | None = None,
-    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+    reports_dir: Path = state_dir(PROJECT_ROOT, "outputs") / "reports",
 ) -> dict[str, Any]:
     blocker_triage_path, blocker_triage = _payload_or_latest(
         blocker_triage_payload,

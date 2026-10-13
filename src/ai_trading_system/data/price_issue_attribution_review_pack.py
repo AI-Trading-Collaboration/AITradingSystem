@@ -13,6 +13,7 @@ from typing import Any
 from ai_trading_system.data.quality_issue_attribution_inventory import (
     load_and_validate_attribution_readiness_inventory,
 )
+from ai_trading_system.paths import join_root
 from ai_trading_system.platform.artifacts import (
     load_strict_json_path,
     write_json_atomic,
@@ -165,7 +166,7 @@ class ReviewPackPaths:
         candidate = Path(relative_path)
         if candidate.is_absolute() or ".." in candidate.parts:
             raise PriceIssueAttributionReviewError(f"path escapes repository: {relative_path}")
-        resolved = (root / candidate).resolve()
+        resolved = (join_root(root, candidate)).resolve()
         if root != resolved and root not in resolved.parents:
             raise PriceIssueAttributionReviewError(f"path escapes repository: {relative_path}")
         if not resolved.is_file():

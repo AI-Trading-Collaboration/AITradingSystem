@@ -7,6 +7,8 @@ from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.paths import glob_root, state_dir
+
 SCHEMA_VERSION = "1.0"
 REPORT_TYPE = "daily_operator_brief_scheduler_dry_run"
 RUN_REPORT_TYPE = "daily_operator_brief_scheduler_dry_run_log"
@@ -50,7 +52,7 @@ FRESHNESS_MISSING = "MISSING"
 FRESHNESS_UNKNOWN = "UNKNOWN"
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_DATA_ROOT = REPO_ROOT / "data"
+DEFAULT_DATA_ROOT = state_dir(REPO_ROOT, "data")
 
 SCHEDULER_CONTRACT: dict[str, Any] = {
     "reads_existing_artifacts_only": True,
@@ -623,7 +625,7 @@ def _latest_dated_artifact(
     earliest = as_of - timedelta(days=lookback_days)
     candidates: list[tuple[date, Path]] = []
     if root.exists():
-        for path in root.glob(f"{prefix}*.json"):
+        for path in glob_root(root, f"{prefix}*.json"):
             parsed = _date_from_artifact_name(path)
             if parsed is not None and earliest <= parsed <= as_of:
                 candidates.append((parsed, path))

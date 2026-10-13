@@ -33,11 +33,12 @@ from ai_trading_system.fundamentals.sec_pit_evaluation import (
     DEFAULT_SEC_PIT_FEATURE_PANEL_PATH,
     load_sec_pit_evaluation_policy,
 )
+from ai_trading_system.paths import glob_root, join_root, state_dir
 
 SEC_PIT_REAL_RUN_DIAGNOSTICS_TASK_ID = "TRADING-042"
 SEC_PIT_REAL_RUN_DIAGNOSTICS_REPORT_TYPE = "sec_pit_real_run_diagnostics"
 SEC_PIT_REAL_RUN_DIAGNOSTICS_PRODUCTION_EFFECT = "none"
-DEFAULT_SEC_PIT_DIAGNOSTICS_OUTPUT_DIR = PROJECT_ROOT / "outputs" / "sec_pit_diagnostics"
+DEFAULT_SEC_PIT_DIAGNOSTICS_OUTPUT_DIR = state_dir(PROJECT_ROOT, "outputs") / "sec_pit_diagnostics"
 
 DIAGNOSTICS_STATUSES = {
     "OK",
@@ -383,8 +384,7 @@ def build_provenance_gap_audit(
     processed_dir = feature_panel_path.parent
     project_root = _infer_project_root(feature_panel_path)
     stage_paths = {
-        "raw_companyfacts": project_root
-        / "data"
+        "raw_companyfacts": state_dir(project_root, "data")
         / "raw"
         / "sec_edgar"
         / "manifest"
@@ -1172,27 +1172,27 @@ def _baseline_path(root: Path, end: date) -> Path:
         return root / "scores_daily.csv"
     for path in (
         root / "scores_daily.csv",
-        root / f"scores_daily_{end.isoformat()}.csv",
-        root / f"daily_score_baseline_{end.isoformat()}.csv",
-        root / f"baseline_scores_{end.isoformat()}.csv",
+        join_root(root, f"scores_daily_{end.isoformat()}.csv"),
+        join_root(root, f"daily_score_baseline_{end.isoformat()}.csv"),
+        join_root(root, f"baseline_scores_{end.isoformat()}.csv"),
     ):
         if path.exists():
             return path
     dated: list[tuple[date, Path]] = []
     for pattern in ("scores_*.csv", "daily_score_*.csv", "baseline_scores_*.csv"):
-        for path in root.glob(pattern):
+        for path in glob_root(root, pattern):
             parsed = _date_from_stem(path.stem)
             if parsed is not None and parsed <= end:
                 dated.append((parsed, path))
     if dated:
         return max(dated, key=lambda item: item[0])[1]
-    csv_files = sorted(root.glob("*.csv"))
+    csv_files = sorted(glob_root(root, "*.csv"))
     return csv_files[0] if csv_files else root / "scores_daily.csv"
 
 
 def _is_default_baseline_score_dir(root: Path) -> bool:
     path = Path(root)
-    normalized = path if path.is_absolute() else PROJECT_ROOT / path
+    normalized = path if path.is_absolute() else join_root(PROJECT_ROOT, path)
     return normalized.resolve() == DEFAULT_BASELINE_SCORE_DIR.resolve()
 
 
@@ -1207,11 +1207,11 @@ def _infer_project_root(path: Path) -> Path:
 
 def _latest_dated_path(root: Path, prefix: str, suffix: str, end: date | None) -> Path:
     default_end = end or date.max
-    default_path = root / f"{prefix}{default_end.isoformat()}{suffix}"
+    default_path = join_root(root, f"{prefix}{default_end.isoformat()}{suffix}")
     if not root.exists():
         return default_path
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob(f"{prefix}*{suffix}"):
+    for path in glob_root(root, f"{prefix}*{suffix}"):
         raw_date = path.stem.removeprefix(prefix)
         parsed = _parse_date(raw_date)
         if parsed is not None and (end is None or parsed <= end):

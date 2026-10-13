@@ -11,6 +11,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 from ai_trading_system.core import ArtifactRef, ProductionEffect
+from ai_trading_system.paths import glob_root, join_root, state_dir
 from ai_trading_system.reports.daily_task_dashboard_view_model import (
     DailyTaskDashboardReport,
     DailyTaskDetail,
@@ -953,8 +954,7 @@ def _read_parameter_governance_summary(report: DailyTaskDashboardReport) -> Trac
     payload = _read_json_object(path)
     if not payload:
         fallback = (
-            report.project_root
-            / "outputs"
+            state_dir(report.project_root, "outputs")
             / "reports"
             / f"parameter_governance_{report.as_of.isoformat()}.json"
         )
@@ -1098,8 +1098,7 @@ def _daily_decision_source_artifacts(report: DailyTaskDashboardReport) -> list[T
         (
             "shadow_parameter_backtest_json",
             "shadow parameter backtest JSON",
-            report.project_root
-            / "artifacts"
+            state_dir(report.project_root, "artifacts")
             / "shadow_backtest"
             / suffix
             / "shadow_backtest_summary.json",
@@ -1127,8 +1126,7 @@ def _daily_decision_source_artifacts(report: DailyTaskDashboardReport) -> list[T
         (
             "shadow_vs_production_comparison_json",
             "shadow vs production comparison JSON",
-            report.project_root
-            / "data"
+            state_dir(report.project_root, "data")
             / "derived"
             / "weight_iterations"
             / "comparison"
@@ -2128,8 +2126,7 @@ def _signal_snapshot_artifact_summary(
         if str(path).endswith("signal_snapshot.json") and Path(path).exists()
     ]
     default_path = (
-        report.project_root
-        / "artifacts"
+        state_dir(report.project_root, "artifacts")
         / "signal_snapshots"
         / report.as_of.isoformat()
         / "signal_snapshot.json"
@@ -2163,8 +2160,7 @@ def _signal_snapshot_artifact_summary(
 
 def _backtest_input_diagnostic_path(report: DailyTaskDashboardReport) -> Path:
     return (
-        report.project_root
-        / "artifacts"
+        state_dir(report.project_root, "artifacts")
         / "data_quality"
         / report.as_of.isoformat()
         / "backtest_input_diagnostics.json"
@@ -2172,8 +2168,8 @@ def _backtest_input_diagnostic_path(report: DailyTaskDashboardReport) -> Path:
 
 
 def _latest_backtest_input_diagnostic_path(report: DailyTaskDashboardReport) -> Path | None:
-    root = report.project_root / "artifacts" / "data_quality"
-    candidates = sorted(root.glob("*/backtest_input_diagnostics.json"))
+    root = state_dir(report.project_root, "artifacts") / "data_quality"
+    candidates = sorted(glob_root(root, "*/backtest_input_diagnostics.json"))
     if not candidates:
         return None
     return max(candidates, key=lambda candidate: candidate.stat().st_mtime)
@@ -2182,8 +2178,7 @@ def _latest_backtest_input_diagnostic_path(report: DailyTaskDashboardReport) -> 
 def _shadow_parameter_backtest_summary(report: DailyTaskDashboardReport) -> TraceRecord:
     suffix = report.as_of.isoformat()
     path = (
-        report.project_root
-        / "artifacts"
+        state_dir(report.project_root, "artifacts")
         / "shadow_backtest"
         / suffix
         / "shadow_backtest_summary.json"
@@ -2257,8 +2252,7 @@ def _shadow_parameter_backtest_summary(report: DailyTaskDashboardReport) -> Trac
 def _signal_ablation_summary(report: DailyTaskDashboardReport) -> TraceRecord:
     suffix = report.as_of.isoformat()
     path = (
-        report.project_root
-        / "artifacts"
+        state_dir(report.project_root, "artifacts")
         / "signal_ablation"
         / suffix
         / "signal_ablation_summary.json"
@@ -2338,9 +2332,9 @@ def _signal_ablation_summary(report: DailyTaskDashboardReport) -> TraceRecord:
 
 
 def _latest_signal_ablation_path(report: DailyTaskDashboardReport) -> Path | None:
-    root = report.project_root / "artifacts" / "signal_ablation"
+    root = state_dir(report.project_root, "artifacts") / "signal_ablation"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/signal_ablation_summary.json"):
+    for path in glob_root(root, "*/signal_ablation_summary.json"):
         try:
             as_of = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -2355,8 +2349,7 @@ def _latest_signal_ablation_path(report: DailyTaskDashboardReport) -> Path | Non
 def _signal_calibration_summary(report: DailyTaskDashboardReport) -> TraceRecord:
     suffix = report.as_of.isoformat()
     path = (
-        report.project_root
-        / "artifacts"
+        state_dir(report.project_root, "artifacts")
         / "signal_calibration"
         / suffix
         / "signal_calibration_summary.json"
@@ -2444,9 +2437,9 @@ def _signal_calibration_summary(report: DailyTaskDashboardReport) -> TraceRecord
 
 
 def _latest_signal_calibration_path(report: DailyTaskDashboardReport) -> Path | None:
-    root = report.project_root / "artifacts" / "signal_calibration"
+    root = state_dir(report.project_root, "artifacts") / "signal_calibration"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/signal_calibration_summary.json"):
+    for path in glob_root(root, "*/signal_calibration_summary.json"):
         try:
             as_of = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -2461,8 +2454,7 @@ def _latest_signal_calibration_path(report: DailyTaskDashboardReport) -> Path | 
 def _portfolio_sensitivity_summary(report: DailyTaskDashboardReport) -> TraceRecord:
     suffix = report.as_of.isoformat()
     path = (
-        report.project_root
-        / "artifacts"
+        state_dir(report.project_root, "artifacts")
         / "portfolio_sensitivity"
         / suffix
         / "portfolio_sensitivity_summary.json"
@@ -2559,9 +2551,9 @@ def _portfolio_sensitivity_summary(report: DailyTaskDashboardReport) -> TraceRec
 
 
 def _latest_portfolio_sensitivity_path(report: DailyTaskDashboardReport) -> Path | None:
-    root = report.project_root / "artifacts" / "portfolio_sensitivity"
+    root = state_dir(report.project_root, "artifacts") / "portfolio_sensitivity"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/portfolio_sensitivity_summary.json"):
+    for path in glob_root(root, "*/portfolio_sensitivity_summary.json"):
         try:
             as_of = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -2576,8 +2568,7 @@ def _latest_portfolio_sensitivity_path(report: DailyTaskDashboardReport) -> Path
 def _portfolio_candidates_summary(report: DailyTaskDashboardReport) -> TraceRecord:
     suffix = report.as_of.isoformat()
     path = (
-        report.project_root
-        / "artifacts"
+        state_dir(report.project_root, "artifacts")
         / "portfolio_candidates"
         / suffix
         / "portfolio_candidates_summary.json"
@@ -2672,9 +2663,9 @@ def _portfolio_candidates_summary(report: DailyTaskDashboardReport) -> TraceReco
 
 
 def _latest_portfolio_candidates_path(report: DailyTaskDashboardReport) -> Path | None:
-    root = report.project_root / "artifacts" / "portfolio_candidates"
+    root = state_dir(report.project_root, "artifacts") / "portfolio_candidates"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/portfolio_candidates_summary.json"):
+    for path in glob_root(root, "*/portfolio_candidates_summary.json"):
         try:
             as_of = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -2689,8 +2680,7 @@ def _latest_portfolio_candidates_path(report: DailyTaskDashboardReport) -> Path 
 def _portfolio_candidate_review_summary(report: DailyTaskDashboardReport) -> TraceRecord:
     suffix = report.as_of.isoformat()
     path = (
-        report.project_root
-        / "artifacts"
+        state_dir(report.project_root, "artifacts")
         / "portfolio_candidate_reviews"
         / suffix
         / "portfolio_candidate_review_decision.json"
@@ -2766,9 +2756,9 @@ def _portfolio_candidate_review_summary(report: DailyTaskDashboardReport) -> Tra
 
 
 def _latest_portfolio_candidate_review_path(report: DailyTaskDashboardReport) -> Path | None:
-    root = report.project_root / "artifacts" / "portfolio_candidate_reviews"
+    root = state_dir(report.project_root, "artifacts") / "portfolio_candidate_reviews"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/portfolio_candidate_review_decision.json"):
+    for path in glob_root(root, "*/portfolio_candidate_review_decision.json"):
         try:
             as_of = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -2783,8 +2773,7 @@ def _latest_portfolio_candidate_review_path(report: DailyTaskDashboardReport) ->
 def _portfolio_candidate_tracking_summary(report: DailyTaskDashboardReport) -> TraceRecord:
     suffix = report.as_of.isoformat()
     path = (
-        report.project_root
-        / "artifacts"
+        state_dir(report.project_root, "artifacts")
         / "portfolio_candidate_tracking"
         / suffix
         / "portfolio_candidate_tracking_summary.json"
@@ -2876,9 +2865,9 @@ def _portfolio_candidate_tracking_summary(report: DailyTaskDashboardReport) -> T
 
 
 def _latest_portfolio_candidate_tracking_path(report: DailyTaskDashboardReport) -> Path | None:
-    root = report.project_root / "artifacts" / "portfolio_candidate_tracking"
+    root = state_dir(report.project_root, "artifacts") / "portfolio_candidate_tracking"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/portfolio_candidate_tracking_summary.json"):
+    for path in glob_root(root, "*/portfolio_candidate_tracking_summary.json"):
         try:
             as_of = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -2893,8 +2882,7 @@ def _latest_portfolio_candidate_tracking_path(report: DailyTaskDashboardReport) 
 def _portfolio_tracking_review_summary(report: DailyTaskDashboardReport) -> TraceRecord:
     suffix = report.as_of.isoformat()
     path = (
-        report.project_root
-        / "artifacts"
+        state_dir(report.project_root, "artifacts")
         / "portfolio_tracking_reviews"
         / suffix
         / "portfolio_tracking_review_summary.json"
@@ -2991,9 +2979,9 @@ def _portfolio_tracking_review_summary(report: DailyTaskDashboardReport) -> Trac
 
 
 def _latest_portfolio_tracking_review_path(report: DailyTaskDashboardReport) -> Path | None:
-    root = report.project_root / "artifacts" / "portfolio_tracking_reviews"
+    root = state_dir(report.project_root, "artifacts") / "portfolio_tracking_reviews"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/portfolio_tracking_review_summary.json"):
+    for path in glob_root(root, "*/portfolio_tracking_review_summary.json"):
         try:
             as_of = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -3009,8 +2997,7 @@ def _weight_tuning_summary(report: DailyTaskDashboardReport) -> TraceRecord:
     path = _latest_weight_tuning_path(report)
     if path is None:
         missing_path = (
-            report.project_root
-            / "artifacts"
+            state_dir(report.project_root, "artifacts")
             / "weight_tuning"
             / report.as_of.isoformat()
             / "weight_tuning_summary.json"
@@ -3097,9 +3084,9 @@ def _weight_tuning_summary(report: DailyTaskDashboardReport) -> TraceRecord:
 
 
 def _latest_weight_tuning_path(report: DailyTaskDashboardReport) -> Path | None:
-    root = report.project_root / "artifacts" / "weight_tuning"
+    root = state_dir(report.project_root, "artifacts") / "weight_tuning"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/weight_tuning_summary.json"):
+    for path in glob_root(root, "*/weight_tuning_summary.json"):
         try:
             as_of = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -3115,8 +3102,7 @@ def _weight_tuning_failure_summary(report: DailyTaskDashboardReport) -> TraceRec
     path = _latest_weight_tuning_failure_path(report)
     if path is None:
         missing_path = (
-            report.project_root
-            / "artifacts"
+            state_dir(report.project_root, "artifacts")
             / "weight_tuning_failure"
             / report.as_of.isoformat()
             / "weight_tuning_failure_summary.json"
@@ -3195,9 +3181,9 @@ def _weight_tuning_failure_summary(report: DailyTaskDashboardReport) -> TraceRec
 
 
 def _latest_weight_tuning_failure_path(report: DailyTaskDashboardReport) -> Path | None:
-    root = report.project_root / "artifacts" / "weight_tuning_failure"
+    root = state_dir(report.project_root, "artifacts") / "weight_tuning_failure"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/weight_tuning_failure_summary.json"):
+    for path in glob_root(root, "*/weight_tuning_failure_summary.json"):
         try:
             as_of = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -3213,8 +3199,7 @@ def _weight_stability_summary(report: DailyTaskDashboardReport) -> TraceRecord:
     path = _latest_weight_stability_path(report)
     if path is None:
         missing_path = (
-            report.project_root
-            / "artifacts"
+            state_dir(report.project_root, "artifacts")
             / "weight_stability"
             / report.as_of.isoformat()
             / "weight_stability_summary.json"
@@ -3298,9 +3283,9 @@ def _weight_stability_summary(report: DailyTaskDashboardReport) -> TraceRecord:
 
 
 def _latest_weight_stability_path(report: DailyTaskDashboardReport) -> Path | None:
-    root = report.project_root / "artifacts" / "weight_stability"
+    root = state_dir(report.project_root, "artifacts") / "weight_stability"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/weight_stability_summary.json"):
+    for path in glob_root(root, "*/weight_stability_summary.json"):
         try:
             as_of = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -3316,8 +3301,7 @@ def _weight_stability_readiness_summary(report: DailyTaskDashboardReport) -> Tra
     path = _latest_weight_stability_readiness_path(report)
     if path is None:
         missing_path = (
-            report.project_root
-            / "artifacts"
+            state_dir(report.project_root, "artifacts")
             / "weight_stability_readiness"
             / report.as_of.isoformat()
             / "weight_stability_readiness_summary.json"
@@ -3405,9 +3389,9 @@ def _weight_stability_readiness_summary(report: DailyTaskDashboardReport) -> Tra
 
 
 def _latest_weight_stability_readiness_path(report: DailyTaskDashboardReport) -> Path | None:
-    root = report.project_root / "artifacts" / "weight_stability_readiness"
+    root = state_dir(report.project_root, "artifacts") / "weight_stability_readiness"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/weight_stability_readiness_summary.json"):
+    for path in glob_root(root, "*/weight_stability_readiness_summary.json"):
         try:
             as_of = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -3416,7 +3400,7 @@ def _latest_weight_stability_readiness_path(report: DailyTaskDashboardReport) ->
             candidates.append((as_of, path))
     if candidates:
         return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
-    latest_candidates = sorted(root.glob("*/weight_stability_readiness_summary.json"))
+    latest_candidates = sorted(glob_root(root, "*/weight_stability_readiness_summary.json"))
     if not latest_candidates:
         return None
     return max(latest_candidates, key=lambda path: path.stat().st_mtime)
@@ -3426,8 +3410,7 @@ def _portfolio_turnover_attribution_summary(report: DailyTaskDashboardReport) ->
     path = _latest_portfolio_turnover_attribution_path(report)
     if path is None:
         missing_path = (
-            report.project_root
-            / "artifacts"
+            state_dir(report.project_root, "artifacts")
             / "portfolio_turnover_attribution"
             / report.as_of.isoformat()
             / "portfolio_turnover_attribution_summary.json"
@@ -3524,9 +3507,9 @@ def _portfolio_turnover_attribution_summary(report: DailyTaskDashboardReport) ->
 def _latest_portfolio_turnover_attribution_path(
     report: DailyTaskDashboardReport,
 ) -> Path | None:
-    root = report.project_root / "artifacts" / "portfolio_turnover_attribution"
+    root = state_dir(report.project_root, "artifacts") / "portfolio_turnover_attribution"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/portfolio_turnover_attribution_summary.json"):
+    for path in glob_root(root, "*/portfolio_turnover_attribution_summary.json"):
         try:
             as_of = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -3542,8 +3525,7 @@ def _market_data_freshness_summary(report: DailyTaskDashboardReport) -> TraceRec
     path = _latest_market_data_freshness_path(report)
     if path is None:
         missing_path = (
-            report.project_root
-            / "artifacts"
+            state_dir(report.project_root, "artifacts")
             / "data_freshness"
             / report.as_of.isoformat()
             / "market_data_freshness_summary.json"
@@ -3629,9 +3611,9 @@ def _market_data_freshness_summary(report: DailyTaskDashboardReport) -> TraceRec
 
 
 def _latest_market_data_freshness_path(report: DailyTaskDashboardReport) -> Path | None:
-    root = report.project_root / "artifacts" / "data_freshness"
+    root = state_dir(report.project_root, "artifacts") / "data_freshness"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/market_data_freshness_summary.json"):
+    for path in glob_root(root, "*/market_data_freshness_summary.json"):
         try:
             as_of = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -3647,8 +3629,7 @@ def _market_data_refresh_summary(report: DailyTaskDashboardReport) -> TraceRecor
     path = _latest_market_data_refresh_path(report)
     if path is None:
         missing_path = (
-            report.project_root
-            / "artifacts"
+            state_dir(report.project_root, "artifacts")
             / "data_refresh"
             / report.as_of.isoformat()
             / "market_data_refresh_summary.json"
@@ -3730,9 +3711,9 @@ def _market_data_refresh_summary(report: DailyTaskDashboardReport) -> TraceRecor
 
 
 def _latest_market_data_refresh_path(report: DailyTaskDashboardReport) -> Path | None:
-    root = report.project_root / "artifacts" / "data_refresh"
+    root = state_dir(report.project_root, "artifacts") / "data_refresh"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/market_data_refresh_summary.json"):
+    for path in glob_root(root, "*/market_data_refresh_summary.json"):
         try:
             as_of = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -3757,8 +3738,7 @@ def _price_cache_reconcile_summary(report: DailyTaskDashboardReport) -> TraceRec
     path = _latest_price_cache_reconcile_path(report)
     if path is None:
         missing_path = (
-            report.project_root
-            / "artifacts"
+            state_dir(report.project_root, "artifacts")
             / "data_quality"
             / report.as_of.isoformat()
             / "price_cache_reconcile_summary.json"
@@ -3822,9 +3802,9 @@ def _price_cache_reconcile_summary(report: DailyTaskDashboardReport) -> TraceRec
 
 
 def _latest_price_cache_reconcile_path(report: DailyTaskDashboardReport) -> Path | None:
-    root = report.project_root / "artifacts" / "data_quality"
+    root = state_dir(report.project_root, "artifacts") / "data_quality"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/price_cache_reconcile_summary.json"):
+    for path in glob_root(root, "*/price_cache_reconcile_summary.json"):
         try:
             as_of = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -4116,7 +4096,9 @@ def _daily_weight_adjustment_summary(report: DailyTaskDashboardReport) -> TraceR
 
 def _shadow_weight_iteration_summary(report: DailyTaskDashboardReport) -> TraceRecord:
     suffix = report.as_of.isoformat()
-    shadow_root = report.project_root / "data" / "derived" / "weight_iterations" / "shadow"
+    shadow_root = (
+        state_dir(report.project_root, "data") / "derived" / "weight_iterations" / "shadow"
+    )
     current_path = shadow_root / "current_shadow_weights.json"
     candidate_path = shadow_root / "candidates" / f"shadow_weight_candidate_{suffix}.json"
     current = _read_json_object(current_path)
@@ -4187,8 +4169,7 @@ def _shadow_weight_iteration_summary(report: DailyTaskDashboardReport) -> TraceR
 def _shadow_vs_production_comparison_summary(report: DailyTaskDashboardReport) -> TraceRecord:
     suffix = report.as_of.isoformat()
     path = (
-        report.project_root
-        / "data"
+        state_dir(report.project_root, "data")
         / "derived"
         / "weight_iterations"
         / "comparison"
@@ -4958,8 +4939,7 @@ def _parameter_governance_web_view_summary(report: DailyTaskDashboardReport) -> 
     payload = _read_json_object(path)
     if payload.get("report_type") != "parameter_governance_web_view":
         default_html = (
-            report.project_root
-            / "data"
+            state_dir(report.project_root, "data")
             / "derived"
             / "weight_iterations"
             / "governance"
@@ -5090,8 +5070,7 @@ def _parameter_governance_daily_digest_summary(report: DailyTaskDashboardReport)
     payload = _read_json_object(path)
     if payload.get("report_type") != "parameter_governance_daily_digest":
         default_markdown = (
-            report.project_root
-            / "data"
+            state_dir(report.project_root, "data")
             / "derived"
             / "weight_iterations"
             / "governance"
@@ -5234,8 +5213,7 @@ def _pipeline_health_summary_summary(report: DailyTaskDashboardReport) -> TraceR
     payload = _read_json_object(path)
     if payload.get("report_type") != "pipeline_health_summary":
         default_markdown = (
-            report.project_root
-            / "data"
+            state_dir(report.project_root, "data")
             / "derived"
             / "pipeline_health"
             / f"pipeline_health_summary_{report.as_of.isoformat()}.md"
@@ -5376,8 +5354,7 @@ def _data_freshness_summary_summary(report: DailyTaskDashboardReport) -> TraceRe
     payload = _read_json_object(path)
     if payload.get("report_type") != "data_freshness_summary":
         default_markdown = (
-            report.project_root
-            / "data"
+            state_dir(report.project_root, "data")
             / "derived"
             / "data_freshness"
             / f"data_freshness_summary_{report.as_of.isoformat()}.md"
@@ -5523,8 +5500,7 @@ def _daily_trading_system_operator_brief_summary(report: DailyTaskDashboardRepor
     payload = _read_json_object(path)
     if payload.get("report_type") != "daily_trading_system_operator_brief":
         default_markdown = (
-            report.project_root
-            / "data"
+            state_dir(report.project_root, "data")
             / "derived"
             / "operator_briefs"
             / f"daily_trading_system_operator_brief_{report.as_of.isoformat()}.md"
@@ -5690,8 +5666,7 @@ def _daily_operator_brief_scheduler_dry_run_summary(
     payload = _read_json_object(path)
     if payload.get("report_type") != "daily_operator_brief_scheduler_dry_run":
         default_markdown = (
-            report.project_root
-            / "data"
+            state_dir(report.project_root, "data")
             / "derived"
             / "operator_briefs"
             / "scheduler_dry_run"
@@ -5848,8 +5823,7 @@ def _daily_operator_brief_scheduler_templates_summary(
     payload = _read_json_object(path)
     if payload.get("report_type") != "daily_operator_brief_scheduler_templates":
         default_markdown = (
-            report.project_root
-            / "data"
+            state_dir(report.project_root, "data")
             / "derived"
             / "operator_briefs"
             / "scheduler_templates"
@@ -5997,8 +5971,7 @@ def _daily_operator_brief_scheduler_template_validation_summary(
     payload = _read_json_object(path)
     if payload.get("report_type") != "daily_operator_brief_scheduler_template_validation":
         default_markdown = (
-            report.project_root
-            / "data"
+            state_dir(report.project_root, "data")
             / "derived"
             / "operator_briefs"
             / "scheduler_template_validation"
@@ -6153,8 +6126,7 @@ def _operator_brief_notification_draft_summary(report: DailyTaskDashboardReport)
     payload = _read_json_object(path)
     if payload.get("report_type") != "operator_brief_notification_draft":
         default_markdown = (
-            report.project_root
-            / "data"
+            state_dir(report.project_root, "data")
             / "derived"
             / "operator_briefs"
             / "notifications"
@@ -6309,8 +6281,7 @@ def _operator_brief_notification_delivery_preflight_summary(
     path = _latest_operator_brief_notification_delivery_preflight_path(report)
     payload = _read_json_object(path)
     default_markdown = (
-        report.project_root
-        / "data"
+        state_dir(report.project_root, "data")
         / "derived"
         / "operator_briefs"
         / "notifications"
@@ -6488,8 +6459,7 @@ def _operator_brief_notification_dispatch_preview_summary(
     path = _latest_operator_brief_notification_dispatch_preview_path(report)
     payload = _read_json_object(path)
     default_markdown = (
-        report.project_root
-        / "data"
+        state_dir(report.project_root, "data")
         / "derived"
         / "operator_briefs"
         / "notifications"
@@ -6693,8 +6663,7 @@ def _operator_brief_notification_approval_gate_summary(
     path = _latest_operator_brief_notification_approval_gate_path(report)
     payload = _read_json_object(path)
     default_markdown = (
-        report.project_root
-        / "data"
+        state_dir(report.project_root, "data")
         / "derived"
         / "operator_briefs"
         / "notifications"
@@ -6904,8 +6873,7 @@ def _operator_brief_notification_draft_dispatch_summary(
     path = _latest_operator_brief_notification_draft_dispatch_path(report)
     payload = _read_json_object(path)
     default_markdown = (
-        report.project_root
-        / "data"
+        state_dir(report.project_root, "data")
         / "derived"
         / "operator_briefs"
         / "notifications"
@@ -7154,8 +7122,7 @@ def _notification_delivery_audit_summary(
     path = _latest_notification_delivery_audit_summary_path(report)
     payload = _read_json_object(path)
     default_markdown = (
-        report.project_root
-        / "data"
+        state_dir(report.project_root, "data")
         / "derived"
         / "operator_briefs"
         / "notifications"
@@ -7346,8 +7313,7 @@ def _sec_pit_evaluation_summary(report: DailyTaskDashboardReport) -> TraceRecord
     path = _latest_sec_pit_evaluation_summary_path(report)
     payload = _read_json_object(path)
     default_markdown = (
-        report.project_root
-        / "outputs"
+        state_dir(report.project_root, "outputs")
         / "sec_pit_evaluation"
         / f"sec_pit_evaluation_summary_{report.as_of.isoformat()}.md"
     )
@@ -7422,8 +7388,7 @@ def _sec_pit_baseline_comparison(report: DailyTaskDashboardReport) -> TraceRecor
     path = _latest_sec_pit_baseline_comparison_path(report)
     payload = _read_json_object(path)
     default_markdown = (
-        report.project_root
-        / "outputs"
+        state_dir(report.project_root, "outputs")
         / "sec_pit_baseline_comparison"
         / f"sec_pit_baseline_comparison_summary_{report.as_of.isoformat()}.md"
     )
@@ -7505,8 +7470,7 @@ def _sec_pit_real_run_diagnostics(report: DailyTaskDashboardReport) -> TraceReco
     path = _latest_sec_pit_real_run_diagnostics_path(report)
     payload = _read_json_object(path)
     default_markdown = (
-        report.project_root
-        / "outputs"
+        state_dir(report.project_root, "outputs")
         / "sec_pit_diagnostics"
         / f"sec_pit_real_run_diagnostics_{report.as_of.isoformat()}.md"
     )
@@ -7592,8 +7556,7 @@ def _sec_pit_candidate_review(report: DailyTaskDashboardReport) -> TraceRecord:
     path = _latest_sec_pit_candidate_review_path(report)
     payload = _read_json_object(path)
     default_markdown = (
-        report.project_root
-        / "outputs"
+        state_dir(report.project_root, "outputs")
         / "sec_pit_candidate_review"
         / f"sec_pit_candidate_review_summary_{report.as_of.isoformat()}.md"
     )
@@ -7679,8 +7642,7 @@ def _sec_pit_shadow_observe(report: DailyTaskDashboardReport) -> TraceRecord:
     path = _latest_sec_pit_shadow_observe_path(report)
     payload = _read_json_object(path)
     default_markdown = (
-        report.project_root
-        / "outputs"
+        state_dir(report.project_root, "outputs")
         / "sec_pit_shadow_observe"
         / f"sec_pit_shadow_observe_summary_{report.as_of.isoformat()}.md"
     )
@@ -7777,8 +7739,7 @@ def _sec_pit_baseline_coverage(report: DailyTaskDashboardReport) -> TraceRecord:
     path = _latest_sec_pit_baseline_coverage_path(report)
     payload = _read_json_object(path)
     default_markdown = (
-        report.project_root
-        / "outputs"
+        state_dir(report.project_root, "outputs")
         / "sec_pit_baseline_coverage"
         / f"sec_pit_baseline_coverage_summary_{report.as_of.isoformat()}.md"
     )
@@ -7838,8 +7799,7 @@ def _sec_pit_shadow_monitor(report: DailyTaskDashboardReport) -> TraceRecord:
     path = _latest_sec_pit_shadow_monitor_path(report)
     payload = _read_json_object(path)
     default_markdown = (
-        report.project_root
-        / "outputs"
+        state_dir(report.project_root, "outputs")
         / "sec_pit_shadow_monitor"
         / f"sec_pit_shadow_monitor_summary_{report.as_of.isoformat()}.md"
     )
@@ -7933,8 +7893,7 @@ def _research_governance_summary(report: DailyTaskDashboardReport) -> TraceRecor
     path = _latest_research_governance_summary_path(report)
     payload = _read_json_object(path)
     default_markdown = (
-        report.project_root
-        / "outputs"
+        state_dir(report.project_root, "outputs")
         / "reports"
         / f"research_governance_summary_{report.as_of.isoformat()}.md"
     )
@@ -8077,8 +8036,7 @@ def _notification_delivery_failure_classification(
     path = _latest_notification_delivery_failure_classification_path(report)
     payload = _read_json_object(path)
     default_markdown = (
-        report.project_root
-        / "outputs"
+        state_dir(report.project_root, "outputs")
         / "notification_delivery_failure_classification"
         / f"notification_delivery_failure_classification_{report.as_of.isoformat()}.md"
     )
@@ -8207,8 +8165,7 @@ def _retry_candidate_queue(report: DailyTaskDashboardReport) -> TraceRecord:
     path = _latest_retry_candidate_queue_path(report)
     payload = _read_json_object(path)
     default_markdown = (
-        report.project_root
-        / "outputs"
+        state_dir(report.project_root, "outputs")
         / "retry_candidate_queue"
         / f"retry_candidate_queue_{report.as_of.isoformat()}.md"
     )
@@ -8350,8 +8307,7 @@ def _retry_execution_dry_run(report: DailyTaskDashboardReport) -> TraceRecord:
     path = _latest_retry_execution_dry_run_path(report)
     payload = _read_json_object(path)
     default_markdown = (
-        report.project_root
-        / "outputs"
+        state_dir(report.project_root, "outputs")
         / "retry_execution_dry_run"
         / f"retry_execution_dry_run_{report.as_of.isoformat()}.md"
     )
@@ -8541,7 +8497,11 @@ def _retry_execution_dry_run(report: DailyTaskDashboardReport) -> TraceRecord:
 
 def _latest_shadow_vs_production_review_path(report: DailyTaskDashboardReport) -> Path:
     review_root = (
-        report.project_root / "data" / "derived" / "weight_iterations" / "comparison" / "reviews"
+        state_dir(report.project_root, "data")
+        / "derived"
+        / "weight_iterations"
+        / "comparison"
+        / "reviews"
     )
     default_path = review_root / f"shadow_vs_production_review_{report.as_of.isoformat()}.json"
     if not review_root.exists():
@@ -8559,7 +8519,11 @@ def _latest_shadow_vs_production_review_path(report: DailyTaskDashboardReport) -
 
 def _latest_shadow_promotion_proposal_path(report: DailyTaskDashboardReport) -> Path:
     proposal_root = (
-        report.project_root / "data" / "derived" / "weight_iterations" / "promotion" / "proposals"
+        state_dir(report.project_root, "data")
+        / "derived"
+        / "weight_iterations"
+        / "promotion"
+        / "proposals"
     )
     default_path = proposal_root / f"shadow_promotion_proposal_{report.as_of.isoformat()}.json"
     if not proposal_root.exists():
@@ -8577,7 +8541,11 @@ def _latest_shadow_promotion_proposal_path(report: DailyTaskDashboardReport) -> 
 
 def _latest_shadow_promotion_apply_preflight_path(report: DailyTaskDashboardReport) -> Path:
     preflight_root = (
-        report.project_root / "data" / "derived" / "weight_iterations" / "promotion" / "preflight"
+        state_dir(report.project_root, "data")
+        / "derived"
+        / "weight_iterations"
+        / "promotion"
+        / "preflight"
     )
     default_path = preflight_root / (
         f"shadow_promotion_apply_preflight_{report.as_of.isoformat()}.json"
@@ -8597,7 +8565,11 @@ def _latest_shadow_promotion_apply_preflight_path(report: DailyTaskDashboardRepo
 
 def _latest_shadow_promotion_apply_path(report: DailyTaskDashboardReport) -> Path:
     apply_root = (
-        report.project_root / "data" / "derived" / "weight_iterations" / "promotion" / "apply"
+        state_dir(report.project_root, "data")
+        / "derived"
+        / "weight_iterations"
+        / "promotion"
+        / "apply"
     )
     default_path = apply_root / f"shadow_promotion_apply_result_{report.as_of.isoformat()}.json"
     if not apply_root.exists():
@@ -8615,8 +8587,7 @@ def _latest_shadow_promotion_apply_path(report: DailyTaskDashboardReport) -> Pat
 
 def _latest_shadow_promotion_rollback_path(report: DailyTaskDashboardReport) -> Path:
     rollback_root = (
-        report.project_root
-        / "data"
+        state_dir(report.project_root, "data")
         / "derived"
         / "weight_iterations"
         / "promotion"
@@ -8640,7 +8611,11 @@ def _latest_shadow_promotion_rollback_path(report: DailyTaskDashboardReport) -> 
 
 def _latest_shadow_promotion_lifecycle_audit_path(report: DailyTaskDashboardReport) -> Path:
     audit_root = (
-        report.project_root / "data" / "derived" / "weight_iterations" / "promotion" / "audit"
+        state_dir(report.project_root, "data")
+        / "derived"
+        / "weight_iterations"
+        / "promotion"
+        / "audit"
     )
     default_path = audit_root / (
         f"shadow_promotion_lifecycle_audit_{report.as_of.isoformat()}.json"
@@ -8659,7 +8634,9 @@ def _latest_shadow_promotion_lifecycle_audit_path(report: DailyTaskDashboardRepo
 
 
 def _latest_parameter_governance_summary_path(report: DailyTaskDashboardReport) -> Path:
-    governance_root = report.project_root / "data" / "derived" / "weight_iterations" / "governance"
+    governance_root = (
+        state_dir(report.project_root, "data") / "derived" / "weight_iterations" / "governance"
+    )
     default_path = governance_root / (
         f"parameter_governance_summary_{report.as_of.isoformat()}.json"
     )
@@ -8677,7 +8654,13 @@ def _latest_parameter_governance_summary_path(report: DailyTaskDashboardReport) 
 
 
 def _latest_parameter_governance_web_view_metadata_path(report: DailyTaskDashboardReport) -> Path:
-    web_root = report.project_root / "data" / "derived" / "weight_iterations" / "governance" / "web"
+    web_root = (
+        state_dir(report.project_root, "data")
+        / "derived"
+        / "weight_iterations"
+        / "governance"
+        / "web"
+    )
     default_path = web_root / f"parameter_governance_web_view_{report.as_of.isoformat()}.json"
     if not web_root.exists():
         return default_path
@@ -8694,7 +8677,11 @@ def _latest_parameter_governance_web_view_metadata_path(report: DailyTaskDashboa
 
 def _latest_parameter_governance_daily_digest_path(report: DailyTaskDashboardReport) -> Path:
     digest_root = (
-        report.project_root / "data" / "derived" / "weight_iterations" / "governance" / "digests"
+        state_dir(report.project_root, "data")
+        / "derived"
+        / "weight_iterations"
+        / "governance"
+        / "digests"
     )
     default_path = digest_root / (
         f"parameter_governance_daily_digest_{report.as_of.isoformat()}.json"
@@ -8713,7 +8700,7 @@ def _latest_parameter_governance_daily_digest_path(report: DailyTaskDashboardRep
 
 
 def _latest_pipeline_health_summary_path(report: DailyTaskDashboardReport) -> Path:
-    health_root = report.project_root / "data" / "derived" / "pipeline_health"
+    health_root = state_dir(report.project_root, "data") / "derived" / "pipeline_health"
     default_path = health_root / f"pipeline_health_summary_{report.as_of.isoformat()}.json"
     if not health_root.exists():
         return default_path
@@ -8729,7 +8716,7 @@ def _latest_pipeline_health_summary_path(report: DailyTaskDashboardReport) -> Pa
 
 
 def _latest_data_freshness_summary_path(report: DailyTaskDashboardReport) -> Path:
-    freshness_root = report.project_root / "data" / "derived" / "data_freshness"
+    freshness_root = state_dir(report.project_root, "data") / "derived" / "data_freshness"
     default_path = freshness_root / f"data_freshness_summary_{report.as_of.isoformat()}.json"
     if not freshness_root.exists():
         return default_path
@@ -8745,7 +8732,7 @@ def _latest_data_freshness_summary_path(report: DailyTaskDashboardReport) -> Pat
 
 
 def _latest_daily_trading_system_operator_brief_path(report: DailyTaskDashboardReport) -> Path:
-    brief_root = report.project_root / "data" / "derived" / "operator_briefs"
+    brief_root = state_dir(report.project_root, "data") / "derived" / "operator_briefs"
     default_path = brief_root / (
         f"daily_trading_system_operator_brief_{report.as_of.isoformat()}.json"
     )
@@ -8766,7 +8753,7 @@ def _latest_daily_operator_brief_scheduler_dry_run_path(
     report: DailyTaskDashboardReport,
 ) -> Path:
     dry_run_root = (
-        report.project_root / "data" / "derived" / "operator_briefs" / "scheduler_dry_run"
+        state_dir(report.project_root, "data") / "derived" / "operator_briefs" / "scheduler_dry_run"
     )
     default_path = dry_run_root / (
         f"daily_operator_brief_scheduler_dry_run_{report.as_of.isoformat()}.json"
@@ -8788,7 +8775,10 @@ def _latest_daily_operator_brief_scheduler_templates_path(
     report: DailyTaskDashboardReport,
 ) -> Path:
     template_root = (
-        report.project_root / "data" / "derived" / "operator_briefs" / "scheduler_templates"
+        state_dir(report.project_root, "data")
+        / "derived"
+        / "operator_briefs"
+        / "scheduler_templates"
     )
     default_path = template_root / (
         f"daily_operator_brief_scheduler_templates_{report.as_of.isoformat()}.json"
@@ -8810,8 +8800,7 @@ def _latest_daily_operator_brief_scheduler_template_validation_path(
     report: DailyTaskDashboardReport,
 ) -> Path:
     validation_root = (
-        report.project_root
-        / "data"
+        state_dir(report.project_root, "data")
         / "derived"
         / "operator_briefs"
         / "scheduler_template_validation"
@@ -8834,7 +8823,7 @@ def _latest_daily_operator_brief_scheduler_template_validation_path(
 
 def _latest_operator_brief_notification_draft_path(report: DailyTaskDashboardReport) -> Path:
     notification_root = (
-        report.project_root / "data" / "derived" / "operator_briefs" / "notifications"
+        state_dir(report.project_root, "data") / "derived" / "operator_briefs" / "notifications"
     )
     default_path = notification_root / (
         f"operator_brief_notification_draft_{report.as_of.isoformat()}.json"
@@ -8856,8 +8845,7 @@ def _latest_operator_brief_notification_delivery_preflight_path(
     report: DailyTaskDashboardReport,
 ) -> Path:
     preflight_root = (
-        report.project_root
-        / "data"
+        state_dir(report.project_root, "data")
         / "derived"
         / "operator_briefs"
         / "notifications"
@@ -8883,8 +8871,7 @@ def _latest_operator_brief_notification_dispatch_preview_path(
     report: DailyTaskDashboardReport,
 ) -> Path:
     preview_root = (
-        report.project_root
-        / "data"
+        state_dir(report.project_root, "data")
         / "derived"
         / "operator_briefs"
         / "notifications"
@@ -8911,8 +8898,7 @@ def _latest_operator_brief_notification_approval_gate_path(
     report: DailyTaskDashboardReport,
 ) -> Path:
     approval_root = (
-        report.project_root
-        / "data"
+        state_dir(report.project_root, "data")
         / "derived"
         / "operator_briefs"
         / "notifications"
@@ -8931,8 +8917,7 @@ def _latest_operator_brief_notification_draft_dispatch_path(
     report: DailyTaskDashboardReport,
 ) -> Path:
     draft_dispatch_root = (
-        report.project_root
-        / "data"
+        state_dir(report.project_root, "data")
         / "derived"
         / "operator_briefs"
         / "notifications"
@@ -8945,8 +8930,7 @@ def _latest_notification_delivery_audit_summary_path(
     report: DailyTaskDashboardReport,
 ) -> Path:
     audit_root = (
-        report.project_root
-        / "data"
+        state_dir(report.project_root, "data")
         / "derived"
         / "operator_briefs"
         / "notifications"
@@ -8972,7 +8956,7 @@ def _latest_notification_delivery_failure_classification_path(
     report: DailyTaskDashboardReport,
 ) -> Path:
     classification_root = (
-        report.project_root / "outputs" / "notification_delivery_failure_classification"
+        state_dir(report.project_root, "outputs") / "notification_delivery_failure_classification"
     )
     default_path = classification_root / (
         f"notification_delivery_failure_classification_{report.as_of.isoformat()}.json"
@@ -8991,7 +8975,7 @@ def _latest_notification_delivery_failure_classification_path(
 
 
 def _latest_sec_pit_evaluation_summary_path(report: DailyTaskDashboardReport) -> Path:
-    evaluation_root = report.project_root / "outputs" / "sec_pit_evaluation"
+    evaluation_root = state_dir(report.project_root, "outputs") / "sec_pit_evaluation"
     default_path = evaluation_root / f"sec_pit_evaluation_summary_{report.as_of.isoformat()}.json"
     if not evaluation_root.exists():
         return default_path
@@ -9007,7 +8991,7 @@ def _latest_sec_pit_evaluation_summary_path(report: DailyTaskDashboardReport) ->
 
 
 def _latest_sec_pit_baseline_comparison_path(report: DailyTaskDashboardReport) -> Path:
-    comparison_root = report.project_root / "outputs" / "sec_pit_baseline_comparison"
+    comparison_root = state_dir(report.project_root, "outputs") / "sec_pit_baseline_comparison"
     default_path = (
         comparison_root / f"sec_pit_baseline_comparison_summary_{report.as_of.isoformat()}.json"
     )
@@ -9025,7 +9009,7 @@ def _latest_sec_pit_baseline_comparison_path(report: DailyTaskDashboardReport) -
 
 
 def _latest_sec_pit_real_run_diagnostics_path(report: DailyTaskDashboardReport) -> Path:
-    diagnostics_root = report.project_root / "outputs" / "sec_pit_diagnostics"
+    diagnostics_root = state_dir(report.project_root, "outputs") / "sec_pit_diagnostics"
     default_path = (
         diagnostics_root / f"sec_pit_real_run_diagnostics_{report.as_of.isoformat()}.json"
     )
@@ -9043,7 +9027,7 @@ def _latest_sec_pit_real_run_diagnostics_path(report: DailyTaskDashboardReport) 
 
 
 def _latest_sec_pit_candidate_review_path(report: DailyTaskDashboardReport) -> Path:
-    review_root = report.project_root / "outputs" / "sec_pit_candidate_review"
+    review_root = state_dir(report.project_root, "outputs") / "sec_pit_candidate_review"
     default_path = review_root / f"sec_pit_candidate_review_summary_{report.as_of.isoformat()}.json"
     if not review_root.exists():
         return default_path
@@ -9059,7 +9043,7 @@ def _latest_sec_pit_candidate_review_path(report: DailyTaskDashboardReport) -> P
 
 
 def _latest_sec_pit_shadow_observe_path(report: DailyTaskDashboardReport) -> Path:
-    shadow_root = report.project_root / "outputs" / "sec_pit_shadow_observe"
+    shadow_root = state_dir(report.project_root, "outputs") / "sec_pit_shadow_observe"
     default_path = shadow_root / f"sec_pit_shadow_observe_summary_{report.as_of.isoformat()}.json"
     if not shadow_root.exists():
         return default_path
@@ -9075,7 +9059,7 @@ def _latest_sec_pit_shadow_observe_path(report: DailyTaskDashboardReport) -> Pat
 
 
 def _latest_sec_pit_baseline_coverage_path(report: DailyTaskDashboardReport) -> Path:
-    coverage_root = report.project_root / "outputs" / "sec_pit_baseline_coverage"
+    coverage_root = state_dir(report.project_root, "outputs") / "sec_pit_baseline_coverage"
     default_path = (
         coverage_root / f"sec_pit_baseline_coverage_summary_{report.as_of.isoformat()}.json"
     )
@@ -9093,7 +9077,7 @@ def _latest_sec_pit_baseline_coverage_path(report: DailyTaskDashboardReport) -> 
 
 
 def _latest_sec_pit_shadow_monitor_path(report: DailyTaskDashboardReport) -> Path:
-    monitor_root = report.project_root / "outputs" / "sec_pit_shadow_monitor"
+    monitor_root = state_dir(report.project_root, "outputs") / "sec_pit_shadow_monitor"
     default_path = monitor_root / f"sec_pit_shadow_monitor_summary_{report.as_of.isoformat()}.json"
     if not monitor_root.exists():
         return default_path
@@ -9109,7 +9093,7 @@ def _latest_sec_pit_shadow_monitor_path(report: DailyTaskDashboardReport) -> Pat
 
 
 def _latest_research_governance_summary_path(report: DailyTaskDashboardReport) -> Path:
-    reports_root = report.project_root / "outputs" / "reports"
+    reports_root = state_dir(report.project_root, "outputs") / "reports"
     default_path = reports_root / f"research_governance_summary_{report.as_of.isoformat()}.json"
     if not reports_root.exists():
         return default_path
@@ -9125,7 +9109,7 @@ def _latest_research_governance_summary_path(report: DailyTaskDashboardReport) -
 
 
 def _latest_retry_candidate_queue_path(report: DailyTaskDashboardReport) -> Path:
-    queue_root = report.project_root / "outputs" / "retry_candidate_queue"
+    queue_root = state_dir(report.project_root, "outputs") / "retry_candidate_queue"
     default_path = queue_root / f"retry_candidate_queue_{report.as_of.isoformat()}.json"
     if not queue_root.exists():
         return default_path
@@ -9141,7 +9125,7 @@ def _latest_retry_candidate_queue_path(report: DailyTaskDashboardReport) -> Path
 
 
 def _latest_retry_execution_dry_run_path(report: DailyTaskDashboardReport) -> Path:
-    dry_run_root = report.project_root / "outputs" / "retry_execution_dry_run"
+    dry_run_root = state_dir(report.project_root, "outputs") / "retry_execution_dry_run"
     default_path = dry_run_root / f"retry_execution_dry_run_{report.as_of.isoformat()}.json"
     if not dry_run_root.exists():
         return default_path
@@ -9208,8 +9192,7 @@ def _latest_shadow_iteration_summary(report: DailyTaskDashboardReport) -> TraceR
     payload = _read_json_object(path)
     if not payload:
         fallback = (
-            report.project_root
-            / "outputs"
+            state_dir(report.project_root, "outputs")
             / "reports"
             / f"shadow_iteration_{report.as_of.isoformat()}.json"
         )
@@ -9258,7 +9241,7 @@ def _shadow_iteration_candidate_label(candidate: TraceRecord) -> str:
 
 
 def _latest_shadow_parameter_summary(report: DailyTaskDashboardReport) -> TraceRecord:
-    search_root = report.project_root / "outputs" / "parameter_search"
+    search_root = state_dir(report.project_root, "outputs") / "parameter_search"
     if not search_root.exists():
         return {}
     candidates: list[tuple[datetime, Path, TraceRecord]] = []
@@ -14418,7 +14401,7 @@ def _project_path(project_root: Path, path_value: object) -> Path | None:
     if not text:
         return None
     path = Path(text)
-    return path if path.is_absolute() else project_root / path
+    return path if path.is_absolute() else join_root(project_root, path)
 
 
 def _render_footer(report: DailyTaskDashboardReport) -> str:

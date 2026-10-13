@@ -5,6 +5,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.paths import join_root, state_dir
 from ai_trading_system.platform.artifacts import write_json_atomic, write_text_atomic
 
 SCHEMA_VERSION = "1.0"
@@ -33,11 +34,11 @@ APPROVAL_REJECTED = "REJECTED"
 RETRY_PENDING_APPROVAL = "PENDING_APPROVAL"
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_OUTPUT_DIR = REPO_ROOT / "outputs" / "retry_execution_dry_run"
+DEFAULT_OUTPUT_DIR = state_dir(REPO_ROOT, "outputs") / "retry_execution_dry_run"
 
 
 def default_retry_execution_dry_run_output_dir(project_root: Path = REPO_ROOT) -> Path:
-    return project_root / "outputs" / "retry_execution_dry_run"
+    return state_dir(project_root, "outputs") / "retry_execution_dry_run"
 
 
 def default_retry_execution_dry_run_json_path(output_dir: Path, as_of: date) -> Path:
@@ -45,7 +46,7 @@ def default_retry_execution_dry_run_json_path(output_dir: Path, as_of: date) -> 
 
 
 def default_retry_candidate_queue_output_dir(project_root: Path = REPO_ROOT) -> Path:
-    return project_root / "outputs" / "retry_candidate_queue"
+    return state_dir(project_root, "outputs") / "retry_candidate_queue"
 
 
 def default_manual_retry_approval_path(project_root: Path, as_of: date) -> Path:
@@ -519,8 +520,7 @@ def _resolve_queue_path(
         return latest
     fallback_date = as_of or generated_at.date()
     return (
-        project_root
-        / "outputs"
+        state_dir(project_root, "outputs")
         / "retry_candidate_queue"
         / f"retry_candidate_queue_{fallback_date.isoformat()}.json"
     )
@@ -1005,14 +1005,14 @@ def _resolve_project_path(project_root: Path, value: Path) -> Path:
     path = Path(value)
     if path.is_absolute():
         return path.resolve(strict=False)
-    return (project_root / path).resolve(strict=False)
+    return (join_root(project_root, path)).resolve(strict=False)
 
 
 def _normalize_path(path: Path) -> Path:
     value = Path(path)
     if value.is_absolute():
         return value.resolve(strict=False)
-    return (Path.cwd() / value).resolve(strict=False)
+    return join_root(Path.cwd(), value).resolve(strict=False)
 
 
 def _parse_iso_date(value: str) -> date | None:

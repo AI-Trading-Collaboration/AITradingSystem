@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 from ai_trading_system.reports.recovery_triage import (
     latest_recovery_blocker_triage_json_path,
     latest_recovery_owner_action_map_json_path,
@@ -95,7 +96,7 @@ def build_remaining_blocker_resolution_ledger_payload(
     source_depth_audit_path: Path | None = None,
     owner_action_map_payload: Mapping[str, Any] | None = None,
     owner_action_map_path: Path | None = None,
-    reports_dir: Path = PROJECT_ROOT / "outputs" / "reports",
+    reports_dir: Path = state_dir(PROJECT_ROOT, "outputs") / "reports",
 ) -> dict[str, Any]:
     recovery_pack_path, recovery_pack_payload = _payload_or_latest(
         recovery_pack_payload,

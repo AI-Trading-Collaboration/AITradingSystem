@@ -38,6 +38,7 @@ from ai_trading_system.fundamentals.sec_pit_aliases import (
     price_row_ticker_aliases,
 )
 from ai_trading_system.fundamentals.sec_pit_backfill import SEC_PIT_BACKTEST_DATA_GRADE
+from ai_trading_system.paths import state_dir
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SEC_PIT_EVALUATION_TASK_ID = "TRADING-040"
@@ -45,11 +46,11 @@ SEC_PIT_EVALUATION_PRODUCTION_EFFECT = "none"
 SEC_PIT_EVALUATION_REPORT_TYPE = "sec_pit_cognitive_evaluation"
 DEFAULT_SEC_PIT_EVALUATION_CONFIG_PATH = PROJECT_ROOT / "config" / "sec_pit_evaluation.yaml"
 DEFAULT_SEC_PIT_EVALUATION_POLICY_PATH = DEFAULT_SEC_PIT_EVALUATION_CONFIG_PATH
-DEFAULT_SEC_PIT_EVALUATION_OUTPUT_DIR = PROJECT_ROOT / "outputs" / "sec_pit_evaluation"
-DEFAULT_PRICES_PATH = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
-DEFAULT_RATES_PATH = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv"
+DEFAULT_SEC_PIT_EVALUATION_OUTPUT_DIR = state_dir(PROJECT_ROOT, "outputs") / "sec_pit_evaluation"
+DEFAULT_PRICES_PATH = state_dir(PROJECT_ROOT, "data") / "raw" / "prices_daily.csv"
+DEFAULT_RATES_PATH = state_dir(PROJECT_ROOT, "data") / "raw" / "rates_daily.csv"
 DEFAULT_SEC_PIT_FEATURE_PANEL_PATH = (
-    PROJECT_ROOT / "data" / "processed" / "sec_edgar" / "sec_pit_feature_panel.csv"
+    state_dir(PROJECT_ROOT, "data") / "processed" / "sec_edgar" / "sec_pit_feature_panel.csv"
 )
 
 FORWARD_RETURN_HORIZONS: tuple[int, ...] = (1, 5, 20, 60)

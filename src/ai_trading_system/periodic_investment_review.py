@@ -13,6 +13,7 @@ from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.decision_learning_queue import DEFAULT_DECISION_LEARNING_QUEUE_PATH
 from ai_trading_system.decision_outcomes import DEFAULT_DECISION_OUTCOMES_PATH
 from ai_trading_system.decision_snapshots import DEFAULT_DECISION_SNAPSHOT_DIR
+from ai_trading_system.paths import state_dir
 from ai_trading_system.prediction_ledger import (
     DEFAULT_PREDICTION_OUTCOMES_PATH,
     build_shadow_maturity_report,
@@ -20,8 +21,8 @@ from ai_trading_system.prediction_ledger import (
 )
 from ai_trading_system.rule_experiments import DEFAULT_RULE_EXPERIMENT_LEDGER_PATH
 
-DEFAULT_PERIODIC_INVESTMENT_REVIEW_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
-DEFAULT_SCORES_DAILY_PATH = PROJECT_ROOT / "data" / "processed" / "scores_daily.csv"
+DEFAULT_PERIODIC_INVESTMENT_REVIEW_REPORT_DIR = state_dir(PROJECT_ROOT, "outputs") / "reports"
+DEFAULT_SCORES_DAILY_PATH = state_dir(PROJECT_ROOT, "data") / "processed" / "scores_daily.csv"
 
 
 @dataclass(frozen=True)

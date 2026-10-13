@@ -9,6 +9,7 @@ from typing import Any
 
 import yaml
 
+from ai_trading_system.paths import state_dir
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SHADOW_PARAMETER_IMPACT_SCHEMA_VERSION = 1
@@ -106,7 +107,7 @@ def default_shadow_parameter_impact_json_path(reports_dir: Path, as_of: date) ->
 def build_shadow_parameter_impact_payload(
     *,
     as_of: date,
-    reports_dir: Path = REPO_ROOT / "outputs" / "reports",
+    reports_dir: Path = state_dir(REPO_ROOT, "outputs") / "reports",
     policy_path: Path = DEFAULT_SHADOW_PARAMETER_IMPACT_POLICY_PATH,
     replay_json_path: Path | None = None,
     output_json_path: Path | None = None,
@@ -224,7 +225,7 @@ def build_shadow_parameter_impact_payload(
 def write_shadow_parameter_impact_report(
     *,
     as_of: date,
-    reports_dir: Path = REPO_ROOT / "outputs" / "reports",
+    reports_dir: Path = state_dir(REPO_ROOT, "outputs") / "reports",
     policy_path: Path = DEFAULT_SHADOW_PARAMETER_IMPACT_POLICY_PATH,
     replay_json_path: Path | None = None,
     output_json_path: Path | None = None,

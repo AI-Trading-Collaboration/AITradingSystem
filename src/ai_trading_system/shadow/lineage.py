@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import join_root
 
 
 def sha256_file(path: Path) -> str:
@@ -62,4 +63,4 @@ def project_path(value: str) -> Path:
     path = Path(value)
     if path.is_absolute():
         return path
-    return PROJECT_ROOT / path
+    return join_root(PROJECT_ROOT, path)

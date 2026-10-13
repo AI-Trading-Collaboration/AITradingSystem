@@ -24,6 +24,7 @@ from ai_trading_system.external_request_cache import (
     sanitize_diagnostic_text,
     write_external_request_cache_response,
 )
+from ai_trading_system.paths import join_root, state_dir
 from ai_trading_system.trading_calendar import is_us_equity_trading_day
 from ai_trading_system.yaml_loader import safe_load_yaml_text
 
@@ -59,7 +60,7 @@ CANONICAL_PRICE_SESSION_AUDIT_SCHEMA_VERSION = (
 )
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_CANONICAL_PRICE_SESSION_POLICY_PATH = (
-    _PROJECT_ROOT / "config" / "data" / "canonical_price_session_policy.yaml"
+    state_dir(_PROJECT_ROOT / "config", "data") / "canonical_price_session_policy.yaml"
 )
 CBOE_RAW_SOURCE_COMMITMENT_ATTR = "cboe_raw_source_commitment"
 
@@ -169,7 +170,7 @@ class CsvDataCache:
 
     def _write_csv(self, data: pd.DataFrame, filename: str) -> Path:
         self.root.mkdir(parents=True, exist_ok=True)
-        output_path = self.root / filename
+        output_path = join_root(self.root, filename)
         data.to_csv(output_path, index=False)
         return output_path
 

@@ -6,6 +6,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.paths import join_root, state_dir
 from ai_trading_system.platform.artifacts import sha256_path, write_json_atomic, write_text_atomic
 
 SCHEMA_VERSION = "1.0"
@@ -46,7 +47,7 @@ STATUS_OPTIONAL_NOT_FOUND = "OPTIONAL_NOT_FOUND"
 STATUS_OPTIONAL_INVALID = "OPTIONAL_INVALID"
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_DATA_ROOT = REPO_ROOT / "data"
+DEFAULT_DATA_ROOT = state_dir(REPO_ROOT, "data")
 
 RECIPIENT_CONFIG_FILENAME = "notification_recipients.example.json"
 CHANNEL_CONFIG_FILENAME = "notification_channels.example.json"
@@ -1198,7 +1199,7 @@ def _walk_config(value: object, prefix: str = "") -> list[tuple[str, str, object
 def _resolve_input_path(data_root: Path, value: Path) -> Path:
     if value.is_absolute():
         return value
-    candidates = [data_root.parent / value, data_root / value, Path.cwd() / value]
+    candidates = [data_root.parent / value, data_root / value, join_root(Path.cwd(), value)]
     for candidate in candidates:
         if candidate.exists():
             return candidate

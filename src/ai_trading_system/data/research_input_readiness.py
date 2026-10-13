@@ -27,6 +27,7 @@ from ai_trading_system.data.quality_execution import (
     CanonicalDataQualityExecutionRequest,
     verify_data_quality_execution_receipt,
 )
+from ai_trading_system.paths import join_root, relative_to_root
 from ai_trading_system.trading_calendar import is_us_equity_trading_day
 from ai_trading_system.us_equity_special_closure_policy import (
     CURRENT_US_EQUITY_SPECIAL_CLOSURE_POLICY_RELATIVE_PATH,
@@ -229,10 +230,10 @@ def _root(path: Path) -> Path:
 
 def _relative(root: Path, value: str) -> str:
     path = Path(value)
-    candidate = path if path.is_absolute() else root / path
+    candidate = path if path.is_absolute() else join_root(root, path)
     # Do not resolve links before the contained reader sees the original path.
     try:
-        relative = candidate.relative_to(root)
+        relative = relative_to_root(candidate, root)
     except ValueError as exc:
         raise ReadinessInspectionError("INPUT_OUTSIDE_EXECUTION_ROOT", value) from exc
     if ".." in relative.parts or not relative.parts:

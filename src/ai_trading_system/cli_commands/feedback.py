@@ -120,6 +120,7 @@ from ai_trading_system.parameter_replay import (
     write_parameter_replay_report,
     write_parameter_replay_summary,
 )
+from ai_trading_system.paths import state_dir
 from ai_trading_system.prediction_ledger import (
     DEFAULT_PARAMETER_SHADOW_PREDICTION_LEDGER_PATH,
     DEFAULT_PREDICTION_LEDGER_PATH,
@@ -366,7 +367,7 @@ def validate_calibration_protocol_command(
         as_of=validation_date,
     )
     report_output = output_path or default_calibration_protocol_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         validation_date,
     )
     report_output = write_calibration_protocol_report(report, report_output)
@@ -388,15 +389,13 @@ def calibrate_decision_outcomes(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="标准化日线利率 CSV 路径，用于复用数据质量门禁。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "rates_daily.csv",
     as_of: Annotated[
@@ -463,7 +462,7 @@ def calibrate_decision_outcomes(
     universe = load_universe()
     data_quality_config = load_data_quality()
     quality_output = quality_report_path or default_quality_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         calibration_date,
     )
     data_quality_report = validate_data_cache(
@@ -517,7 +516,7 @@ def calibrate_decision_outcomes(
     )
     outcomes_output = write_decision_outcomes_csv(result, outcomes_path)
     calibration_report_output = report_path or default_decision_calibration_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         calibration_date,
     )
     calibration_report_output = write_decision_calibration_report(
@@ -551,15 +550,13 @@ def calibrate_prediction_outcomes(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="标准化日线利率 CSV 路径，用于复用数据质量门禁。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "rates_daily.csv",
     as_of: Annotated[
@@ -604,7 +601,7 @@ def calibrate_prediction_outcomes(
     universe = load_universe()
     data_quality_config = load_data_quality()
     quality_output = quality_report_path or default_quality_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         calibration_date,
     )
     data_quality_report = validate_data_cache(
@@ -653,7 +650,7 @@ def calibrate_prediction_outcomes(
     )
     outcomes_output = write_prediction_outcomes_csv(result, outcomes_path)
     report_output = report_path or default_prediction_outcome_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         calibration_date,
     )
     report_output = write_prediction_outcome_report(
@@ -769,7 +766,7 @@ def run_shadow_predictions_command(
         ),
     )
     output_report = report_path or default_shadow_prediction_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         run_date,
     )
     output_report = write_shadow_prediction_run_report(report, output_report)
@@ -890,8 +887,7 @@ def run_parameter_shadow_predictions_command(
         source_label="Parameter candidate ledger",
     )
     output_report = report_path or (
-        PROJECT_ROOT
-        / "outputs"
+        state_dir(PROJECT_ROOT, "outputs")
         / "reports"
         / f"parameter_shadow_predictions_{run_date.isoformat()}.md"
     )
@@ -1017,7 +1013,7 @@ def run_shadow_weight_profiles_command(
         prediction_output = append_prediction_records(new_records, prediction_ledger_path)
         appended_predictions = len(new_records)
     output_report = report_path or default_shadow_weight_profile_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         run_date,
     )
     output_report = write_shadow_weight_profile_report(report, output_report)
@@ -1041,8 +1037,7 @@ def evaluate_shadow_weight_performance_command(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "prices_daily.csv",
     as_of: Annotated[
@@ -1096,12 +1091,12 @@ def evaluate_shadow_weight_performance_command(
         console.print(f"[red]Shadow weight performance 评估失败：{exc}[/red]")
         raise typer.Exit(code=1) from exc
     csv_path = csv_output_path or default_shadow_weight_performance_csv_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         evaluation_date,
     )
     csv_path = write_shadow_weight_performance_csv(report, csv_path)
     report_path = output_path or default_shadow_weight_performance_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         evaluation_date,
     )
     report_path = write_shadow_weight_performance_report(
@@ -1140,8 +1135,7 @@ def search_shadow_parameters_command(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "prices_daily.csv",
     search_space_path: Annotated[
@@ -1473,7 +1467,7 @@ def shadow_maturity_command(
         review_mode=parsed_review_mode,
     )
     report_output = output_path or default_shadow_maturity_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         report_date,
     )
     report_output = write_shadow_maturity_report(report, report_output)
@@ -1519,7 +1513,7 @@ def build_decision_causal_chains_command(
     )
     ledger_output = write_decision_causal_chain_ledger(ledger, output_path)
     report_output = report_path or default_decision_causal_chain_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         report_date,
     )
     report_output = write_decision_causal_chain_report(
@@ -1592,7 +1586,7 @@ def build_decision_learning_queue_command(
     )
     queue_output = write_decision_learning_queue(ledger, output_path)
     report_output = report_path or default_decision_learning_queue_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         report_date,
     )
     report_output = write_decision_learning_queue_report(
@@ -1681,7 +1675,7 @@ def build_rule_experiments_command(
     )
     ledger_output = write_rule_experiment_ledger(ledger, output_path)
     report_output = report_path or default_rule_experiment_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         report_date,
     )
     report_output = write_rule_experiment_report(
@@ -1739,7 +1733,7 @@ def validate_rule_cards_command(
         as_of=validation_date,
     )
     report_path = output_path or default_rule_governance_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         validation_date,
     )
     write_rule_governance_report(report, report_path)
@@ -1838,8 +1832,7 @@ def promote_rule_card_command(
     except (KeyError, ValueError) as exc:
         raise typer.BadParameter(str(exc)) from exc
     lifecycle_report_path = report_path or (
-        PROJECT_ROOT
-        / "outputs"
+        state_dir(PROJECT_ROOT, "outputs")
         / "reports"
         / f"rule_lifecycle_promote_{promotion_date.isoformat()}.md"
     )
@@ -1905,7 +1898,9 @@ def retire_rule_card_command(
     except (KeyError, ValueError) as exc:
         raise typer.BadParameter(str(exc)) from exc
     lifecycle_report_path = report_path or (
-        PROJECT_ROOT / "outputs" / "reports" / f"rule_lifecycle_retire_{action_date.isoformat()}.md"
+        state_dir(PROJECT_ROOT, "outputs")
+        / "reports"
+        / f"rule_lifecycle_retire_{action_date.isoformat()}.md"
     )
     lifecycle_report_path = write_rule_lifecycle_action_report(
         report,
@@ -1956,7 +1951,7 @@ def validate_benchmark_policy_command(
         selected_benchmark_tickers=benchmark_tickers,
     )
     report_path = output_path or default_benchmark_policy_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         validation_date,
     )
     write_benchmark_policy_report(report, report_path)
@@ -1998,8 +1993,7 @@ def feedback_loop_review_command(
     evidence_path: Annotated[
         Path,
         typer.Option(help="market evidence YAML 文件或目录路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "external"
     / "market_evidence",
     decision_snapshot_path: Annotated[
@@ -2060,7 +2054,7 @@ def feedback_loop_review_command(
         or task_register_view_path(PROJECT_ROOT, "active"),
     )
     report_path = output_path or default_feedback_loop_review_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         review_date,
     )
     write_feedback_loop_review_report(report, report_path)
@@ -2115,11 +2109,11 @@ def build_parameter_replay_command(
         console.print(f"[red]参数 replay 构建失败：{exc}[/red]")
         raise typer.Exit(code=1) from exc
     report_output = output_path or default_parameter_replay_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         review_date,
     )
     summary_output = summary_output_path or default_parameter_replay_summary_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         review_date,
     )
     write_parameter_replay_report(report, report_output)
@@ -2182,7 +2176,7 @@ def build_parameter_candidates_command(
         raise typer.Exit(code=1) from exc
     ledger_output = write_parameter_candidate_ledger(ledger, output_path)
     report_output = report_path or default_parameter_candidate_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         review_date,
     )
     report_output = write_parameter_candidate_report(
@@ -2238,11 +2232,11 @@ def evaluate_parameter_governance_command(
         console.print(f"[red]参数治理评估失败：{exc}[/red]")
         raise typer.Exit(code=1) from exc
     report_output = output_path or default_parameter_governance_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         review_date,
     )
     summary_output = summary_output_path or default_parameter_governance_summary_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         review_date,
     )
     write_parameter_governance_report(report, report_output)
@@ -2377,7 +2371,7 @@ def optimize_market_feedback_command(
         sample_policy_path=sample_policy_path,
     )
     report_path = output_path or default_market_feedback_optimization_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         review_date,
     )
     write_market_feedback_optimization_report(report, report_path)

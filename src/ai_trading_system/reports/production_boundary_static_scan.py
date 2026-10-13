@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import join_root, relative_to_root, rglob_root
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SCHEMA_VERSION = 1
@@ -585,7 +586,7 @@ def _resolve_scan_roots(project_root: Path, scan_roots: Sequence[Path | str] | N
     resolved: list[Path] = []
     for raw in raw_roots:
         path = Path(raw)
-        resolved.append(path if path.is_absolute() else project_root / path)
+        resolved.append(path if path.is_absolute() else join_root(project_root, path))
     return resolved
 
 
@@ -599,7 +600,7 @@ def _iter_scan_files(roots: Iterable[Path], project_root: Path) -> Iterable[Path
                 seen.add(root)
                 yield root
             continue
-        for path in root.rglob("*"):
+        for path in rglob_root(root, "*"):
             if path in seen or not path.is_file():
                 continue
             if _should_skip_path(path, project_root) or not _is_text_file(path):
@@ -833,7 +834,7 @@ def _is_text_file(path: Path) -> bool:
 
 def _should_skip_path(path: Path, project_root: Path) -> bool:
     try:
-        rel_parts = path.relative_to(project_root).parts
+        rel_parts = relative_to_root(path, project_root).parts
     except ValueError:
         rel_parts = path.parts
     return any(part in SKIP_DIR_NAMES for part in rel_parts)
@@ -841,7 +842,7 @@ def _should_skip_path(path: Path, project_root: Path) -> bool:
 
 def _relative_path(path: Path, project_root: Path) -> str:
     try:
-        return path.relative_to(project_root).as_posix()
+        return relative_to_root(path, project_root).as_posix()
     except ValueError:
         return path.as_posix()
 

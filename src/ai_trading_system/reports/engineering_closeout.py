@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import relative_to_root
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
     load_report_registry,
@@ -694,7 +695,7 @@ def _collect_config_surfaces(project_root: Path) -> list[dict[str, Any]]:
         surfaces.append(
             _surface(
                 surface_type="configuration_file",
-                name=path.relative_to(project_root).as_posix(),
+                name=relative_to_root(path, project_root).as_posix(),
                 path=path,
                 classification="KEEP",
                 owner_action="retain_as_reviewed_configuration_surface",
@@ -780,7 +781,7 @@ def _collect_documentation_surfaces(project_root: Path) -> list[dict[str, Any]]:
     surfaces: list[dict[str, Any]] = []
     top_level_docs = sorted(path for path in docs_root.glob("*.md") if path.is_file())
     for path in top_level_docs:
-        name = path.relative_to(project_root).as_posix()
+        name = relative_to_root(path, project_root).as_posix()
         classification = "KEEP"
         owner_action = "retain_as_active_project_documentation"
         if (

@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import join_root
 from ai_trading_system.trading_engine.parameters.parameter_schema import (
     ProductionParameters,
     PromotionRulesConfig,
@@ -53,7 +54,7 @@ def load_signal_ablation_config(
 
 def resolve_project_path(path_text: str, *, project_root: Path = PROJECT_ROOT) -> Path:
     path = Path(path_text)
-    return path if path.is_absolute() else project_root / path
+    return path if path.is_absolute() else join_root(project_root, path)
 
 
 def _load_mapping(path: Path) -> dict[str, object]:

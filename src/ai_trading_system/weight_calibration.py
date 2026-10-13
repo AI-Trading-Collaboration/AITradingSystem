@@ -10,14 +10,17 @@ from typing import Any, Literal, Self
 from pydantic import BaseModel, Field, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_WEIGHT_PROFILE_PATH = PROJECT_ROOT / "config" / "weights" / "weight_profile_current.yaml"
 DEFAULT_APPROVED_CALIBRATION_OVERLAY_PATH = (
-    PROJECT_ROOT / "data" / "processed" / "approved_calibration_overlay.json"
+    state_dir(PROJECT_ROOT, "data") / "processed" / "approved_calibration_overlay.json"
 )
-DEFAULT_CURRENT_CONTEXT_PATH = PROJECT_ROOT / "outputs" / "current_context.json"
-DEFAULT_EFFECTIVE_WEIGHTS_PATH = PROJECT_ROOT / "outputs" / "current_effective_weights.json"
+DEFAULT_CURRENT_CONTEXT_PATH = state_dir(PROJECT_ROOT, "outputs") / "current_context.json"
+DEFAULT_EFFECTIVE_WEIGHTS_PATH = (
+    state_dir(PROJECT_ROOT, "outputs") / "current_effective_weights.json"
+)
 
 OverlayStatus = Literal[
     "candidate",

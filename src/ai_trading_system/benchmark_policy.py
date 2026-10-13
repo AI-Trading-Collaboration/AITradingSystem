@@ -14,6 +14,7 @@ from ai_trading_system.config import (
     DEFAULT_BENCHMARK_POLICY_CONFIG_PATH,
     PROJECT_ROOT,
 )
+from ai_trading_system.paths import join_root
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 BenchmarkRole = Literal[
@@ -721,7 +722,7 @@ def _resolve_project_path(project_root: Path, raw_path: str) -> Path:
     path = Path(raw_path)
     if path.is_absolute():
         return path
-    return project_root / path
+    return join_root(project_root, path)
 
 
 def _role_label(role: str) -> str:

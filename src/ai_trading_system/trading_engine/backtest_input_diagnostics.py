@@ -10,6 +10,7 @@ from typing import Any
 import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import glob_root, state_dir
 from ai_trading_system.shadow.lineage import git_commit_sha, sha256_file
 from ai_trading_system.trading_engine.parameters.parameter_loader import (
     DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
@@ -83,8 +84,8 @@ def default_backtest_input_manifest_path(output_root: Path, as_of: date) -> Path
 
 
 def latest_backtest_input_diagnostics_path(output_root: Path | None = None) -> Path | None:
-    root = (output_root or (PROJECT_ROOT / "artifacts")) / "data_quality"
-    candidates = sorted(root.glob("*/backtest_input_diagnostics.json"))
+    root = (output_root or (state_dir(PROJECT_ROOT, "artifacts"))) / "data_quality"
+    candidates = sorted(glob_root(root, "*/backtest_input_diagnostics.json"))
     if not candidates:
         return None
     return max(candidates, key=lambda path: path.stat().st_mtime)
@@ -105,7 +106,7 @@ def run_backtest_input_diagnostics(
     output_root: Path | None = None,
     generated_at: datetime | None = None,
 ) -> BacktestInputDiagnosticsRun:
-    root = output_root or (PROJECT_ROOT / "artifacts")
+    root = output_root or (state_dir(PROJECT_ROOT, "artifacts"))
     generated = generated_at or datetime.now().astimezone()
     resolved_config_path = resolve_project_path(config_path)
     config = load_shadow_backtest_config(resolved_config_path)
@@ -1002,7 +1003,7 @@ def _signal_snapshot_dirs(raw_config: dict[str, Any], as_of: date) -> list[Path]
         dated_dirs.append(directory / as_of.isoformat())
     if dated_dirs:
         return dated_dirs
-    default_root = PROJECT_ROOT / "artifacts" / "signal_snapshots"
+    default_root = state_dir(PROJECT_ROOT, "artifacts") / "signal_snapshots"
     dated_dirs.extend([default_root, default_root / as_of.isoformat()])
     return dated_dirs
 

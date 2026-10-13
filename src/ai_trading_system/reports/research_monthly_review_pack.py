@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import join_root, state_dir
 
 SCHEMA_VERSION = 1
 REPORT_TYPE = "research_monthly_review_pack"
@@ -293,7 +294,9 @@ def build_research_monthly_review_pack_payload(
 ) -> dict[str, Any]:
     if report_index_payload is None:
         source_path = report_index_path or (
-            project_root / "outputs" / "reports" / f"report_index_{as_of.isoformat()}.json"
+            state_dir(project_root, "outputs")
+            / "reports"
+            / f"report_index_{as_of.isoformat()}.json"
         )
         report_index_payload = _read_json_mapping(source_path)
         report_index_path = source_path
@@ -1488,7 +1491,7 @@ def _resolve_artifact_path(path_text: str, project_root: Path) -> Path | None:
     path = Path(path_text)
     if path.is_absolute():
         return path
-    return project_root / path
+    return join_root(project_root, path)
 
 
 def _latest_dated_path(output_dir: Path, prefix: str, suffix: str) -> Path | None:

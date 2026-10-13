@@ -171,6 +171,7 @@ from ai_trading_system.official_policy_sources import (
 from ai_trading_system.ops_daily import (
     resolve_daily_ops_default_as_of,
 )
+from ai_trading_system.paths import join_root, state_dir
 from ai_trading_system.portfolio_exposure import (
     build_portfolio_exposure_report,
     default_portfolio_exposure_report_path,
@@ -264,7 +265,7 @@ score_daily_app = typer.Typer(help="每日评分和 research baseline backfill�
 
 console = Console()
 DEFAULT_PORTFOLIO_POSITIONS_PATH = (
-    PROJECT_ROOT / "data" / "external" / "portfolio_positions" / "current_positions.csv"
+    state_dir(PROJECT_ROOT, "data") / "external" / "portfolio_positions" / "current_positions.csv"
 )
 
 
@@ -305,15 +306,13 @@ def score_daily_backfill_baseline_command(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="标准化日线利率 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "rates_daily.csv",
     quality_report_path: Annotated[
@@ -360,8 +359,7 @@ def score_daily_backfill_baseline_command(
     expected_rate_series = configured_rate_series(universe)
     data_quality_config = load_data_quality()
     quality_output = quality_report_path or (
-        PROJECT_ROOT
-        / "outputs"
+        state_dir(PROJECT_ROOT, "outputs")
         / "reports"
         / f"baseline_score_backfill_data_quality_{end_date.isoformat()}.md"
     )
@@ -412,8 +410,7 @@ def score_daily_backfill_baseline_command(
 
 def _default_baseline_backfill_output_path(start_date: date, end_date: date) -> Path:
     return (
-        PROJECT_ROOT
-        / "data"
+        state_dir(PROJECT_ROOT, "data")
         / "processed"
         / "research"
         / ("scores_daily_backfill_sec_pit_" f"{start_date:%Y%m%d}_{end_date:%Y%m%d}.csv")
@@ -421,11 +418,11 @@ def _default_baseline_backfill_output_path(start_date: date, end_date: date) -> 
 
 
 def _project_relative_path(path: Path) -> Path:
-    return path if path.is_absolute() else PROJECT_ROOT / path
+    return path if path.is_absolute() else join_root(PROJECT_ROOT, path)
 
 
 def _is_production_scores_daily_path(path: Path) -> bool:
-    production_path = PROJECT_ROOT / "data" / "processed" / "scores_daily.csv"
+    production_path = state_dir(PROJECT_ROOT, "data") / "processed" / "scores_daily.csv"
     return path.resolve() == production_path.resolve()
 
 
@@ -460,7 +457,7 @@ def _resolve_official_policy_precheck_evidence(
         api_keys=api_keys,
         selected_source_ids=selected_source_ids,
         limit=limit,
-        download_manifest_path=project_root / "data" / "raw" / "download_manifest.csv",
+        download_manifest_path=state_dir(project_root, "data") / "raw" / "download_manifest.csv",
     )
     write_official_policy_fetch_report(report, output_path)
     return report, default_official_policy_candidates_path(
@@ -475,15 +472,13 @@ def score_daily(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="标准化日线利率 CSV 路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "rates_daily.csv",
     as_of: Annotated[
@@ -497,15 +492,13 @@ def score_daily(
     features_path: Annotated[
         Path,
         typer.Option(help="特征 CSV 输出路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "processed"
     / "features_daily.csv",
     scores_path: Annotated[
         Path,
         typer.Option(help="评分 CSV 输出路径。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "processed"
     / "scores_daily.csv",
     report_path: Annotated[
@@ -609,8 +602,7 @@ def score_daily(
         typer.Option(
             help=("TSMC IR 季度指标 CSV；存在时日报会按 as-of 合并到 " "SEC-style 指标后再校验。")
         ),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "processed"
     / "tsm_ir_quarterly_metrics.csv",
     tsm_ir_merge: Annotated[
@@ -650,8 +642,7 @@ def score_daily(
     thesis_path: Annotated[
         Path,
         typer.Option(help="交易 thesis YAML 文件或目录路径，用于写入日报复核摘要。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "external"
     / "trade_theses",
     risk_events_path: Annotated[
@@ -797,15 +788,13 @@ def score_daily(
     valuation_path: Annotated[
         Path,
         typer.Option(help="估值快照 YAML 文件或目录路径，用于写入日报复核摘要。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "external"
     / "valuation_snapshots",
     trades_path: Annotated[
         Path,
         typer.Option(help="交易记录 YAML 文件或目录路径，用于写入日报复盘摘要。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "external"
     / "trades",
     review_benchmarks: Annotated[
@@ -900,32 +889,32 @@ def score_daily(
     expected_price_tickers = list(dict.fromkeys([*expected_price_tickers, *benchmark_tickers]))
     expected_rate_series = configured_rate_series(universe)
     quality_output = quality_report_path or default_quality_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         score_date,
     )
     feature_report_output = feature_report_path or default_feature_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         score_date,
     )
     feature_availability_output = (
         feature_availability_report_path
         or default_feature_availability_report_path(
-            PROJECT_ROOT / "outputs" / "reports",
+            state_dir(PROJECT_ROOT, "outputs") / "reports",
             score_date,
         )
     )
     score_report_output = report_path or default_daily_score_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         score_date,
     )
     alert_report_output = alert_report_path or default_alert_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
+        state_dir(PROJECT_ROOT, "outputs") / "reports",
         score_date,
     )
     portfolio_exposure_output = (
         portfolio_exposure_report_path
         or default_portfolio_exposure_report_path(
-            PROJECT_ROOT / "outputs" / "reports",
+            state_dir(PROJECT_ROOT, "outputs") / "reports",
             score_date,
         )
     )
@@ -954,62 +943,62 @@ def score_daily(
     )
     belief_state_history_output = belief_state_history_path or DEFAULT_BELIEF_STATE_HISTORY_PATH
     sec_fundamentals_input = sec_fundamentals_path or default_sec_fundamental_metrics_csv_path(
-        PROJECT_ROOT / "data" / "processed",
+        state_dir(PROJECT_ROOT, "data") / "processed",
         score_date,
     )
     sec_metrics_validation_output = (
         sec_metrics_validation_report_path
         or default_sec_fundamental_metrics_validation_report_path(
-            PROJECT_ROOT / "outputs" / "reports",
+            state_dir(PROJECT_ROOT, "outputs") / "reports",
             score_date,
         )
     )
     sec_fundamental_features_output = (
         sec_fundamental_features_path
         or default_sec_fundamental_features_csv_path(
-            PROJECT_ROOT / "data" / "processed",
+            state_dir(PROJECT_ROOT, "data") / "processed",
             score_date,
         )
     )
     sec_fundamental_feature_report_output = (
         sec_fundamental_feature_report_path
         or default_sec_fundamental_features_report_path(
-            PROJECT_ROOT / "outputs" / "reports",
+            state_dir(PROJECT_ROOT, "outputs") / "reports",
             score_date,
         )
     )
     risk_event_occurrence_report_output = (
         risk_event_occurrence_report_path
         or default_risk_event_occurrence_report_path(
-            PROJECT_ROOT / "outputs" / "reports",
+            state_dir(PROJECT_ROOT, "outputs") / "reports",
             score_date,
         )
     )
     execution_policy_report_output = (
         execution_policy_report_path
         or default_execution_policy_report_path(
-            PROJECT_ROOT / "outputs" / "reports",
+            state_dir(PROJECT_ROOT, "outputs") / "reports",
             score_date,
         )
     )
     official_policy_report_output = (
         official_policy_report_path
         or default_official_policy_fetch_report_path(
-            PROJECT_ROOT / "outputs" / "reports",
+            state_dir(PROJECT_ROOT, "outputs") / "reports",
             score_date,
         )
     )
     risk_event_openai_precheck_report_output = (
         risk_event_openai_precheck_report_path
         or default_risk_event_openai_prereview_report_path(
-            PROJECT_ROOT / "outputs" / "reports",
+            state_dir(PROJECT_ROOT, "outputs") / "reports",
             score_date,
         )
     )
     risk_event_llm_formal_report_output = (
         risk_event_llm_formal_report_path
         or default_llm_formal_assessment_report_path(
-            PROJECT_ROOT / "outputs" / "reports",
+            state_dir(PROJECT_ROOT, "outputs") / "reports",
             score_date,
         )
     )

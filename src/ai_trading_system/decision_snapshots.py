@@ -7,11 +7,12 @@ from typing import Any
 
 from ai_trading_system.backtest.daily import BacktestRegimeContext
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 from ai_trading_system.scoring.daily import DailyScoreReport
 from ai_trading_system.scoring.position_model import PositionBand
 
 SCHEMA_VERSION = 1
-DEFAULT_DECISION_SNAPSHOT_DIR = PROJECT_ROOT / "data" / "processed" / "decision_snapshots"
+DEFAULT_DECISION_SNAPSHOT_DIR = state_dir(PROJECT_ROOT, "data") / "processed" / "decision_snapshots"
 
 
 def default_decision_snapshot_path(output_dir: Path, as_of: date) -> Path:

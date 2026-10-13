@@ -29,6 +29,7 @@ from ai_trading_system.contracts import (
     DataQualityEvidence,
 )
 from ai_trading_system.core import ProductionEffect
+from ai_trading_system.paths import contained_root, relative_to_root
 from ai_trading_system.platform.artifacts import (
     ArtifactWriteError,
     ArtifactWriteResult,
@@ -615,6 +616,7 @@ def write_contained_artifact_bytes(
 
     if not isinstance(content, bytes) or not isinstance(immutable, bool):
         raise TypeError("content must be bytes and immutable must be boolean")
+    root = contained_root(root, relative_path)
     try:
         checked_root = root.resolve(strict=True)
     except OSError as exc:
@@ -658,6 +660,7 @@ def write_contained_artifact_bytes(
 def read_contained_artifact_bytes(*, root: Path, relative_path: str) -> bytes:
     """Read one regular file through a root-bound directory chain without following links."""
 
+    root = contained_root(root, relative_path)
     try:
         checked_root = root.resolve(strict=True)
     except OSError as exc:
@@ -695,6 +698,7 @@ def delete_contained_artifact_bytes(
         or expected_size_bytes < 0
     ):
         raise ValueError("expected_size_bytes must be a non-negative integer")
+    root = contained_root(root, relative_path)
     try:
         checked_root = root.resolve(strict=True)
     except OSError as exc:
@@ -1164,7 +1168,7 @@ def _assert_snapshot_paths_contained(
 ) -> None:
     try:
         for path in (pointer_path, *paths):
-            path.relative_to(root)
+            relative_to_root(path, root)
     except ValueError as exc:
         raise DataPublicationIntegrityError(
             "ARTIFACT_PATH_ESCAPES_ROOT",
@@ -2112,7 +2116,7 @@ def _open_bound_directory(
     base: _BoundDirectory | None,
 ) -> Iterator[_BoundDirectory]:
     try:
-        relative = parent.relative_to(root)
+        relative = relative_to_root(parent, root)
     except ValueError as exc:
         raise DataPublicationIntegrityError(
             "ARTIFACT_PATH_ESCAPES_ROOT",

@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import glob_root, join_root, state_dir
 from ai_trading_system.shadow.lineage import git_commit_sha, git_worktree_dirty, sha256_file
 from ai_trading_system.trading_engine.data_registry_consistency import (
     manifest_context_from_path,
@@ -66,7 +67,7 @@ class PortfolioCandidateTrackingRun:
 
 
 def default_portfolio_candidate_tracking_root() -> Path:
-    return PROJECT_ROOT / "artifacts" / "portfolio_candidate_tracking"
+    return state_dir(PROJECT_ROOT, "artifacts") / "portfolio_candidate_tracking"
 
 
 def default_portfolio_candidate_tracking_dir(output_root: Path, as_of: date) -> Path:
@@ -114,7 +115,7 @@ def portfolio_candidate_tracking_report_alias_paths(
 
 def latest_portfolio_candidate_tracking_path(output_root: Path | None = None) -> Path | None:
     root = output_root or default_portfolio_candidate_tracking_root()
-    candidates = sorted(root.glob("*/portfolio_candidate_tracking_summary.json"))
+    candidates = sorted(glob_root(root, "*/portfolio_candidate_tracking_summary.json"))
     if not candidates:
         return None
     return max(candidates, key=lambda path: path.stat().st_mtime)
@@ -126,7 +127,7 @@ def latest_portfolio_candidate_tracking_path_on_or_before(
 ) -> Path | None:
     root = output_root or default_portfolio_candidate_tracking_root()
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/portfolio_candidate_tracking_summary.json"):
+    for path in glob_root(root, "*/portfolio_candidate_tracking_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -775,13 +776,15 @@ def _resolve_review_path(
         return path
     latest_path = latest_portfolio_candidate_review_decision_path(root)
     if latest_path is None:
-        return root / tracking_date.isoformat() / "portfolio_candidate_review_decision.json"
+        return (
+            join_root(root, tracking_date.isoformat()) / "portfolio_candidate_review_decision.json"
+        )
     return latest_path
 
 
 def _latest_review_decision_by_date_on_or_before(as_of: date, root: Path) -> Path | None:
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/portfolio_candidate_review_decision.json"):
+    for path in glob_root(root, "*/portfolio_candidate_review_decision.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -948,7 +951,7 @@ def _latest_market_data_refresh_path_on_or_before(
     root: Path,
 ) -> Path | None:
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/market_data_refresh_summary.json"):
+    for path in glob_root(root, "*/market_data_refresh_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -1310,7 +1313,7 @@ def _review_status(payload: dict[str, Any]) -> str:
 def _output_root(config: dict[str, Any], *, dry_run: bool) -> Path:
     key = "dry_run_dir" if dry_run else "portfolio_candidate_tracking_dir"
     default = (
-        PROJECT_ROOT / "outputs" / "dry_runs" / "portfolio_candidate_tracking"
+        state_dir(PROJECT_ROOT, "outputs") / "dry_runs" / "portfolio_candidate_tracking"
         if dry_run
         else default_portfolio_candidate_tracking_root()
     )
@@ -1320,7 +1323,7 @@ def _output_root(config: dict[str, Any], *, dry_run: bool) -> Path:
 
 def _input_root(config: dict[str, Any], key: str) -> Path:
     raw = _input(config, key)
-    return resolve_project_path(str(raw)) if raw else PROJECT_ROOT / "artifacts"
+    return resolve_project_path(str(raw)) if raw else state_dir(PROJECT_ROOT, "artifacts")
 
 
 def _market_data_freshness_root(config: dict[str, Any]) -> Path:
@@ -1330,7 +1333,11 @@ def _market_data_freshness_root(config: dict[str, Any]) -> Path:
 
 def _market_data_refresh_root(config: dict[str, Any]) -> Path:
     raw = _input(config, "market_data_refresh_dir")
-    return resolve_project_path(str(raw)) if raw else PROJECT_ROOT / "artifacts" / "data_refresh"
+    return (
+        resolve_project_path(str(raw))
+        if raw
+        else state_dir(PROJECT_ROOT, "artifacts") / "data_refresh"
+    )
 
 
 def _input(config: dict[str, Any], key: str) -> object:
@@ -1339,7 +1346,7 @@ def _input(config: dict[str, Any], key: str) -> object:
 
 def _latest_named_artifact(root: Path, file_name: str, as_of: date) -> Path | None:
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob(f"*/{file_name}"):
+    for path in glob_root(root, f"*/{file_name}"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -1358,7 +1365,7 @@ def _latest_shadow_backtest_path(config: dict[str, Any], as_of: date) -> Path | 
     ]
     candidates: list[tuple[date, Path]] = []
     for root in roots:
-        for path in root.glob("*/shadow_backtest_summary.json"):
+        for path in glob_root(root, "*/shadow_backtest_summary.json"):
             try:
                 candidate_date = date.fromisoformat(path.parent.name)
             except ValueError:

@@ -26,6 +26,7 @@ from ai_trading_system.data.quality import (
     validate_data_cache,
     write_data_quality_report,
 )
+from ai_trading_system.paths import join_root, relative_to_root, rglob_root, state_dir
 from ai_trading_system.platform.artifacts import (
     StrictJsonContractError,
     load_strict_json_text,
@@ -166,7 +167,7 @@ class LimitedNonPitBuild:
 
 
 def default_limited_non_pit_output_root(project_root: Path) -> Path:
-    return project_root / "outputs" / "replays" / "limited_non_pit_reconstruction"
+    return state_dir(project_root, "outputs") / "replays" / "limited_non_pit_reconstruction"
 
 
 def build_limited_non_pit_reconstruction(
@@ -221,7 +222,7 @@ def build_limited_non_pit_reconstruction(
         )
     staging_root.mkdir()
     try:
-        schema_path = resolved_project_root / SCHEMA_RELATIVE_PATH
+        schema_path = join_root(resolved_project_root, SCHEMA_RELATIVE_PATH)
         schema_bytes = _read_regular_file(schema_path, "reviewed schema")
         write_bytes_atomic(staging_root / "contract" / schema_path.name, schema_bytes)
         write_bytes_atomic(staging_root / "source" / "replay_run.json", inventory_bytes)
@@ -416,7 +417,7 @@ def validate_limited_non_pit_reconstruction(
         root = _validate_input_directory(bundle_path, "limited non-PIT bundle")
         resolved_project_root = project_root.resolve(strict=True)
         payload, _ = _load_strict_mapping(
-            root / PAYLOAD_FILENAME,
+            join_root(root, PAYLOAD_FILENAME),
             PAYLOAD_FILENAME,
         )
         bundle_id = str(payload.get("bundle_id") or bundle_id)
@@ -433,7 +434,7 @@ def validate_limited_non_pit_reconstruction(
             root / "contract" / SCHEMA_RELATIVE_PATH.name,
             "schema snapshot",
         ) != _read_regular_file(
-            resolved_project_root / SCHEMA_RELATIVE_PATH,
+            join_root(resolved_project_root, SCHEMA_RELATIVE_PATH),
             "reviewed project schema",
         ):
             raise LimitedNonPitReconstructionError(
@@ -511,7 +512,7 @@ def validate_limited_non_pit_reconstruction(
         checks.append("source_inventory_snapshot_and_external_binding")
 
         for role, artifact_id, member_path in _INPUT_SPECS:
-            member = root / member_path
+            member = join_root(root, member_path)
             record = inventory_records[artifact_id]
             member_bytes = _read_regular_file(member, role)
             _require_hash_and_size(
@@ -560,7 +561,7 @@ def validate_limited_non_pit_reconstruction(
 
         expected_markdown = render_limited_non_pit_markdown(payload)
         actual_markdown = _read_regular_file(
-            root / MARKDOWN_FILENAME,
+            join_root(root, MARKDOWN_FILENAME),
             MARKDOWN_FILENAME,
         ).decode("utf-8")
         if actual_markdown != expected_markdown:
@@ -1076,7 +1077,7 @@ def _source_artifacts(root: Path) -> list[dict[str, object]]:
         root / "contract" / SCHEMA_RELATIVE_PATH.name,
         root / "source/replay_run.json",
         root / "source/input_freeze_manifest.json",
-        *(root / member_path for _, _, member_path in _INPUT_SPECS),
+        *(join_root(root, member_path) for _, _, member_path in _INPUT_SPECS),
         _quality_report_path(root, as_of),
         marketstack_reconciliation_path(_quality_report_path(root, as_of)),
     ]
@@ -1108,7 +1109,10 @@ def _validate_source_artifact_inventory(
         f"contract/{SCHEMA_RELATIVE_PATH.name}",
         "source/replay_run.json",
         "source/input_freeze_manifest.json",
-        *(_member_path(root / member_path, root=root) for _, _, member_path in _INPUT_SPECS),
+        *(
+            _member_path(join_root(root, member_path), root=root)
+            for _, _, member_path in _INPUT_SPECS
+        ),
         _member_path(
             _quality_report_path(root, _parse_date(payload.get("as_of"), "payload.as_of")),
             root=root,
@@ -1148,7 +1152,7 @@ def _validate_bundle_membership(
         }
     )
     observed: set[str] = set()
-    for path in root.rglob("*"):
+    for path in rglob_root(root, "*"):
         if path.is_symlink():
             raise LimitedNonPitReconstructionError(
                 f"LIMITED_NON_PIT_BUNDLE_SYMLINK:{path}"
@@ -1262,7 +1266,7 @@ def _capture_guard_paths(
     records: list[dict[str, object]] = []
     seen: set[Path] = set()
     for raw_path in guard_paths:
-        path = raw_path if raw_path.is_absolute() else project_root / raw_path
+        path = raw_path if raw_path.is_absolute() else join_root(project_root, raw_path)
         resolved = path.resolve(strict=True)
         if resolved in seen:
             raise LimitedNonPitReconstructionError(
@@ -1318,7 +1322,7 @@ def _validate_guard_evidence(
             )
         candidate = Path(path_value)
         if not candidate.is_absolute():
-            candidate = project_root / candidate
+            candidate = join_root(project_root, candidate)
         candidate.resolve(strict=False)
 
 
@@ -1451,7 +1455,7 @@ def _resolve_member(root: Path, value: str) -> Path:
         raise LimitedNonPitReconstructionError(
             f"LIMITED_NON_PIT_MEMBER_PATH_INVALID:{value}"
         )
-    candidate = (root / Path(*pure.parts)).resolve(strict=True)
+    candidate = (join_root(root, Path(*pure.parts))).resolve(strict=True)
     if not candidate.is_relative_to(root):
         raise LimitedNonPitReconstructionError(
             f"LIMITED_NON_PIT_MEMBER_PATH_OUTSIDE_ROOT:{value}"
@@ -1466,7 +1470,7 @@ def _member_path(path: Path, *, root: Path) -> str:
         raise LimitedNonPitReconstructionError(
             f"LIMITED_NON_PIT_MEMBER_OUTSIDE_ROOT:{path}"
         )
-    return resolved.relative_to(resolved_root).as_posix()
+    return relative_to_root(resolved, resolved_root).as_posix()
 
 
 def _read_regular_file(path: Path, label: str) -> bytes:
@@ -1507,7 +1511,7 @@ def _csv_data_row_count(content: bytes) -> int:
 def _display_path(path: Path, *, project_root: Path) -> str:
     resolved = path.resolve(strict=False)
     if resolved.is_relative_to(project_root):
-        return resolved.relative_to(project_root).as_posix()
+        return relative_to_root(resolved, project_root).as_posix()
     return str(resolved)
 
 

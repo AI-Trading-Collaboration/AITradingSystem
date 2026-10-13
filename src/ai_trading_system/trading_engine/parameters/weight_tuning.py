@@ -14,6 +14,7 @@ import yaml
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data.quality import default_quality_report_path
 from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START_DATE
+from ai_trading_system.paths import glob_root, state_dir
 from ai_trading_system.shadow.lineage import git_commit_sha, git_worktree_dirty, sha256_file
 from ai_trading_system.trading_engine.backtesting.metrics import calculate_portfolio_metrics
 from ai_trading_system.trading_engine.backtesting.portfolio_simulator import (
@@ -94,7 +95,7 @@ class _SimulationContext:
 
 
 def default_weight_tuning_root() -> Path:
-    return PROJECT_ROOT / "artifacts" / "weight_tuning"
+    return state_dir(PROJECT_ROOT, "artifacts") / "weight_tuning"
 
 
 def default_weight_tuning_dir(output_root: Path, as_of: date) -> Path:
@@ -119,7 +120,7 @@ def default_weight_tuning_candidates_path(output_root: Path, as_of: date) -> Pat
 
 def latest_weight_tuning_path(output_root: Path | None = None) -> Path | None:
     root = output_root or default_weight_tuning_root()
-    candidates = sorted(root.glob("*/weight_tuning_summary.json"))
+    candidates = sorted(glob_root(root, "*/weight_tuning_summary.json"))
     if not candidates:
         return None
     return max(candidates, key=lambda path: path.stat().st_mtime)
@@ -131,7 +132,7 @@ def latest_weight_tuning_path_on_or_before(
 ) -> Path | None:
     root = output_root or default_weight_tuning_root()
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/weight_tuning_summary.json"):
+    for path in glob_root(root, "*/weight_tuning_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -2221,9 +2222,9 @@ def _market_data_freshness_summary(as_of: date, *, allow_latest: bool = False) -
 
 
 def _latest_market_data_freshness_path(as_of: date | None) -> Path | None:
-    root = PROJECT_ROOT / "artifacts" / "data_freshness"
+    root = state_dir(PROJECT_ROOT, "artifacts") / "data_freshness"
     candidates: list[tuple[date, Path]] = []
-    for path in root.glob("*/market_data_freshness_summary.json"):
+    for path in glob_root(root, "*/market_data_freshness_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -2294,7 +2295,7 @@ def _safety_payload() -> dict[str, Any]:
 
 def _output_root(config: Mapping[str, Any], *, dry_run: bool) -> Path:
     if dry_run:
-        return PROJECT_ROOT / "outputs" / "dry_runs" / "weight_tuning"
+        return state_dir(PROJECT_ROOT, "outputs") / "dry_runs" / "weight_tuning"
     output = _mapping(config.get("output"))
     return resolve_project_path(
         str(output.get("weight_tuning_dir") or default_weight_tuning_root())
@@ -2308,7 +2309,7 @@ def _data_quality_report_dir(
     dry_run: bool,
 ) -> Path:
     if dry_run:
-        return PROJECT_ROOT / "outputs" / "dry_runs" / "weight_tuning" / "reports"
+        return state_dir(PROJECT_ROOT, "outputs") / "dry_runs" / "weight_tuning" / "reports"
     output = _mapping(config.get("output"))
     if output.get("data_quality_report_dir"):
         return resolve_project_path(str(output.get("data_quality_report_dir")))

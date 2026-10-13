@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import join_root
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_INDEX_WAIVER_PATH,
     DEFAULT_REPORT_REGISTRY_PATH,
@@ -735,7 +736,9 @@ def _candidate_paths(patterns: Sequence[str], project_root: Path) -> list[Path]:
     seen: set[Path] = set()
     for raw_pattern in patterns:
         pattern_path = Path(raw_pattern)
-        pattern = str(pattern_path if pattern_path.is_absolute() else project_root / pattern_path)
+        pattern = str(
+            pattern_path if pattern_path.is_absolute() else join_root(project_root, pattern_path)
+        )
         for raw_path in glob(pattern):
             path = Path(raw_path)
             if not path.is_file():
@@ -752,7 +755,7 @@ def _resolve_path(raw: str, project_root: Path) -> Path | None:
     if not raw:
         return None
     path = Path(raw)
-    return path if path.is_absolute() else project_root / path
+    return path if path.is_absolute() else join_root(project_root, path)
 
 
 def _is_archived_path(path: Path) -> bool:

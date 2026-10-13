@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import join_root, relative_to_root
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_HEURISTIC_GOVERNANCE_CONFIG_PATH = PROJECT_ROOT / "config" / "heuristic_governance.yaml"
@@ -440,7 +441,7 @@ def _source_paths(config: dict[str, Any], project_root: Path) -> list[Path]:
         if not isinstance(raw_path, str) or not raw_path.strip():
             raise ValueError("heuristic governance source path must be a non-empty string")
         path = Path(raw_path)
-        paths.append(path if path.is_absolute() else project_root / path)
+        paths.append(path if path.is_absolute() else join_root(project_root, path))
     return paths
 
 
@@ -497,7 +498,7 @@ def _policy_metadata_checks(config: dict[str, Any], project_root: Path) -> list[
         required_fields = check.get("required_fields")
         if not isinstance(required_fields, list) or not required_fields:
             raise ValueError("required_policy_metadata.required_fields must be a non-empty list")
-        path = project_root / relative_config_path
+        path = join_root(project_root, relative_config_path)
         missing_fields: list[str] = []
         if not path.exists():
             missing_fields = [str(field) for field in required_fields]
@@ -544,7 +545,7 @@ def _policy_rationale_map_checks(
                 "required_policy_rationale_maps.required_keys must be a non-empty list"
             )
         required_field_names = [str(field) for field in required_fields]
-        path = project_root / relative_config_path
+        path = join_root(project_root, relative_config_path)
         if not path.exists():
             for key in required_keys:
                 checks.append(
@@ -742,6 +743,6 @@ def _relative_path(path: Path, project_root: Path) -> str:
     resolved_root = project_root.resolve()
     resolved_path = path.resolve()
     try:
-        return resolved_path.relative_to(resolved_root).as_posix()
+        return relative_to_root(resolved_path, resolved_root).as_posix()
     except ValueError:
         return resolved_path.as_posix()

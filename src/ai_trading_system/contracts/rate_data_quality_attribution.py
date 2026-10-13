@@ -17,6 +17,7 @@ from ai_trading_system.contracts.data_quality_attribution import (
     SOURCE_ORDINAL_SCOPE_EXACT_SNAPSHOT,
     DataQualitySourceArtifactBinding,
 )
+from ai_trading_system.paths import join_root, relative_to_root
 from ai_trading_system.yaml_loader import (
     StrictYamlError,
     StrictYamlOptions,
@@ -864,9 +865,9 @@ def _optional_canonical_date(value: object) -> date | None:
 
 
 def _resolve_bound_path(project_root: Path, relative_path: str) -> Path:
-    candidate = (project_root / relative_path).resolve()
+    candidate = (join_root(project_root, relative_path)).resolve()
     try:
-        candidate.relative_to(project_root)
+        relative_to_root(candidate, project_root)
     except ValueError as exc:
         raise RateDataQualityAttributionContractError(
             "BOUND_PATH_OUTSIDE_PROJECT",

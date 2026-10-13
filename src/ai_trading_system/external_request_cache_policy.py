@@ -10,12 +10,13 @@ from typing import Any
 import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 
 EXTERNAL_REQUEST_CACHE_LIFECYCLE_POLICY_SCHEMA_VERSION = (
     "external_request_cache_lifecycle_policy.v1"
 )
 DEFAULT_EXTERNAL_REQUEST_CACHE_LIFECYCLE_POLICY_PATH = (
-    PROJECT_ROOT / "config" / "data" / "external_request_cache_lifecycle_policy.yaml"
+    state_dir(PROJECT_ROOT / "config", "data") / "external_request_cache_lifecycle_policy.yaml"
 )
 
 

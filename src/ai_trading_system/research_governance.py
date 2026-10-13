@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import join_root, rglob_root, state_dir
 from ai_trading_system.platform.artifacts import write_json_atomic, write_markdown_atomic
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
@@ -16,11 +17,11 @@ DEFAULT_RESEARCH_PROTOCOL_DIR = PROJECT_ROOT / "config" / "research" / "protocol
 DEFAULT_RESEARCH_GOVERNANCE_POLICY_PATH = (
     PROJECT_ROOT / "config" / "research" / "research_governance_policy.yaml"
 )
-DEFAULT_RESEARCH_GOVERNANCE_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "research_governance"
-DEFAULT_RESEARCH_OPS_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "research_ops"
+DEFAULT_RESEARCH_GOVERNANCE_OUTPUT_ROOT = state_dir(PROJECT_ROOT, "outputs") / "research_governance"
+DEFAULT_RESEARCH_OPS_OUTPUT_ROOT = state_dir(PROJECT_ROOT, "outputs") / "research_ops"
 DEFAULT_THRESHOLD_REGISTRY_PATH = PROJECT_ROOT / "config" / "research" / "threshold_registry.yaml"
 DEFAULT_SCHEMA_DIR = PROJECT_ROOT / "docs" / "schema"
-DEFAULT_INDICATOR_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "research_indicators"
+DEFAULT_INDICATOR_OUTPUT_ROOT = state_dir(PROJECT_ROOT, "outputs") / "research_indicators"
 
 SAFETY_BOUNDARY = {
     "validation_only": True,
@@ -591,7 +592,7 @@ def build_research_rollup(
     root = output_root / research_id
     artifacts = []
     if root.exists():
-        for path in sorted(root.rglob("*.json")):
+        for path in sorted(rglob_root(root, "*.json")):
             lifecycle = "PRIMARY" if path.name == "research_rollup.json" else "SUPPORTING"
             if "debug" in path.parts:
                 lifecycle = "DEBUG"
@@ -824,12 +825,12 @@ def _evidence_record(
 
 
 def _find_first_artifact(root: Path, filename: str) -> Path | None:
-    direct = root / filename
+    direct = join_root(root, filename)
     if direct.exists():
         return direct
     if not root.exists():
         return None
-    for path in sorted(root.rglob(filename)):
+    for path in sorted(rglob_root(root, filename)):
         return path
     return None
 

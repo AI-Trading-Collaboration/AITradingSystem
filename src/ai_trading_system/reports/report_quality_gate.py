@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import join_root
 
 SCHEMA_VERSION = 1
 REPORT_TYPE = "report_quality_gate"
@@ -686,7 +687,7 @@ def _resolve_path(raw: str, project_root: Path) -> Path | None:
     path = Path(raw)
     if path.is_absolute():
         return path
-    return project_root / path
+    return join_root(project_root, path)
 
 
 def _non_empty(value: Any) -> bool:

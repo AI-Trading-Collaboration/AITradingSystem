@@ -14,15 +14,20 @@ from typing import Any
 import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.paths import state_dir
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
-DEFAULT_NORGATE_TRIAL_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "research_trends" / "norgate_trial"
+DEFAULT_NORGATE_TRIAL_OUTPUT_ROOT = (
+    state_dir(PROJECT_ROOT, "outputs") / "research_trends" / "norgate_trial"
+)
 DEFAULT_RESEARCH_DOCS_ROOT = PROJECT_ROOT / "docs" / "research"
 DEFAULT_RESEARCH_INPUTS_ROOT = PROJECT_ROOT / "inputs" / "research_reviews"
 DEFAULT_ENVIRONMENT_CONTRACT_PATH = (
-    PROJECT_ROOT / "config" / "data" / "norgate_trial_environment_contract.yaml"
+    state_dir(PROJECT_ROOT / "config", "data") / "norgate_trial_environment_contract.yaml"
 )
-DEFAULT_SOURCE_CONTRACT_PATH = PROJECT_ROOT / "config" / "data" / "norgate_source_contract.yaml"
+DEFAULT_SOURCE_CONTRACT_PATH = (
+    state_dir(PROJECT_ROOT / "config", "data") / "norgate_source_contract.yaml"
+)
 DEFAULT_DECISION_GATE_PATH = (
     PROJECT_ROOT / "config" / "research" / "norgate_paid_platinum_decision_gate.yaml"
 )

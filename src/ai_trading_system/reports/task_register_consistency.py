@@ -10,6 +10,7 @@ from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.core.task_register_paths import task_register_view_path
+from ai_trading_system.paths import join_root
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
     load_report_registry,
@@ -648,7 +649,7 @@ def _check_docs_links(
     missing_links: list[str] = []
     for row in rows:
         for link in row.docs_links:
-            if not (project_root / link).exists():
+            if not (join_root(project_root, link)).exists():
                 missing_links.append(f"{row.task_id}:{link}")
     _append_check(
         checks,

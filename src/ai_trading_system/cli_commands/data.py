@@ -136,6 +136,7 @@ from ai_trading_system.free_pit_data_sources import (
 from ai_trading_system.free_pit_data_sources import (
     DEFAULT_RATES_PATH as DEFAULT_FREE_RATES_PATH,
 )
+from ai_trading_system.paths import state_dir
 from ai_trading_system.trading_engine.backtest_input_diagnostics import (
     run_backtest_input_diagnostics,
 )
@@ -1835,8 +1836,7 @@ def data_refresh_audit_report_command(
     price_cache_path: Annotated[
         Path,
         typer.Option(help="只读 price cache 路径，用于 skipped refresh checksum/row count。"),
-    ] = PROJECT_ROOT
-    / "data"
+    ] = state_dir(PROJECT_ROOT, "data")
     / "raw"
     / "prices_daily.csv",
     fallback_policy_report_path: Annotated[
