@@ -6,17 +6,28 @@ Everything that past research lines re-implemented, and often got wrong, lives h
 execution timing, holdings that drift between trades, cost, the benchmarks and the metrics. Every
 run first checks that no target uses later data and that every declared parameter is read.
 
-Data comes only from checked long-history snapshots (``research_data.qqq_long_history``). Until the
-trial ledger and the window-read registry exist (S3b), only the development window is open.
+Data comes only from checked long-history snapshots (``research_data.qqq_long_history``). Research
+runs go through ``ledger.run_and_record``, which records every run (failed ones too) under
+``research/<question>/``, counts trials against the preregistered cap, and opens the validation
+window once per question, only for an approved preregistration (S3b).
 """
 
 from ai_trading_system.research_bench.checks import Strategy
 from ai_trading_system.research_bench.data import BenchData, from_daily_frame, from_snapshot
+from ai_trading_system.research_bench.ledger import (
+    LedgerError,
+    Question,
+    TrialCapError,
+    load_question,
+    register_read,
+    run_and_record,
+)
 from ai_trading_system.research_bench.run import (
     BenchCheckError,
     RunResult,
     RunSpec,
     WindowNotOpenError,
+    WindowPermit,
     benchmark_summaries,
     run_strategy,
 )
@@ -26,16 +37,23 @@ from ai_trading_system.research_bench.simulate import Rebalance, simulate
 __all__ = [
     "BenchCheckError",
     "BenchData",
+    "LedgerError",
+    "Question",
     "Rebalance",
     "RunResult",
     "RunSpec",
     "Strategy",
+    "TrialCapError",
     "WindowNotOpenError",
+    "WindowPermit",
     "benchmark_summaries",
     "from_daily_frame",
     "from_snapshot",
+    "load_question",
     "load_settings",
+    "register_read",
     "resolve_window",
+    "run_and_record",
     "run_strategy",
     "simulate",
 ]

@@ -13,6 +13,7 @@ caught, or a recorded mutation of the guarded code that makes the test fail.
 | G2 no look-ahead | Features at an as-of date do not change when later data changes | `test_features_do_not_look_ahead.py` |
 | G2 reproducible | The run manifest records commit, `code_modified` and config content hashes | `test_run_manifest_records_provenance.py` |
 | G2/G3 research bench | Every research result goes through one bench: benchmarks are the series they name, targets never use later data, every declared parameter is read, no metric is a constant, cost and timing are right, runs are reproducible, and the bench agrees with the old simulator (TRADING-2565 S3a) | `test_research_bench_invariants.py` |
+| G3 trial ledger | Every research run is recorded, failed ones too, in a hash chain; trials are counted and capped; the validation window is read once per question and only for a preregistration approved on main; records hold summaries only; the deflated Sharpe ratio matches the paper's worked example; this repository's records were never changed or removed and decisions cite only recorded runs (TRADING-2565 S3b) | `test_research_ledger_invariants.py` |
 
 Existing tests that already guard the same guarantees and stay in the suite (not duplicated here):
 
@@ -49,3 +50,25 @@ Each mutation was applied to `src/ai_trading_system/research_bench/` and the ben
 | Matched benchmark ignores the strategy's average exposure | `test_constant_strategy_equals_its_matched_benchmark` |
 | Cost dropped | `test_cost_is_zero_without_turnover_and_grows_with_bps`; the metric test; one unit test |
 | Holdings do not drift between trades (the old simulator's constant weights) | the fixed-number simulation unit test |
+
+## Recorded mutation evidence (2026-10-13, trial ledger)
+
+Each mutation was applied to `src/ai_trading_system/research_bench/` and the ledger and bench tests
+were run (`tests/invariants/test_research_ledger_invariants.py`, `tests/test_research_ledger.py`,
+`tests/test_research_bench.py`).
+
+| Mutation | Tests that failed |
+|---|---|
+| A run that fails its checks is not recorded | `test_every_run_is_recorded_including_failed_ones` |
+| The chain ignores `prev_sha256` | `test_a_changed_or_removed_record_breaks_the_chain` |
+| The trial cap is not enforced | `test_trials_are_counted_and_capped` |
+| Strategy code is not part of the trial | `test_trials_are_counted_and_capped` |
+| Approval is not checked before a validation read | `test_validation_needs_an_approved_prereg` |
+| The validation window can be read twice | `test_the_validation_window_is_read_once` |
+| A permit is not checked against the read register | `test_the_validation_window_is_read_once` |
+| One read can run a strategy twice | `test_the_validation_window_is_read_once` |
+| Validation parameters can be overridden | `test_the_validation_window_is_read_once` |
+| The git-history check ignores rewritten reads | `test_history_and_admission_checks_catch_rewrites` |
+| A decision may cite an unrecorded run | `test_history_and_admission_checks_catch_rewrites` |
+| The deflated Sharpe ratio drops its second quantile term | `test_deflated_sharpe_matches_the_worked_example` |
+| The bench opens the validation window without a permit | `test_the_validation_window_is_read_once`; one unit test |

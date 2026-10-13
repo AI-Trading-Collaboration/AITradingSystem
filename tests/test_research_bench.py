@@ -15,6 +15,7 @@ from ai_trading_system.research_bench import (
     Rebalance,
     RunSpec,
     WindowNotOpenError,
+    WindowPermit,
     from_daily_frame,
     from_snapshot,
     load_settings,
@@ -333,15 +334,24 @@ def _synthetic_daily() -> pd.DataFrame:
     return daily
 
 
-def test_only_the_development_window_is_open_before_the_trial_ledger() -> None:
+def test_validation_and_consistency_need_a_matching_permit() -> None:
     data = from_daily_frame(_synthetic_daily(), qqq_series="proxy", source={"snapshot_id": "s"})
 
     def half(inputs: pd.DataFrame, params: Mapping[str, Any]) -> pd.Series:
         return pd.Series(float(params["level"]), index=inputs.index)
 
     for role in ("validation", "consistency_check"):
-        with pytest.raises(WindowNotOpenError, match="S3b"):
+        with pytest.raises(WindowNotOpenError, match="registered"):
             run_strategy(data, half, RunSpec("qqq_direction", "half", {"level": 0.5}, role), LOADED)
+    wrong = WindowPermit("QQQ-Q1", "consistency_check", "QQQ-Q1-w0001", ("half",))
+    with pytest.raises(WindowNotOpenError, match="registered"):
+        run_strategy(
+            data,
+            half,
+            RunSpec("qqq_direction", "half", {"level": 0.5}, "validation"),
+            LOADED,
+            permit=wrong,
+        )
     with pytest.raises(ValueError, match="plain JSON"):
         run_strategy(
             data,

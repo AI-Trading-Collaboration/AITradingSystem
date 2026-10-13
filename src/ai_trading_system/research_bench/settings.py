@@ -36,6 +36,8 @@ class BenchSettings(_Strict):
     cost_model: str = Field(min_length=1)
     window_policy: str = Field(min_length=1)
     window_registry: str = Field(min_length=1)
+    research_root: str = Field(min_length=1)
+    approval_ref: str = Field(min_length=1)
     trading_days_per_year: int = Field(gt=0)
     cvar_levels: tuple[float, ...] = Field(min_length=1)
     rolling_years: int = Field(gt=0)

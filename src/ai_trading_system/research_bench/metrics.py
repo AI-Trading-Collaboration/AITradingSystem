@@ -12,6 +12,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from ai_trading_system.research_bench.deflated import ReturnMoments
 from ai_trading_system.research_bench.settings import BenchSettings, LoadedSettings
 from ai_trading_system.research_bench.simulate import Simulation
 
@@ -57,10 +58,31 @@ def summarize(sim: Simulation, cash_returns: pd.Series, loaded: LoadedSettings) 
         "annual_turnover": float(sim.daily["turnover"].sum()) / years,
         "annual_cost": float(sim.daily["cost"].sum()) / years,
     }
+    moments = excess_moments(excess)
+    summary["sharpe_daily"] = moments.sharpe
+    summary["excess_skewness"] = moments.skewness
+    summary["excess_kurtosis"] = moments.kurtosis
     for level in settings.cvar_levels:
         summary[cvar_field(level)] = cvar(returns, level)
     summary["episodes"] = _episodes(returns, sim.start, loaded)
     return summary
+
+
+def excess_moments(excess: pd.Series) -> ReturnMoments:
+    """Daily Sharpe ratio (ddof 1), skewness and non-excess kurtosis of the daily excess returns:
+    the inputs of the deflated Sharpe ratio. Undefined moments (no variation) are NaN."""
+
+    values = excess.to_numpy(dtype=float)
+    centered = values - values.mean()
+    m2 = float(np.mean(centered**2))
+    if m2 <= 0.0:
+        return ReturnMoments(math.nan, math.nan, math.nan, len(values))
+    return ReturnMoments(
+        sharpe=_ratio(float(values.mean()), _std(excess)),
+        skewness=float(np.mean(centered**3)) / m2**1.5,
+        kurtosis=float(np.mean(centered**4)) / m2**2,
+        observations=len(values),
+    )
 
 
 def cvar_field(level: float) -> str:

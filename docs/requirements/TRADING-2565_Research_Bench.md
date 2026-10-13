@@ -59,7 +59,7 @@
   - `simulate`：敞口映射、调仓规则、漂移、成本；
   - `metrics`；
   - `checks`：前视、参数消费；
-  - `run`：检查、模拟、基准、指标、指纹；验证和一致性窗口抛 `WindowNotOpenError`，等 S3b；
+  - `run`：检查、模拟、基准、指标、指纹；验证和一致性窗口抛 `WindowNotOpenError`（S3b 起要台账发的许可）；
   - `__main__`：`benchmarks` 命令在开发窗口上跑四个固定基准，只打印汇总和用时，用来核对数据和评估台，不算研究试验。
 - **区**：`src/ai_trading_system/research_bench/**` 和 `config/research/research_bench.yaml` 加进 `config/gov008_ship.yaml` 的 C 区，pi 守卫读同一份配置。
 - **和旧模拟器的关系**：时序和旧的 `simple_baseline_portfolio_control._strategy_return_series` 相同；同一份价格上，200 日均线全进全出规则逐日一致（不变量 10）。区别有两点：
@@ -67,7 +67,35 @@
   - 成本按乘法从调仓当天扣除。
 - **用时**：云端合成数据上，一次完整运行约 0.3 秒，包括 40 次前视重算、参数检查、策略和 3 个基准的模拟。
 
+## S3b 的实现（2026-10-13）
+
+- **一题的目录** `research/<题号>/`：
+  - `prereg.yaml`（C 区）和它指定的策略模块；
+  - `runs/0001.json`、`0002.json`……：每次运行一条，失败的也记。每条带上一条的 sha256（换行符按 LF 算），改或删一条，后面就对不上；
+  - `window_reads.jsonl`：验证和一致性窗口的每次读取一行，同样链起来。
+  - 格式的样例在 `research/_template/`（`prereg.yaml` 带逐项说明，`strategy.py` 是策略接口的样例）。名字以 `_` 开头的目录不算题目。
+- **预注册**（`prereg`）：pydantic 校验。字段有：
+  - 题号、问题、问题类型、批准它的 owner decision；
+  - 固定的快照 id（不能是 LATEST）和 QQQ 序列；
+  - 策略模块，以及每个策略的函数、参数、调仓、推迟天数、是否加杠杆基准；
+  - 验证哪些策略、每个策略的判定规则（`<部分>.<字段> <比较> <值>`，部分是 strategy、comparison、exposure_gap）；
+  - 敏感性变体、已有研究的预期（效应、失效环境、来源）、样本地板、试验上限、停止条件。
+- **运行和登记**（`ledger.run_and_record`，命令行 `run`、`validate`、`consistency`）：
+  - 开发窗口随时可跑，可以改参数。每个不同的配置算一个试验：策略、策略模块的内容、参数、调仓、推迟、成本、QQQ 序列。重复的配置记录但不算新试验；新试验超过上限就拒绝，什么都不跑、不记录。
+  - 验证窗口每题只读一次。要求 `prereg.yaml` 和策略模块与 main 上的一致，且 main 的 `docs/requirements` 里有 prereg 写的 owner decision（`config/research/research_bench.yaml` 的 `approval_ref`）。先登记读取，再跑；一次读取只许每个验证策略各跑一次，参数只能是预注册的。
+  - 一致性窗口只能在验证窗口读过之后读，条件相同。
+  - 评估台本身（`run_strategy`）没有台账发的许可就不开验证和一致性窗口。
+  - 运行记录只有汇总指标和出处（commit、代码是否改动、快照、配置哈希、策略模块哈希），没有逐日序列。
+- **试验计数和折算夏普**（`deflated`，命令行 `ledger`）：
+  - 第一屏是每题和全局的开发试验数、上限、读取记录、链是否完好，以及每次运行的年化夏普和折算夏普。
+  - 折算夏普按 Bailey、López de Prado（2014）：试验数用全局开发试验数，方差用各试验（每个配置取最近一次成功运行）日夏普的样本方差，偏度和峰度来自这次运行的日超额收益。和论文第 4 节的例子对得上（SR0 0.1132，DSR 0.9004），另有一个手算用例。
+- **结果准入**：`research/<题号>/decision.md` 只能引用登记过的运行和读取，并且至少引用一次运行。仓库里所有题目的链、读取和引用由不变量 17 检查。
+- **防删改的边界**：链只能让已提交的记录被改或被删时看得出来。不变量 17 查 git 历史：运行记录只许新增，读取记录只许追加。提交之前在本机删掉文件再重跑，链看不出来。S3c 的 pi 研究 brief 模板会把验证窗口的读取放在单独一次运行里，由运行报告列出改动的文件。
+- **区**：`research/*/prereg.yaml` 加进 C 区（模板也是）。策略模块、运行记录和读取记录留在 A 区，靠哈希链和 git 历史检查防删改。
+- **不变量**：`tests/invariants/test_research_ledger_invariants.py` 第 11 到 17 条，每条有反向对照；13 处变异都被抓到（`tests/invariants/README.md`）。
+
 ## 进展
 
 - 2026-10-12：随 TRADING-2567 激活（READY）。production_effect=none；broker_action=none。
 - 2026-10-13：设计和分批定稿（项目文件 `knowledge/claude/qqq-options/s3-bench-and-q1-prereg-draft-2026-10-13.md`，含第一题预注册草稿）。S3a 为 TRADING-2565-01（C 区）。production_effect=none；broker_action=none。
+- 2026-10-13：S3a（TRADING-2565-01）Baker 按结果 tree 1dcf95e3 事先批准，排在 OPS-085-01 之后发布。S3b 写好：运行登记、试验计数、折算夏普、验证窗口读取登记、预注册格式和模板，打包等 S3a 发布后的 main。production_effect=none；broker_action=none。

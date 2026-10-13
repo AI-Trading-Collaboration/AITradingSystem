@@ -8,11 +8,11 @@
 
 | 资产 | 位置 | 说明 |
 |---|---|---|
-| 研究评估台 | `src/ai_trading_system/research_bench/`；配置 `config/research/research_bench.yaml` | TRADING-2565 S3a，C 区。策略接口是"每天给出目标敞口"，评估台负责执行滞后、漂移、统一成本、固定基准、指标、前视和参数消费检查、运行指纹；不变量测试在 `tests/invariants/test_research_bench_invariants.py`。新研究一律经它运行 |
+| 研究评估台 | `src/ai_trading_system/research_bench/`；配置 `config/research/research_bench.yaml` | TRADING-2565 S3a，C 区。策略接口是"每天给出目标敞口"，评估台负责执行滞后、漂移、统一成本、固定基准、指标、前视和参数消费检查、运行指纹；不变量测试在 `tests/invariants/test_research_bench_invariants.py`。S3b 加了运行登记、试验计数、折算夏普（`deflated.py`）和验证窗口读取登记（`ledger.py`），不变量在 `test_research_ledger_invariants.py`。新研究一律经它运行 |
 | 简单基线模拟器 | `src/ai_trading_system/simple_baseline_portfolio_control.py`：`_strategy_return_series`（1272 行）、`_metrics_for_strategy`（1473 行） | 信号滞后经核实正确，是事实上的共享模拟器（删除前有 28 个模块调它的私有函数）。评估台的时序和它相同，200 日均线规则逐日对得上（不变量 10）；评估台另加了持仓漂移和乘法扣成本 |
 | 稳健性场景 | `src/ai_trading_system/backtest/robustness.py`：`same_turnover_random_scenario`、`same_exposure_random_scenario`、`_block_bootstrap_total_return_delta_ci` | 同换手、同暴露的随机基线和 block bootstrap 区间。C 区 |
 | 成本模型 | `config/research/transaction_cost_model.yaml` | 删除前研究代码里的成本默认值有 0、4、5、5–15 bps 四种，评估台统一用这一份 |
-| 运行出处记录 | `src/ai_trading_system/core/provenance.py` | 记录 commit、代码是否改动、配置哈希。评估台 S3b 的运行登记以它为核心，补上快照 id、窗口和试验编号（S3a 的运行指纹已含快照 id、窗口和配置哈希） |
+| 运行出处记录 | `src/ai_trading_system/core/provenance.py` | 记录 commit、代码是否改动、配置哈希。评估台的运行登记用它的 `git_provenance`，另记快照 id、窗口、试验编号、配置和策略模块的哈希 |
 | 研究窗口政策 | `config/research/primary_research_window_policy.yaml`、`research_window_registry.yaml` | C 区。QQQ 方向问题的开发、验证、一致性窗口在 `question_windows.qqq_direction` |
 | 1999 年起的 QQQ 长历史数据 | `src/ai_trading_system/research_data/qqq_long_history.py`；规格 `config/research/qqq_long_history.yaml` | FRED 的 Nasdaq-100 总收益和价格、T-bill、VIX/VXN/VXO 快照，派生 QQQ 代理、现金、合成 2/3 倍；同一快照里有真实 QQQ 自 1999-03-10 起的复权收盘价（FMP），检查用它逐年核对两条指数和 QQQ 代理。只能经 `load_daily` 读，未检查或检查失败的快照会被拒绝；数据只在本机。快照在主仓库的 `data/raw/research/qqq_long_history/`，`fetch`、`check` 带 `--prices-path` 指向运行副本的价格（TRADING-2567 S1） |
 

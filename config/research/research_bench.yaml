@@ -4,6 +4,12 @@ schema_version: research_bench.v1
 cost_model: config/research/transaction_cost_model.yaml
 window_policy: config/research/primary_research_window_policy.yaml
 window_registry: config/research/research_window_registry.yaml
+# Research questions live in <research_root>/<question_id>/ (prereg.yaml, strategy module, run
+# records, window reads). The validation and consistency windows open only when the question's
+# prereg.yaml and strategy module equal the versions on approval_ref and approval_ref's
+# docs/requirements carry the prereg's owner decision.
+research_root: research
+approval_ref: main
 trading_days_per_year: 252
 # Left tail: mean of the worst share of daily returns.
 cvar_levels: [0.01, 0.05]

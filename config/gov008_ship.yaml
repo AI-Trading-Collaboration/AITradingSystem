@@ -33,6 +33,7 @@ zones:
     - config/research/research_window_registry.yaml
     - src/ai_trading_system/research_bench/**
     - config/research/research_bench.yaml
+    - research/*/prereg.yaml
     - config/market_regimes.yaml
     - config/backtest_validation_policy.yaml
     - config/scoring_rules.yaml

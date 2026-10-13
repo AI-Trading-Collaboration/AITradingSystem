@@ -1,0 +1,47 @@
+# Preregistration template (TRADING-2565 S3b; format in src/ai_trading_system/research_bench/prereg.py).
+#
+# Copy this directory to research/<question_id>/ and fill every field before the first development
+# run. Development runs are counted against trial_cap. Before the validation window can be read, this
+# file and the strategy module must be on main, shipped with an Owner-Decision, and the decision must
+# be written in docs/requirements. After that, editing either file closes the validation window again.
+# Zone C: every research/*/prereg.yaml change needs an owner decision.
+schema_version: research_prereg.v1
+question_id: QQQ-Q0                 # equals the directory name
+question: >-
+  One sentence: what is tested, against which benchmark, and judged by what.
+question_type: qqq_direction        # picks the windows in config/research/primary_research_window_policy.yaml
+owner_decision: null                # the decision that approves this file; the validation read needs it
+data:
+  snapshot_id: FILL_SNAPSHOT_ID     # a fixed, checked long-history snapshot (never LATEST)
+  qqq_series: proxy                 # proxy (total-return index less fees) or actual (the real QQQ)
+strategy_module: strategy.py        # in this directory; any change to it is a new trial
+strategies:
+  - id: example
+    function: vol_scaled_exposure
+    params: {window: 21, target: 0.2, cap: 1.0}
+    rebalance: {schedule: month_end, band: 0.0}
+    delay_days: 0
+    leveraged_benchmarks: false     # true adds fixed 2x and 3x to the benchmarks
+validation:
+  strategies: [example]             # each runs once on the validation window, with the params above
+  rules:                            # <section>.<field> <op> <value>; sections: strategy, comparison, exposure_gap
+    example:
+      - {metric: comparison.cvar_5pct_relative_improvement, op: ">=", value: 0.10, note: left tail 10% milder than the matched benchmark}
+      - {metric: comparison.max_drawdown, op: ">=", value: 0.05, note: drawdown at least 5 points shallower}
+      - {metric: comparison.geometric_annual_return, op: ">=", value: -0.01, note: gives up at most 1 point a year}
+sensitivity:                        # variants run on the development window; each one is a trial
+  - window 63 days
+prior_expectation:                  # what earlier research leads us to expect, before any result
+  effect: lower drawdown and left tail at a similar geometric return
+  fails_when: volatility jumps without warning (1987, 2020-02)
+  sources:
+    - Moreira and Muir (2017), Volatility-Managed Portfolios
+sample_floor:
+  min_return_days: 2000             # fewer return days in the validation window: evidence insufficient
+trial_cap: 16                       # development trials (distinct configurations), failed runs included
+stop_conditions:
+  - the bench's invariant tests fail
+  - the snapshot check is FAIL
+  - after reading development results, no parameter changes except recorded bug fixes
+production_effect: none
+broker_action: none

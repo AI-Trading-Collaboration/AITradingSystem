@@ -2,8 +2,9 @@
 
 The benchmarks are fixed and cannot be added after a run: the constant exposure equal to the
 strategy's average exposure (the primary comparison), buy-and-hold QQQ, cash and, for questions
-that use leverage, fixed 2x and 3x. Until the trial ledger and the window-read registry exist
-(TRADING-2565, S3b), only the development window is open.
+that use leverage, fixed 2x and 3x. The development window is open; the validation and consistency
+windows open only with a permit that ``research_bench.ledger`` issues when it registers a read.
+Research runs go through the ledger (``run_and_record``), which records every run.
 """
 
 from __future__ import annotations
@@ -52,7 +53,17 @@ class BenchCheckError(ValueError):
 
 
 class WindowNotOpenError(PermissionError):
-    """The window cannot be read yet (validation and consistency open with S3b)."""
+    """The window cannot be read without a registered read."""
+
+
+@dataclass(frozen=True)
+class WindowPermit:
+    """A registered read of a validation or consistency window (issued by the ledger only)."""
+
+    question_id: str
+    role: WindowRole
+    read_id: str
+    strategies: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -85,11 +96,18 @@ class RunResult:
         return asdict(self)
 
 
-def open_window(loaded: LoadedSettings, question_type: str, role: WindowRole) -> Window:
+def open_window(
+    loaded: LoadedSettings,
+    question_type: str,
+    role: WindowRole,
+    permit: WindowPermit | None = None,
+) -> Window:
     window = resolve_window(loaded, question_type, role)
-    if role not in OPEN_WINDOW_ROLES:
+    if role in OPEN_WINDOW_ROLES:
+        return window
+    if permit is None or permit.role != role:
         raise WindowNotOpenError(
-            f"the {role} window opens with the trial ledger and window-read registry (S3b)"
+            f"the {role} window opens only through a read registered by research_bench.ledger"
         )
     return window
 
@@ -99,9 +117,11 @@ def run_strategy(
     strategy: Strategy,
     spec: RunSpec,
     loaded: LoadedSettings | None = None,
+    *,
+    permit: WindowPermit | None = None,
 ) -> RunResult:
     loaded = loaded or load_settings()
-    window = open_window(loaded, spec.question_type, spec.window_role)
+    window = open_window(loaded, spec.question_type, spec.window_role, permit)
     params = _json_params(spec.params)
     start, end = _window_bounds(data, window)
 
@@ -143,15 +163,7 @@ def run_strategy(
     comparison = compare(strategy_summary, benchmarks[PRIMARY_BENCHMARK], loaded)
     gap = exposure_gap(sim, float(sim.exposure.mean()), data.returns["qqq"])
 
-    spec_record = {
-        "question_type": spec.question_type,
-        "strategy_id": spec.strategy_id,
-        "params": params,
-        "window_role": spec.window_role,
-        "rebalance": {"schedule": spec.rebalance.schedule, "band": spec.rebalance.band},
-        "delay_days": spec.delay_days,
-        "leveraged_benchmarks": spec.leveraged_benchmarks,
-    }
+    spec_payload = spec_record(spec)
     window_record = {
         "window_id": window.window_id,
         "role": window.role,
@@ -165,7 +177,7 @@ def run_strategy(
     }
     fingerprint = _fingerprint(
         {
-            "spec": spec_record,
+            "spec": spec_payload,
             "window": window_record,
             "source": data.source,
             "settings_sha256": loaded.sha256,
@@ -175,7 +187,7 @@ def run_strategy(
         }
     )
     return RunResult(
-        spec=spec_record,
+        spec=spec_payload,
         window=window_record,
         source=dict(data.source),
         settings_sha256=loaded.sha256,
@@ -187,6 +199,20 @@ def run_strategy(
         exposure_gap=gap,
         fingerprint=fingerprint,
     )
+
+
+def spec_record(spec: RunSpec) -> dict[str, Any]:
+    """The run specification as plain JSON (the cost is recorded separately, resolved)."""
+
+    return {
+        "question_type": spec.question_type,
+        "strategy_id": spec.strategy_id,
+        "params": _json_params(spec.params),
+        "window_role": spec.window_role,
+        "rebalance": {"schedule": spec.rebalance.schedule, "band": spec.rebalance.band},
+        "delay_days": spec.delay_days,
+        "leveraged_benchmarks": spec.leveraged_benchmarks,
+    }
 
 
 def benchmark_simulations(
