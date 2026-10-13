@@ -824,6 +824,7 @@ def precheck_triaged_official_candidates_with_openai_command(
         openai_cache_ttl_seconds=effective_cache_ttl_hours * 3600,
         max_retries=profile.max_retries,
         max_candidates=effective_max_candidates,
+        max_concurrency=profile.max_concurrency,
     )
     write_risk_event_prereview_import_report(report, report_path)
 

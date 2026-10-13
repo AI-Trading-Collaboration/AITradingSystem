@@ -43,6 +43,8 @@ class LlmRequestProfile(BaseModel):
     cache_ttl_hours: float = Field(gt=0)
     max_retries: int = Field(ge=0)
     max_candidates: int | None = Field(default=None, ge=0)
+    # Requests in flight at once for a candidate batch; wall time only, same requests and output.
+    max_concurrency: int = Field(default=1, ge=1, le=8)
     official_policy_limit: int | None = Field(default=None, ge=0)
     formal_assessment: LlmFormalAssessmentProfile = Field(
         default_factory=LlmFormalAssessmentProfile

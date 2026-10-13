@@ -1363,6 +1363,7 @@ def score_daily(
             generated_at=explicit_risk_event_precheck_visibility_cutoff,
             request_visibility_cutoff=explicit_risk_event_precheck_visibility_cutoff,
             max_candidates=effective_risk_event_openai_precheck_max_candidates,
+            max_concurrency=llm_profile.max_concurrency,
         )
         write_risk_event_prereview_import_report(
             risk_event_prereview_report,

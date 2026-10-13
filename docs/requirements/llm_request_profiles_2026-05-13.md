@@ -43,6 +43,7 @@
 - `cache_ttl_hours`
 - `max_retries`
 - `max_candidates`
+- `max_concurrency`（2026-10-13，OPS-083 第 2 步：官方候选预审同时在途的请求数，默认 1 即串行，日报 profile 为 4；只影响墙钟时间，请求内容和报告不变）
 - `official_policy_limit`
 - `formal_assessment`
 
@@ -60,4 +61,5 @@
 ## 进展记录
 
 - 2026-05-13：新增任务并进入实现；范围限定为请求策略 profile，不改变 LLM 输出权限、source policy 或评分/仓位边界。
+- 2026-10-13：OPS-083 第 2 步新增 `max_concurrency`，见 `docs/requirements/OPS-083_Daily_Run_Performance.md` 第 3 节。
 - 2026-05-13：实现完成并归档为 DONE；新增 profile 配置、加载器、CLI 覆盖、daily-run profile 传递和报告披露，验证通过全量 `pytest`、`ruff check src tests`、`git diff --check`、CLI help、data-sources validate 和 daily-plan smoke。

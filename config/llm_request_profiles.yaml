@@ -58,6 +58,7 @@ profiles:
     cache_ttl_hours: 24
     max_retries: 2
     max_candidates: 10
+    max_concurrency: 4
     official_policy_limit: 30
     formal_assessment:
       enabled: true

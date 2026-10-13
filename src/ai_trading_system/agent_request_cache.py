@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+import threading
 import urllib.parse
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -341,7 +343,8 @@ def safe_filename_token(value: str) -> str:
 
 def write_json_atomically(path: Path, payload: Mapping[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp_path = path.with_name(f"{path.name}.tmp")
+    # Unique per thread: concurrent prereview requests may write the same cache key.
+    tmp_path = path.with_name(f"{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
     tmp_path.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",

@@ -1,10 +1,10 @@
 # OPS-083：日常运行耗时优化
 
-最后更新：2026-10-12
+最后更新：2026-10-13
 
 稳定任务 ID：`OPS-083_DAILY_RUN_PERFORMANCE`
 
-状态：`IN_PROGRESS`（第 1 步：secret hygiene 增量扫描）
+状态：`IN_PROGRESS`（第 1 步已发布；第 2 步：OpenAI 预审有限并发）
 
 任务记录：`tasks/OPS-083_DAILY_RUN_PERFORMANCE.yaml`。运行副本与计划任务见 `docs/operations/operations_runbook.md` 第 9 节。
 
@@ -45,7 +45,7 @@ run ledger 里每一步记的都是整次运行的起止时间，不能用来看
 
 ## 3. 步骤计划与验收
 
-### 第 1 步：secret hygiene 增量扫描（本次）
+### 第 1 步：secret hygiene 增量扫描（已发布）
 
 - `scan_secrets` 增加可选缓存：路径 → (size, mtime_ns)。只沿用上次无发现、且大小和修改时间都没变的文件的结果；有发现的文件
   不进缓存，每次重读。读文件前先 stat，读的过程中文件变了下次也会重读。
@@ -60,11 +60,21 @@ run ledger 里每一步记的都是整次运行的起止时间，不能用来看
 - 验收：PR 套件通过；ship 后按运维手册 9.1 更新运行副本；第一次真实运行报告为"全量（缓存不存在）"，之后的运行为"增量"，
   `secret_hygiene` 耗时低于 60 秒（预计 15–30 秒）；PASS/FAIL 语义不变。
 
-### 第 2 步：OpenAI 预审有限并发
+### 第 2 步：OpenAI 预审有限并发（本次）
 
-- `risk_event_prereview.run_openai_risk_event_prereview_for_official_candidates` 改为有限并发（上限可配置，建议 4），按原候选顺序
-  汇总 records、issues 与计数；确认请求缓存与审计归档写入线程安全；429/5xx 沿用现有重试。
-- 验收：报告与串行版本逐字段一致（顺序、计数、缓存统计）；新增并发与失败路径测试；缓存未命中日 `score_daily` 低于 60 秒。
+- `run_openai_risk_event_prereview_for_official_candidates` 新增 `max_concurrency`（默认 1，即原来的串行）。大于 1 时用线程池，
+  同时在途的请求不超过上限，结果按候选优先级顺序汇总 records、issues、checksum 与各项计数，所以成功时报告和串行逐字段一致。
+- 上限来自 LLM request profile 的 `max_concurrency`（1–8，默认 1）。`risk_event_daily_official_precheck` 设为 4，其他 profile 不变。
+  `score-daily` 和 `risk-events precheck-triaged-official-candidates` 都读 profile。
+- 出错时：串行和以前一样在第一个错误处停。并发时第一个错误出现后不再发新请求，已在途的请求（最多 3 个）照常完成，并计入报告
+  的请求数和问题列表，报告照实反映实际发出的请求；出错时队列仍为空，整批 fail closed 不变。
+- 请求缓存和审计归档按请求各写各的文件；`write_json_atomically` 的临时文件名加上进程和线程号，同一缓存键被两个线程同时写时
+  不会互相覆盖临时文件。429/5xx 沿用现有重试。
+- 不改：候选筛选与排序、请求内容、模型、reasoning effort、候选上限、缓存 TTL、报告格式和队列。
+- 验收：测试覆盖并发报告与串行一致（完成顺序打乱、带缓存写入与回读）、出错后不再发新请求、上限校验、profile 取值和
+  `score-daily` 传参；PR 套件通过；缓存未命中日 `score_daily` 低于 100 秒。
+- 预计：之前 160–240 秒，其中 OpenAI 等待约 140–220 秒（10 个请求，每个 15–22 秒），其余约 17 秒。上限 4 时 10 个请求分 3 批，
+  预计 70–90 秒。原计划写的"低于 60 秒"要分 2 批才能做到（上限 5 或以上），改上限只需改 profile 的一个值，按第一次真实耗时再定。
 
 ### 第 3 步：CLI 启动开销
 
@@ -78,3 +88,7 @@ run ledger 里每一步记的都是整次运行的起止时间，不能用来看
 ## 4. 进度
 
 - 2026-10-12：完成耗时分析（第 1 节）；第 1 步代码与测试由 pi 运行 `OPS-083-01` 提交，等待验收与 ship。
+- 2026-10-13：第 1 步已于 2026-10-12 发布（main `5802317d3`），运行副本 10-12 13:30 JST 随 DATA-022 更新。10-12 17:30 JST 的
+  日报第一次运行报告为"全量（缓存不存在）"，41,139 个文件 347.5 秒，缓存已写；第一次增量在下一次日报。同一次日报的 score_daily
+  因 DATA-022 遗漏的收据角色失败（DATA-022-02 修复），所以第 2 步的耗时基线仍用 2026-10-11 之前的数据。第 2 步代码与测试由 pi
+  运行 `OPS-083-02` 提交。

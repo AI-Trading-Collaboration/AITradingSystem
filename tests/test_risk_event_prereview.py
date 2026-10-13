@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import threading
+import time
 from collections.abc import Mapping
 from dataclasses import replace
 from datetime import UTC, datetime
@@ -890,6 +892,170 @@ def _source(
             reviewed_at=datetime(2026, 5, 4, tzinfo=UTC).date(),
         ),
     )
+
+
+def _bis_only_data_sources(*, cache_allowed: bool = False) -> DataSourcesConfig:
+    source = _source(
+        source_id="official_bis_federal_register_notices",
+        source_type="primary_source",
+        external_llm_allowed=True,
+        max_content_sent_level="metadata_only",
+    )
+    permission = source.llm_permission.model_copy(update={"cache_allowed": cache_allowed})
+    return DataSourcesConfig(sources=[source.model_copy(update={"llm_permission": permission})])
+
+
+def _numbered_candidates(tmp_path: Path, count: int) -> tuple[OfficialPolicyCandidate, ...]:
+    base = _official_candidate(tmp_path)
+    return tuple(
+        replace(
+            base,
+            candidate_id=f"{base.candidate_id}:{index}",
+            source_title=f"{base.source_title} #{index}",
+        )
+        for index in range(count)
+    )
+
+
+def _candidate_number(payload: Mapping[str, Any]) -> int:
+    request = json.loads(payload["input"][1]["content"])
+    return int(str(request["source_title"]).rsplit("#", 1)[1])
+
+
+def _without_request_identity(
+    report: RiskEventPreReviewImportReport,
+) -> RiskEventPreReviewImportReport:
+    """Drop what differs per request by design: the random client id and the cache directory."""
+    return replace(
+        report,
+        records=tuple(
+            record.model_copy(
+                update={
+                    "client_request_id": "",
+                    "cache_path": Path(str(record.cache_path)).name,
+                }
+            )
+            for record in report.records
+        ),
+    )
+
+
+def test_official_candidates_concurrent_report_equals_serial(tmp_path: Path) -> None:
+    # OPS-083 step 2: concurrency changes wall time only; the report is the serial one.
+    candidates = _numbered_candidates(tmp_path, 7)
+    lock = threading.Lock()
+    in_flight = 0
+    peak_in_flight = 0
+
+    def fake_post(
+        _url: str,
+        _headers: Mapping[str, str],
+        payload: Mapping[str, Any],
+        _timeout: float,
+    ) -> OpenAIJsonResponse:
+        nonlocal in_flight, peak_in_flight
+        number = _candidate_number(payload)
+        with lock:
+            in_flight += 1
+            peak_in_flight = max(peak_in_flight, in_flight)
+        try:
+            # Later candidates answer first, so completion order differs from candidate order.
+            time.sleep(0.05 * (len(candidates) - number))
+        finally:
+            with lock:
+                in_flight -= 1
+        request_id = f"req_{number}"
+        if number % 3 == 0:
+            return _openai_irrelevant_response(request_id=request_id)
+        return _openai_response(request_id=request_id)
+
+    def run(max_concurrency: int, cache_dir: Path) -> RiskEventPreReviewImportReport:
+        return run_openai_risk_event_prereview_for_official_candidates(
+            candidates,
+            api_key="TEST_ONLY_NON_PROVIDER_SECRET",
+            data_sources=_bis_only_data_sources(cache_allowed=True),
+            risk_events=load_risk_events(),
+            input_path=tmp_path / "official_policy_source_candidates_2026-05-04.csv",
+            as_of=datetime(2026, 5, 4, tzinfo=UTC).date(),
+            http_post_json=fake_post,
+            generated_at=datetime(2026, 5, 4, tzinfo=UTC),
+            openai_cache_dir=cache_dir,
+            max_concurrency=max_concurrency,
+        )
+
+    serial = run(1, tmp_path / "cache_serial")
+    assert peak_in_flight == 1
+    concurrent = run(4, tmp_path / "cache_concurrent")
+
+    assert 1 < peak_in_flight <= 4
+    assert _without_request_identity(concurrent) == _without_request_identity(serial)
+    assert serial.status == "PASS_WITH_WARNINGS"
+    assert serial.record_count == 4
+    assert serial.openai_request_count == 7
+    assert serial.openai_cache_miss_count == 7
+    assert serial.openai_cache_write_count == 7
+    assert not list((tmp_path / "cache_concurrent").rglob("*.tmp"))
+
+    # The cache entries written concurrently are complete: a rerun is served from them.
+    cached = run(4, tmp_path / "cache_concurrent")
+    assert cached.openai_cache_hit_count == 7
+    assert cached.openai_cache_miss_count == 0
+    assert cached.record_count == serial.record_count
+
+
+def test_official_candidates_concurrent_error_stops_new_requests(tmp_path: Path) -> None:
+    candidates = _numbered_candidates(tmp_path, 6)
+    calls: dict[int, int] = {}
+    lock = threading.Lock()
+    first_failed = threading.Event()
+
+    def fake_post(
+        _url: str,
+        _headers: Mapping[str, str],
+        payload: Mapping[str, Any],
+        _timeout: float,
+    ) -> OpenAIJsonResponse:
+        number = _candidate_number(payload)
+        with lock:
+            calls[number] = calls.get(number, 0) + 1
+        if number == 0:
+            if calls[0] == DEFAULT_OPENAI_MAX_RETRIES + 1:
+                first_failed.set()
+            raise TimeoutError("read timed out")
+        # The other request in flight finishes only after the first candidate has failed.
+        assert first_failed.wait(timeout=5)
+        time.sleep(0.3)
+        return _openai_response(request_id=f"req_{number}")
+
+    report = run_openai_risk_event_prereview_for_official_candidates(
+        candidates,
+        api_key="TEST_ONLY_NON_PROVIDER_SECRET",
+        data_sources=_bis_only_data_sources(),
+        risk_events=load_risk_events(),
+        input_path=tmp_path / "official_policy_source_candidates_2026-05-04.csv",
+        as_of=datetime(2026, 5, 4, tzinfo=UTC).date(),
+        http_post_json=fake_post,
+        generated_at=datetime(2026, 5, 4, tzinfo=UTC),
+        max_concurrency=2,
+    )
+
+    # Candidate 1 was already in flight and is reported; nothing after it is sent.
+    assert calls == {0: DEFAULT_OPENAI_MAX_RETRIES + 1, 1: 1}
+    assert report.status == "FAIL"
+    assert report.records == ()
+    assert [issue.code for issue in report.issues if issue.severity.value == "ERROR"] == [
+        "openai_responses_api_request_failed"
+    ]
+
+
+def test_official_candidates_reject_zero_concurrency(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="max_concurrency"):
+        run_openai_risk_event_prereview_for_official_candidates(
+            (_official_candidate(tmp_path),),
+            api_key="TEST_ONLY_NON_PROVIDER_SECRET",
+            data_sources=_bis_only_data_sources(),
+            max_concurrency=0,
+        )
 
 
 def _openai_response(request_id: str = "req_test") -> OpenAIJsonResponse:

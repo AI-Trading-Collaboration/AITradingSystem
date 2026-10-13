@@ -3,7 +3,8 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
-from collections.abc import Mapping
+from collections.abc import Callable, Iterator, Mapping
+from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from enum import StrEnum
@@ -454,7 +455,10 @@ def run_openai_risk_event_prereview_for_official_candidates(
     request_visibility_cutoff: datetime | None = None,
     http_post_json: HttpPostJson | None = None,
     max_candidates: int | None = None,
+    max_concurrency: int = 1,
 ) -> RiskEventPreReviewImportReport:
+    if max_concurrency < 1:
+        raise ValueError("max_concurrency must be at least 1")
     records: list[RiskEventPreReviewRecord] = []
     issues: list[RiskEventPreReviewIssue] = []
     row_count = 0
@@ -482,16 +486,9 @@ def run_openai_risk_event_prereview_for_official_candidates(
             )
             selected_candidates = selected_candidates[:max_candidates]
 
-    for candidate in selected_candidates:
+    def prereview(candidate: OfficialPolicyCandidate) -> _CandidatePreReview:
         packet = official_policy_candidate_to_llm_input(candidate)
-        packet_checksum = _packet_checksum(packet)
-        packet_checksums.append(
-            {
-                "candidate_id": candidate.candidate_id,
-                "packet_checksum_sha256": packet_checksum,
-            }
-        )
-        report = run_openai_risk_event_prereview(
+        return packet, run_openai_risk_event_prereview(
             packet,
             api_key=api_key,
             data_sources=data_sources,
@@ -510,6 +507,18 @@ def run_openai_risk_event_prereview_for_official_candidates(
             request_visibility_cutoff=request_visibility_cutoff,
             http_post_json=http_post_json,
         )
+
+    for candidate, (packet, report) in _prereview_in_candidate_order(
+        tuple(selected_candidates),
+        prereview,
+        max_concurrency=max_concurrency,
+    ):
+        packet_checksums.append(
+            {
+                "candidate_id": candidate.candidate_id,
+                "packet_checksum_sha256": _packet_checksum(packet),
+            }
+        )
         row_count += report.row_count
         openai_request_count += report.openai_request_count
         openai_cache_hit_count += report.openai_cache_hit_count
@@ -523,8 +532,6 @@ def run_openai_risk_event_prereview_for_official_candidates(
             for issue in report.issues
             if issue.code != "risk_event_prereview_no_risk_event_candidates"
         )
-        if report.error_count:
-            break
 
     _check_duplicate_records(records, issues)
     has_error = any(issue.severity == RiskEventPreReviewIssueSeverity.ERROR for issue in issues)
@@ -544,6 +551,51 @@ def run_openai_risk_event_prereview_for_official_candidates(
         openai_cache_disabled_count=openai_cache_disabled_count,
         openai_cache_write_count=openai_cache_write_count,
     )
+
+
+_CandidatePreReview = tuple[LlmClaimPrecheckInput, RiskEventPreReviewImportReport]
+
+
+def _prereview_in_candidate_order(
+    candidates: tuple[OfficialPolicyCandidate, ...],
+    prereview: Callable[[OfficialPolicyCandidate], _CandidatePreReview],
+    *,
+    max_concurrency: int,
+) -> Iterator[tuple[OfficialPolicyCandidate, _CandidatePreReview]]:
+    """Yield each sent candidate's packet and report in candidate order.
+
+    The first report with an error stops new requests. Serially that is the last report;
+    with max_concurrency > 1 the requests already in flight finish and are reported too,
+    so the report counts every request that was sent.
+    """
+
+    if max_concurrency == 1:
+        for candidate in candidates:
+            result = prereview(candidate)
+            yield candidate, result
+            if result[1].error_count:
+                return
+        return
+
+    results: dict[int, _CandidatePreReview] = {}
+    with ThreadPoolExecutor(
+        max_workers=max(1, min(max_concurrency, len(candidates))),
+        thread_name_prefix="risk-event-prereview",
+    ) as pool:
+        pending: dict[Future[_CandidatePreReview], int] = {}
+        next_index = 0
+        stopped = False
+        while pending or (not stopped and next_index < len(candidates)):
+            while not stopped and next_index < len(candidates) and len(pending) < max_concurrency:
+                pending[pool.submit(prereview, candidates[next_index])] = next_index
+                next_index += 1
+            done, _ = wait(pending, return_when=FIRST_COMPLETED)
+            for future in done:
+                index = pending.pop(future)
+                results[index] = future.result()
+                stopped = stopped or bool(results[index][1].error_count)
+    for index in sorted(results):
+        yield candidates[index], results[index]
 
 
 def official_policy_candidate_to_llm_input(

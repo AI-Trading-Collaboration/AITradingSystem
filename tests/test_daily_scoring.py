@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from typing import cast
 
 import pandas as pd
+import pytest
 from typer.testing import CliRunner
 
 import ai_trading_system.cli_commands.score_daily as score_daily_cli
@@ -48,6 +49,11 @@ from ai_trading_system.fundamentals.tsm_ir import (
 from ai_trading_system.portfolio_exposure import (
     PortfolioExposureReport,
     build_portfolio_exposure_report,
+)
+from ai_trading_system.risk_event_prereview import (
+    RiskEventPreReviewImportReport,
+    RiskEventPreReviewIssue,
+    RiskEventPreReviewIssueSeverity,
 )
 from ai_trading_system.risk_events import (
     LoadedRiskEventOccurrence,
@@ -1162,6 +1168,130 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     )
     assert lookup_result.exit_code == 0
     assert "最终 AI 仓位" in lookup_result.output
+
+
+def test_score_daily_risk_event_precheck_uses_the_profile_concurrency(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # OPS-083 step 2: the daily LLM request profile sets how many prereview requests run at once.
+    universe = load_universe()
+    sec_companies_path = tmp_path / "sec_companies.yaml"
+    sec_metrics_path = tmp_path / "fundamental_metrics.yaml"
+    fundamental_feature_config_path = tmp_path / "fundamental_features.yaml"
+    sec_fundamentals_path = tmp_path / "sec_fundamentals.csv"
+    _sample_prices(configured_price_tickers(universe), periods=260).to_csv(
+        tmp_path / "prices_daily.csv", index=False
+    )
+    _sample_rates(configured_rate_series(universe), periods=260).to_csv(
+        tmp_path / "rates_daily.csv", index=False
+    )
+    _write_sec_companies_config(sec_companies_path)
+    _write_sec_metrics_config(sec_metrics_path)
+    _write_sec_features_config(fundamental_feature_config_path)
+    _write_sec_metrics_csv(sec_fundamentals_path)
+    captured: dict[str, object] = {}
+
+    def fake_official_evidence(**_kwargs: object) -> tuple[object, Path]:
+        report = SimpleNamespace(passed=True, candidates=(), candidate_count=0)
+        return report, tmp_path / "official_policy_candidates.csv"
+
+    def fake_prereview(
+        candidates: tuple[object, ...],
+        **kwargs: object,
+    ) -> RiskEventPreReviewImportReport:
+        captured.update(kwargs)
+        # An error report stops score-daily right after the prereview.
+        return RiskEventPreReviewImportReport(
+            input_path=tmp_path / "official_policy_candidates.csv",
+            row_count=len(candidates),
+            checksum_sha256="a" * 64,
+            records=(),
+            source_kind="openai_live",
+            issues=(
+                RiskEventPreReviewIssue(
+                    severity=RiskEventPreReviewIssueSeverity.ERROR,
+                    code="test_stop_after_prereview",
+                    message="test stop",
+                ),
+            ),
+        )
+
+    monkeypatch.setenv("OPENAI_API_KEY", "TEST_ONLY_NON_PROVIDER_SECRET")
+    monkeypatch.setattr(
+        score_daily_cli, "_resolve_official_policy_precheck_evidence", fake_official_evidence
+    )
+    monkeypatch.setattr(
+        score_daily_cli,
+        "run_openai_risk_event_prereview_for_official_candidates",
+        fake_prereview,
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "score-daily",
+            "--llm-request-profile",
+            "risk_event_daily_official_precheck",
+            "--prices-path",
+            str(tmp_path / "prices_daily.csv"),
+            "--rates-path",
+            str(tmp_path / "rates_daily.csv"),
+            "--as-of",
+            "2026-04-30",
+            "--run-id",
+            "daily_ops_run:2026-04-30:test",
+            "--features-path",
+            str(tmp_path / "features_daily.csv"),
+            "--scores-path",
+            str(tmp_path / "scores_daily.csv"),
+            "--report-path",
+            str(tmp_path / "daily_score.md"),
+            "--feature-report-path",
+            str(tmp_path / "feature_summary.md"),
+            "--feature-availability-report-path",
+            str(tmp_path / "feature_availability.md"),
+            "--quality-report-path",
+            str(tmp_path / "quality.md"),
+            "--execution-policy-report-path",
+            str(tmp_path / "execution_policy.md"),
+            "--portfolio-positions-path",
+            str(tmp_path / "portfolio_positions.csv"),
+            "--portfolio-exposure-report-path",
+            str(tmp_path / "portfolio_exposure.md"),
+            "--sec-companies-path",
+            str(sec_companies_path),
+            "--sec-metrics-path",
+            str(sec_metrics_path),
+            "--fundamental-feature-config-path",
+            str(fundamental_feature_config_path),
+            "--sec-fundamentals-path",
+            str(sec_fundamentals_path),
+            "--sec-fundamental-features-path",
+            str(tmp_path / "sec_fundamental_features.csv"),
+            "--sec-fundamental-feature-report-path",
+            str(tmp_path / "sec_fundamental_features.md"),
+            "--sec-metrics-validation-report-path",
+            str(tmp_path / "sec_fundamentals_validation.md"),
+            "--valuation-path",
+            str(tmp_path / "valuation_snapshots"),
+            "--risk-event-occurrences-path",
+            str(tmp_path / "risk_event_occurrences"),
+            "--official-policy-report-path",
+            str(tmp_path / "official_policy_fetch.md"),
+            "--risk-event-openai-precheck-report-path",
+            str(tmp_path / "risk_event_openai_precheck.md"),
+            "--risk-event-prereview-queue-path",
+            str(tmp_path / "risk_event_prereview_queue.json"),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert result.exit_code == 1, result.output
+    assert captured["max_concurrency"] == 4
+    assert captured["max_candidates"] == 10
+    assert (tmp_path / "risk_event_openai_precheck.md").exists()
 
 
 def test_score_daily_tsm_ir_merge_helper_replaces_tsm_quarterly_rows(

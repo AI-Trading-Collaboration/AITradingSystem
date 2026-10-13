@@ -4,6 +4,7 @@ import pytest
 
 from ai_trading_system.llm_request_profiles import (
     DEFAULT_LLM_REQUEST_PROFILES_CONFIG_PATH,
+    LlmRequestProfile,
     LlmRequestProfilesConfig,
     load_llm_request_profiles,
 )
@@ -32,6 +33,7 @@ def test_daily_llm_request_profile_carries_candidate_and_formal_defaults() -> No
     assert profile.cache_ttl_hours == 24
     assert profile.max_retries == 2
     assert profile.max_candidates == 10
+    assert profile.max_concurrency == 4
     assert profile.official_policy_limit == 30
     assert profile.formal_assessment.enabled is True
     assert profile.formal_assessment.next_review_days == 1
@@ -76,3 +78,24 @@ def test_llm_request_profiles_reject_duplicate_ids() -> None:
 
     with pytest.raises(ValueError, match="must be unique"):
         LlmRequestProfilesConfig.model_validate(raw)
+
+
+def test_llm_request_profiles_default_to_serial_requests() -> None:
+    config = load_llm_request_profiles()
+
+    assert {
+        profile.profile_id: profile.max_concurrency
+        for profile in config.profiles
+        if profile.profile_id != "risk_event_daily_official_precheck"
+    } == {
+        "llm_claim_prereview": 1,
+        "risk_event_single_prereview": 1,
+        "risk_event_triaged_official_candidates": 1,
+    }
+    with pytest.raises(ValueError, match="max_concurrency"):
+        LlmRequestProfile.model_validate(
+            {
+                **config.get_profile("risk_event_daily_official_precheck").model_dump(),
+                "max_concurrency": 9,
+            }
+        )
