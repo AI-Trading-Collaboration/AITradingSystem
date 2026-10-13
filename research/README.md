@@ -4,12 +4,13 @@
 
 ## 现在的状态（2026-10-13）
 
-- 没有在进行的研究。2026-05 到 09 的约 860 个研究任务已按 2026-10-12 的可靠性复核重新评级，结果见 `ledger.md`。
+- 2026-05 到 09 的约 860 个研究任务已按 2026-10-12 的可靠性复核重新评级，结果见 `ledger.md`。
 - 结论：没有一条正面结论达到 A 或 B 级；能当真的只有少数负面结论，见 `negative_results.md`。
 - 2026-10-12 研究方向已定（TRADING-2567，`owner_decision:TRADING-2567:2026-10-12:qqq_direction_1999_window`）：QQQ 期权路径，先在 1999 年起的历史上找站得住的方向信号，再用 QuantConnect 回测期权表达；QQQ 类问题以 1999-03-10 起为开发验证窗口，2021-02-22 起只做一致性检查。
 - 长历史数据和研究窗口（TRADING-2567 S1、S2）的代码和政策已就位：QQQ 方向问题在 1999-03-10 到 2010-12-31 上开发，2011-01-03 到 2021-02-19 每个问题预注册后只读一次，2021-02-22 起只做一致性检查（`config/research/primary_research_window_policy.yaml` 的 `question_windows`）。第一份数据快照已在主仓库下载（2026-10-13），TRADING-2567-03 修正后重跑检查再用，见 `assets.md`。
 - 第一批题目的顺序（2026-10-13，`owner_decision:TRADING-2567:2026-10-13:risk_first_question_order`）：先管风险、再组合信号。依次是按波动调敞口和杠杆、3–5 个固定符号的经典信号等权组合、期权层卖波动、FOMC 和隔夜。主指标是同等平均敞口下的回撤、左尾和复利分散，超额收益在后。
 - 共享评估台（TRADING-2565）分三批建。S3a：模块 `src/ai_trading_system/research_bench/`（C 区）；`python -m ai_trading_system.research_bench benchmarks` 在开发窗口上跑固定基准核对数据。S3b：运行登记、试验计数、折算夏普、验证窗口读取登记和预注册格式（下面第 2–5 步）。S3c：标准证伪（成本、推迟、逐年和逐段剔除、同敞口随机择时、块 bootstrap）、报告第一屏和 pi 研究运行的 brief 模板。评估台和 agent 护栏（TRADING-2566）建好之前，pi 不接研究任务。
+- 第一题 `QQQ-Q1/` 已开题（2026-10-13，`owner_decision:TRADING-2567:2026-10-13:qqq_q1_prereg`）：按已实现波动调 Nasdaq-100 敞口，Q1a 不加杠杆，Q1b 最高 3 倍，和平均敞口相同的固定敞口比回撤、左尾和复利分散。下一步跑开发窗口。
 - 旧的研究代码、文档、配置和测试按 GOV-009（`owner_decision:GOV-009:2026-10-12:research_cleanup`）分批删除。删除前的完整内容保存在 tag `research-archive-2026-10-12`。
 
 ## 文件
@@ -20,6 +21,7 @@
 | `negative_results.md` | 负结果清单：已证伪、未测成、工程上不可执行。研究 brief 必读 |
 | `assets.md` | 可以复用的代码、检验和记录，以及它们在哪里 |
 | `_template/` | 一个研究问题的样例：`prereg.yaml`（逐项说明）和 `strategy.py`（策略接口）；`brief.md` 是 pi 研究运行的 brief 模板 |
+| `QQQ-Q1/` | 第一题：预注册 `prereg.yaml`（C 区）和策略模块 `strategy.py`；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |
 
 ## 结论只用四个词
 

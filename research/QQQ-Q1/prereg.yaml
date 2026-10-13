@@ -1,0 +1,133 @@
+# QQQ-Q1 preregistration (TRADING-2567; format in src/ai_trading_system/research_bench/prereg.py).
+#
+# Written before any result of this question exists. Approved by Baker with the owner decision below,
+# recorded in docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md. Any change to this
+# file or to strategy.py closes the validation window until a new owner decision approves it.
+schema_version: research_prereg.v1
+question_id: QQQ-Q1
+question: >-
+  Does setting Nasdaq-100 exposure each month by realized volatility, min(1, σ*/σ̂) without leverage
+  (Q1a) and min(3, 2σ*/σ̂) with 2x and 3x (Q1b), give a shallower drawdown and a milder left tail
+  (Q1a) or better compounding after bad stretches (Q1b) than a constant exposure with the same
+  average, at a similar geometric return?
+question_type: qqq_direction
+owner_decision: owner_decision:TRADING-2567:2026-10-13:qqq_q1_prereg
+data:
+  snapshot_id: qlh-20261013-0b0df53cb1a2
+  qqq_series: actual                # the real QQQ (FMP adjusted close) from 1999-03-10
+strategy_module: strategy.py
+# σ̂ is read from ndx_return (QQQ, and the price index before March 1999); σ* is the median of the
+# same estimate from 1986 to 1999-03-09 (strategy.py). Each sensitivity variant is its own entry and
+# its own trial; σ* follows the variant's estimate.
+strategies:
+  - id: q1a
+    function: realized_vol_exposure
+    params: {window: 21, scale: 1.0, leveraged: false}
+    rebalance: {schedule: month_end, band: 0.0}
+    delay_days: 0
+    leveraged_benchmarks: false
+  - id: q1b
+    function: realized_vol_exposure
+    params: {window: 21, scale: 2.0, leveraged: true}
+    rebalance: {schedule: month_end, band: 0.0}
+    delay_days: 0
+    leveraged_benchmarks: true
+  - id: q1a_window63
+    function: realized_vol_exposure
+    params: {window: 63, scale: 1.0, leveraged: false}
+    rebalance: {schedule: month_end, band: 0.0}
+    leveraged_benchmarks: false
+  - id: q1b_window63
+    function: realized_vol_exposure
+    params: {window: 63, scale: 2.0, leveraged: true}
+    rebalance: {schedule: month_end, band: 0.0}
+    leveraged_benchmarks: true
+  - id: q1a_ewma
+    function: ewma_vol_exposure
+    params: {halflife: 11.2, scale: 1.0, leveraged: false}
+    rebalance: {schedule: month_end, band: 0.0}
+    leveraged_benchmarks: false
+  - id: q1b_ewma
+    function: ewma_vol_exposure
+    params: {halflife: 11.2, scale: 2.0, leveraged: true}
+    rebalance: {schedule: month_end, band: 0.0}
+    leveraged_benchmarks: true
+  - id: q1a_weekly
+    function: realized_vol_exposure
+    params: {window: 21, scale: 1.0, leveraged: false}
+    rebalance: {schedule: week_end, band: 0.0}
+    leveraged_benchmarks: false
+  - id: q1b_weekly
+    function: realized_vol_exposure
+    params: {window: 21, scale: 2.0, leveraged: true}
+    rebalance: {schedule: week_end, band: 0.0}
+    leveraged_benchmarks: true
+  - id: q1a_band20
+    function: realized_vol_exposure
+    params: {window: 21, scale: 1.0, leveraged: false}
+    rebalance: {schedule: daily, band: 0.2}
+    leveraged_benchmarks: false
+  - id: q1b_band20
+    function: realized_vol_exposure
+    params: {window: 21, scale: 2.0, leveraged: true}
+    rebalance: {schedule: daily, band: 0.2}
+    leveraged_benchmarks: true
+validation:
+  strategies: [q1a, q1b]
+  # Both against the constant exposure with the same average exposure, rebalanced the same way.
+  # Kept when every rule holds; rejected when the point estimate of the main measure (Q1a: the left
+  # tail, Q1b: the rolling 3-year low) or of the drawdown is worse than the constant exposure (for
+  # this estimate and schedule only); otherwise evidence insufficient. Development results only check
+  # the implementation; no parameter changes after reading them except recorded bug fixes.
+  rules:
+    q1a:
+      - {metric: comparison.cvar_5pct_relative_improvement, op: ">=", value: 0.10, note: left tail at least 10% milder}
+      - {metric: ci_low.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: the interval excludes no improvement}
+      - {metric: comparison.max_drawdown, op: ">=", value: 0.05, note: drawdown at least 5 points shallower}
+      - {metric: comparison.geometric_annual_return, op: ">=", value: -0.010, note: gives up at most 1.0 point a year}
+      - {metric: cost_25.geometric_annual_return, op: ">=", value: -0.010, note: the cost condition holds at 25 bps}
+      - {metric: delay_2.cvar_5pct_relative_improvement, op: ">=", value: 0.10, note: the tail condition holds two days late}
+      - {metric: leave_year_min.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: no single year carries the tail result}
+      - {metric: leave_year_min.max_drawdown, op: ">", value: 0.0, note: no single year carries the drawdown result}
+      - {metric: placebo_rank.cvar_5pct_relative_improvement, op: ">=", value: 0.95, note: beats 95% of same-exposure random timings}
+    q1b:
+      - {metric: comparison.rolling_geometric_return_low, op: ">=", value: 0.02, note: 10th percentile of rolling 3-year geometric return at least 2 points higher}
+      - {metric: ci_low.rolling_geometric_return_low, op: ">", value: 0.0, note: the interval excludes no improvement}
+      - {metric: comparison.max_drawdown, op: ">=", value: 0.10, note: drawdown at least 10 points shallower}
+      - {metric: comparison.geometric_annual_return, op: ">=", value: -0.015, note: gives up at most 1.5 points a year}
+      - {metric: cost_25.geometric_annual_return, op: ">=", value: -0.015, note: the cost condition holds at 25 bps}
+      - {metric: delay_2.rolling_geometric_return_low, op: ">=", value: 0.02, note: the compounding condition holds two days late}
+      - {metric: leave_year_min.rolling_geometric_return_low, op: ">", value: 0.0, note: no single year carries the compounding result}
+      - {metric: leave_year_min.max_drawdown, op: ">", value: 0.0, note: no single year carries the drawdown result}
+      - {metric: placebo_rank.rolling_geometric_return_low, op: ">=", value: 0.95, note: beats 95% of same-exposure random timings}
+  confidence: 0.975                 # two sub-questions: Bonferroni on 95%
+sensitivity:                        # development only, each a trial, none decides anything
+  - window 63 days (q1a_window63, q1b_window63)
+  - exponentially weighted volatility, half-life 11.2 days, λ = 0.94 (q1a_ewma, q1b_ewma)
+  - weekly rebalance (q1a_weekly, q1b_weekly)
+  - checked daily, traded only when exposure is more than 20% off target (q1a_band20, q1b_band20)
+prior_expectation:
+  effect: >-
+    Q1a: shallower drawdown and a milder left tail at about the same geometric return. Q1b: less
+    dispersion of compounded results and a shallower drawdown; the geometric return need not be
+    higher than constant leverage with the same average.
+  fails_when: >-
+    a crash after a calm stretch (2020-02: the last 21 days were calm, so exposure was full going
+    in); a volatility spike that reverses quickly (2015-08, 2018-02: exposure cut, rebound missed).
+    The development window's long high-volatility bear markets (2000-2002, 2008) favour this
+    question, so the validation window decides.
+  sources:
+    - Harvey, Hoyle, Korgaonkar, Rattray, Sargaison, Van Hemert (2018), The Impact of Volatility Targeting
+    - Moreira and Muir (2017), Volatility-Managed Portfolios
+    - Cederburg, O'Doherty, Wang and Yan (2020), On the performance of volatility-managed portfolios
+    - "Liu, Tang and Zhou (2019), Volatility-managed portfolio: does it really work?"
+    - Imai (2026), Sustainable leveraged investing through volatility management
+sample_floor:
+  min_return_days: 2000             # the validation window has about 2,550; CVaR 5% uses about 128
+trial_cap: 20                       # 10 configurations, and each once more after a recorded bug fix
+stop_conditions:
+  - the bench's invariant tests fail
+  - the snapshot check is FAIL
+  - after reading development results, no parameter changes except recorded bug fixes; each rerun counts as a trial
+production_effect: none
+broker_action: none

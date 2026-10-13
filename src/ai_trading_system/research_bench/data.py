@@ -4,6 +4,12 @@ The snapshot is read only through ``qqq_long_history.load_daily``, which refuses
 or stale snapshots. Returns on day t cover the previous trading date's close to t's close. Signal
 inputs carry only what was known at t's close: the T-bill rate dated t is published the next
 business day, so ``cash_rate_known`` on t is the rate dated the previous trading date.
+
+``qqq_return`` is the chosen QQQ series alone; it starts in March 1999, so a lookback over it has no
+value at the start of the development window. ``ndx_return`` is the same series from its first
+return on and the Nasdaq-100 price index's return before that (the price index starts in 1986), so a
+lookback can reach back before the window. Before March 1999 it leaves out dividends and fees, well
+under 1% a year. A gap after the QQQ series has started stays a gap.
 """
 
 from __future__ import annotations
@@ -13,6 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
+import numpy as np
 import pandas as pd
 
 from ai_trading_system.research_data import qqq_long_history as qlh
@@ -27,6 +34,7 @@ QQQ_SERIES_COLUMNS: dict[str, str] = {
 }
 INPUT_COLUMNS: tuple[str, ...] = (
     "qqq_return",
+    "ndx_return",
     "ndx_price",
     "ndx_tr",
     "vix",
@@ -72,6 +80,10 @@ def from_daily_frame(
     if not index.is_monotonic_increasing or index.has_duplicates:
         raise ValueError("daily frame dates must be unique and increasing")
     qqq = daily[QQQ_SERIES_COLUMNS[qqq_series]].astype(float)
+    price = daily["ndx_price"].astype(float)
+    price_return = (price / price.shift(1) - 1).to_numpy()
+    before = ~np.logical_or.accumulate(qqq.notna().to_numpy())
+    ndx = np.where(before, price_return, qqq.to_numpy())
     returns = pd.DataFrame(
         {
             "qqq": qqq.to_numpy(),
@@ -84,6 +96,7 @@ def from_daily_frame(
     inputs = pd.DataFrame(
         {
             "qqq_return": qqq.to_numpy(),
+            "ndx_return": ndx,
             "ndx_price": daily["ndx_price"].astype(float).to_numpy(),
             "ndx_tr": daily["ndx_tr"].astype(float).to_numpy(),
             "vix": daily["vix"].astype(float).to_numpy(),

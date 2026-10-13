@@ -297,6 +297,25 @@ def test_daily_frame_adapter_picks_the_qqq_series_and_lags_the_rate() -> None:
         from_daily_frame(daily, qqq_series="other", source={})  # type: ignore[arg-type]
 
 
+def test_ndx_return_uses_the_price_index_only_before_the_qqq_series_starts() -> None:
+    index = pd.bdate_range("1999-03-04", periods=7, name="date")
+    daily = _daily(index, [math.nan, math.nan, 0.01, 0.02, math.nan, -0.01, 0.0])
+    daily["ndx_price"] = [100.0, 102.0, 101.0, 103.0, 104.0, 102.0, 103.0]
+    daily.loc[index[:4], "etf_reference_return"] = math.nan
+    price_return = (daily["ndx_price"] / daily["ndx_price"].shift(1) - 1).to_numpy()
+    proxy = from_daily_frame(daily, qqq_series="proxy", source={}).inputs
+    actual = from_daily_frame(daily, qqq_series="actual", source={}).inputs
+
+    assert math.isnan(proxy["ndx_return"].iloc[0])
+    assert proxy["ndx_return"].iloc[1] == pytest.approx(price_return[1])
+    assert proxy["ndx_return"].iloc[2:4].tolist() == pytest.approx([0.01, 0.02])
+    assert math.isnan(proxy["ndx_return"].iloc[4])  # a later gap is not filled
+    assert proxy["ndx_return"].iloc[5:].tolist() == pytest.approx([-0.01, 0.0])
+    assert actual["ndx_return"].iloc[1:4].tolist() == pytest.approx(price_return[1:4])
+    assert actual["ndx_return"].iloc[5:].tolist() == pytest.approx([-0.0099, 0.0001])
+    assert actual["qqq_return"].iloc[:4].isna().all()
+
+
 def test_snapshot_adapter_carries_the_check_status_and_warnings(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
