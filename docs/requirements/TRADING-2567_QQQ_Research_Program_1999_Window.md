@@ -46,6 +46,18 @@
   - 敏感性只在开发窗口跑，每个计一次试验，不参与判定：波动窗口 63 天、指数加权波动（λ=0.94）、按周调仓、每天看但偏离超过 20% 才调，两个子问题各 4 个。试验上限 20：10 个配置，各留一次修 bug 后重跑。
   - 开发窗口的结果只用来检查实现。看过以后，除记录在案的修 bug 外不改参数；预注册或策略模块一改，验证窗口要等新的 owner decision 才能读。
 
+- `owner_decision:TRADING-2567:2026-10-13:pi_research_runs`
+- 选择（Baker，2026-10-13 17:37 JST，在研究线程的决定卡上选了"改"）：卡片的问题是「让 pi 按模板跑第一题的研究运行吗？（TRADING-2566 的系统级隔离改成评估台窗口控制加守卫）」。这个选项的后果是「我写好护栏批，按 tree 再请你批一次；发布后 pi 跑第一题开发窗口」。另外两个选项是"先做系统级隔离"（按原验收做 aits-agent 隔离，再给评估台另开读数据的通道，开发窗口推迟）和"先讨论"。
+- 含义：
+  - pi 按 `research/_template/brief.md` 跑研究运行（开发、验证、一致性窗口），不再等 TRADING-2566 的系统级隔离。
+  - TRADING-2566 第 1 项原来要"以 aits-agent 读 holdout 和前瞻 outcome 路径被操作系统拒绝"。对研究运行改为：
+    - 评估台读数据、控制窗口：验证窗口要等预注册和策略模块随 owner decision 上了 main 才能登记读取，每题一次；每次运行带哈希链记录。
+    - 预注册和策略模块都在 C 区，开题批准之后改它们要 Baker 批准。
+    - pi 守卫不让 pi 打开或写 `data/raw/research/`、`data/raw/external_request_cache/`。守卫防的是误操作，不是安全边界。
+  - 理由：长历史快照是一个文件，同时含开发窗口和验证窗口，系统权限分不开日期；aits-agent 也读不到 D 盘上的快照。pi 在研究运行里只运行 brief 列出的命令。
+  - 系统级隔离（aits-agent 账号）照常推进，用于一般的 pi 运行。前瞻记录建好时，再定它的 outcome 路径怎么隔离。
+  - TRADING-2566 第 2 项（负结果清单只由人审后更新）照旧。
+
 ## 背景
 
 - 22 条旧研究线的结论在 `research/ledger.md`。旧的 QQQ 期权线（第 19 行）没测成：约 60 个任务只跑过 1 次策略损益（+4.48%），对照组只算了一股 QQQ，结果无法解释；它用来定方向的 Composer v2（第 21 行）后来被证伪。
@@ -120,3 +132,4 @@ FMP 没有期权数据；现有 FMP Starter 档只有 5 年历史。QQQ 实际 E
 - 2026-10-13：Baker 定第一批的顺序和成功标准（第三条 owner decision）。S3 评估台分三批，S3a 是 TRADING-2565-01（C 区），内容见 TRADING-2565 需求文档；第一题（按波动调敞口和杠杆）的预注册草稿在项目文件 `knowledge/claude/qqq-options/s3-bench-and-q1-prereg-draft-2026-10-13.md`，门槛在开题时由 Baker 定。Baker 同时要求在验证这些策略的过程中评估工程结构有没有提升空间：S3 和第一题期间把每个包和每次真实数据运行的摩擦记在项目文件 `knowledge/claude/qqq-options/engineering-log.md`，第一题开发窗口跑完后写工程结构复核，请 Baker 定。production_effect=none；broker_action=none。
 - 2026-10-13：08 发布后（main 4a64b78e）Baker 在主仓库重新 fetch，快照 `qlh-20261013-0b0df53cb1a2`，检查 WARN（5 条都是已知的）。FMP 现有档返回了 1999-03-10 起的 QQQ，不用升档。真实 QQQ 日收益减两条指数日收益的标准差，2003、2004、2005 年对总收益指数是 0.34%、0.26%、0.11%，对价格指数是 0.93%、0.74%、0.36%：2003–2005 年的逐日噪声在 FRED 的价格指数，这几年的信号不能读 `ndx_price`。合成 QQQ 对真实 QQQ：真实 QQQ 每年低 0.14%，相关 0.985；1999–2002 和 2008 年日跟踪误差大（年化 6–16%），1999、2000、2001、2008 年的年跟踪差超过 0.5%（推断是 2004 年 12 月以前 QQQ 在 AMEX 16:15 收盘，未核实）。研究按题选一条序列，写进预注册；第一题用真实 QQQ。production_effect=none；broker_action=none。
 - 2026-10-13：TRADING-2567-09 开第一题（C 区，第四条 owner decision）：`research/QQQ-Q1/` 的预注册和策略模块。两条 QQQ 序列都从 1999-03 开始，带回看的策略在开发窗口第一天没有目标，模拟会拒绝；评估台加输入 `ndx_return`：选定的 QQQ 序列从第一个收益日起，之前用价格指数收益（1986 年起），之后的缺口不补。模板策略改用它。发布后按 `research/_template/brief.md` 跑开发窗口，跑完写工程结构复核。production_effect=none；broker_action=none。
+- 2026-10-13：TRADING-2566-01（C 区，第五条 owner decision）：策略模块 `research/*/*.py` 划进 C 区；pi 守卫不让 pi 打开或写研究数据（命令里提到、或读写工具的路径在 `data/raw/research/`、`data/raw/external_request_cache/` 下都拦）；`AGENTS.md`、research-run skill、`research/README.md` 改成研究运行经评估台、pi 可以按模板跑，预注册模板要求先读负结果清单；TRADING-2566 第 2 项（Baker 审负结果清单）还没做。production_effect=none；broker_action=none。

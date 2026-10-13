@@ -4,7 +4,8 @@
 # run. Development runs are counted against trial_cap. Before the validation window can be read, this
 # file and the strategy module must be on main, shipped with an Owner-Decision, and the decision must
 # be written in docs/requirements. After that, editing either file closes the validation window again.
-# Zone C: every research/*/prereg.yaml change needs an owner decision.
+# Zone C: every change to research/*/prereg.yaml or a strategy module (research/*/*.py) needs an
+# owner decision.
 schema_version: research_prereg.v1
 question_id: QQQ-Q0                 # equals the directory name
 question: >-
@@ -39,7 +40,9 @@ validation:
   confidence: 0.95                  # of the bootstrap interval; raise it to split the error across sub-questions
 sensitivity:                        # variants run on the development window; each one is a trial
   - window 63 days
-prior_expectation:                  # what earlier research leads us to expect, before any result
+prior_expectation:                  # what earlier research leads us to expect, before any result.
+                                    # Read research/negative_results.md and research/ledger.md first:
+                                    # a question inside a falsified scope says here how it differs.
   effect: lower drawdown and left tail at a similar geometric return
   fails_when: volatility jumps without warning (1987, 2020-02)
   sources:

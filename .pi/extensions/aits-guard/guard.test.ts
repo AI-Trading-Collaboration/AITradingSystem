@@ -15,6 +15,8 @@ import guard, {
   findRepoRoot,
   initializeCZoneBaseline,
   makeState,
+  readVerdict,
+  researchDataMention,
   truncateToolResult,
   writeReport,
   writeVerdict,
@@ -177,6 +179,52 @@ test("exclude pathspecs for an excluded path pass (AGENTS.md requires them)", ()
   ]) {
     assert.equal(checkCommand(root, command), undefined, command);
   }
+});
+
+test("research data is never opened, listed or written; bench commands and research records pass", async () => {
+  const root = fakeRepo();
+  for (const command of [
+    "cat data/raw/research/qqq_long_history/qlh-1/series.csv",
+    "Get-Content D:\\Work\\AITradingSystem\\data\\raw\\research\\qqq_long_history\\qlh-1\\check.json",
+    "ls Data/Raw/External_Request_Cache",
+    ".venv/Scripts/python.exe -c \"open('data/raw/research/x').read()\"",
+    "git status --short -- . ':(exclude,literal)docs/research/private_pack.md'; head data/raw/external_request_cache/a.json",
+  ]) {
+    const verdict = checkCommand(root, command);
+    assert.ok(verdict && "block" in verdict, `expected block: ${command}`);
+    assert.equal(verdict.rule, "research-data");
+  }
+  for (const command of [
+    ".venv/Scripts/python.exe -m ai_trading_system.research_bench report QQQ-Q1",
+    ".venv/Scripts/python.exe -m ai_trading_system.research_bench run QQQ-Q1 --strategy q1a --falsify",
+    "cat research/QQQ-Q1/prereg.yaml",
+    "cat src/ai_trading_system/research_bench/data.py",
+    "ls data/raw",
+    "cat data/raw/research_notes.md",
+  ]) {
+    assert.equal(checkCommand(root, command), undefined, command);
+  }
+  assert.equal(researchDataMention("D:/Work/AITradingSystem_ops_runtime/data/raw/research/x"), "data/raw/research");
+  for (const path of ["data/raw/research/qqq_long_history/qlh-1/series.csv", "data\\raw\\external_request_cache"]) {
+    const read = readVerdict(root, root, path);
+    assert.ok(read && "block" in read, path);
+    assert.equal(read.rule, "research-data");
+    const write = checkWrite(root, root, path);
+    assert.ok(write && "block" in write, path);
+    assert.equal(write.rule, "research-data");
+  }
+  assert.equal(readVerdict(root, join(root, "data"), "raw/research/a.csv")?.rule, "research-data");
+  assert.equal(readVerdict(root, root, "research/README.md"), undefined);
+
+  const handlers = await makeHandlers(root);
+  for (const toolName of ["read", "grep", "find", "ls"]) {
+    const event = { type: "tool_call", toolCallId: toolName, toolName, input: { path: "data/raw/research" } };
+    const result = await handlers.tool_call(event, ctx(root));
+    assert.equal((result as { block: boolean }).block, true, toolName);
+    assert.equal((result as { terminate?: boolean }).terminate, undefined, toolName);
+  }
+  const allowed = { type: "tool_call", toolCallId: "ok", toolName: "read", input: { path: "research/QQQ-Q1/prereg.yaml" } };
+  assert.equal(await handlers.tool_call(allowed, ctx(root)), undefined);
 });
 
 test("writes: excluded, rendered views and frozen config are blocked with rule names", () => {

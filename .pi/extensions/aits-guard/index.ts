@@ -38,6 +38,11 @@ const NEVER_WRITE: readonly string[] = [
   "config/etf_portfolio/trend_calibration.yaml",
 ];
 
+// Research data only the research bench reads (TRADING-2566): the long-history snapshots and the
+// request cache hold every window, the validation window included. The agent runs the bench and
+// reads its printed summaries, never these files.
+const RESEARCH_DATA_DIRS: readonly string[] = ["data/raw/research", "data/raw/external_request_cache"];
+
 const READ_ONLY_WHEN_LOCKED = new Set(["read", "grep", "find", "ls"]);
 const LOCK_REASON = "C 区确认被拒，停止并汇报";
 const MAX_TOOL_RESULT_CHARS = 32_000; // about 8,000 tokens at 4 chars/token.
@@ -174,6 +179,16 @@ function ownerDecisionVerified(root: string, decision = process.env.AITS_PI_OWNE
 function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+
+/** The research data directory a command or path names, if any (either slash, any case). */
+export function researchDataMention(text: string): string | undefined {
+  const normalized = text.replace(/\\/g, "/");
+  return RESEARCH_DATA_DIRS.find((dir) =>
+    new RegExp(String.raw`(?:^|[^A-Za-z0-9_])${escapeRegExp(dir)}(?:$|[^A-Za-z0-9_])`, "i").test(normalized),
+  );
+}
+
+const RESEARCH_DATA_REASON = "is research data only the research bench reads: run its commands and use their printed summaries";
 
 function hasExcludePathspec(command: string, excluded: string): boolean {
   const excludeForm = new RegExp(
@@ -430,6 +445,10 @@ export function commandVerdict(root: string, command: string, state = makeState(
       };
     }
   }
+  const researchData = researchDataMention(command);
+  if (researchData !== undefined) {
+    return { block: true, rule: "research-data", reason: `${researchData} ${RESEARCH_DATA_REASON}` };
+  }
   if (hasRunArtifactWrite(command)) {
     return { block: true, rule: "run-artifact", reason: "run artifacts are written by guard, accept_checks, acceptance, or publish scripts" };
   }
@@ -486,6 +505,10 @@ export function writeVerdict(root: string, cwd: string, target: string, state = 
   }
   const rel = repoRelative(root, cwd, target);
   if (rel === undefined) return undefined;
+  const researchData = researchDataMention(rel);
+  if (researchData !== undefined) {
+    return { block: true, rule: "research-data", reason: `${researchData} ${RESEARCH_DATA_REASON}` };
+  }
   const policy = readShipPolicy(root);
   if (policy.exclusions.includes(rel)) {
     return {
@@ -514,6 +537,12 @@ export function writeVerdict(root: string, cwd: string, target: string, state = 
 
 export function checkWrite(root: string, cwd: string, target: string): Verdict {
   return writeVerdict(root, cwd, target);
+}
+
+export function readVerdict(root: string, cwd: string, target: string): Verdict {
+  const researchData = researchDataMention(repoRelative(root, cwd, target) ?? target);
+  if (researchData === undefined) return undefined;
+  return { block: true, rule: "research-data", reason: `${researchData} ${RESEARCH_DATA_REASON}` };
 }
 
 function gitPathspecArgs(root: string): string[] {
@@ -774,6 +803,8 @@ export default function (pi: ExtensionAPI) {
       verdict = commandVerdict(root, input.command, state);
     } else if ((event.toolName === "write" || event.toolName === "edit") && typeof input.path === "string") {
       verdict = writeVerdict(root, ctx.cwd, input.path, state);
+    } else if (READ_ONLY_WHEN_LOCKED.has(event.toolName) && typeof input.path === "string") {
+      verdict = readVerdict(root, ctx.cwd, input.path);
     }
     if (verdict === undefined) return undefined;
     if (isBlockVerdict(verdict)) {

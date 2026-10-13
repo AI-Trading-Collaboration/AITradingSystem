@@ -1,13 +1,13 @@
 ---
 name: research-run
-description: Plan or review AITradingSystem strategy research, a backtest, or an investment-facing conclusion. Research is paused until the evaluation bench (TRADING-2565) exists; start from research/.
+description: Plan, run or review AITradingSystem strategy research, a backtest, or an investment-facing conclusion. Research runs go through the evaluation bench (TRADING-2565); start from research/.
 ---
 
 # Research runs
 
-Strategy research is paused (GOV-009, 2026-10-12) until the evaluation bench (TRADING-2565) and the
-agent guardrails (TRADING-2566) exist. Until then, research work means designing those, or reviewing
-the records below.
+Every research question is preregistered and every run goes through the evaluation bench
+(`python -m ai_trading_system.research_bench`, TRADING-2565). `research/README.md` lists the steps; a
+pi research run follows `research/_template/brief.md` and runs only the bench commands it lists.
 
 ## Read first
 
@@ -32,7 +32,9 @@ the records below.
 - Their data is the long-history snapshot: `python -m ai_trading_system.research_data.qqq_long_history
   fetch` in the main checkout on the owner's machine (`--prices-path` to the ops runtime copy's
   `prices_daily.csv`), read through `load_daily`. It stays local: never commit it, print its rows,
-  or send them to an external model.
+  or send them to an external model. Agents never open `data/raw/research/` or
+  `data/raw/external_request_cache/` (the pi guard blocks it): the bench reads the data, opens the
+  validation window only through a registered read, and prints summaries.
 - Run `aits validate-data` (or the same code path) first and stop on failure when reading the daily
   cache. State the data quality status in the result.
 - Every report states the selected window and the actual requested and evaluated date ranges.
@@ -42,8 +44,10 @@ the records below.
 1. **Preregister before reading any outcome**: hypothesis, window, cost model, kill criteria, and the
    decision rule, committed (and shipped) before the first result is read. Record every trial,
    including failed and abandoned ones.
-2. **Run**: research runs do not record the commit and configuration hashes yet. Until the evaluation
-   bench runner does, a research result is a draft, not evidence.
+2. **Run**: `run`, `validate`, `consistency` on the bench. Each run is recorded under
+   `research/<question>/runs/` with its commit, settings and module hashes, trial number and window;
+   a result from anywhere else is a draft, not evidence. The preregistration and the strategy module
+   are zone C: after the owner approves them, changing either needs a new owner decision.
 3. **Admit**: a conclusion enters `research/ledger.md` only after human review; agents may propose
    entries for `research/negative_results.md` but do not edit it. A validation PASS never means a
    candidate is valid, paper-shadow eligible, or approved for production or a broker.

@@ -2,8 +2,8 @@ schema_version: task.v1
 id: TRADING-2566_RESEARCH_AGENT_LOOP_GUARDRAILS
 area: 研究方法 / 研究 agent 闭环护栏（RSI 借鉴）
 priority: P2
-status: READY
+status: IN_PROGRESS
 next_owner: Project Owner
-next_step: 退出条件已满足：2026-10-12 研究方向已定（owner_decision:TRADING-2567:2026-10-12:qqq_direction_1999_window）。在 TRADING-2567 S4 把研究运行交给 pi 之前完成
-acceptance: 以 aits-agent 读 holdout 和前瞻 outcome 路径被操作系统拒绝，有实测记录；负结果清单有 owner 审阅记录；research-run skill 和研究任务单模板引用清单与模板；不改任何研究线的冻结需求
-notes: production_effect=none；broker_action=none；依据：AQuA 用固定沙箱拿走 agent 泄漏数据的能力；RSI 综述认为研究方向仍要由人定；投毒基准论文（arXiv 2609.17817）说明 agent 的经验记忆也要人审；TRADING-2564 的阶段选择试行（SDP）是同一思路的文字版；2026-10-12：随 TRADING-2567 激活（owner_decision:TRADING-2567:2026-10-12:qqq_direction_1999_window）
+next_step: 第 1、3 项由 TRADING-2566-01 完成（owner_decision:TRADING-2567:2026-10-13:pi_research_runs）。剩第 2 项：Baker 审一次 research/negative_results.md，审阅记录追加到本卡 notes
+acceptance: 研究运行由评估台读数据、控制窗口（验证窗口每题读一次，预注册和策略模块随 owner decision 上 main 后才能读），预注册和策略模块 research/*/*.py 在 C 区，pi 守卫拦研究数据路径（data/raw/research/、data/raw/external_request_cache/）并有测试；负结果清单有 owner 审阅记录；research-run skill 和研究模板引用清单与模板；不改任何研究线的冻结需求。aits-agent 的系统级隔离随 DEVX-025 推进，不是本卡的验收
+notes: production_effect=none；broker_action=none；依据：AQuA 用固定沙箱拿走 agent 泄漏数据的能力；RSI 综述认为研究方向仍要由人定；投毒基准论文（arXiv 2609.17817）说明 agent 的经验记忆也要人审；TRADING-2564 的阶段选择试行（SDP）是同一思路的文字版；2026-10-12：随 TRADING-2567 激活（owner_decision:TRADING-2567:2026-10-12:qqq_direction_1999_window）；2026-10-13：Baker 在研究线程的决定卡上选了「改」（owner_decision:TRADING-2567:2026-10-13:pi_research_runs）：研究运行不再等系统级隔离，第 1 项改为评估台窗口控制、C 区和守卫，验收随之改写。TRADING-2566-01（C 区）：research/*/*.py 划进 C 区；守卫拦命令里提到的、读写工具路径在研究数据目录下的调用；AGENTS.md、research-run skill、research/README.md、预注册模板改成研究运行经评估台，模板引用负结果清单；第 2 项待 Baker 审 negative_results.md。production_effect=none；broker_action=none

@@ -131,9 +131,11 @@ the tested tree -> ordinary push, with the remote checked before and after.
 ## Runs and evidence
 
 - Daily runs record the commit, whether result-affecting code was modified, content hashes of their
-  configuration, and the requested and evaluated date ranges (`core/provenance.py`). Research runs do
-  not record these yet; until the evaluation bench runner does (TRADING-2565), a research result is a
-  draft, not evidence.
+  configuration, and the requested and evaluated date ranges (`core/provenance.py`). Research runs go
+  through the evaluation bench (`python -m ai_trading_system.research_bench`, TRADING-2565), which
+  records each run with the same provenance under `research/<question>/runs/`; a result from anywhere
+  else is a draft, not evidence. Agents never open the research data under `data/raw/research/` or
+  `data/raw/external_request_cache/`; they run the bench and read its printed summaries.
 - State a hypothesis, window, cost model, and kill criteria and commit them before reading any outcome
   of a new experiment; record every trial. A validation PASS never means a candidate is valid,
   paper-shadow eligible, or approved for production or a broker.

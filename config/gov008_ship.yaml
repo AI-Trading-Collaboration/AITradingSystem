@@ -1,8 +1,9 @@
 schema_version: gov008_ship_policy.v1
 policy_id: GOV-008-SHIP
-version: 1.1.0
+version: 1.1.1
 # In force from the GOV-008 P3 cutover (owner_decision:GOV-008:2026-10-10:bootstrap_route_b_v1).
 # 1.1.0: decision_record_excluded (owner_decision:DEVX-029:2026-10-13:decision_scoped_signoff).
+# 1.1.1: strategy modules research/*/*.py in zone C (owner_decision:TRADING-2567:2026-10-13:pi_research_runs).
 status: OWNER_APPROVED_ENFORCED
 owner: Project Owner
 rationale: >
@@ -35,6 +36,7 @@ zones:
     - src/ai_trading_system/research_bench/**
     - config/research/research_bench.yaml
     - research/*/prereg.yaml
+    - research/*/*.py
     - config/market_regimes.yaml
     - config/backtest_validation_policy.yaml
     - config/scoring_rules.yaml
