@@ -73,9 +73,14 @@ the tested tree -> ordinary push, with the remote checked before and after.
 - `ship` writes a `Gate:` trailer recording the tested tree. The gate is run by the agent itself and
   is not an independent verifier; for zone C the owner decision is the real control. In two-step pi
   runs pi stops after `--dry-run`; after Claude's review the owner account runs `--gate`, then
-  `publish.ps1 -ExpectedTree <reviewed tree>`, which uses `main`'s `ship.py` to `--publish --push`
-  without tests or branch code and verifies the Gate tree, zone, and Owner-Decision. Zone A and B
-  publish on the reviewed tree; zone C also needs the owner's accepted record for that tree.
+  `publish.ps1` with `-ExpectedTree <reviewed tree>` or with `-ExpectedPatch <reviewed patch id>
+  -ExpectedMessage <message SHA-256>` (one commit whose patch and message match the review, so it
+  stays valid when `main` moves). It uses `main`'s `ship.py` to `--publish --push` without tests or
+  branch code and verifies the Gate tree, zone, and Owner-Decision. Zone A and B publish on the
+  reviewed tree or patch; zone C also needs either the owner's accepted record for that tree or owner
+  decision records (`decisions/` under the review root) whose `c_paths` cover every changed zone C
+  path. Paths in `decision_record_excluded` (the rules, the gates, and the production and broker
+  boundary) always need the per-tree record.
   Do not weaken a test, invariant, or this policy to make a gate pass.
 - Never pass hundreds of test file paths to pytest (collection becomes quadratic on Windows); pass
   `tests` and select with markers. Run serial pytest only to reproduce a parallelism-related failure
@@ -106,10 +111,13 @@ the tested tree -> ordinary push, with the remote checked before and after.
   them in the `Owner-Decision:` trailer.
 - The owner signs decisions, not executions (`owner_decision:DEVX-025:2026-10-12:signoff_policy`):
   direction and scope, zone C changes, these rules and the gates themselves (this file, the ship
-  policy, the pi guard, `publish.ps1`), R2 and R3 actions, machine permissions, and any result that
-  departs from what was approved. A decision states its scope and expected result (for zone C, the
-  expected tree when it can be computed beforehand); work that matches it goes ahead without asking
-  again.
+  policy, the pi guard, `publish.ps1`, `approve.ps1`), R2 and R3 actions, machine permissions, and any result that
+  departs from what was approved. A decision states its scope and expected result; work that matches
+  it goes ahead without asking again. A zone C decision is recorded once
+  (`owner_decision:DEVX-029:2026-10-13:decision_scoped_signoff`): `scripts/agent/approve.ps1` writes
+  `<review_root>/decisions/<task>.<date>.<slug>.json` with the allowed zone C paths, the expected
+  result, the owner's own words, and an expiry at most 14 days out. It runs only on the owner's own
+  instruction naming that decision; the per-tree record stays for excluded paths.
 - Task records are `tasks/<ID>.yaml` (schema `task.v1`): edit the file or use
   `python tools/tasks.py new|set`, then `python tools/tasks.py render`. `docs/task_register.md` and
   `docs/task_register_completed.md` are rendered views: never edit them; the PR suite fails when they

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import datetime as dt
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -92,6 +94,7 @@ def test_real_policy_zone_c_globs_match_tracked_files() -> None:
         ("research/QQQ-Q1/runs/0001.json", "A"),
         (".pi/extensions/aits-guard/index.ts", "C"),
         ("scripts/agent/publish.ps1", "C"),
+        ("scripts/agent/approve.ps1", "C"),
         ("scripts/agent/run-brief.ps1", "B"),
         ("docs/requirements/x.md", "A"),
         ("registry/development_tasks/aa/x.yaml", "A"),
@@ -469,3 +472,280 @@ def test_cli_rejects_push_with_dry_run_or_gate(repo: Path, args: list[str]) -> N
     )
     assert done.returncode == 2
     assert "--push can only be used" in done.stderr
+
+
+# --- DEVX-029: owner decision records and the reviewed patch --------------------------------------
+
+DECISION = "owner_decision:T:2026-10-13:x"
+DECISION_POLICY = MINI_POLICY | {"decision_record_excluded": ["secret/rules/**"]}
+
+
+def _today() -> dt.date:
+    return dt.datetime.now(dt.UTC).date()
+
+
+def _decision_record(**overrides: object) -> dict:
+    approved = _today()
+    record = {
+        "schema": ship.DECISION_SCHEMA,
+        "decision": DECISION,
+        "approved_at": f"{approved.isoformat()}T00:10:00Z",
+        "owner_words": "批准决定 T，按草稿写进验收目录",
+        "c_paths": ["secret/app/**"],
+        "expected_result": "only secret/app changes",
+        "expires": (approved + dt.timedelta(days=7)).isoformat(),
+    }
+    record.update(overrides)
+    return record
+
+
+def _outside(repo: Path, name: str) -> Path:
+    """A directory next to the throw-away repository (the repo fixture is tmp_path itself)."""
+    return repo.parent / f"{repo.name}-{name}"
+
+
+def _write_record(root: Path, record: dict, decision: str = DECISION) -> Path:
+    path = root / ship.DECISION_RECORD_DIR / ship.decision_record_name(decision)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(record, ensure_ascii=False), encoding="utf-8")
+    return path
+
+
+def _decision_repo(repo: Path, policy: dict | None = None) -> None:
+    """Commit a base policy on main (with decision_record_excluded) and bring task/x up to it."""
+    run_git(repo, "switch", "main")
+    _write_policy(repo, DECISION_POLICY if policy is None else policy)
+    run_git(repo, "add", "config/gov008_ship.yaml")
+    run_git(repo, "commit", "--allow-empty", "-m", f"policy\n\nOwner-Decision: {DECISION}")
+    run_git(repo, "switch", "task/x")
+    run_git(repo, "merge", "--ff-only", "main")
+
+
+def _gated_zone_c_change(repo: Path, rel: str = "secret/app/rule.txt") -> None:
+    commit_file(repo, rel, "x\n", f"guarded change\n\nOwner-Decision: {DECISION}")
+    ship.gate(repo, "main")
+
+
+def test_real_policy_decision_record_excluded_is_inside_zone_c() -> None:
+    policy = yaml.safe_load((REPO / ship.POLICY_PATH).read_text(encoding="utf-8"))
+    excluded = policy["decision_record_excluded"]
+    assert [g for g in excluded if g not in policy["zones"]["C"]] == []
+    for rules_or_gate in (
+        "AGENTS.md",
+        "config/gov008_ship.yaml",
+        "tools/gov008/ship.py",
+        ".pi/extensions/aits-guard/**",
+        "scripts/agent/publish.ps1",
+        "scripts/agent/approve.ps1",
+        ".github/**",
+        "src/ai_trading_system/core/production_effect.py",
+        "src/ai_trading_system/trading_engine/brokers/**",
+    ):
+        assert rules_or_gate in excluded
+
+
+def test_decision_record_name_and_malformed_id() -> None:
+    assert ship.decision_record_name(DECISION) == "T.2026-10-13.x.json"
+    with pytest.raises(ship.ShipError, match="malformed"):
+        ship.decision_record_name("owner_decision:T:missing")
+
+
+@pytest.mark.parametrize(
+    ("overrides", "problem"),
+    [
+        ({"schema": "other"}, "schema must be"),
+        ({"decision": "owner_decision:T"}, "decision must be"),
+        ({"owner_words": " "}, "owner_words must be"),
+        ({"expected_result": None}, "expected_result must be"),
+        ({"c_paths": []}, "c_paths must be"),
+        ({"c_paths": ["/abs/**"]}, "c_paths must be"),
+        ({"approved_at": "2026-10-13 00:10"}, "approved_at must be"),
+        ({"expires": "soon"}, "expires must be"),
+    ],
+)
+def test_decision_record_validation_names_the_problem(overrides: dict, problem: str) -> None:
+    with pytest.raises(ship.ShipError, match=problem):
+        ship.validate_decision_record(_decision_record(**overrides), _today())
+
+
+def test_decision_record_validity_window() -> None:
+    today = _today()
+    ship.validate_decision_record(_decision_record(), today)
+    with pytest.raises(ship.ShipError, match="more than 14 days"):
+        ship.validate_decision_record(
+            _decision_record(expires=(today + dt.timedelta(days=15)).isoformat()), today
+        )
+    with pytest.raises(ship.ShipError, match="expired on"):
+        ship.validate_decision_record(_decision_record(), today + dt.timedelta(days=8))
+    with pytest.raises(ship.ShipError, match="before approved_at"):
+        ship.validate_decision_record(
+            _decision_record(expires=(today - dt.timedelta(days=1)).isoformat()),
+            today - dt.timedelta(days=2),
+        )
+
+
+def test_publish_zone_c_with_decision_record_covering_its_paths(repo: Path, tmp_path: Path) -> None:
+    _decision_repo(repo)
+    _gated_zone_c_change(repo)
+    root = _outside(tmp_path, "reviews")
+    _write_record(root, _decision_record())
+    done = ship.publish(repo, "main", push=False, review_root=root)
+    assert done["decision_records"] == {"decisions": [DECISION], "zone_c_paths": 1}
+    assert run_git(repo, "rev-parse", "main") == done["shipped_sha"]
+
+
+@pytest.mark.parametrize(
+    ("record", "rel", "problem"),
+    [
+        (None, "secret/app/rule.txt", "no decision record"),
+        ({"c_paths": ["secret/other/**"]}, "secret/app/rule.txt", "outside the decision records"),
+        ({"c_paths": ["secret/**"]}, "secret/rules/gate.txt", "cannot approve"),
+        ({"decision": "owner_decision:T:2026-10-13:other"}, "secret/app/rule.txt", "is for"),
+        (
+            {"expires": "2026-01-01", "approved_at": "2025-12-30T00:00:00Z"},
+            "secret/app/rule.txt",
+            "expired",
+        ),
+    ],
+)
+def test_publish_zone_c_decision_record_refusals_keep_main(
+    repo: Path, tmp_path: Path, record: dict | None, rel: str, problem: str
+) -> None:
+    _decision_repo(repo)
+    before = run_git(repo, "rev-parse", "main")
+    _gated_zone_c_change(repo, rel)
+    root = _outside(tmp_path, "reviews")
+    if record is not None:
+        _write_record(root, _decision_record(**record))
+    with pytest.raises(ship.ShipError, match=problem):
+        ship.publish(repo, "main", push=False, review_root=root)
+    assert run_git(repo, "rev-parse", "main") == before
+
+
+def test_publish_decision_records_need_the_base_policy_list(repo: Path, tmp_path: Path) -> None:
+    _decision_repo(repo, policy=MINI_POLICY)
+    _gated_zone_c_change(repo)
+    root = _outside(tmp_path, "reviews")
+    _write_record(root, _decision_record())
+    with pytest.raises(ship.ShipError, match="decision records are off"):
+        ship.publish(repo, "main", push=False, review_root=root)
+
+
+def test_publish_review_root_does_not_change_zone_a_or_b(repo: Path, tmp_path: Path) -> None:
+    _decision_repo(repo)
+    commit_file(repo, "src/app.py", "x\n", "code")
+    ship.gate(repo, "main")
+    done = ship.publish(repo, "main", push=False, review_root=_outside(tmp_path, "no-reviews"))
+    assert "decision_records" not in done
+
+
+def test_message_fingerprint_ignores_gate_trailer(repo: Path) -> None:
+    commit_file(repo, "docs/a.md", "x\n", "docs: add a\n\nbody line")
+    before = ship.message_fingerprint(repo)
+    ship.gate(repo, "main")
+    assert ship.message_fingerprint(repo) == before
+
+
+def test_patch_fingerprint_leaves_out_rendered_task_views(repo: Path) -> None:
+    commit_file(repo, "src/app.py", "x\n", "code")
+    plain = ship.patch_fingerprint(repo, "main", MINI_POLICY)
+    commit_file(repo, "docs/task_register.md", "rendered\n", "views")
+    assert ship.patch_fingerprint(repo, "main", MINI_POLICY) == plain
+
+
+def test_reviewed_patch_publishes_after_main_moves(repo: Path) -> None:
+    message = "code: add app\n\nreviewed body"
+    commit_file(repo, "src/app.py", "x\n", message)
+    patch = ship.patch_fingerprint(repo, "main", MINI_POLICY)
+    reviewed = ship.message_fingerprint(repo)
+    reviewed_tree = run_git(repo, "rev-parse", "HEAD^{tree}")
+    run_git(repo, "switch", "main")
+    commit_file(repo, "docs/other.md", "m\n", "main moved")
+    run_git(repo, "switch", "-c", "task/again")
+    commit_file(repo, "src/app.py", "x\n", message)
+    ship.gate(repo, "main")
+    assert run_git(repo, "rev-parse", "HEAD^{tree}") != reviewed_tree
+    done = ship.publish(repo, "main", push=False, expected_patch=patch, expected_message=reviewed)
+    assert done["reviewed_patch"] == {"patch": patch, "message": reviewed}
+    assert run_git(repo, "rev-parse", "main") == done["shipped_sha"]
+
+
+@pytest.mark.parametrize("change", ["extra_hunk", "message", "two_commits"])
+def test_reviewed_patch_refuses_any_difference(repo: Path, change: str) -> None:
+    message = "code: add app"
+    commit_file(repo, "src/app.py", "x\n", message)
+    patch = ship.patch_fingerprint(repo, "main", MINI_POLICY)
+    reviewed = ship.message_fingerprint(repo)
+    before = run_git(repo, "rev-parse", "main")
+    if change == "extra_hunk":
+        (repo / "src/app.py").write_text("x\ny\n", encoding="utf-8")
+        run_git(repo, "commit", "-a", "--amend", "-m", message)
+    elif change == "message":
+        run_git(repo, "commit", "--amend", "-m", message + "\n\nOwner-Decision: " + DECISION)
+    else:
+        run_git(repo, "reset", "--soft", "HEAD~1")
+        run_git(repo, "commit", "-m", "half")
+        commit_file(repo, "docs/empty.md", "", "second")
+    ship.gate(repo, "main")
+    problem = {
+        "extra_hunk": "reviewed patch",
+        "message": "reviewed message",
+        "two_commits": "exactly one",
+    }
+    with pytest.raises(ship.ShipError, match=problem[change]):
+        ship.publish(repo, "main", push=False, expected_patch=patch, expected_message=reviewed)
+    assert run_git(repo, "rev-parse", "main") == before
+
+
+@pytest.mark.parametrize(
+    ("patch", "message", "problem"),
+    [("A" * 40, "a" * 64, "40-character"), ("a" * 40, "a" * 63, "64-character")],
+)
+def test_reviewed_patch_formats(repo: Path, patch: str, message: str, problem: str) -> None:
+    commit_file(repo, "src/app.py", "x\n", "code")
+    ship.gate(repo, "main")
+    with pytest.raises(ship.ShipError, match=problem):
+        ship.publish(repo, "main", push=False, expected_patch=patch, expected_message=message)
+
+
+def test_cli_check_decision_record(tmp_path: Path) -> None:
+    good = _write_record(tmp_path, _decision_record())
+    done = subprocess.run(
+        [sys.executable, str(REPO / "tools/gov008/ship.py"), "--check-decision-record", str(good)],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert done.returncode == 0, done.stderr
+    summary = json.loads(done.stdout.strip().splitlines()[-1])
+    assert summary["record_name"] == "T.2026-10-13.x.json"
+    assert summary["c_paths"] == ["secret/app/**"]
+    assert len(summary["sha256"]) == 64
+    bad = _write_record(tmp_path / "bad", _decision_record(c_paths=[]))
+    refused = subprocess.run(
+        [sys.executable, str(REPO / "tools/gov008/ship.py"), "--check-decision-record", str(bad)],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert refused.returncode == 2
+    assert "c_paths must be" in refused.stderr
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["--dry-run", "--review-root", "x"],
+        ["--publish", "--expected-patch", "a" * 40],
+        ["--publish", "--expected-message", "a" * 64],
+    ],
+)
+def test_cli_rejects_publish_only_options_elsewhere(repo: Path, args: list[str]) -> None:
+    done = subprocess.run(
+        [sys.executable, str(REPO / "tools/gov008/ship.py"), "--repo", str(repo), *args],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert done.returncode == 2
+    assert "need --publish" in done.stderr or "go together" in done.stderr

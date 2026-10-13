@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-PS1 = [ROOT / "scripts/agent/agent-run.ps1", ROOT / "scripts/agent/run-brief.ps1", ROOT / "scripts/agent/setup-agent-account.ps1", ROOT / "scripts/agent/publish.ps1"]
+PS1 = [ROOT / "scripts/agent/agent-run.ps1", ROOT / "scripts/agent/run-brief.ps1", ROOT / "scripts/agent/setup-agent-account.ps1", ROOT / "scripts/agent/publish.ps1", ROOT / "scripts/agent/approve.ps1"]
 
 
 def powershell() -> str:

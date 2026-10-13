@@ -2,7 +2,9 @@
 
 Flow: task branch -> local gate -> ``Gate:`` trailer -> ``main`` moves to the same tree ->
 ordinary push. ``--gate`` can stop after recording the tested tree; ``--publish`` verifies that
-record without running branch code, then fast-forwards the base branch.
+record without running branch code, then fast-forwards the base branch. ``--publish`` can also
+check the reviewed patch (``--expected-patch``) instead of a predicted tree, and, for zone C, owner
+decision records under the review root (``--review-root``) instead of a per-tree acceptance.
 
 This is an agent-run gate, not an independent verifier (no branch protection; owner decision
 2026-10-10). Zone C changes (see config/gov008_ship.yaml) must carry an ``Owner-Decision:`` trailer.
@@ -12,11 +14,14 @@ usage:
   python tools/gov008/ship.py --repo . --execute [--push] # run gate, amend trailer, move main
   python tools/gov008/ship.py --repo . --gate             # run gate and amend trailer only
   python tools/gov008/ship.py --repo . --publish [--push] # verify Gate trailer, move main
+  python tools/gov008/ship.py --check-decision-record <file> # validate one owner decision record
 """
 
 from __future__ import annotations
 
 import argparse
+import datetime as dt
+import hashlib
 import json
 import os
 import re
@@ -33,6 +38,34 @@ GATE_TRAILER = "Gate"
 GATE_RE = re.compile(
     r"^zone=(?P<zone>[ABC]) tree=(?P<tree>[0-9a-f]{12,40}) commands=(?P<commands>\d+) "
     r"seconds=(?P<seconds>\d+(?:\.\d+)?) PASS$"
+)
+OWNER_DECISION_RE = re.compile(
+    r"^owner_decision:(?P<task>[A-Za-z0-9_.-]+):(?P<date>\d{4}-\d{2}-\d{2}):(?P<slug>[A-Za-z0-9_.-]+)$"
+)
+# Owner decision records (owner_decision:DEVX-029:2026-10-13:decision_scoped_signoff): one record
+# per owner decision in <review root>/decisions/, written from the owner's own words. It lets zone C
+# paths inside its c_paths publish without a per-tree acceptance until it expires. 14 days is the
+# longest a record may stay valid, so a stale decision cannot keep approving changes.
+DECISION_SCHEMA = "aits.owner_decision/1"
+DECISION_RECORD_DIR = "decisions"
+DECISION_MAX_DAYS = 14
+# Rendered task views are regenerated on whatever main a package lands on; the gate's staleness test
+# ties them to tasks/*.yaml, so the reviewed patch fingerprint leaves them out.
+RENDERED_VIEWS = ("docs/task_register.md", "docs/task_register_completed.md")
+# Fixed diff options so the fingerprint does not depend on local git configuration.
+PATCH_DIFF_OPTIONS = (
+    "--no-color",
+    "--no-ext-diff",
+    "--no-textconv",
+    "--no-renames",
+    "--binary",
+    "--full-index",
+    "--unified=3",
+    "--inter-hunk-context=0",
+    "--diff-algorithm=myers",
+    "--indent-heuristic",
+    "--src-prefix=a/",
+    "--dst-prefix=b/",
 )
 # On a failing gate command the terminal shows only this many trailing lines, enough to see pytest's
 # short test summary. Display truncation only: the full output always goes to the gate log file.
@@ -170,6 +203,154 @@ def plan(repo: Path, base: str = "main", policy: dict | None = None) -> dict:
         "problems": problems,
         "ok": not problems,
     }
+
+
+def decision_record_name(decision: str) -> str:
+    match = OWNER_DECISION_RE.fullmatch(decision)
+    if match is None:
+        raise ShipError(f"owner decision id is malformed: {decision!r}")
+    return f"{match['task']}.{match['date']}.{match['slug']}.json"
+
+
+def validate_decision_record(data: object, today: dt.date) -> dict:
+    """Check one owner decision record; return it or raise ShipError naming every problem."""
+    if not isinstance(data, dict):
+        raise ShipError("decision record is not a JSON object")
+    problems: list[str] = []
+    if data.get("schema") != DECISION_SCHEMA:
+        problems.append(f"schema must be {DECISION_SCHEMA}")
+    decision = data.get("decision")
+    if not isinstance(decision, str) or OWNER_DECISION_RE.fullmatch(decision) is None:
+        problems.append("decision must be owner_decision:<task>:<YYYY-MM-DD>:<slug>")
+    for key in ("owner_words", "expected_result"):
+        if not isinstance(data.get(key), str) or not data[key].strip():
+            problems.append(f"{key} must be a non-empty string")
+    c_paths = data.get("c_paths")
+    if (
+        not isinstance(c_paths, list)
+        or not c_paths
+        or not all(isinstance(g, str) and g.strip() and not g.startswith("/") for g in c_paths)
+    ):
+        problems.append("c_paths must be a non-empty list of repository-relative globs")
+    approved: dt.date | None = None
+    try:
+        approved_at = dt.datetime.strptime(str(data.get("approved_at")), "%Y-%m-%dT%H:%M:%SZ")
+        approved = approved_at.date()
+    except ValueError:
+        problems.append("approved_at must be YYYY-MM-DDTHH:MM:SSZ (UTC)")
+    try:
+        expires = dt.date.fromisoformat(str(data.get("expires")))
+    except ValueError:
+        problems.append("expires must be YYYY-MM-DD")
+    else:
+        if approved is not None and expires > approved + dt.timedelta(days=DECISION_MAX_DAYS):
+            problems.append(f"expires is more than {DECISION_MAX_DAYS} days after approved_at")
+        if approved is not None and expires < approved:
+            problems.append("expires is before approved_at")
+        if expires < today:
+            problems.append(f"expired on {expires.isoformat()}")
+    if problems:
+        raise ShipError("decision record: " + "; ".join(problems))
+    return data
+
+
+def read_decision_record(path: Path, today: dt.date) -> dict:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError) as exc:
+        raise ShipError(f"decision record {path} cannot be read: {exc}") from exc
+    return validate_decision_record(data, today)
+
+
+def check_decision_records(
+    repo: Path, base: str, policy: dict, review_root: Path, today: dt.date | None = None
+) -> dict:
+    """Zone C without a per-tree acceptance: every changed C path needs a valid decision record."""
+    today = dt.datetime.now(dt.UTC).date() if today is None else today
+    if "decision_record_excluded" not in policy:
+        raise ShipError(
+            "base policy has no decision_record_excluded list: decision records are off"
+        )
+    changed = [p for p in git(repo, "diff", "--name-only", f"{base}..HEAD").splitlines() if p]
+    c_paths = classify(changed, policy)["C"]
+    excluded = [glob_to_regex(g) for g in policy["decision_record_excluded"]]
+    blocked = [p for p in c_paths if any(rx.match(p) for rx in excluded)]
+    if blocked:
+        raise ShipError(
+            f"zone C paths {blocked[:5]} are rules or boundaries that a decision record cannot "
+            "approve; they need the owner's per-tree acceptance"
+        )
+    decisions = list(dict.fromkeys(owner_decisions(repo, base)))
+    if not decisions:
+        raise ShipError(f"no '{OWNER_DECISION_TRAILER}:' trailer to look up a decision record")
+    records = []
+    for decision in decisions:
+        path = review_root / DECISION_RECORD_DIR / decision_record_name(decision)
+        if not path.is_file():
+            raise ShipError(f"no decision record for {decision} at {path}")
+        record = read_decision_record(path, today)
+        if record["decision"] != decision:
+            raise ShipError(f"decision record {path} is for {record['decision']}, not {decision}")
+        records.append(record)
+    allowed = [glob_to_regex(g) for record in records for g in record["c_paths"]]
+    uncovered = [p for p in c_paths if not any(rx.match(p) for rx in allowed)]
+    if uncovered:
+        raise ShipError(f"zone C paths {uncovered[:5]} are outside the decision records' c_paths")
+    return {"decisions": decisions, "zone_c_paths": len(c_paths)}
+
+
+def patch_fingerprint(repo: Path, base: str, policy: dict) -> str:
+    """``git patch-id --stable`` of base..HEAD without rendered views and registered exclusions."""
+    excluded = [*policy.get("tree_clean_exclusions", []), *RENDERED_VIEWS]
+    spec = [".", *[f":(exclude,literal){p}" for p in excluded]]
+    diff = subprocess.run(
+        ["git", "-C", str(repo), "diff", *PATCH_DIFF_OPTIONS, f"{base}..HEAD", "--", *spec],
+        capture_output=True,
+        check=False,
+    )
+    if diff.returncode != 0:
+        stderr = diff.stderr.decode(errors="replace")
+        raise ShipError(f"git diff for the patch fingerprint failed: {stderr}")
+    if not diff.stdout.strip():
+        raise ShipError("the patch is empty")
+    pid = subprocess.run(
+        ["git", "-C", str(repo), "patch-id", "--stable"],
+        input=diff.stdout,
+        capture_output=True,
+        check=False,
+    )
+    fields = pid.stdout.decode().split()
+    if pid.returncode != 0 or not fields:
+        raise ShipError(f"git patch-id failed: {pid.stderr.decode(errors='replace')}")
+    return fields[0]
+
+
+def message_fingerprint(repo: Path, rev: str = "HEAD") -> str:
+    """SHA-256 of the commit message without Gate trailer lines (UTF-8, one trailing newline)."""
+    message = git(repo, "log", "-1", "--format=%B", rev)
+    lines = [line for line in message.splitlines() if not line.startswith(f"{GATE_TRAILER}: ")]
+    return hashlib.sha256(("\n".join(lines).rstrip() + "\n").encode("utf-8")).hexdigest()
+
+
+def check_reviewed_patch(
+    repo: Path, base: str, policy: dict, expected_patch: str, expected_message: str
+) -> dict:
+    if re.fullmatch(r"[0-9a-f]{40}", expected_patch) is None:
+        raise ShipError("expected patch must be a 40-character lowercase hex patch id")
+    if re.fullmatch(r"[0-9a-f]{64}", expected_message) is None:
+        raise ShipError("expected message must be a 64-character lowercase hex SHA-256")
+    count = git(repo, "rev-list", "--count", f"{base}..HEAD")
+    if count != "1":
+        raise ShipError(f"a reviewed patch publishes exactly one commit on {base}, found {count}")
+    patch = patch_fingerprint(repo, base, policy)
+    if patch != expected_patch:
+        raise ShipError(f"patch {patch} does not match the reviewed patch {expected_patch}")
+    message = message_fingerprint(repo)
+    if message != expected_message:
+        raise ShipError(
+            f"commit message {message} does not match the reviewed message {expected_message}"
+        )
+    return {"patch": patch, "message": message}
 
 
 def git_dir(repo: Path) -> Path:
@@ -316,16 +497,35 @@ def gate(repo: Path, base: str) -> dict:
     return {"gated_sha": new_head, "tree": tree, "gate": result, "plan": p}
 
 
-def publish(repo: Path, base: str, push: bool) -> dict:
-    """Verify HEAD's Gate trailer against base policy, then fast-forward ``base``."""
-    p = plan(repo, base, policy=load_policy_from_ref(repo, base))
+def publish(
+    repo: Path,
+    base: str,
+    push: bool,
+    review_root: Path | None = None,
+    expected_patch: str | None = None,
+    expected_message: str | None = None,
+) -> dict:
+    """Verify HEAD's Gate trailer against base policy, then fast-forward ``base``.
+
+    With ``expected_patch`` the commit must be the reviewed patch and message. With
+    ``review_root`` a zone C change also needs decision records covering its zone C paths
+    (publish.ps1 passes it when there is no per-tree acceptance)."""
+    policy = load_policy_from_ref(repo, base)
+    p = plan(repo, base, policy=policy)
     if not p["ok"]:
         raise ShipError("; ".join(p["problems"]))
     trailer = read_gate_trailer(repo)
     validate_gate_trailer(repo, trailer, p)
+    result: dict = {}
+    if expected_patch is not None or expected_message is not None:
+        result["reviewed_patch"] = check_reviewed_patch(
+            repo, base, policy, expected_patch or "", expected_message or ""
+        )
+    if review_root is not None and p["zone"] == "C":
+        result["decision_records"] = check_decision_records(repo, base, policy, review_root)
     new_head = git(repo, "rev-parse", "HEAD")
     move_base_and_maybe_push(repo, base, new_head, p["base_sha"], push)
-    return {"shipped_sha": new_head, "pushed": push, "gate_trailer": trailer, "plan": p}
+    return {"shipped_sha": new_head, "pushed": push, "gate_trailer": trailer, "plan": p, **result}
 
 
 def ship(repo: Path, base: str, push: bool) -> dict:
@@ -350,22 +550,50 @@ def main() -> int:
     mode.add_argument("--execute", action="store_true")
     mode.add_argument("--gate", action="store_true")
     mode.add_argument("--publish", action="store_true")
+    mode.add_argument("--check-decision-record", type=Path, metavar="FILE")
     parser.add_argument(
         "--push", action="store_true", help="with --execute or --publish: ordinary push of base"
+    )
+    parser.add_argument("--review-root", type=Path, help="with --publish: zone C decision records")
+    parser.add_argument("--expected-patch", help="with --publish: reviewed git patch-id --stable")
+    parser.add_argument(
+        "--expected-message", help="with --publish: SHA-256 of the reviewed message"
     )
     args = parser.parse_args()
     if args.push and not (args.execute or args.publish):
         parser.error("--push can only be used with --execute or --publish")
+    if (args.review_root or args.expected_patch or args.expected_message) and not args.publish:
+        parser.error("--review-root, --expected-patch and --expected-message need --publish")
+    if bool(args.expected_patch) != bool(args.expected_message):
+        parser.error("--expected-patch and --expected-message go together")
     repo = args.repo.resolve()
     try:
         # Compact one-line JSON: the full plan/ship result stays machine-readable without spending
         # ~30 lines (and thousands of tokens in a small model context) on indentation.
-        if args.dry_run:
+        if args.check_decision_record is not None:
+            path = args.check_decision_record
+            record = read_decision_record(path, dt.datetime.now(dt.UTC).date())
+            result = {
+                "decision": record["decision"],
+                "record_name": decision_record_name(record["decision"]),
+                "c_paths": record["c_paths"],
+                "expected_result": record["expected_result"],
+                "expires": record["expires"],
+                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            }
+        elif args.dry_run:
             result = plan(repo, args.base)
         elif args.gate:
             result = gate(repo, args.base)
         elif args.publish:
-            result = publish(repo, args.base, args.push)
+            result = publish(
+                repo,
+                args.base,
+                args.push,
+                review_root=args.review_root,
+                expected_patch=args.expected_patch,
+                expected_message=args.expected_message,
+            )
         else:
             result = ship(repo, args.base, args.push)
         print(json.dumps(result, ensure_ascii=False, separators=(", ", ": ")))

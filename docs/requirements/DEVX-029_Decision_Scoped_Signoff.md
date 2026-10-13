@@ -90,6 +90,15 @@ owner_decision:DEVX-029:2026-10-13:decision_scoped_signoff —— owner（Baker�
 ## 5. 进度
 
 - 2026-10-13：owner 选定方式 A（`owner_decision:DEVX-029:2026-10-13:decision_scoped_signoff`）。运行 01 登记本需求和任务；运行 02（C 区）按 tree 请 owner 最后一次批准。
+- 2026-10-13：运行 02（C 区）实现第 3 节步骤 1–7：
+  - `ship.py` 增加决定记录核对、补丁指纹和 `--check-decision-record`；
+  - `publish.ps1` 增加 `-ExpectedPatch`、`-ExpectedMessage`；C 区没有按 tree 的验收记录时，先确认每个 `Owner-Decision` 都有记录文件，再交给 `ship.py` 核对；
+  - 新增 `approve.ps1`，只输出 ASCII，Windows PowerShell 5.1 不会读乱；
+  - `config/gov008_ship.yaml` 升到 1.1.0；
+  - `agent_config.json` 增加 `decision_drafts_root`（`D:\Work\AITradingSystem_decision_drafts`，pi 的账户无权访问）；
+  - AGENTS.md 和 ship-change skill 同步。
+
+  云端在 Linux 上用 PowerShell 7 跑了全部 PowerShell 用例；PowerShell 5.1 由 Windows 上的门禁覆盖。这次改的是规则本身，owner 按结果 tree 批准。
 
 ## 6. 运行影响边界
 

@@ -45,15 +45,19 @@ pi 的运行由远程会话用 `scripts/agent/run-brief.ps1` 启动，验收的�
 .venv/Scripts/python.exe tools/gov008/ship.py --repo . --execute --push     # one-step: gate, then main and origin
 .venv/Scripts/python.exe tools/gov008/ship.py --repo . --gate               # two-step after review: write Gate only
 scripts/agent/publish.ps1 -Branch <branch> -RunDir <run-dir> -ExpectedTree <tree>  # owner account: publish with main ship.py
+scripts/agent/publish.ps1 -Branch <branch> -RunDir <run-dir> -ExpectedPatch <patch id> -ExpectedMessage <sha256>  # or by the reviewed patch
 ```
 
 - `ship` runs the gate, writes a `Gate:` trailer, fast-forwards `main` to the tested tree, pushes
   normally, and checks `origin/main` before and after. In two-step pi runs pi stops after `--dry-run`
   (the guard blocks `--gate`, `--execute`, `--publish` and `publish.ps1`); after Claude's review the
-  owner account runs `--gate`, then `publish.ps1` with the reviewed tree. It only publishes a branch
-  whose tree is that tree; zone C, or a branch without a `Gate:` trailer, also needs the owner's
-  accepted record for the same tree in the review root. It does not run tests or branch code. Do
-  nothing else in the repository while it runs.
+  owner account runs `--gate`, then `publish.ps1` with the reviewed tree, or with the reviewed patch
+  (`git patch-id --stable` of the one commit without the rendered task views, plus the SHA-256 of its
+  message without `Gate:` lines), which stays valid when `main` moves. Zone C also needs the owner's
+  accepted record for the same tree in the review root, or owner decision records in
+  `<review_root>/decisions/` covering every changed zone C path (never for paths in
+  `decision_record_excluded`). It does not run tests or branch code. Do nothing else in the repository
+  while it runs.
 - If the gate fails: read the failures, fix them on the branch, commit, and run `ship` again. Never
   bypass `ship` with a manual `git push`, and never force-push, rebase, or rewrite history.
 - If `main` moved meanwhile, `ship` refuses. The second shipper brings the new `main` into its branch

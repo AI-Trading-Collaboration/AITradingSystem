@@ -1,7 +1,8 @@
 schema_version: gov008_ship_policy.v1
 policy_id: GOV-008-SHIP
-version: 1.0.0
+version: 1.1.0
 # In force from the GOV-008 P3 cutover (owner_decision:GOV-008:2026-10-10:bootstrap_route_b_v1).
+# 1.1.0: decision_record_excluded (owner_decision:DEVX-029:2026-10-13:decision_scoped_signoff).
 status: OWNER_APPROVED_ENFORCED
 owner: Project Owner
 rationale: >
@@ -59,6 +60,7 @@ zones:
     - tools/gov008/ship.py
     - .pi/extensions/aits-guard/**
     - scripts/agent/publish.ps1
+    - scripts/agent/approve.ps1
   # Zone A: records. Documentation, task and experiment records, generated lists.
   A:
     - docs/**
@@ -66,6 +68,28 @@ zones:
     - inputs/**
     - research/**
     - "*.md"
+
+# Zone C paths that an owner decision record (<review_root>/decisions/, see AGENTS.md) can never
+# approve: the rules and gates themselves and the production and broker boundary. A change to any of
+# them still needs the owner's acceptance of its exact tree. Every entry is also a zone C entry.
+decision_record_excluded:
+  - AGENTS.md
+  - config/gov008_ship.yaml
+  - tools/gov008/ship.py
+  - .pi/extensions/aits-guard/**
+  - scripts/agent/publish.ps1
+  - scripts/agent/approve.ps1
+  - .github/**
+  - src/ai_trading_system/core/production_effect.py
+  - src/ai_trading_system/trading_engine/brokers/**
+  - src/ai_trading_system/trading_engine/execution/**
+  - config/parameters/production/current.yaml
+  - config/parameters/promotion/promotion_rules.yaml
+  - config/research/promotion_gate_thresholds.yaml
+  - config/execution_policy.yaml
+  - config/trading_engine.yaml
+  - config/ibkr_paper_*.yaml
+  - config/production_boundary_static_scan_allowlist.yaml
 
 gates:
   # Commands are argv lists run from the repository root; "python" means the interpreter running

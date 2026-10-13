@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime as dt
 import json
 import os
 import shutil
@@ -7,11 +8,13 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tests"))
 from test_agent_scripts import powershell  # noqa: E402, I001
+from tools.gov008 import ship  # noqa: E402
 
 PUBLISH = ROOT / "scripts/agent/publish.ps1"
 DECISION = "owner_decision:T:2026-10-12:x"
@@ -19,6 +22,7 @@ MINI_POLICY = {
     "schema_version": "gov008_ship_policy.v1",
     "tree_clean_exclusions": [],
     "zones": {"C": ["secret/**"], "A": ["docs/**", "*.md"]},
+    "decision_record_excluded": ["secret/rules/**"],
     "gates": {"A": [], "B": [], "C": []},
 }
 
@@ -112,12 +116,15 @@ def run_publish(
     env: dict[str, str] | None = None,
     branch: str = "task/x",
     tree: str | None = None,
+    reviewed: list[str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     ps = powershell()
     if env is None:
         env = {k: v for k, v in os.environ.items() if not k.startswith("AITS_PI_")}
     if tree is None:
         tree = current_tree(repo, branch)
+    if reviewed is None:
+        reviewed = ["-ExpectedTree", tree]
     return subprocess.run(
         [
             ps,
@@ -130,8 +137,7 @@ def run_publish(
             branch,
             "-RunDir",
             str(run_dir),
-            "-ExpectedTree",
-            tree,
+            *reviewed,
             "-Repo",
             str(repo),
             "-Python",
@@ -466,3 +472,129 @@ def test_publish_gate_trailer_claiming_zone_b_for_zone_c_change_fails(tmp_path: 
     assert json.loads((run_dir / "publish.json").read_text(encoding="utf-8"))["ok"] is False
     assert "does not match planned zone C" in done.stdout
     assert run_git(repo, "rev-parse", "main") == before
+
+
+# --- DEVX-029: owner decision records and the reviewed patch --------------------------------------
+
+
+def write_decision_record(run_dir: Path, c_paths: list[str]) -> Path:
+    today = dt.datetime.now(dt.UTC).date()
+    record = {
+        "schema": ship.DECISION_SCHEMA,
+        "decision": DECISION,
+        "approved_at": f"{today.isoformat()}T00:10:00Z",
+        "owner_words": "approve decision T",
+        "c_paths": c_paths,
+        "expected_result": "secret/app only",
+        "expires": (today + dt.timedelta(days=7)).isoformat(),
+    }
+    path = run_dir.parent / "reviews" / "decisions" / ship.decision_record_name(DECISION)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(record), encoding="utf-8")
+    return path
+
+
+def reviewed_patch(repo: Path) -> list[str]:
+    patch = ship.patch_fingerprint(repo, "main", MINI_POLICY)
+    return ["-ExpectedPatch", patch, "-ExpectedMessage", ship.message_fingerprint(repo)]
+
+
+def test_publish_zone_c_with_decision_record_needs_no_tree_record(tmp_path: Path) -> None:
+    repo, origin, run_dir = setup_repo(tmp_path)
+    commit_file(repo, "secret/app/rule.py", "x\n", f"code\n\nOwner-Decision: {DECISION}")
+    assert run_ship(repo, "--base", "main", "--gate").returncode == 0
+    run_dir.mkdir()
+    write_decision_record(run_dir, ["secret/app/**"])
+    done = run_publish(repo, run_dir)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert run_git(repo, "rev-parse", "main") == run_git(origin, "rev-parse", "main")
+
+
+@pytest.mark.parametrize(
+    ("rel", "c_paths", "problem"),
+    [
+        ("secret/app/rule.py", ["secret/other/**"], "outside the decision records"),
+        ("secret/rules/gate.py", ["secret/**"], "cannot approve"),
+    ],
+)
+def test_publish_zone_c_decision_record_refusals_keep_main(
+    tmp_path: Path, rel: str, c_paths: list[str], problem: str
+) -> None:
+    repo, _origin, run_dir = setup_repo(tmp_path)
+    before = run_git(repo, "rev-parse", "main")
+    commit_file(repo, rel, "x\n", f"code\n\nOwner-Decision: {DECISION}")
+    assert run_ship(repo, "--base", "main", "--gate").returncode == 0
+    run_dir.mkdir()
+    write_decision_record(run_dir, c_paths)
+    done = run_publish(repo, run_dir)
+    assert done.returncode == 1
+    assert problem in done.stdout
+    assert run_git(repo, "rev-parse", "main") == before
+
+
+def test_publish_by_reviewed_patch_after_main_moves(tmp_path: Path) -> None:
+    repo, origin, run_dir = setup_repo(tmp_path)
+    commit_file(repo, "src/app.py", "x\n", "code: add app")
+    reviewed = reviewed_patch(repo)
+    run_git(repo, "switch", "main")
+    commit_file(repo, "docs/other.md", "m\n", "main moved")
+    run_git(repo, "switch", "-c", "task/again")
+    commit_file(repo, "src/app.py", "x\n", "code: add app")
+    assert run_ship(repo, "--base", "main", "--gate").returncode == 0
+    run_dir.mkdir()
+    done = run_publish(repo, run_dir, branch="task/again", reviewed=reviewed)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert run_git(repo, "rev-parse", "main") == run_git(origin, "rev-parse", "main")
+
+
+def test_publish_reviewed_patch_refuses_other_patch(tmp_path: Path) -> None:
+    repo, _origin, run_dir = setup_repo(tmp_path)
+    commit_file(repo, "src/app.py", "x\n", "code: add app")
+    reviewed = reviewed_patch(repo)
+    (repo / "src/app.py").write_text("x\ny\n", encoding="utf-8")
+    run_git(repo, "commit", "-a", "--amend", "-m", "code: add app")
+    assert run_ship(repo, "--base", "main", "--gate").returncode == 0
+    before = run_git(repo, "rev-parse", "main")
+    run_dir.mkdir()
+    done = run_publish(repo, run_dir, reviewed=reviewed)
+    assert done.returncode == 1
+    assert "does not match the reviewed patch" in done.stdout
+    assert run_git(repo, "rev-parse", "main") == before
+
+
+@pytest.mark.parametrize(
+    ("args", "problem"),
+    [
+        (
+            ["-ExpectedTree", "a" * 40, "-ExpectedPatch", "a" * 40, "-ExpectedMessage", "a" * 64],
+            "not both",
+        ),
+        (["-ExpectedPatch", "A" * 40, "-ExpectedMessage", "a" * 64], "ExpectedPatch is not"),
+        (["-ExpectedPatch", "a" * 40], "ExpectedMessage is not"),
+    ],
+)
+def test_publish_reviewed_patch_validation_without_json(
+    tmp_path: Path, args: list[str], problem: str
+) -> None:
+    repo, _origin, run_dir = setup_repo(tmp_path)
+    commit_file(repo, "src/app.py", "x\n", "code")
+    assert run_ship(repo, "--base", "main", "--gate").returncode == 0
+    run_dir.mkdir()
+    done = run_publish(repo, run_dir, reviewed=args)
+    assert done.returncode == 2
+    assert problem in done.stdout
+    assert not (run_dir / "publish.json").exists()
+
+
+def test_publish_reviewed_patch_zone_c_tree_record_must_be_branch_tree(tmp_path: Path) -> None:
+    repo, _origin, run_dir = setup_repo(tmp_path)
+    commit_file(repo, "secret/app/rule.py", "x\n", f"code\n\nOwner-Decision: {DECISION}")
+    reviewed = reviewed_patch(repo)
+    assert run_ship(repo, "--base", "main", "--gate").returncode == 0
+    write_acceptance(run_dir, tree=current_tree(repo, "main"))
+    done = run_publish(repo, run_dir, reviewed=reviewed)
+    assert done.returncode == 2
+    assert "does not match Branch tree" in done.stdout
+    write_acceptance(run_dir, tree=current_tree(repo))
+    done = run_publish(repo, run_dir, reviewed=reviewed)
+    assert done.returncode == 0, done.stdout + done.stderr
