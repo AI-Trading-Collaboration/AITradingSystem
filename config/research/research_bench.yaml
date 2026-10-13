@@ -1,0 +1,41 @@
+# Research bench settings (TRADING-2565, TRADING-2567 S3). Zone C: every research question is
+# evaluated with these numbers, so a change here changes every result and needs an owner decision.
+schema_version: research_bench.v1
+cost_model: config/research/transaction_cost_model.yaml
+window_policy: config/research/primary_research_window_policy.yaml
+window_registry: config/research/research_window_registry.yaml
+trading_days_per_year: 252
+# Left tail: mean of the worst share of daily returns.
+cvar_levels: [0.01, 0.05]
+# "How much is left after an unlucky stretch": the 10th percentile of rolling geometric returns.
+rolling_years: 3
+rolling_percentile: 0.10
+# Every run re-evaluates the strategy with the data after this many dates replaced by wild values;
+# a target on or before such a date that moves is look-ahead and stops the run.
+lookahead_cut_dates: 20
+# Fixed drawdown episodes, by calendar month and written down before any result is read. Losses are
+# reported for each episode inside the run window; they are not found from the data's own peaks.
+episodes:
+  - id: dotcom_bear
+    start: "2000-03"
+    end: "2002-10"
+  - id: global_financial_crisis
+    start: "2007-10"
+    end: "2009-03"
+  - id: us_downgrade_2011
+    start: "2011-07"
+    end: "2011-10"
+  - id: china_oil_2015
+    start: "2015-08"
+    end: "2016-02"
+  - id: q4_2018
+    start: "2018-10"
+    end: "2018-12"
+  - id: covid_crash
+    start: "2020-02"
+    end: "2020-03"
+  - id: inflation_bear_2022
+    start: "2022-01"
+    end: "2022-12"
+production_effect: none
+broker_action: none

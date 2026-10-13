@@ -18,6 +18,22 @@
 - 选择（Baker，2026-10-13 10:09 JST，在研究线程的决定卡上选了"加，先核对"）：卡片的问题是「加 QQQ 实际复权价（1999 年起）来核对长历史研究数据吗？」，说明里写明新数据源先在他电脑上试 FMP 能否拿到 1999 年起的数据，拿不到再用 Yahoo，只存本机、只用于研究；这个选项的后果是「我准备包和 tree，你按 tree 批准；核对完开发窗口才用这份数据」。另一个选项是不加、按推断用总收益序列。
 - 含义：长历史快照加上真实 QQQ 自 1999-03-10 起的复权收盘价，检查逐年对照两条指数和合成 QQQ；对照结果出来之前，开发窗口不用这份数据。真实 QQQ 先只作参照，研究要不要改用它另行决定。实现是 C 区改动（新增数据源目录条目），Baker 按结果 tree 事先批准后发布。
 
+- `owner_decision:TRADING-2567:2026-10-13:risk_first_question_order`
+- 选择（Baker，2026-10-13 12:14 JST，在研究线程的决定卡上选了"按建议排"）：
+  - 卡片的问题是「按'先管风险、再组合信号'的顺序排第一批 QQQ 研究题目吗？」。
+  - 说明里的顺序：
+    1. 按已实现波动调整 QQQ 敞口和合成杠杆；
+    2. 三到五个经典信号等权组合，在一个区间里调仓；
+    3. 期权层（S5）改测卖 put 或 covered call；
+    4. 最后对 FOMC 和隔夜效应做便宜的核对。
+  - 说明里的成功标准：主要是同等平均敞口下的回撤、左尾和复利分散，超额收益只作次要指标。
+  - 这个选项的后果是「目标改成同等风险下回撤更小、复利更好，第一题是按波动调敞口和杠杆」。另外两个选项是"以跑赢为主"和"先讨论"。
+- 依据：开题前查过的已有研究。去掉前视偏差和多重检验后，股指择时很少跑赢买入持有；站得住的是风险一侧，见项目文件 `knowledge/claude/qqq-options/trend-research-literature-2026-10-13.md`、`excess-return-why-hard-2026-10-13.md`。
+- 含义：
+  - S4 第一批预注册按上面的顺序。原来列在 S4 里的经典趋势基准、旧风险否决和 Composer v2 样本外检验，并入第二题（信号组合），或在开题时由 Baker 决定。
+  - 每个题目的预注册要有"已有研究的预期"一节，写明效应大小、失效环境和来源。
+  - 评估台（S3、TRADING-2565）的主指标按这个标准定。
+
 ## 背景
 
 - 22 条旧研究线的结论在 `research/ledger.md`。旧的 QQQ 期权线（第 19 行）没测成：约 60 个任务只跑过 1 次策略损益（+4.48%），对照组只算了一股 QQQ，结果无法解释；它用来定方向的 Composer v2（第 21 行）后来被证伪。
@@ -44,8 +60,8 @@ FMP 没有期权数据；现有 FMP Starter 档只有 5 年历史。QQQ 实际 E
 | S0 | 本文档、任务卡、研究台账的去向和更正 | A |
 | S1 | 长历史研究数据：上表 FRED 序列下载成研究快照（不进日报缓存和日报 DQ），带 manifest、校验和覆盖检查；派生现金代理和合成 2 倍、3 倍，与本机 QQQ、QLD、TQQQ 重叠段比对；`config/data_sources.yaml` 登记 | C |
 | S2 | 研究窗口：`research_window_registry.yaml` 新增开发窗口 1999-03-10 到 2010-12-31、验证窗口 2011-01-03 到 2021-02-19（代理口径），`primary_research_window_policy.yaml` 的 `question_windows` 写明 QQQ 方向问题的窗口角色；`AGENTS.md`、research-run skill 同步 | C |
-| S3 | 评估台：共享模拟器（从 `simple_baseline_portfolio_control` 提出）、快照读取、试验登记和多重检验校正（TRADING-2565）、标准证伪检验、预注册格式 | B/C |
-| S4 | 第一批预注册（Baker 签开题）：经典趋势基准、旧 QQQ 期权线冻结的 4 个风险否决、冻结的 Composer v2 只作样本外检验（是否纳入在开题时定） | A |
+| S3 | 评估台：共享模拟器（从 `simple_baseline_portfolio_control` 提出）、快照读取、试验登记和多重检验校正（TRADING-2565）、标准证伪检验、预注册格式。分 S3a、S3b、S3c 三批，见 `docs/requirements/TRADING-2565_Research_Bench.md` | C |
+| S4 | 第一批预注册（Baker 签开题）。2026-10-13 起按第三条 owner decision 的顺序：先按波动调敞口和杠杆，再做经典信号组合（经典趋势基准、旧 QQQ 期权线冻结的 4 个风险否决、冻结的 Composer v2 样本外检验在这里，是否纳入在开题时定） | A |
 | S5 | 期权实现：方向信号通过后另立任务，在 QuantConnect 上回测；对照组和估计量在运行前冻结 | 另立任务 |
 
 ## 不改的
@@ -89,3 +105,4 @@ FMP 没有期权数据；现有 FMP Starter 档只有 5 年历史。QQQ 实际 E
 - 2026-10-13：TRADING-2567-06 在检查里加总收益滞后系数，区分这两种情况：总收益指数滞后 s 天时系数约为 s，价格指数有水平噪声时只略高于 0（回归量有噪声造成，按 2003 年的噪声大小不到 0.1），价格指数滞后时为负。逐年和低于下限的窗口合起来各算一次，带标准误；标准误不小于 1 的估计在 check.md 里显示为 `-`。发布后重跑 `check`。即使系数分得清，也只是推断；要确认哪条序列对，需要独立的参照（QQQ 自 1999-03-10 起的实际复权价），由 Baker 决定是否新增数据源。production_effect=none；broker_action=none。
 - 2026-10-13：06 发布后（main 7932537e）重跑检查：低于下限的窗口里总收益滞后系数 0.11 ± 0.01，2003、2004、2005 年各约 0.11 ± 0.02，其余年份为 0。和 05 的比例 −0.27 一起拟合几种模拟的误差形态，最接近的是：价格指数每天约 0.5% 的水平误差，加上总收益指数约 5% 的当天涨跌晚一天反映；总收益指数本身几乎没有水平误差。这是推断。Baker 选择先用真实 QQQ 复权价核对（第二条 owner decision），TRADING-2567-07 只记下这个决定和上面的结果，实现在下一批（C 区）。production_effect=none；broker_action=none。
 - 2026-10-13：TRADING-2567-08 把真实 QQQ 复权价加进快照：数据源目录新增 `fmp_qqq_long_history_research`（C 区；本机探测 FMP 和 Yahoo 都有 1999-03-10 起的 QQQ，按决定先用 FMP），规格加 `etf_reference` 一节，`fetch` 同时下载真实 QQQ，研究数据多一列 `etf_reference_return`（只作参照）；检查逐年对照两条指数和合成 QQQ；快照 schema v2，检查报告 schema v5。发布后在主仓库重新 `fetch`（会联网，生成新快照）。对照结果出来之前开发窗口不用这份数据，结果决定开发窗口用哪条序列。production_effect=none；broker_action=none。
+- 2026-10-13：Baker 定第一批的顺序和成功标准（第三条 owner decision）。S3 评估台分三批，S3a 是 TRADING-2565-01（C 区），内容见 TRADING-2565 需求文档；第一题（按波动调敞口和杠杆）的预注册草稿在项目文件 `knowledge/claude/qqq-options/s3-bench-and-q1-prereg-draft-2026-10-13.md`，门槛在开题时由 Baker 定。Baker 同时要求在验证这些策略的过程中评估工程结构有没有提升空间：S3 和第一题期间把每个包和每次真实数据运行的摩擦记在项目文件 `knowledge/claude/qqq-options/engineering-log.md`，第一题开发窗口跑完后写工程结构复核，请 Baker 定。production_effect=none；broker_action=none。

@@ -2,8 +2,8 @@ schema_version: task.v1
 id: TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING
 area: 研究方法 / 试验自动登记与多重检验校正（RSI 借鉴）
 priority: P2
-status: READY
-next_owner: Project Owner
-next_step: 退出条件已满足：2026-10-12 研究方向已定（owner_decision:TRADING-2567:2026-10-12:qqq_direction_1999_window）。作为 TRADING-2567 S3 评估台的一部分实现：试验自动登记（含失败和放弃的变体），报告给出试验次数和校正后指标；Baker 定的研究节奏不限同时进行的问题数，靠这里控制假阳性
+status: IN_PROGRESS
+next_owner: Claude（S3a 发布后写 S3b：运行记录、试验计数和折算夏普、验证窗口读取登记、预注册格式）
+next_step: 作为 TRADING-2567 S3 评估台实现，分三批（docs/requirements/TRADING-2565_Research_Bench.md）。S3a（TRADING-2565-01，C 区）：模块 src/ai_trading_system/research_bench/、配置 config/research/research_bench.yaml、不变量测试，只开开发窗口；S3b：运行记录和试验计数、折算夏普、验证窗口读取登记、预注册格式；S3c：标准证伪和报告。每批 Baker 按结果 tree 事先批准
 acceptance: 研究运行默认自动登记，未登记的运行结果不能进入结果准入；报告第一屏显示试验次数和校正后指标；校正实现有固定数值用例；涉及 backtest/** 或阈值的改动走 C 区并带 owner 决定
-notes: production_effect=none；broker_action=none；落实 GOV-008 第 3 节 G3 的试验计数（第 4 节第 2 条的实验台账目前只有最小版）；依据：AQuA（arXiv 2608.12841）和 Huang & Fan（arXiv 2603.14288）的自主因子研究都报了很高的 Sharpe，但没讲清试验次数和多重检验；2026-10-12：随 TRADING-2567 激活（owner_decision:TRADING-2567:2026-10-12:qqq_direction_1999_window）
+notes: production_effect=none；broker_action=none；落实 GOV-008 第 3 节 G3 的试验计数（第 4 节第 2 条的实验台账目前只有最小版）；依据：AQuA（arXiv 2608.12841）和 Huang & Fan（arXiv 2603.14288）的自主因子研究都报了很高的 Sharpe，但没讲清试验次数和多重检验；2026-10-12：随 TRADING-2567 激活（owner_decision:TRADING-2567:2026-10-12:qqq_direction_1999_window）；2026-10-13：开始实现，设计和分批见 docs/requirements/TRADING-2565_Research_Bench.md；第一批顺序和主指标按 owner_decision:TRADING-2567:2026-10-13:risk_first_question_order

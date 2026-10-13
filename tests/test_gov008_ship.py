@@ -85,6 +85,8 @@ def test_real_policy_zone_c_globs_match_tracked_files() -> None:
         ("src/ai_trading_system/scoring/daily.py", "C"),
         ("src/ai_trading_system/trading_engine/brokers/ibkr.py", "C"),
         ("config/scoring_rules.yaml", "C"),
+        ("src/ai_trading_system/research_bench/simulate.py", "C"),
+        ("config/research/research_bench.yaml", "C"),
         (".pi/extensions/aits-guard/index.ts", "C"),
         ("scripts/agent/publish.ps1", "C"),
         ("scripts/agent/run-brief.ps1", "B"),
