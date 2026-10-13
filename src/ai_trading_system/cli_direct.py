@@ -278,6 +278,7 @@ def _dispatch(args: list[str]) -> None:
             ),
             download_start=_option(args, "--download-start", "2018-01-01"),
             full_universe=_flag(args, "--full-universe"),
+            rescue_session=_flag(args, "--rescue-session"),
         )
         return
     if args[:1] == ["download-data"]:

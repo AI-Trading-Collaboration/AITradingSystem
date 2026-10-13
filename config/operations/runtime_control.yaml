@@ -1,7 +1,7 @@
 schema_version: operations_runtime_control_policy.v1
 policy_id: operations_runtime_control_v1
 owner: system_operations
-version: 1.2.0
+version: 1.3.0
 status: active_ops_071
 policy_metadata:
   rationale: >
@@ -19,7 +19,15 @@ policy_metadata:
     the current release, reason code, and a report-only replay boundary. Since
     1.2.0 (OPS-082, owner_decision:OPS-082:2026-10-11:deterministic_scheduler_v1
     (e)) the current release is the HEAD of the clean runtime checkout, reachable
-    from origin/main, instead of an active deployment receipt.
+    from origin/main, instead of an active deployment receipt. Since 1.3.0
+    (OPS-085, owner_decision:OPS-085:2026-10-13:rescue_retry_after_source_failure)
+    a parent that failed only because a data source was temporarily unavailable
+    gets one automatic same-as-of retry from capture_daily_inputs in the 17:30
+    rescue window, without a release change. The child binds the parent state and
+    the capture manifest that shows the failure and reruns every step from
+    capture_daily_inputs on; capture reuses the sources that already passed, so
+    only the failed source is fetched again. Any other failure still needs an
+    explicit OPS-071 recovery or the next as_of.
   validation_evidence: >
     ARCH-004F1 focused tests cover concurrent acquisition, stale-lock recovery,
     duplicate completed triggers, retry exhaustion, safe resume, unsafe
@@ -27,7 +35,9 @@ policy_metadata:
     OPS-071 tests cover immutable parent archives, exact parent/release binding,
     one-child limit, selective report-tail replay, and tamper rejection; OPS-082
     tests reject a dirty runtime checkout, a HEAD not on origin/main, and a HEAD
-    that moved after the request.
+    that moved after the request. OPS-085 tests cover the one-retry limit, parent
+    and capture-manifest binding, replay from the capture step, and refusal when
+    the failure was not a temporary data-source failure.
   review_condition: >
     Review before changing lock TTL, attempt budget, resume/recovery eligibility,
     allowed recovery boundary, daily executor cut-in, non-daily manual dispatch,
@@ -51,3 +61,6 @@ terminal_recovery_allowed_from_step_ids:
   - dynamic_v3_rescue_schedule_observe
   - pipeline_health
   - secret_hygiene
+source_retry_enabled: true
+source_retry_from_step_ids:
+  - capture_daily_inputs

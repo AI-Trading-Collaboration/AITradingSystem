@@ -128,6 +128,7 @@ def parse_cli_output(text: str) -> dict[str, Any]:
 
     run_control = first(r"Canonical run control：(\S+)")
     executed = first(r"每日运行执行：(\S+)")
+    source_retry = first(r"Source-failure retry：(\S+)")
     finalization_failed = first(r"Canonical finalization：FAILED \((\S+)\)")
     if finalization_failed is None and "Canonical finalization：FAIL_FINALIZATION" in text:
         finalization_failed = "FAIL_FINALIZATION"
@@ -136,8 +137,32 @@ def parse_cli_output(text: str) -> dict[str, Any]:
         "run_control_status": run_control,
         "executed_status": executed,
         "finalization_failure": finalization_failed,
+        "source_retry": source_retry,
         "traceback": _TRACEBACK in text,
     }
+
+
+def source_retry_label(outcome: str | None) -> str | None:
+    """Chinese line for the OPS-085 retry outcome that ``aits ops daily-run`` prints."""
+
+    if outcome is None:
+        return None
+    if outcome == "RETRIED":
+        return "已从采集步骤重试一次（同一 as_of 的第 2 次尝试）"
+    reason = outcome.removeprefix("NOT_ELIGIBLE:")
+    if reason == "NO_FAILED_RUN":
+        return "不需要：同一 as_of 没有失败的运行"
+    if reason == "ALREADY_RETRIED":
+        return "不重试：同一 as_of 已经重试过，需人工处理"
+    if reason.startswith("OTHER_STEP_FAILED:"):
+        steps = reason.split(":", 1)[1]
+        return f"不重试：采集以外的步骤失败（{steps}），需人工处理"
+    if reason.startswith("COMPONENT_NOT_RETRYABLE:"):
+        _, component, blocker = (reason.split(":", 2) + ["", ""])[:3]
+        return f"不重试：组件 {component} 的失败（{blocker}）不是临时数据源故障，需人工处理"
+    if reason.startswith("RUN_CONTROL_"):
+        return f"不重试：运行控制拒绝（{reason}），需人工处理"
+    return f"不重试：{reason}，需人工处理"
 
 
 def as_of_from_run_id(run_id: str | None) -> str | None:
@@ -478,6 +503,9 @@ def build_summary(
 ) -> dict[str, Any]:
     primary, findings = classify(evidence)
     state = evidence.state or {}
+    retry_outcome = (
+        parse_cli_output(evidence.log_text)["source_retry"] if evidence.log_text else None
+    )
     return {
         "schema_version": SCHEMA_VERSION,
         "generated_by": "scripts/ops/daily_scheduler_summary.py",
@@ -492,6 +520,10 @@ def build_summary(
         "run_id": evidence.run_id,
         "as_of": evidence.as_of,
         "cli_status": evidence.cli_status,
+        "source_failure_retry": {
+            "outcome": retry_outcome,
+            "label": source_retry_label(retry_outcome),
+        },
         "run_state": {
             "path": str(evidence.state_path) if evidence.state_path else None,
             "belongs_to_this_invocation": evidence.state_is_current_run,
@@ -544,6 +576,13 @@ def render_markdown(summary: Mapping[str, Any]) -> str:
         f"- daily-run 退出码：{summary.get('daily_run_exit_code')}",
         f"- Run ID：`{summary.get('run_id')}`；as_of：{summary.get('as_of')}",
         f"- CLI 结果：`{summary.get('cli_status')}`",
+    ]
+    retry = summary.get("source_failure_retry") or {}
+    if retry.get("label"):
+        lines.append(
+            f"- 数据源失败自动重试（OPS-085）：{retry['label']}（`{retry.get('outcome')}`）"
+        )
+    lines += [
         (
             f"- 运行状态（run state）：`{state.get('status')}`，attempt {state.get('attempt')}，"
             f"run_id `{state.get('run_id')}`"

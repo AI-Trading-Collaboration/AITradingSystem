@@ -14,6 +14,8 @@ from ai_trading_system.contracts.operations import (
     OperationsRecoveryRequest,
     OperationsRunControlResolution,
     OperationsRunDecision,
+    OperationsSourceRetryReceipt,
+    OperationsSourceRetryRequest,
 )
 from ai_trading_system.contracts.status import CanonicalStatus
 from ai_trading_system.contracts.workflow import RunLedger, WorkflowSpec, WorkflowStepSpec
@@ -49,6 +51,10 @@ class OperationsRuntimeControlPolicy:
     terminal_recovery_enabled: bool = False
     terminal_recovery_requires_release_change: bool = True
     terminal_recovery_allowed_from_step_ids: tuple[str, ...] = ()
+    # OPS-085 (owner_decision:OPS-085:2026-10-13:rescue_retry_after_source_failure): one automatic
+    # same-as-of retry from these steps after a data-source-only failure, without a release change.
+    source_retry_enabled: bool = False
+    source_retry_from_step_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.policy_id.strip() or not self.owner.strip() or not self.version.strip():
@@ -72,6 +78,15 @@ class OperationsRuntimeControlPolicy:
                 self.policy_id,
             )
         object.__setattr__(self, "terminal_recovery_allowed_from_step_ids", allowed)
+        retry_steps = tuple(
+            sorted(set(item.strip() for item in self.source_retry_from_step_ids if item.strip()))
+        )
+        if self.source_retry_enabled and not retry_steps:
+            raise OperationsRuntimeControlError(
+                "RUNTIME_POLICY_SOURCE_RETRY_STEPS_MISSING",
+                self.policy_id,
+            )
+        object.__setattr__(self, "source_retry_from_step_ids", retry_steps)
 
 
 @dataclass(frozen=True)
@@ -265,6 +280,7 @@ class OperationsRunControl:
         run_id: str,
         now: datetime | None = None,
         recovery_request: OperationsRecoveryRequest | None = None,
+        source_retry: OperationsSourceRetryRequest | None = None,
     ) -> OperationsRunControlAcquisition:
         timestamp = now or datetime.now(tz=UTC)
         key = operations_idempotency_key(spec=spec, as_of=as_of)
@@ -293,6 +309,18 @@ class OperationsRunControl:
                     key=key,
                     attempt=prior.attempt,
                     completed=prior.completed_step_ids,
+                )
+            if source_retry is not None:
+                return self._acquire_source_retry(
+                    spec=spec,
+                    as_of=as_of,
+                    key=key,
+                    prior=prior,
+                    run_id=run_id,
+                    request=source_retry,
+                    recovery_request=recovery_request,
+                    lock_record=lock_record,
+                    at=timestamp,
                 )
             if (
                 prior is not None
@@ -456,6 +484,214 @@ class OperationsRunControl:
         except Exception:
             self._release_lock(lock_record)
             raise
+
+    def read_execution_state(
+        self,
+        *,
+        spec: WorkflowSpec,
+        as_of: date,
+    ) -> OperationsExecutionState | None:
+        """Read the state for this workflow spec and as_of without taking the lock."""
+
+        return self._read_state(operations_idempotency_key(spec=spec, as_of=as_of))
+
+    def _acquire_source_retry(
+        self,
+        *,
+        spec: WorkflowSpec,
+        as_of: date,
+        key: str,
+        prior: OperationsExecutionState | None,
+        run_id: str,
+        request: OperationsSourceRetryRequest,
+        recovery_request: OperationsRecoveryRequest | None,
+        lock_record: _LockRecord,
+        at: datetime,
+    ) -> OperationsRunControlAcquisition:
+        if (
+            recovery_request is not None
+            or prior is None
+            or prior.status not in {CanonicalStatus.BLOCKED, CanonicalStatus.FAILED}
+            or not self.policy.source_retry_enabled
+        ):
+            self._release_lock(lock_record)
+            return self._without_lease(
+                decision=OperationsRunDecision.BLOCKED_INVALID_RECOVERY,
+                spec=spec,
+                as_of=as_of,
+                key=key,
+                attempt=0 if prior is None else prior.attempt,
+                completed=() if prior is None else prior.completed_step_ids,
+                blocker_codes=("SOURCE_RETRY_NOT_ELIGIBLE",),
+            )
+        if prior.attempt >= self.policy.max_run_attempts:
+            self._release_lock(lock_record)
+            return self._without_lease(
+                decision=OperationsRunDecision.BLOCKED_RETRY_EXHAUSTED,
+                spec=spec,
+                as_of=as_of,
+                key=key,
+                attempt=prior.attempt,
+                completed=prior.completed_step_ids,
+                blocker_codes=("RUN_ATTEMPT_BUDGET_EXHAUSTED",),
+            )
+        try:
+            state, receipt_path = self._prepare_source_retry(
+                spec=spec,
+                prior=prior,
+                run_id=run_id,
+                request=request,
+                at=at,
+            )
+        except OperationsRuntimeControlError as exc:
+            self._release_lock(lock_record)
+            return self._without_lease(
+                decision=OperationsRunDecision.BLOCKED_INVALID_RECOVERY,
+                spec=spec,
+                as_of=as_of,
+                key=key,
+                attempt=prior.attempt,
+                completed=prior.completed_step_ids,
+                blocker_codes=(exc.code,),
+            )
+        self._write_state(state, spec)
+        return OperationsRunControlAcquisition(
+            resolution=OperationsRunControlResolution(
+                decision=OperationsRunDecision.SOURCE_RETRY,
+                idempotency_key=key,
+                workflow_id=spec.workflow_id,
+                workflow_spec_id=spec.spec_id,
+                as_of=as_of,
+                attempt=state.attempt,
+                resume_completed_step_ids=state.completed_step_ids,
+                recovery_parent_run_id=prior.run_id,
+                recovery_from_step_id=request.retry_from_step_id,
+                recovery_receipt_path=str(receipt_path),
+            ),
+            lease=OperationsRunControlLease(
+                control=self,
+                spec=spec,
+                lock_record=lock_record,
+                state=state,
+            ),
+        )
+
+    def _prepare_source_retry(
+        self,
+        *,
+        spec: WorkflowSpec,
+        prior: OperationsExecutionState,
+        run_id: str,
+        request: OperationsSourceRetryRequest,
+        at: datetime,
+    ) -> tuple[OperationsExecutionState, Path]:
+        """Replay every step from the retry step on, as OPS-071 does from its boundary.
+
+        Steps after the retry step depend on it, so the run ledger cannot keep them PASS while the
+        retry step reruns; they rerun too. Steps before the boundary are reused.
+        """
+
+        if request.parent_run_id != prior.run_id:
+            raise OperationsRuntimeControlError(
+                "SOURCE_RETRY_PARENT_RUN_MISMATCH",
+                request.parent_run_id,
+            )
+        if request.retry_from_step_id not in self.policy.source_retry_from_step_ids:
+            raise OperationsRuntimeControlError(
+                "SOURCE_RETRY_FROM_STEP_NOT_ALLOWED",
+                request.retry_from_step_id,
+            )
+        step_ids = tuple(step.step_id for step in spec.steps)
+        if request.retry_from_step_id not in step_ids:
+            raise OperationsRuntimeControlError(
+                "SOURCE_RETRY_FROM_STEP_UNKNOWN",
+                request.retry_from_step_id,
+            )
+        retry_root = self._source_retry_root(prior.idempotency_key)
+        if retry_root.exists():
+            raise OperationsRuntimeControlError("SOURCE_RETRY_ALREADY_USED", str(retry_root))
+        manifest = _read_bound_json(
+            Path(request.capture_manifest_path),
+            expected_sha256=request.capture_manifest_sha256,
+            missing_code="SOURCE_RETRY_CAPTURE_MANIFEST_INVALID",
+        )
+        if manifest.get("as_of") != prior.as_of.isoformat():
+            raise OperationsRuntimeControlError(
+                "SOURCE_RETRY_CAPTURE_MANIFEST_DATE_MISMATCH",
+                str(manifest.get("as_of")),
+            )
+        replay_steps = spec.steps[step_ids.index(request.retry_from_step_id) :]
+        non_idempotent = tuple(step.step_id for step in replay_steps if not step.idempotent)
+        if non_idempotent:
+            raise OperationsRuntimeControlError(
+                "SOURCE_RETRY_REPLAY_NON_IDEMPOTENT",
+                ",".join(non_idempotent),
+            )
+
+        child_attempt = prior.attempt + 1
+        receipt_path = retry_root / f"attempt_{child_attempt}" / "source_retry_receipt.json"
+        state_path = self._state_path(prior.idempotency_key)
+        ledger_path = self.execution_ledger_path(prior.idempotency_key)
+        try:
+            parent_state_bytes = state_path.read_bytes()
+            parent_ledger_bytes = ledger_path.read_bytes()
+        except OSError as exc:
+            raise OperationsRuntimeControlError(
+                "SOURCE_RETRY_PARENT_EVIDENCE_MISSING",
+                str(exc),
+            ) from exc
+        state_archive_path = receipt_path.with_name("parent_terminal_state.json")
+        ledger_archive_path = receipt_path.with_name("parent_terminal_run_ledger.json")
+        _write_immutable_bytes(state_archive_path, parent_state_bytes)
+        _write_immutable_bytes(ledger_archive_path, parent_ledger_bytes)
+
+        replay_step_ids = tuple(step.step_id for step in replay_steps)
+        replay_step_set = set(replay_step_ids)
+        reused_completed = tuple(
+            step_id for step_id in prior.completed_step_ids if step_id not in replay_step_set
+        )
+        receipt = OperationsSourceRetryReceipt(
+            idempotency_key=prior.idempotency_key,
+            workflow_id=spec.workflow_id,
+            workflow_spec_id=spec.spec_id,
+            as_of=prior.as_of,
+            parent_run_id=prior.run_id,
+            child_run_id=run_id,
+            parent_status=prior.status,
+            parent_attempt=prior.attempt,
+            child_attempt=child_attempt,
+            retry_from_step_id=request.retry_from_step_id,
+            replay_step_ids=replay_step_ids,
+            reused_completed_step_ids=reused_completed,
+            parent_state_archive_path=str(state_archive_path),
+            parent_state_sha256=hashlib.sha256(parent_state_bytes).hexdigest(),
+            parent_ledger_archive_path=str(ledger_archive_path),
+            parent_ledger_sha256=hashlib.sha256(parent_ledger_bytes).hexdigest(),
+            request=request,
+            authorized_at=at,
+        )
+        _write_immutable_json(receipt_path, receipt.to_dict())
+        state = replace(
+            prior,
+            run_id=run_id,
+            status=CanonicalStatus.RUNNING,
+            attempt=child_attempt,
+            started_at=at,
+            updated_at=at,
+            finished_at=None,
+            completed_step_ids=reused_completed,
+            skipped_step_ids=tuple(
+                step_id for step_id in prior.skipped_step_ids if step_id not in replay_step_set
+            ),
+            current_step_id=None,
+            step_attempts=tuple(
+                (step_id, attempts)
+                for step_id, attempts in prior.step_attempts
+                if step_id not in replay_step_set
+            ),
+            blocker_codes=(),
+        )
+        return state, receipt_path
 
     def _unsafe_resume_steps(
         self, *, spec: WorkflowSpec, prior: OperationsExecutionState | None
@@ -767,6 +1003,9 @@ class OperationsRunControl:
     def _recovery_receipt_path(self, key: str, *, child_attempt: int) -> Path:
         return self.root / "recovery" / key / f"attempt_{child_attempt}" / "recovery_receipt.json"
 
+    def _source_retry_root(self, key: str) -> Path:
+        return self.root / "source_retry" / key
+
     def _read_state(self, key: str) -> OperationsExecutionState | None:
         path = self._state_path(key)
         if not path.exists():
@@ -974,6 +1213,12 @@ def load_operations_runtime_control_policy(
         terminal_recovery_allowed_from_step_ids=_required_string_tuple(
             payload,
             "terminal_recovery_allowed_from_step_ids",
+        ),
+        source_retry_enabled=payload.get("source_retry_enabled") is True,
+        source_retry_from_step_ids=(
+            _required_string_tuple(payload, "source_retry_from_step_ids")
+            if "source_retry_from_step_ids" in payload
+            else ()
         ),
     )
 

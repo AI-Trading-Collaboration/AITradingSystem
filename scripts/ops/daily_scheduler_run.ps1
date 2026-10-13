@@ -15,7 +15,10 @@ Order, each step fail-closed:
      value is taken from the user environment scope. Values are never printed or logged; the log
      records PRESENT or MISSING per name.
   3. Exactly one call of `<runtime>\.venv\Scripts\aits.exe ops daily-run`. A duplicate trigger for
-     an as_of that already has a terminal state is refused by the daily-run run control itself.
+     an as_of that already has a terminal state is refused by the daily-run run control itself. The
+     rescue window adds --retry-after-source-failure (OPS-085): daily-run then retries the as_of
+     once, from the capture step, when its first run failed only on a temporary data-source
+     failure; any other terminal state is refused as before.
   4. Exit code and output go to <runtime>\outputs\run_control\scheduler\<date>_<window>.log.
   5. scripts\ops\daily_scheduler_summary.py writes the Chinese summary next to the log, by code.
      Notification is these files only.
@@ -46,8 +49,9 @@ $DailyRunEnvironment = @(
 )
 $OriginMainRef = 'refs/remotes/origin/main'
 # The 17:30 trigger is the same task's second start time; anything before 15:00 Tokyo is the
-# 12:00 primary window (OPS-084), including a late start after the PC wakes. Display label only;
-# run control deduplicates by as_of.
+# 12:00 primary window (OPS-084), including a late start after the PC wakes. Run control
+# deduplicates by as_of; the window only sets the summary label and whether daily-run may retry
+# a temporary data-source failure (OPS-085).
 $RescueWindowStartHour = 15
 
 $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
@@ -150,9 +154,13 @@ if ($precheckBlocker) {
     }
     $stdoutPath = $stem + '.stdout.tmp'
     $stderrPath = $stem + '.stderr.tmp'
-    Add-LogText $logPath ("command={0} ops daily-run`ndaily_run_invoked=true`n" -f $Aits)
+    $dailyRunArguments = @('ops', 'daily-run')
+    # OPS-085 (owner_decision:OPS-085:2026-10-13:rescue_retry_after_source_failure): only the rescue
+    # window asks for the one automatic retry; daily-run checks the evidence and decides.
+    if ($Window -eq 'RESCUE') { $dailyRunArguments += '--retry-after-source-failure' }
+    Add-LogText $logPath ("command={0} {1}`ndaily_run_invoked=true`n" -f $Aits, ($dailyRunArguments -join ' '))
     try {
-        $process = Start-Process -FilePath $Aits -ArgumentList @('ops', 'daily-run') `
+        $process = Start-Process -FilePath $Aits -ArgumentList $dailyRunArguments `
             -WorkingDirectory $RuntimeRoot -NoNewWindow -PassThru `
             -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
         $null = $process.Handle

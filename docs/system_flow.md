@@ -8,7 +8,7 @@
 ## 1. 每日链路
 
 唯一外部入口是 `aits ops daily-run`（`aits ops daily-plan` 只出计划不执行），由 Windows 计划任务在运行副本里每天触发
-（12:00、17:30 Asia/Tokyo，见第 5 节、OPS-082 与 OPS-084）。步骤、依赖和交易日/休市日条件以
+（12:00、17:30 Asia/Tokyo，见第 5 节、OPS-082、OPS-084 与 OPS-085）。步骤、依赖和交易日/休市日条件以
 `config/scheduled_tasks.yaml` 的 `daily_trading_day` 为准（32 个任务）；`ops_daily.py` 与运行控制使用同一份 DAG。
 
 ```mermaid
@@ -104,10 +104,14 @@ flowchart LR
     TASK["Windows 计划任务<br/>12:00 / 17:30 Asia/Tokyo"] --> PRE["前置检查：运行副本工作区干净 ·<br/>HEAD 可从 origin/main 到达 · aits.exe 存在"]
     PRE -->|失败| SUM
     PRE --> ENV["只设置 daily-run 读取的环境变量<br/>（日志只记 PRESENT/MISSING）"]
-    ENV --> RUN["一次 aits ops daily-run<br/>运行控制按 as_of 去重"]
+    ENV --> RUN["一次 aits ops daily-run<br/>运行控制按 as_of 去重<br/>17:30 加 --retry-after-source-failure"]
     RUN --> LOG["outputs/run_control/scheduler/&lt;日期&gt;_&lt;窗口&gt;.log"]
     LOG --> SUM["daily_scheduler_summary.py（代码，无 LLM）<br/>.summary.md / .summary.json：终态 · 每步 · capture 组件 · DQ · 阻断分类"]
 ```
+
+17:30 窗口的 daily-run 带 `--retry-after-source-failure`（OPS-085，`owner_decision:OPS-085:2026-10-13:rescue_retry_after_source_failure`）：
+同一 as_of 的第 1 次尝试只因可重抓历史源（`market_macro`）的临时故障失败、采集已关闭且其他步骤没有失败时，运行控制以
+`SOURCE_RETRY` 从 `capture_daily_inputs` 起重跑一次；已 PASS 的采集组件复用，失败组件在补救会话里重抓。其他失败照旧等待人工处理。
 
 终止恢复绑定的当前版本是运行副本 HEAD（工作区干净、可从 `origin/main` 到达、与父运行 `git_commit` 不同），
 `OperationsRecoveryRequest` v2 记录 HEAD、运行副本路径与 `origin/main`；不再使用 deployment receipt。

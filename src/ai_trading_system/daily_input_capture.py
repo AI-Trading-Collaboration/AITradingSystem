@@ -647,6 +647,7 @@ def capture_daily_inputs(
     sleeper: CaptureSleeper = time.sleep,
     clock: CaptureClock | None = None,
     generated_at: datetime | None = None,
+    rescue_session: bool = False,
 ) -> DailyInputCaptureResult:
     captured_at = generated_at or datetime.now(tz=UTC)
     if captured_at.tzinfo is None or captured_at.utcoffset() is None:
@@ -688,6 +689,7 @@ def capture_daily_inputs(
                 snapshotter=component_snapshotter,
                 sleeper=sleeper,
                 clock=capture_clock,
+                rescue_session=rescue_session,
             )
         )
 
@@ -778,6 +780,7 @@ def _capture_component_with_source_control(
     snapshotter: CaptureSnapshotter,
     sleeper: CaptureSleeper,
     clock: CaptureClock,
+    rescue_session: bool = False,
 ) -> dict[str, object]:
     source_root = policy.source_control_root / as_of.isoformat() / component.component_id
     state_path = source_root / "state.json"
@@ -820,6 +823,47 @@ def _capture_component_with_source_control(
             error_summary=state_issue,
             attempt_history=(),
         )
+    # OPS-085 (owner_decision:OPS-085:2026-10-13:rescue_retry_after_source_failure): when the
+    # primary session ended in a temporary source failure, the rescue window gets one more session
+    # with the same attempt budget. Its state sits next to the primary state, which stays as
+    # written; a closed rescue session is reused by any later capture of this as_of.
+    session_fields: dict[str, object] = {}
+    lease_root = source_root
+    if state is not None and _source_state_terminal_fail(state):
+        rescue_state_path = state_path.parent / "rescue" / "state.json"
+        rescue_state, rescue_issue, rescue_superseded = _load_source_state(
+            rescue_state_path,
+            component=component,
+            as_of=as_of,
+            idempotency_key=idempotency_key,
+        )
+        if rescue_issue is None and rescue_superseded is not None:
+            rescue_issue = "rescue source state cannot be superseded"
+        if rescue_issue is not None:
+            return _source_blocked_result(
+                component=component,
+                project_root=project_root,
+                started_at=started_at,
+                ended_at=_aware_now(clock),
+                idempotency_key=idempotency_key,
+                lease_status="NOT_ACQUIRED",
+                blocker_code="SOURCE_STATE_INVALID",
+                error_summary=rescue_issue,
+                attempt_history=(),
+            )
+        rescue_closed = rescue_state is not None and (
+            rescue_state.get("status") == "PASS" or _source_state_terminal_fail(rescue_state)
+        )
+        if rescue_closed or (rescue_session and _rescue_session_allowed(component, state)):
+            session_fields = {
+                "capture_session": "RESCUE",
+                "primary_session_state_path": _relative_path(state_path, project_root),
+                "primary_session_attempt_count": len(list(state.get("attempts", []))),
+            }
+            state_path = rescue_state_path
+            lock_path = rescue_state_path.parent / "active.lock"
+            lease_root = rescue_state_path.parent
+            state = rescue_state
     prior_attempts = list(state.get("attempts", [])) if state else []
     if state and state.get("status") == "PASS":
         prior_result = state.get("component_result")
@@ -839,18 +883,22 @@ def _capture_component_with_source_control(
                 "idempotency_reused": True,
                 "source_revision": component.source_revision,
                 "source_state_path": _relative_path(state_path, project_root),
+                **session_fields,
             }
-        return _source_blocked_result(
-            component=component,
-            project_root=project_root,
-            started_at=started_at,
-            ended_at=_aware_now(clock),
-            idempotency_key=idempotency_key,
-            lease_status="NOT_ACQUIRED",
-            blocker_code="SOURCE_STATE_INVALID",
-            error_summary="terminal PASS source state artifact drift",
-            attempt_history=tuple(prior_attempts),
-        )
+        return {
+            **_source_blocked_result(
+                component=component,
+                project_root=project_root,
+                started_at=started_at,
+                ended_at=_aware_now(clock),
+                idempotency_key=idempotency_key,
+                lease_status="NOT_ACQUIRED",
+                blocker_code="SOURCE_STATE_INVALID",
+                error_summary="terminal PASS source state artifact drift",
+                attempt_history=tuple(prior_attempts),
+            ),
+            **session_fields,
+        }
     if state and state.get("status") == "FAIL" and state.get("retry_allowed") is False:
         prior_result = state.get("component_result")
         if isinstance(prior_result, Mapping):
@@ -860,23 +908,27 @@ def _capture_component_with_source_control(
                 "idempotency_reused": True,
                 "source_revision": component.source_revision,
                 "source_state_path": _relative_path(state_path, project_root),
+                **session_fields,
             }
     if len(prior_attempts) >= component.max_attempts:
-        return _source_blocked_result(
-            component=component,
-            project_root=project_root,
-            started_at=started_at,
-            ended_at=_aware_now(clock),
-            idempotency_key=idempotency_key,
-            lease_status="NOT_ACQUIRED",
-            blocker_code="SOURCE_ATTEMPT_BUDGET_EXHAUSTED",
-            error_summary="reviewed source/session attempt budget exhausted",
-            attempt_history=tuple(prior_attempts),
-        )
+        return {
+            **_source_blocked_result(
+                component=component,
+                project_root=project_root,
+                started_at=started_at,
+                ended_at=_aware_now(clock),
+                idempotency_key=idempotency_key,
+                lease_status="NOT_ACQUIRED",
+                blocker_code="SOURCE_ATTEMPT_BUDGET_EXHAUSTED",
+                error_summary="reviewed source/session attempt budget exhausted",
+                attempt_history=tuple(prior_attempts),
+            ),
+            **session_fields,
+        }
 
     lease, lease_status, lease_issue = _acquire_source_lease(
         lock_path=lock_path,
-        source_root=source_root,
+        source_root=lease_root,
         component=component,
         as_of=as_of,
         idempotency_key=idempotency_key,
@@ -884,17 +936,20 @@ def _capture_component_with_source_control(
         clock=clock,
     )
     if lease is None:
-        return _source_blocked_result(
-            component=component,
-            project_root=project_root,
-            started_at=started_at,
-            ended_at=_aware_now(clock),
-            idempotency_key=idempotency_key,
-            lease_status=lease_status,
-            blocker_code="SOURCE_LEASE_CONFLICT",
-            error_summary=lease_issue or "active source/session lease exists",
-            attempt_history=tuple(prior_attempts),
-        )
+        return {
+            **_source_blocked_result(
+                component=component,
+                project_root=project_root,
+                started_at=started_at,
+                ended_at=_aware_now(clock),
+                idempotency_key=idempotency_key,
+                lease_status=lease_status,
+                blocker_code="SOURCE_LEASE_CONFLICT",
+                error_summary=lease_issue or "active source/session lease exists",
+                attempt_history=tuple(prior_attempts),
+            ),
+            **session_fields,
+        }
 
     result: dict[str, object] | None = None
     try:
@@ -1005,6 +1060,7 @@ def _capture_component_with_source_control(
                 "source_lease_status": lease_status,
                 "idempotency_reused": False,
                 "recovery_mode": component.recovery_mode,
+                **session_fields,
             }
             source_state = {
                 "schema_version": "daily_input_capture_source_state.v1",
@@ -1026,40 +1082,65 @@ def _capture_component_with_source_control(
                 "component_result": result,
                 "updated_at": attempt_ended.isoformat(),
                 "production_effect": "none",
+                **session_fields,
             }
             write_json_atomic(state_path, source_state)
             if passed or not retry_allowed:
                 break
             sleeper(float(component.retry_delay_seconds))
         if result is None:
-            return _source_blocked_result(
-                component=component,
-                project_root=project_root,
-                started_at=started_at,
-                ended_at=_aware_now(clock),
-                idempotency_key=idempotency_key,
-                lease_status=lease_status,
-                blocker_code="SOURCE_ATTEMPT_BUDGET_EXHAUSTED",
-                error_summary="reviewed source/session attempt budget exhausted",
-                attempt_history=tuple(prior_attempts),
-            )
+            return {
+                **_source_blocked_result(
+                    component=component,
+                    project_root=project_root,
+                    started_at=started_at,
+                    ended_at=_aware_now(clock),
+                    idempotency_key=idempotency_key,
+                    lease_status=lease_status,
+                    blocker_code="SOURCE_ATTEMPT_BUDGET_EXHAUSTED",
+                    error_summary="reviewed source/session attempt budget exhausted",
+                    attempt_history=tuple(prior_attempts),
+                ),
+                **session_fields,
+            }
         return result
     except Exception as exc:
         ended_at = _aware_now(clock)
-        return _source_blocked_result(
-            component=component,
-            project_root=project_root,
-            started_at=started_at,
-            ended_at=ended_at,
-            idempotency_key=idempotency_key,
-            lease_status=lease_status,
-            blocker_code="FILESYSTEM_INTEGRITY_FAILURE",
-            error_summary=_sanitize_error_summary(f"{type(exc).__name__}: {exc}", env),
-            attempt_history=tuple(prior_attempts),
-            lease_id=str(lease["lease_id"]),
-        )
+        return {
+            **_source_blocked_result(
+                component=component,
+                project_root=project_root,
+                started_at=started_at,
+                ended_at=ended_at,
+                idempotency_key=idempotency_key,
+                lease_status=lease_status,
+                blocker_code="FILESYSTEM_INTEGRITY_FAILURE",
+                error_summary=_sanitize_error_summary(f"{type(exc).__name__}: {exc}", env),
+                attempt_history=tuple(prior_attempts),
+                lease_id=str(lease["lease_id"]),
+            ),
+            **session_fields,
+        }
     finally:
         _release_source_lease(lock_path, expected_lease_id=str(lease["lease_id"]))
+
+
+def _source_state_terminal_fail(state: Mapping[str, object]) -> bool:
+    return state.get("status") == "FAIL" and state.get("retry_allowed") is False
+
+
+def _rescue_session_allowed(
+    component: CaptureComponent,
+    primary_state: Mapping[str, object],
+) -> bool:
+    """A rescue session may only re-fetch history whose last primary failure was temporary."""
+
+    if component.recovery_mode != "IMMUTABLE_RAW_BACKFILL":
+        return False
+    attempts = primary_state.get("attempts")
+    if not isinstance(attempts, list) or not attempts or not isinstance(attempts[-1], Mapping):
+        return False
+    return attempts[-1].get("blocker_code") in component.retryable_blocker_codes
 
 
 def _source_blocked_result(

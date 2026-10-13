@@ -1,6 +1,6 @@
 # OPS-082：确定性 Windows 调度替代 Codex automation
 
-最后更新：2026-10-13（主触发时间由 OPS-084 从 09:30 改为 12:00）
+最后更新：2026-10-13（主触发时间由 OPS-084 从 09:30 改为 12:00；17:30 对数据源临时故障自动重试一次，见 OPS-085）
 
 稳定任务 ID：`OPS-082_DETERMINISTIC_WINDOWS_SCHEDULER`
 
@@ -67,7 +67,7 @@ B：仍记为 BASELINE_DONE，等 owner 确认付费源状态后再转 DONE。ow
 | 无窗口启动 | 动作是 `conhost.exe --headless powershell.exe -NoProfile -NonInteractive -File <运行副本>\scripts\ops\daily_scheduler_run.ps1`（owner 偏好后台进程不弹控制台窗口）。conhost 不转发子进程退出码，所以计划任务的"上次运行结果"只表示包装脚本已启动，运行结论看日志与摘要 |
 | 包装脚本 | `scripts/ops/daily_scheduler_run.ps1`：① 前置检查：工作区干净（`git status --porcelain`）、HEAD 可从本地 `origin/main` 到达、`aits.exe` 存在，任一失败不调用 daily-run、退出码 2；② 只设置 daily-run 实际读取的环境变量（grep `src` 确认：`FMP_API_KEY`、`MARKETSTACK_API_KEY`、`SEC_USER_AGENT`、`OPENAI_API_KEY`、`CONGRESS_API_KEY`、`GOVINFO_API_KEY`），进程里没有时取用户环境变量，日志只记 PRESENT/MISSING；不设置 Codex automation 旧合同里的 `AITS_*` 变量（已无代码读取）；③ 调用一次 `<运行副本>\.venv\Scripts\aits.exe ops daily-run`；④ 输出与退出码写 `<运行副本>\outputs\run_control\scheduler\<东京日期>_<窗口>.log`（已存在则加 `_2`、`_3`，不覆盖）；⑤ 调用摘要脚本 |
 | 摘要 | `scripts/ops/daily_scheduler_summary.py`（只用标准库，读文件，不调用 LLM）：读 daily-run 输出、run state 与 ledger、run metadata、capture manifest、DQ 发现指针与回执，写 `<stem>.summary.md`（中文）与 `<stem>.summary.json`：as_of、窗口、终态、每步状态、每个 capture 组件、DQ 状态、阻断原因分类。分类：数据源不可用（provider 鉴权/额度/不可用等 capture blocker，含付费源停订）、数据质量未通过（validate_data FAIL）、代码缺陷（未处理异常、非数据原因的步骤失败）、控制面问题（前置检查、运行控制、缺环境变量、本地 source-control 问题）、等待新 as_of（同一 as_of 已有终态的重复触发、as_of 尚未 provider-ready）。错误摘录再做一次密钥脱敏 |
-| 去重 | 不新增逻辑：同一 workflow/规格/as_of 已 PASS 返回 `RUN_CONTROL_ALREADY_COMPLETE`；已有 BLOCKED/FAILED 终态返回 `RUN_CONTROL_BLOCKED_TERMINAL_RECOVERY_REQUIRED`，不执行任何步骤 |
+| 去重 | 同一 workflow/规格/as_of 已 PASS 返回 `RUN_CONTROL_ALREADY_COMPLETE`；已有 BLOCKED/FAILED 终态返回 `RUN_CONTROL_BLOCKED_TERMINAL_RECOVERY_REQUIRED`，不执行任何步骤。例外（2026-10-13 起，OPS-085）：17:30 窗口带 `--retry-after-source-failure`，上一次运行只因可重抓历史源（`market_macro`）的临时故障失败时，从 `capture_daily_inputs` 起重试一次（第 2 次尝试），条件见 `docs/requirements/OPS-085_Rescue_Retry_After_Source_Failure.md` 第 3 节 |
 | 终止恢复 | `OperationsRecoveryRequest` 升为 v2：`current_release_commit` = 运行副本 HEAD，另记 `runtime_checkout_root` 与 `runtime_origin_main_commit`，去掉 deployment receipt 字段。CLI 构造请求时与运行控制获取租约时各检查一次（`platform/operations/runtime_checkout.py`）：工作区干净、HEAD 可从 `origin/main` 到达、HEAD 与请求一致；仍要求与父运行 manifest 的 `git_commit` 不同。拒绝码 `RECOVERY_RUNTIME_CHECKOUT_DIRTY`、`RECOVERY_RUNTIME_CHECKOUT_HEAD_NOT_ON_ORIGIN_MAIN`、`RECOVERY_CURRENT_RELEASE_MISMATCH`、`RECOVERY_RUNTIME_CHECKOUT_GIT_FAILED`。已写下的 v1 恢复回执是不可变历史，不回读 |
 | 删除 | `src/ai_trading_system/ops_scheduler_business_contract.py` 及其单元测试、`config/operations/aitradingsystem_pit_automation_prompt.md`（无代码或研究记录引用；Codex automation 停用后不再需要） |
 

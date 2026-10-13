@@ -16,9 +16,17 @@ from pathlib import Path
 from types import ModuleType
 
 import pytest
+from typer.testing import CliRunner
 
+import ai_trading_system.cli_commands.ops as ops_cli
+from ai_trading_system.cli import app
 from ai_trading_system.cli_commands.ops import _build_daily_terminal_recovery_request
-from ai_trading_system.ops_daily import build_daily_ops_plan, run_daily_ops_plan_controlled
+from ai_trading_system.ops_daily import (
+    DailyOpsRunReport,
+    DailyOpsStepResult,
+    build_daily_ops_plan,
+    run_daily_ops_plan_controlled,
+)
 from ai_trading_system.platform.operations.runtime_checkout import (
     RuntimeCheckoutError,
     inspect_runtime_checkout,
@@ -622,6 +630,126 @@ def test_register_script_creates_one_interactive_unelevated_task_with_two_trigge
     assert "-StartWhenAvailable -MultipleInstances IgnoreNew" in code
     assert "Password" not in code
     assert "Only one scheduling source is allowed" in code
+
+
+def test_only_the_rescue_window_asks_daily_run_for_the_source_failure_retry() -> None:
+    """OPS-085: 12:00 never retries; 17:30 asks once and daily-run decides from the evidence."""
+    code = _code_lines(_ps1("daily_scheduler_run.ps1"))
+
+    assert "$dailyRunArguments = @('ops', 'daily-run')" in code
+    assert (
+        "if ($Window -eq 'RESCUE') { $dailyRunArguments += '--retry-after-source-failure' }" in code
+    )
+    assert code.count("--retry-after-source-failure") == 1
+    assert "-ArgumentList $dailyRunArguments" in code
+
+
+def test_summary_reports_the_source_failure_retry_outcome(tmp_path: Path) -> None:
+    runtime = _runtime(
+        tmp_path,
+        state_status="PASS",
+        steps=[{"step_id": "validate_data", "status": "PASS"}],
+        components=[_component("market_macro")],
+        metadata_status="PASS",
+    )
+    retried = _summarize(
+        runtime,
+        tmp_path,
+        "Source-failure retry：RETRIED\n" + _executed_log("PASS"),
+        exit_code=0,
+    )
+    assert retried["blocker_category"] == summary.NONE
+    assert retried["source_failure_retry"]["outcome"] == "RETRIED"
+    assert "数据源失败自动重试（OPS-085）：已从采集步骤重试一次" in retried["_markdown"]
+
+    refused = _summarize(
+        runtime,
+        tmp_path,
+        "Source-failure retry：NOT_ELIGIBLE:COMPONENT_NOT_RETRYABLE:market_macro:"
+        "PROVIDER_QUOTA_EXHAUSTED\n"
+        "Canonical run control：RUN_CONTROL_BLOCKED_TERMINAL_RECOVERY_REQUIRED\n"
+        f"Run ID：{RUN_ID}\n",
+    )
+    assert refused["blocker_category"] == summary.WAITING_FOR_NEW_AS_OF
+    assert "PROVIDER_QUOTA_EXHAUSTED" in refused["source_failure_retry"]["label"]
+    assert "需人工处理" in refused["_markdown"]
+
+    plain = _summarize(runtime, tmp_path, _executed_log("PASS"), exit_code=0)
+    assert plain["source_failure_retry"] == {"outcome": None, "label": None}
+    assert "OPS-085" not in plain["_markdown"]
+
+
+def test_daily_run_cli_forwards_the_retry_request_and_prints_the_outcome(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    seen: dict[str, object] = {}
+
+    def fake_controlled_runner(
+        plan,
+        *,
+        project_root,
+        env,
+        run_id,
+        diagnostics_dir,
+        recovery_request=None,
+        source_retry_requested=False,
+        completion_callback=None,
+        terminal_failure_callback=None,
+    ):
+        seen.update(
+            recovery_request=recovery_request,
+            source_retry_requested=source_retry_requested,
+        )
+        now = datetime(2026, 10, 13, 8, 30, tzinfo=UTC)
+        return DailyOpsRunReport(
+            plan=plan,
+            started_at=now,
+            finished_at=now,
+            status="RUN_CONTROL_BLOCKED_TERMINAL_RECOVERY_REQUIRED",
+            step_results=(
+                DailyOpsStepResult(
+                    step_id="run_control",
+                    title="Canonical daily runtime control",
+                    command=(),
+                    status="FAIL",
+                    return_code=None,
+                    started_at=now,
+                    ended_at=now,
+                    duration_seconds=0.0,
+                    produced_paths=(),
+                    blocks_downstream=True,
+                    error="EXPLICIT_TERMINAL_RECOVERY_REQUEST_REQUIRED",
+                ),
+            ),
+            source_retry="NOT_ELIGIBLE:ALREADY_RETRIED",
+        )
+
+    monkeypatch.setattr(ops_cli, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(ops_cli, "run_daily_ops_plan", fake_controlled_runner)
+    result = CliRunner().invoke(
+        app,
+        [
+            "ops",
+            "daily-run",
+            "--as-of",
+            "2026-05-06",
+            "--skip-risk-event-openai-precheck",
+            "--run-output-root",
+            str(tmp_path / "runs"),
+            "--run-id",
+            "daily_ops_run:2026-05-06:rescue",
+            "--retry-after-source-failure",
+        ],
+        env={"FMP_API_KEY": "present", "SEC_USER_AGENT": "AITradingSystem test@example.com"},
+    )
+
+    assert result.exit_code == 1, result.output
+    assert seen["source_retry_requested"] is True
+    assert seen["recovery_request"] is None
+    assert "Source-failure retry：NOT_ELIGIBLE:ALREADY_RETRIED" in result.output
+    parsed = summary.parse_cli_output(result.output)
+    assert parsed["source_retry"] == "NOT_ELIGIBLE:ALREADY_RETRIED"
+    assert parsed["run_control_status"] == "RUN_CONTROL_BLOCKED_TERMINAL_RECOVERY_REQUIRED"
 
 
 def _minutes(clock: str) -> int:

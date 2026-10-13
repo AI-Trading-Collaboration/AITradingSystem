@@ -558,6 +558,16 @@ def capture_daily_inputs_command(
         bool,
         typer.Option("--full-universe", help="市场/宏观下载包含完整 AI 产业链标的。"),
     ] = False,
+    rescue_session: Annotated[
+        bool,
+        typer.Option(
+            "--rescue-session",
+            help=(
+                "OPS-085：只由 daily-run 的数据源失败自动重试传入；早上因临时数据源故障失败的"
+                "可回补组件再开一次同预算的采集会话。"
+            ),
+        ),
+    ] = False,
 ) -> None:
     """内部步骤：逐源保全当日输入；不得作为独立外部 scheduler trigger。"""
     capture_date = _parse_date(as_of)
@@ -569,6 +579,7 @@ def capture_daily_inputs_command(
             policy_path=policy_path,
             download_start=market_download_start,
             full_universe=full_universe,
+            rescue_session=rescue_session,
         )
     except (OSError, ValueError) as exc:
         console.print(f"[red]Daily input capture 无法启动：{exc}[/red]")
@@ -1959,6 +1970,7 @@ def _run_daily_ops_with_completion_callback(
     run_id: str,
     diagnostics_dir: Path,
     recovery_request: OperationsRecoveryRequest | None,
+    source_retry_requested: bool = False,
 ) -> DailyOpsRunReport:
     runner_parameters = inspect.signature(run_daily_ops_plan).parameters
     runner_kwargs: dict[str, Any] = {
@@ -1969,6 +1981,8 @@ def _run_daily_ops_with_completion_callback(
     }
     if "recovery_request" in runner_parameters:
         runner_kwargs["recovery_request"] = recovery_request
+    if source_retry_requested and "source_retry_requested" in runner_parameters:
+        runner_kwargs["source_retry_requested"] = True
     if "completion_callback" in runner_parameters:
         return run_daily_ops_plan(
             plan,
@@ -2091,6 +2105,16 @@ def daily_ops_run_command(
         str | None,
         typer.Option(help="受控 terminal recovery 的稳定 reason code。"),
     ] = None,
+    retry_after_source_failure: Annotated[
+        bool,
+        typer.Option(
+            "--retry-after-source-failure",
+            help=(
+                "OPS-085：17:30 补救窗口传入。同一 as_of 的第一次运行只因临时数据源故障失败时，"
+                "从采集步骤自动重试一次；其他失败仍按原规则处理。"
+            ),
+        ),
+    ] = False,
     manual_execution: Annotated[
         bool,
         typer.Option(
@@ -2198,6 +2222,7 @@ def daily_ops_run_command(
         recovery_parent_run_id=recovery_parent_run_id,
         recovery_from_step=recovery_from_step,
         recovery_reason_code=recovery_reason_code,
+        retry_after_source_failure=retry_after_source_failure,
     )
     finalization_result: DailyOpsCanonicalFinalizationResult | None = None
 
@@ -2435,6 +2460,7 @@ def daily_ops_run_command(
             run_id=resolved_run_id,
             diagnostics_dir=run_paths.reports_dir / "diagnostics",
             recovery_request=recovery_request,
+            source_retry_requested=retry_after_source_failure,
         )
     except DailyOpsCanonicalFinalizationError as exc:
         console.print(f"[red]Canonical finalization：FAILED ({exc.code})[/red]")
@@ -2444,6 +2470,10 @@ def daily_ops_run_command(
             console.print(f"Finalization evidence：{exc.evidence_path}")
         raise typer.Exit(code=1) from exc
 
+    source_retry_outcome = getattr(run_report, "source_retry", None)
+    if source_retry_outcome is not None:
+        # Read by scripts/ops/daily_scheduler_summary.py (OPS-085).
+        console.print(f"Source-failure retry：{source_retry_outcome}")
     if run_report.status == "FAIL_FINALIZATION":
         write_daily_ops_run_report(run_report, run_report_path, metadata_path=metadata_path)
         periodic_plan_path = _write_periodic_plan_from_daily_run(
@@ -3478,6 +3508,7 @@ def _daily_run_manifest_command(
     recovery_parent_run_id: str | None,
     recovery_from_step: str | None,
     recovery_reason_code: str | None,
+    retry_after_source_failure: bool = False,
 ) -> tuple[str, ...]:
     command = [
         "aits",
@@ -3529,6 +3560,8 @@ def _daily_run_manifest_command(
         command.extend(["--recovery-from-step", recovery_from_step])
     if recovery_reason_code is not None:
         command.extend(["--recovery-reason-code", recovery_reason_code])
+    if retry_after_source_failure:
+        command.append("--retry-after-source-failure")
     return tuple(command)
 
 

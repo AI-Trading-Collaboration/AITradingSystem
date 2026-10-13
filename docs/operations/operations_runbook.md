@@ -1,6 +1,6 @@
 # AITradingSystem Operations Runbook
 
-最后更新：2026-10-13（OPS-084：主触发时间改为 12:00）；2026-10-11（OPS-082：Windows 计划任务、终止恢复改为运行副本校验、新增第 9 节）；2026-10-10 GOV-008 P5 重写
+最后更新：2026-10-13（OPS-084：主触发时间改为 12:00；OPS-085：17:30 对数据源临时故障自动重试一次）；2026-10-11（OPS-082：Windows 计划任务、终止恢复改为运行副本校验、新增第 9 节）；2026-10-10 GOV-008 P5 重写
 
 执行任何 daily、weekly、biweekly、monthly、调度或产物目录任务前先读本文：确认 cadence、触发路径、质量门禁、
 预期产物和"不影响 production"的边界。数据怎么流动见 `docs/system_flow.md` 第 1～6 节；产物怎么理解见
@@ -63,6 +63,13 @@ aits ops replay-day --mode cache-only --as-of YYYY-MM-DD   # 历史严格复现�
 - 计划任务的第二次触发（17:30 或手动）遇到同一 as-of 已 PASS 时返回 `RUN_CONTROL_ALREADY_COMPLETE`（退出码 0），遇到
   BLOCKED/FAILED 终态时返回 `RUN_CONTROL_BLOCKED_TERMINAL_RECOVERY_REQUIRED`（退出码 1），都不执行任何步骤；摘要分别归为
   "无阻断"与"等待新 as_of"。
+- 例外（OPS-085，`owner_decision:OPS-085:2026-10-13:rescue_retry_after_source_failure`）：17:30 触发带
+  `--retry-after-source-failure`。上一次运行是该 as-of 的第 1 次尝试、采集已关闭（`PARTIAL_CAPTURE`，校验 PASS）、除
+  `pipeline_health`/`secret_hygiene` 外没有步骤失败，且每个失败组件都是可重抓的历史源（`IMMUTABLE_RAW_BACKFILL`，目前只有
+  `market_macro`）、blocker 可重试、没有 traceback 时，运行控制以 `SOURCE_RETRY` 从 `capture_daily_inputs` 起重跑一次
+  （第 2 次尝试）；已 PASS 的采集组件复用，失败组件在 `rescue/` 补救会话里重抓。父运行状态与回执在
+  `outputs/run_control/daily/source_retry/<key>/attempt_2/`。密钥、权限、额度、格式错误、traceback、PIT/官方源/SEC 组件失败
+  或其他步骤失败都不重试。摘要写明结果（`RETRIED` 或 `NOT_ELIGIBLE:<原因>`）。条件见 OPS-085 需求文档第 3 节。
 - 终止后恢复（OPS-071）只能用同一入口：`aits ops daily-run --recovery-parent-run-id <id> --recovery-from-step <step>
   --recovery-reason-code <code>`，三项必须同时给出；只允许从 `artifact_lineage` 及其后的报告/收尾步骤恢复，已 PASS 的
   capture、DQ、PIT、评分必须复用。恢复绑定的当前版本是**运行副本的 HEAD**：工作区必须干净、HEAD 必须是本地 `origin/main`
@@ -171,7 +178,8 @@ dynamic-v3 rescue、候选跟踪每日步骤）。发布改由 `python tools/gov
 2. 只设置 daily-run 实际读取的环境变量：`FMP_API_KEY`、`MARKETSTACK_API_KEY`、`SEC_USER_AGENT`、`OPENAI_API_KEY`、
    `CONGRESS_API_KEY`、`GOVINFO_API_KEY`；进程里没有时取用户环境变量。值不打印、不写日志，日志只记 PRESENT/MISSING。
    新增或停用数据源时，同一次改动更新这个列表。
-3. 调用一次 `.venv\Scripts\aits.exe ops daily-run`（不带 `--as-of`，由 daily-run 解析最近 provider-ready 交易日）。
+3. 调用一次 `.venv\Scripts\aits.exe ops daily-run`（不带 `--as-of`，由 daily-run 解析最近 provider-ready 交易日）；
+   RESCUE 窗口（15:00 以后）加 `--retry-after-source-failure`（OPS-085，见第 3 节）。
 4. 输出与退出码写 `outputs\run_control\scheduler\<东京日期>_<PRIMARY|RESCUE>.log`（15:00 前为 PRIMARY；已存在则加 `_2`、`_3`）。
 5. `scripts\ops\daily_scheduler_summary.py` 用代码（不调用 LLM）写同名 `.summary.md`（中文）与 `.summary.json`：as_of、窗口、
    终态、每步状态、每个 capture 组件、DQ 状态与阻断原因分类。通知只写这些文件。

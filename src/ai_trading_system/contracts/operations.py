@@ -36,6 +36,7 @@ class OperationsRunDecision(StrEnum):
     BLOCKED_UNSAFE_RESUME = "BLOCKED_UNSAFE_RESUME"
     BLOCKED_TERMINAL_RECOVERY_REQUIRED = "BLOCKED_TERMINAL_RECOVERY_REQUIRED"
     BLOCKED_INVALID_RECOVERY = "BLOCKED_INVALID_RECOVERY"
+    SOURCE_RETRY = "SOURCE_RETRY"
 
 
 class OperationsDispatchMode(StrEnum):
@@ -833,6 +834,166 @@ class OperationsRecoveryReceipt:
 
 
 @dataclass(frozen=True)
+class OperationsSourceRetryRequest:
+    """One automatic same-as-of retry after a data-source-only failure (OPS-085).
+
+    owner_decision:OPS-085:2026-10-13:rescue_retry_after_source_failure: when the primary daily run
+    failed only because a data source was temporarily unavailable, the 17:30 rescue window retries
+    once from the capture step. The caller binds the exact capture manifest that shows the failure;
+    run control binds the parent state. No release change is required, unlike OPS-071 recovery.
+    """
+
+    schema_version: ClassVar[str] = "operations_source_retry_request.v1"
+
+    parent_run_id: str
+    retry_from_step_id: str
+    reason_code: str
+    capture_manifest_path: str
+    capture_manifest_sha256: str
+    retry_components: tuple[tuple[str, str], ...]
+    requested_at: datetime
+
+    def __post_init__(self) -> None:
+        for value, field in (
+            (self.parent_run_id, "parent_run_id"),
+            (self.retry_from_step_id, "retry_from_step_id"),
+            (self.reason_code, "reason_code"),
+            (self.capture_manifest_path, "capture_manifest_path"),
+        ):
+            _nonempty(value, field)
+        _hex_digest(self.capture_manifest_sha256, "capture_manifest_sha256", length=64)
+        if not self.retry_components:
+            raise OperationsContractError("SOURCE_RETRY_COMPONENTS_REQUIRED", self.parent_run_id)
+        components = tuple(
+            sorted(
+                (
+                    _nonempty(component_id, "retry_component_id"),
+                    _nonempty(blocker_code, "retry_component_blocker_code"),
+                )
+                for component_id, blocker_code in self.retry_components
+            )
+        )
+        if len({component_id for component_id, _ in components}) != len(components):
+            raise OperationsContractError("SOURCE_RETRY_COMPONENT_DUPLICATE", self.parent_run_id)
+        object.__setattr__(self, "retry_components", components)
+        _aware_datetime(self.requested_at, "requested_at")
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "schema_version": self.schema_version,
+            "parent_run_id": self.parent_run_id,
+            "retry_from_step_id": self.retry_from_step_id,
+            "reason_code": self.reason_code,
+            "capture_manifest_path": self.capture_manifest_path,
+            "capture_manifest_sha256": self.capture_manifest_sha256,
+            "retry_components": [
+                {"component_id": component_id, "blocker_code": blocker_code}
+                for component_id, blocker_code in self.retry_components
+            ],
+            "requested_at": self.requested_at.isoformat(),
+        }
+
+
+@dataclass(frozen=True)
+class OperationsSourceRetryReceipt:
+    schema_version: ClassVar[str] = "operations_source_retry_receipt.v1"
+
+    idempotency_key: str
+    workflow_id: str
+    workflow_spec_id: str
+    as_of: date
+    parent_run_id: str
+    child_run_id: str
+    parent_status: CanonicalStatus
+    parent_attempt: int
+    child_attempt: int
+    retry_from_step_id: str
+    replay_step_ids: tuple[str, ...]
+    reused_completed_step_ids: tuple[str, ...]
+    parent_state_archive_path: str
+    parent_state_sha256: str
+    parent_ledger_archive_path: str
+    parent_ledger_sha256: str
+    request: OperationsSourceRetryRequest
+    authorized_at: datetime
+
+    def __post_init__(self) -> None:
+        for value, field in (
+            (self.idempotency_key, "idempotency_key"),
+            (self.workflow_id, "workflow_id"),
+            (self.workflow_spec_id, "workflow_spec_id"),
+            (self.parent_run_id, "parent_run_id"),
+            (self.child_run_id, "child_run_id"),
+            (self.retry_from_step_id, "retry_from_step_id"),
+            (self.parent_state_archive_path, "parent_state_archive_path"),
+            (self.parent_ledger_archive_path, "parent_ledger_archive_path"),
+        ):
+            _nonempty(value, field)
+        if self.parent_status not in {CanonicalStatus.BLOCKED, CanonicalStatus.FAILED}:
+            raise OperationsContractError(
+                "SOURCE_RETRY_PARENT_STATUS_INVALID",
+                self.parent_status.value,
+            )
+        if (
+            isinstance(self.parent_attempt, bool)
+            or self.parent_attempt < 1
+            or isinstance(self.child_attempt, bool)
+            or self.child_attempt != self.parent_attempt + 1
+        ):
+            raise OperationsContractError(
+                "SOURCE_RETRY_ATTEMPT_SEQUENCE_INVALID",
+                self.child_run_id,
+            )
+        for value, field in (
+            (self.parent_state_sha256, "parent_state_sha256"),
+            (self.parent_ledger_sha256, "parent_ledger_sha256"),
+        ):
+            _hex_digest(value, field, length=64)
+        if not self.replay_step_ids or self.replay_step_ids[0] != self.retry_from_step_id:
+            raise OperationsContractError(
+                "SOURCE_RETRY_REPLAY_BOUNDARY_INVALID",
+                self.retry_from_step_id,
+            )
+        if set(self.replay_step_ids) & set(self.reused_completed_step_ids):
+            raise OperationsContractError(
+                "SOURCE_RETRY_REPLAY_REUSE_OVERLAP",
+                self.child_run_id,
+            )
+        if self.request.parent_run_id != self.parent_run_id:
+            raise OperationsContractError("SOURCE_RETRY_PARENT_RUN_MISMATCH", self.child_run_id)
+        _aware_datetime(self.authorized_at, "authorized_at")
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "schema_version": self.schema_version,
+            "idempotency_key": self.idempotency_key,
+            "workflow_id": self.workflow_id,
+            "workflow_spec_id": self.workflow_spec_id,
+            "as_of": self.as_of.isoformat(),
+            "parent_run_id": self.parent_run_id,
+            "child_run_id": self.child_run_id,
+            "parent_status": self.parent_status.value,
+            "parent_attempt": self.parent_attempt,
+            "child_attempt": self.child_attempt,
+            "retry_from_step_id": self.retry_from_step_id,
+            "replay_step_ids": list(self.replay_step_ids),
+            "reused_completed_step_ids": list(self.reused_completed_step_ids),
+            "parent_state_archive_path": self.parent_state_archive_path,
+            "parent_state_sha256": self.parent_state_sha256,
+            "parent_ledger_archive_path": self.parent_ledger_archive_path,
+            "parent_ledger_sha256": self.parent_ledger_sha256,
+            "request": self.request.to_dict(),
+            "authorized_at": self.authorized_at.isoformat(),
+            "owner_decision": "owner_decision:OPS-085:2026-10-13:rescue_retry_after_source_failure",
+            "production_effect": "none",
+            "production_weight_write": False,
+            "active_shadow_weight_write": False,
+            "broker_action": False,
+            "trading_action": False,
+        }
+
+
+@dataclass(frozen=True)
 class OperationsRunControlResolution:
     schema_version: ClassVar[str] = "operations_run_control_resolution.v1"
 
@@ -877,7 +1038,8 @@ class OperationsRunControlResolution:
             self.recovery_from_step_id,
             self.recovery_receipt_path,
         )
-        if self.decision is OperationsRunDecision.RECOVERY:
+        # A SOURCE_RETRY child (OPS-085) binds its parent, replay boundary and receipt the same way.
+        if self.decision in {OperationsRunDecision.RECOVERY, OperationsRunDecision.SOURCE_RETRY}:
             if any(value is None or not value.strip() for value in recovery_fields):
                 raise OperationsContractError(
                     "RUN_CONTROL_RECOVERY_BINDING_REQUIRED",

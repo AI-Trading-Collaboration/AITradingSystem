@@ -352,7 +352,23 @@ def test_cli_direct_dispatches_capture_and_date_scoped_source_paths(
         "policy_path": policy_path,
         "download_start": "2021-02-22",
         "full_universe": True,
+        "rescue_session": False,
     }
+    assert (
+        cli_direct.main(
+            [
+                "ops",
+                "capture-daily-inputs",
+                "--as-of",
+                "2026-07-27",
+                "--policy-path",
+                str(policy_path),
+                "--rescue-session",
+            ]
+        )
+        == 0
+    )
+    assert calls["capture"]["rescue_session"] is True
     assert calls["pit_fetch"]["raw_output_dir"] == pit_raw
     assert calls["pit_fetch"]["normalized_output_path"] == pit_normalized
     assert calls["pit_fetch"]["manifest_path"] == pit_manifest

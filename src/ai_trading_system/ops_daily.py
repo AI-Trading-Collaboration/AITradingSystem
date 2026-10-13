@@ -21,8 +21,10 @@ from ai_trading_system.contracts.data_quality_execution import (
     DAILY_DEFAULT_DATA_QUALITY_EXECUTION_PROFILE_ID,
 )
 from ai_trading_system.contracts.operations import (
+    OperationsExecutionState,
     OperationsRecoveryRequest,
     OperationsRunDecision,
+    OperationsSourceRetryRequest,
 )
 from ai_trading_system.contracts.status import CanonicalStatus
 from ai_trading_system.core import (
@@ -34,6 +36,7 @@ from ai_trading_system.core import (
 )
 from ai_trading_system.daily_input_capture import (
     DAILY_INPUT_CAPTURE_SCHEMA_VERSION,
+    DEFAULT_DAILY_INPUT_CAPTURE_POLICY_PATH,
     daily_input_capture_paths,
     load_daily_input_capture_policy,
 )
@@ -81,6 +84,7 @@ from ai_trading_system.pit_snapshots import default_pit_snapshot_validation_repo
 from ai_trading_system.platform.artifacts import (
     StrictJsonContractError,
     load_strict_json_path,
+    sha256_path,
     write_json_atomic,
 )
 from ai_trading_system.platform.operations import (
@@ -287,6 +291,8 @@ class DailyOpsRunReport:
     visibility_issues: tuple[DailyOpsInputVisibilityIssue, ...] = ()
     production_effect: str = "writes local data/cache/reports and calls provider APIs"
     metadata: DailyOpsRunMetadata | None = None
+    # OPS-085: outcome of a requested data-source-failure retry ("RETRIED" or "NOT_ELIGIBLE:<why>").
+    source_retry: str | None = None
 
     @property
     def failed_step(self) -> DailyOpsStepResult | None:
@@ -1930,6 +1936,8 @@ def run_daily_ops_plan_controlled(
     completion_callback: DailyOpsCompletionCallback | None = None,
     terminal_failure_callback: DailyOpsTerminalFailureCallback | None = None,
     recovery_request: OperationsRecoveryRequest | None = None,
+    source_retry_requested: bool = False,
+    capture_policy_path: Path = DEFAULT_DAILY_INPUT_CAPTURE_POLICY_PATH,
 ) -> DailyOpsRunReport:
     policy = (
         runtime_control.policy
@@ -1977,27 +1985,49 @@ def run_daily_ops_plan_controlled(
     resolved_run_id = run_id or (
         f"daily_control:{plan.as_of.isoformat()}:{acquired_at.strftime('%Y%m%dT%H%M%S%fZ')}"
     )
+    source_retry: DailySourceRetryAssessment | None = None
+    if source_retry_requested and recovery_request is None:
+        source_retry = assess_daily_source_retry(
+            plan,
+            prior=control.read_execution_state(spec=spec, as_of=plan.as_of),
+            project_root=project_root,
+            capture_policy_path=capture_policy_path,
+            requested_at=acquired_at,
+        )
     acquisition = control.acquire(
         spec=spec,
         as_of=plan.as_of,
         run_id=resolved_run_id,
         now=acquired_at,
         recovery_request=recovery_request,
+        source_retry=None if source_retry is None else source_retry.request,
     )
+    source_retry_outcome = None if source_retry is None else source_retry.outcome
     if acquisition.lease is None:
-        return _daily_run_control_nonexecution_report(
-            plan=plan,
-            decision=acquisition.resolution.decision,
-            blocker_codes=acquisition.resolution.blocker_codes,
-            at=acquired_at,
+        return replace(
+            _daily_run_control_nonexecution_report(
+                plan=plan,
+                decision=acquisition.resolution.decision,
+                blocker_codes=acquisition.resolution.blocker_codes,
+                at=acquired_at,
+            ),
+            source_retry=(
+                f"NOT_ELIGIBLE:RUN_CONTROL_{acquisition.resolution.decision.value}"
+                if source_retry_outcome == DAILY_SOURCE_RETRY_RETRIED
+                else source_retry_outcome
+            ),
         )
 
     resumed = frozenset(acquisition.resolution.resume_completed_step_ids)
-    resume_reason = (
-        "Canonical recovery：replay boundary 之前的步骤已由 parent terminal evidence 复用。"
-        if acquisition.resolution.decision is OperationsRunDecision.RECOVERY
-        else "Canonical resume：相同 idempotency key 的步骤已 PASS。"
-    )
+    retrying_sources = acquisition.resolution.decision is OperationsRunDecision.SOURCE_RETRY
+    if acquisition.resolution.decision is OperationsRunDecision.RECOVERY:
+        resume_reason = (
+            "Canonical recovery：replay boundary 之前的步骤已由 parent terminal evidence 复用。"
+        )
+    elif retrying_sources:
+        resume_reason = "OPS-085 数据源失败自动重试：重试边界之前的步骤已由父运行复用。"
+    else:
+        resume_reason = "Canonical resume：相同 idempotency key 的步骤已 PASS。"
     controlled_plan = replace(
         plan,
         steps=tuple(
@@ -2008,7 +2038,11 @@ def run_daily_ops_plan_controlled(
                     skip_reason=resume_reason,
                 )
                 if step.step_id in resumed
-                else step
+                else (
+                    _with_capture_rescue_session(step)
+                    if retrying_sources and step.step_id == DAILY_SOURCE_RETRY_FROM_STEP_ID
+                    else step
+                )
             )
             for step in plan.steps
         ),
@@ -2057,7 +2091,7 @@ def run_daily_ops_plan_controlled(
                     CanonicalStatus.FAILED,
                     blocker_codes=_daily_run_blocker_codes(report),
                 )
-        return report
+        return replace(report, source_retry=source_retry_outcome)
     except Exception:
         if not acquisition.lease.released:
             acquisition.lease.finish(
@@ -2065,6 +2099,125 @@ def run_daily_ops_plan_controlled(
                 blocker_codes=("UNHANDLED_DAILY_EXECUTOR_EXCEPTION",),
             )
         raise
+
+
+DAILY_SOURCE_RETRY_FROM_STEP_ID = "capture_daily_inputs"
+DAILY_SOURCE_RETRY_REASON_CODE = "OPS_085_TEMPORARY_SOURCE_FAILURE"
+DAILY_SOURCE_RETRY_RETRIED = "RETRIED"
+_SOURCE_RETRY_RECOVERY_MODE = "IMMUTABLE_RAW_BACKFILL"
+_PYTHON_TRACEBACK = "Traceback (most recent call last)"
+
+
+@dataclass(frozen=True)
+class DailySourceRetryAssessment:
+    """Whether a terminal parent failed only on a temporary data-source failure (OPS-085)."""
+
+    reason: str
+    request: OperationsSourceRetryRequest | None = None
+
+    @property
+    def outcome(self) -> str:
+        if self.request is not None:
+            return DAILY_SOURCE_RETRY_RETRIED
+        return f"NOT_ELIGIBLE:{self.reason}"
+
+
+def assess_daily_source_retry(
+    plan: DailyOpsPlan,
+    *,
+    prior: OperationsExecutionState | None,
+    project_root: Path = PROJECT_ROOT,
+    capture_policy_path: Path = DEFAULT_DAILY_INPUT_CAPTURE_POLICY_PATH,
+    requested_at: datetime,
+) -> DailySourceRetryAssessment:
+    """Build the OPS-085 retry request when the parent failed only because a source was down.
+
+    owner_decision:OPS-085:2026-10-13:rescue_retry_after_source_failure. Eligible means: the first
+    attempt for this as_of ended FAILED or BLOCKED; capture closed with a valid PARTIAL_CAPTURE
+    manifest; every failed component is history that can be fetched again
+    (``IMMUTABLE_RAW_BACKFILL``) and failed with a blocker its reviewed policy lists as retryable,
+    without a Python traceback; and no step failed other than the always-run checks, whose failure
+    follows from the blocked steps. Every other failure keeps the manual route.
+    """
+
+    def not_eligible(reason: str) -> DailySourceRetryAssessment:
+        return DailySourceRetryAssessment(reason=reason)
+
+    if prior is None or prior.status not in {CanonicalStatus.BLOCKED, CanonicalStatus.FAILED}:
+        return not_eligible("NO_FAILED_RUN")
+    if prior.attempt != 1:
+        return not_eligible("ALREADY_RETRIED")
+    capture_step = next(
+        (step for step in plan.steps if step.step_id == DAILY_SOURCE_RETRY_FROM_STEP_ID),
+        None,
+    )
+    if capture_step is None or not capture_step.enabled or len(capture_step.produced_paths) < 3:
+        return not_eligible("CAPTURE_STEP_ABSENT")
+    if DAILY_SOURCE_RETRY_FROM_STEP_ID not in prior.completed_step_ids:
+        return not_eligible("CAPTURE_NOT_CLOSED")
+    always_run = {step.step_id for step in plan.steps if step.always_run}
+    resolved = set(prior.completed_step_ids) | set(prior.skipped_step_ids)
+    failed_steps = sorted(
+        step_id
+        for step_id, _attempts in prior.step_attempts
+        if step_id not in resolved and step_id not in always_run
+    )
+    if failed_steps:
+        return not_eligible("OTHER_STEP_FAILED:" + ",".join(failed_steps))
+    manifest_path = capture_step.produced_paths[0]
+    validation_path = capture_step.produced_paths[2]
+    try:
+        manifest = load_strict_json_path(manifest_path)
+        validation = load_strict_json_path(validation_path)
+    except (OSError, ValueError, StrictJsonContractError):
+        return not_eligible("CAPTURE_EVIDENCE_UNREADABLE")
+    if (
+        not isinstance(manifest, Mapping)
+        or not isinstance(validation, Mapping)
+        or manifest.get("as_of") != plan.as_of.isoformat()
+        or manifest.get("status") != "PARTIAL_CAPTURE"
+        or validation.get("status") != "PASS"
+    ):
+        return not_eligible("CAPTURE_EVIDENCE_INVALID")
+    component_rows = manifest.get("component_results")
+    if not isinstance(component_rows, list):
+        return not_eligible("CAPTURE_EVIDENCE_INVALID")
+    policy = load_daily_input_capture_policy(capture_policy_path, project_root=project_root)
+    retry_components: list[tuple[str, str]] = []
+    for row in component_rows:
+        if not isinstance(row, Mapping) or row.get("status") == "PASS":
+            continue
+        component_id = str(row.get("component_id", ""))
+        blocker_code = str(row.get("blocker_code", ""))
+        component_policy = policy.component_policies.get(component_id)
+        if (
+            component_policy is None
+            or component_policy.recovery_mode != _SOURCE_RETRY_RECOVERY_MODE
+            or blocker_code not in component_policy.retryable_blocker_codes
+            or _PYTHON_TRACEBACK in str(row.get("error_summary") or "")
+        ):
+            return not_eligible(f"COMPONENT_NOT_RETRYABLE:{component_id}:{blocker_code}")
+        retry_components.append((component_id, blocker_code))
+    if not retry_components:
+        return not_eligible("NO_FAILED_COMPONENT")
+    return DailySourceRetryAssessment(
+        reason="TEMPORARY_SOURCE_FAILURE",
+        request=OperationsSourceRetryRequest(
+            parent_run_id=prior.run_id,
+            retry_from_step_id=DAILY_SOURCE_RETRY_FROM_STEP_ID,
+            reason_code=DAILY_SOURCE_RETRY_REASON_CODE,
+            capture_manifest_path=str(manifest_path),
+            capture_manifest_sha256=sha256_path(manifest_path),
+            retry_components=tuple(retry_components),
+            requested_at=requested_at,
+        ),
+    )
+
+
+def _with_capture_rescue_session(step: DailyOpsStep) -> DailyOpsStep:
+    if not step.command or "--rescue-session" in step.command:
+        return step
+    return replace(step, command=(*step.command, "--rescue-session"))
 
 
 def _apply_daily_ops_completion_callback(

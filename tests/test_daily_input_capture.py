@@ -1126,3 +1126,186 @@ def test_recovery_queue_for_missed_sessions_never_authorizes_historical_pit(
     )
     assert tampered["status"] == "FAIL"
     assert "QUEUE_SAFETY_BOUNDARY_MISMATCH" in {issue["code"] for issue in tampered["issues"]}
+
+
+def _late_vix_runner(
+    components,
+    *,
+    calls: list[str],
+    market_macro_passes: bool,
+):
+    """market_macro fails like the 2026-10-12 late Cboe VIX file unless told to pass."""
+
+    normal_runner = _runner_for_components(components, calls=calls)
+
+    def runner(command: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        if "download-data" in command and not market_macro_passes:
+            calls.append("market_macro")
+            return subprocess.CompletedProcess(
+                command,
+                1,
+                stdout="",
+                stderr="Cboe VIX response had no rows for 2026-07-27 to 2026-07-27",
+            )
+        return normal_runner(command, **kwargs)
+
+    return runner
+
+
+def _capture_for_rescue(tmp_path: Path, runner, *, rescue_session: bool, minute: int):
+    return capture_daily_inputs(
+        as_of=date(2026, 7, 27),
+        project_root=tmp_path,
+        policy_path=tmp_path / "capture_policy.yaml",
+        runner=runner,
+        snapshotter=lambda _component: None,
+        sleeper=lambda _seconds: None,
+        generated_at=datetime(2026, 7, 28, 0, minute, tzinfo=UTC),
+        rescue_session=rescue_session,
+    )
+
+
+def _rescue_components(tmp_path: Path):
+    policy_path = tmp_path / "capture_policy.yaml"
+    _write_policy(policy_path, tmp_path)
+    policy = load_daily_input_capture_policy(policy_path, project_root=tmp_path)
+    paths = daily_input_capture_paths(date(2026, 7, 27), policy=policy)
+    components = build_daily_input_capture_components(
+        as_of=date(2026, 7, 27),
+        paths=paths,
+        policy=policy,
+        project_root=tmp_path,
+    )
+    return components, policy
+
+
+def test_rescue_session_refetches_only_the_temporarily_failed_history_source(
+    tmp_path: Path,
+) -> None:
+    """OPS-085: one more market/macro session at 17:30; the morning state stays as written."""
+    components, policy = _rescue_components(tmp_path)
+    calls: list[str] = []
+    morning = _capture_for_rescue(
+        tmp_path,
+        _late_vix_runner(components, calls=calls, market_macro_passes=False),
+        rescue_session=False,
+        minute=30,
+    )
+    assert morning.status == "PARTIAL_CAPTURE"
+    assert morning.component_results[0]["blocker_code"] == "REQUEST_FAILED"
+    assert calls.count("market_macro") == 2
+    primary_state = policy.source_control_root / "2026-07-27" / "market_macro" / "state.json"
+    primary_bytes = primary_state.read_bytes()
+
+    # Without the rescue flag the terminal morning failure is reused, no provider request.
+    calls.clear()
+    again = _capture_for_rescue(
+        tmp_path,
+        _late_vix_runner(components, calls=calls, market_macro_passes=True),
+        rescue_session=False,
+        minute=35,
+    )
+    assert again.status == "PARTIAL_CAPTURE"
+    assert calls == []
+    assert again.component_results[0]["source_lease_status"] == "REUSED_TERMINAL"
+
+    calls.clear()
+    rescue = _capture_for_rescue(
+        tmp_path,
+        _late_vix_runner(components, calls=calls, market_macro_passes=True),
+        rescue_session=True,
+        minute=40,
+    )
+    assert rescue.status == "CAPTURED"
+    assert rescue.validation_status == "PASS"
+    assert calls == ["market_macro"]
+    market = rescue.component_results[0]
+    assert market["status"] == "PASS"
+    assert market["capture_session"] == "RESCUE"
+    assert market["attempt_count"] == 1
+    assert market["primary_session_attempt_count"] == 2
+    assert market["source_state_path"].endswith("market_macro/rescue/state.json")
+    assert all(
+        item["source_lease_status"] == "REUSED_PASS" for item in rescue.component_results[1:]
+    )
+    assert primary_state.read_bytes() == primary_bytes
+
+    # A later capture of the same as_of reuses the rescue PASS, with or without the flag.
+    calls.clear()
+    later = _capture_for_rescue(
+        tmp_path,
+        _late_vix_runner(components, calls=calls, market_macro_passes=False),
+        rescue_session=False,
+        minute=45,
+    )
+    assert later.status == "CAPTURED"
+    assert calls == []
+    assert later.component_results[0]["source_lease_status"] == "REUSED_PASS"
+    assert later.component_results[0]["capture_session"] == "RESCUE"
+
+
+def test_rescue_session_runs_once_and_keeps_its_own_attempt_budget(tmp_path: Path) -> None:
+    components, _policy = _rescue_components(tmp_path)
+    calls: list[str] = []
+    failing = _late_vix_runner(components, calls=calls, market_macro_passes=False)
+    _capture_for_rescue(tmp_path, failing, rescue_session=False, minute=30)
+    calls.clear()
+
+    rescue = _capture_for_rescue(tmp_path, failing, rescue_session=True, minute=40)
+    market = rescue.component_results[0]
+    assert rescue.status == "PARTIAL_CAPTURE"
+    assert rescue.validation_status == "PASS"
+    assert calls == ["market_macro", "market_macro"]
+    assert market["capture_session"] == "RESCUE"
+    assert market["attempt_count"] == 2
+    assert market["blocker_code"] == "REQUEST_FAILED"
+
+    calls.clear()
+    third = _capture_for_rescue(
+        tmp_path,
+        _late_vix_runner(components, calls=calls, market_macro_passes=True),
+        rescue_session=True,
+        minute=50,
+    )
+    assert calls == []
+    assert third.status == "PARTIAL_CAPTURE"
+    assert third.component_results[0]["source_lease_status"] == "REUSED_TERMINAL"
+
+
+def test_rescue_session_does_not_refetch_quota_or_point_in_time_failures(
+    tmp_path: Path,
+) -> None:
+    components, _policy = _rescue_components(tmp_path)
+    calls: list[str] = []
+    normal_runner = _runner_for_components(components, calls=calls)
+
+    def quota_and_pit_down(
+        command: tuple[str, ...], **kwargs: object
+    ) -> subprocess.CompletedProcess[str]:
+        if "download-data" in command:
+            calls.append("market_macro")
+            return subprocess.CompletedProcess(
+                command, 1, stdout="", stderr="HTTP 429 provider rate limit quota exhausted"
+            )
+        if "pit-snapshots" in command:
+            calls.append("fmp_forward_pit")
+            return subprocess.CompletedProcess(command, 1, stdout="", stderr="timed out")
+        return normal_runner(command, **kwargs)
+
+    _capture_for_rescue(tmp_path, quota_and_pit_down, rescue_session=False, minute=30)
+    calls.clear()
+
+    rescue = _capture_for_rescue(
+        tmp_path,
+        _runner_for_components(components, calls=calls),
+        rescue_session=True,
+        minute=40,
+    )
+
+    assert calls == []
+    assert rescue.status == "PARTIAL_CAPTURE"
+    by_id = {item["component_id"]: item for item in rescue.component_results}
+    assert by_id["market_macro"]["blocker_code"] == "PROVIDER_QUOTA_EXHAUSTED"
+    assert by_id["fmp_forward_pit"]["blocker_code"] == "PROVIDER_UNAVAILABLE"
+    assert "capture_session" not in by_id["market_macro"]
+    assert "capture_session" not in by_id["fmp_forward_pit"]

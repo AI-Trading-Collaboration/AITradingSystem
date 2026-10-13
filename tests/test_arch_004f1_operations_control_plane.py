@@ -19,6 +19,7 @@ from ai_trading_system.contracts.operations import (
     OperationsRecoveryRequest,
     OperationsRunDecision,
     OperationsShadowPlan,
+    OperationsSourceRetryRequest,
     PeriodicOperationsPlan,
     build_operations_shadow_plan,
     resolve_operations_due,
@@ -89,6 +90,7 @@ def _runtime_policy(
     non_daily_dispatch: bool = False,
     terminal_recovery: bool = False,
     terminal_recovery_allowed_from_step_ids: tuple[str, ...] = (),
+    source_retry_from_step_ids: tuple[str, ...] = (),
 ) -> OperationsRuntimeControlPolicy:
     return OperationsRuntimeControlPolicy(
         policy_id="test_runtime_control_v1",
@@ -102,6 +104,8 @@ def _runtime_policy(
         terminal_recovery_enabled=terminal_recovery,
         terminal_recovery_requires_release_change=True,
         terminal_recovery_allowed_from_step_ids=(terminal_recovery_allowed_from_step_ids),
+        source_retry_enabled=bool(source_retry_from_step_ids),
+        source_retry_from_step_ids=source_retry_from_step_ids,
     )
 
 
@@ -1395,6 +1399,227 @@ def test_runtime_control_recovery_rejects_non_idempotent_replay(
     assert blocked.lease is None
 
 
+def _source_retry_spec() -> WorkflowSpec:
+    def step(step_id: str, *dependencies: str) -> WorkflowStepSpec:
+        return WorkflowStepSpec(
+            step_id=step_id,
+            entrypoint=EntrypointRef(module="tests.fake", callable_name=step_id),
+            dependencies=dependencies,
+            idempotent=True,
+            max_attempts=1,
+        )
+
+    return WorkflowSpec(
+        workflow_id="synthetic_runtime",
+        owner="test",
+        cadence=WorkflowCadence.DAILY,
+        timezone="UTC",
+        steps=(step("capture"), step("other", "capture"), step("report", "other")),
+        due_policy_id="test_due_v1",
+    )
+
+
+def _source_retry_request(
+    tmp_path: Path,
+    *,
+    parent_run_id: str = "parent",
+    as_of: date = date(2026, 7, 27),
+    retry_from_step_id: str = "capture",
+) -> OperationsSourceRetryRequest:
+    manifest_path = tmp_path / "capture_manifest.json"
+    manifest_path.write_text(
+        json.dumps({"as_of": as_of.isoformat(), "status": "PARTIAL_CAPTURE"}),
+        encoding="utf-8",
+    )
+    return OperationsSourceRetryRequest(
+        parent_run_id=parent_run_id,
+        retry_from_step_id=retry_from_step_id,
+        reason_code="OPS_085_TEST",
+        capture_manifest_path=str(manifest_path),
+        capture_manifest_sha256=sha256_path(manifest_path),
+        retry_components=(("market_macro", "REQUEST_FAILED"),),
+        requested_at=datetime(2026, 7, 28, 8, 30, tzinfo=UTC),
+    )
+
+
+def _failed_source_parent(
+    tmp_path: Path,
+    *,
+    max_run_attempts: int = 2,
+    source_retry: bool = True,
+) -> tuple[OperationsRunControl, WorkflowSpec]:
+    """Capture closed and `other` passed; `report` failed on the missing source."""
+    now = datetime(2026, 7, 28, tzinfo=UTC)
+    control = OperationsRunControl(
+        root=tmp_path / "control",
+        policy=_runtime_policy(
+            max_run_attempts=max_run_attempts,
+            terminal_recovery=True,
+            terminal_recovery_allowed_from_step_ids=("report",),
+            source_retry_from_step_ids=("capture",) if source_retry else (),
+        ),
+    )
+    spec = _source_retry_spec()
+    parent = control.acquire(spec=spec, as_of=date(2026, 7, 27), run_id="parent", now=now)
+    assert parent.lease is not None
+    for step_id in ("capture", "other"):
+        parent.lease.start_step(step_id, at=now)
+        parent.lease.pass_step(step_id, at=now)
+    parent.lease.start_step("report", at=now)
+    parent.lease.finish(
+        CanonicalStatus.FAILED,
+        blocker_codes=("DAILY_STEP_FAILED:report",),
+        at=now,
+    )
+    return control, spec
+
+
+def test_runtime_control_source_retry_replays_capture_and_unpassed_steps_once(
+    tmp_path: Path,
+) -> None:
+    """OPS-085: one automatic retry from capture, no release change, parent evidence archived."""
+    as_of = date(2026, 7, 27)
+    later = datetime(2026, 7, 28, 8, 30, tzinfo=UTC)
+    control, spec = _failed_source_parent(tmp_path)
+    key = operations_key = control.read_execution_state(spec=spec, as_of=as_of).idempotency_key
+    state_path = control.root / "states" / f"{key}.json"
+    parent_state_bytes = state_path.read_bytes()
+
+    retried = control.acquire(
+        spec=spec,
+        as_of=as_of,
+        run_id="rescue",
+        now=later,
+        source_retry=_source_retry_request(tmp_path),
+    )
+
+    assert retried.resolution.decision is OperationsRunDecision.SOURCE_RETRY
+    assert retried.resolution.attempt == 2
+    assert retried.resolution.resume_completed_step_ids == ()
+    assert retried.resolution.recovery_parent_run_id == "parent"
+    assert retried.resolution.recovery_from_step_id == "capture"
+    assert retried.lease is not None
+    assert all(
+        retried.lease.state.step_attempt_count(step_id) == 0
+        for step_id in ("capture", "other", "report")
+    )
+    receipt_path = Path(str(retried.resolution.recovery_receipt_path))
+    assert receipt_path.parent.parent.name == operations_key
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    assert receipt["schema_version"] == "operations_source_retry_receipt.v1"
+    assert receipt["replay_step_ids"] == ["capture", "other", "report"]
+    assert receipt["reused_completed_step_ids"] == []
+    assert receipt["owner_decision"].startswith("owner_decision:OPS-085:")
+    assert receipt["request"]["retry_components"] == [
+        {"component_id": "market_macro", "blocker_code": "REQUEST_FAILED"}
+    ]
+    assert Path(receipt["parent_state_archive_path"]).read_bytes() == parent_state_bytes
+
+    for step_id in ("capture", "other", "report"):
+        retried.lease.start_step(step_id, at=later)
+        retried.lease.pass_step(step_id, at=later)
+    retried.lease.finish(CanonicalStatus.PASS, at=later)
+    assert json.loads(state_path.read_text(encoding="utf-8"))["status"] == "PASS"
+
+    again = control.acquire(
+        spec=spec,
+        as_of=as_of,
+        run_id="again",
+        now=later,
+        source_retry=_source_retry_request(tmp_path, parent_run_id="rescue"),
+    )
+    assert again.resolution.decision is OperationsRunDecision.ALREADY_COMPLETE
+
+
+def test_runtime_control_source_retry_happens_at_most_once(tmp_path: Path) -> None:
+    as_of = date(2026, 7, 27)
+    later = datetime(2026, 7, 28, 8, 30, tzinfo=UTC)
+    control, spec = _failed_source_parent(tmp_path, max_run_attempts=3)
+    retried = control.acquire(
+        spec=spec,
+        as_of=as_of,
+        run_id="rescue",
+        now=later,
+        source_retry=_source_retry_request(tmp_path),
+    )
+    assert retried.lease is not None
+    retried.lease.start_step("capture", at=later)
+    retried.lease.finish(
+        CanonicalStatus.FAILED,
+        blocker_codes=("DAILY_STEP_FAILED:capture",),
+        at=later,
+    )
+
+    second = control.acquire(
+        spec=spec,
+        as_of=as_of,
+        run_id="second_rescue",
+        now=later,
+        source_retry=_source_retry_request(tmp_path, parent_run_id="rescue"),
+    )
+    ordinary = control.acquire(spec=spec, as_of=as_of, run_id="ordinary", now=later)
+
+    assert second.resolution.decision is OperationsRunDecision.BLOCKED_INVALID_RECOVERY
+    assert second.resolution.blocker_codes == ("SOURCE_RETRY_ALREADY_USED",)
+    assert second.lease is None
+    assert ordinary.resolution.decision is (
+        OperationsRunDecision.BLOCKED_TERMINAL_RECOVERY_REQUIRED
+    )
+
+
+@pytest.mark.parametrize(
+    ("case", "expected_code"),
+    [
+        pytest.param("policy_disabled", "SOURCE_RETRY_NOT_ELIGIBLE", id="policy-disabled"),
+        pytest.param("parent_mismatch", "SOURCE_RETRY_PARENT_RUN_MISMATCH", id="parent-mismatch"),
+        pytest.param("step_not_allowed", "SOURCE_RETRY_FROM_STEP_NOT_ALLOWED", id="other-step"),
+        pytest.param(
+            "manifest_changed",
+            "SOURCE_RETRY_CAPTURE_MANIFEST_INVALID_SHA256_MISMATCH",
+            id="manifest-changed",
+        ),
+        pytest.param("with_recovery", "SOURCE_RETRY_NOT_ELIGIBLE", id="with-recovery-request"),
+    ],
+)
+def test_runtime_control_source_retry_rejects_unbound_requests(
+    tmp_path: Path, case: str, expected_code: str
+) -> None:
+    as_of = date(2026, 7, 27)
+    control, spec = _failed_source_parent(tmp_path, source_retry=case != "policy_disabled")
+    state_path = (
+        control.root
+        / "states"
+        / f"{control.read_execution_state(spec=spec, as_of=as_of).idempotency_key}.json"
+    )
+    parent_state_bytes = state_path.read_bytes()
+    request = _source_retry_request(
+        tmp_path,
+        parent_run_id="someone_else" if case == "parent_mismatch" else "parent",
+        retry_from_step_id="other" if case == "step_not_allowed" else "capture",
+    )
+    if case == "manifest_changed":
+        Path(request.capture_manifest_path).write_text("{}", encoding="utf-8")
+    recovery = (
+        _recovery_request(tmp_path, parent_run_id="parent", as_of=as_of)
+        if case == "with_recovery"
+        else None
+    )
+
+    blocked = control.acquire(
+        spec=spec,
+        as_of=as_of,
+        run_id="rescue",
+        source_retry=request,
+        recovery_request=recovery,
+    )
+
+    assert blocked.resolution.decision is OperationsRunDecision.BLOCKED_INVALID_RECOVERY
+    assert blocked.resolution.blocker_codes == (expected_code,)
+    assert blocked.lease is None
+    assert state_path.read_bytes() == parent_state_bytes
+    assert not (control.root / "source_retry").exists()
+
+
 def test_runtime_control_blocks_concurrent_workflow_date_acquisition(tmp_path: Path) -> None:
     control = OperationsRunControl(root=tmp_path, policy=_runtime_policy())
     spec = _runtime_spec()
@@ -1953,6 +2178,190 @@ def test_controlled_daily_executor_recovery_replays_only_report_tail(
         and str(result.skip_reason).startswith("Canonical recovery")
         for result in recovered.step_results
     )
+
+
+def test_controlled_daily_executor_source_retry_reruns_capture_after_late_source(
+    tmp_path: Path,
+) -> None:
+    """OPS-085: the 2026-10-12 shape (late VIX, pipeline_health FAIL) recovers at 17:30."""
+    as_of = date(2026, 5, 6)
+    plan = build_daily_ops_plan(
+        as_of=as_of,
+        project_root=tmp_path,
+        skip_risk_event_openai_precheck=True,
+    )
+    _write_daily_pass_status_artifacts(plan)
+    capture_step = next(step for step in plan.steps if step.step_id == "capture_daily_inputs")
+    captured_manifest = json.loads(capture_step.produced_paths[0].read_text(encoding="utf-8"))
+    control = OperationsRunControl(
+        root=tmp_path / "control",
+        policy=_runtime_policy(
+            daily_cut_in=True,
+            terminal_recovery=True,
+            terminal_recovery_allowed_from_step_ids=("artifact_lineage",),
+            source_retry_from_step_ids=("capture_daily_inputs",),
+        ),
+    )
+    calls: list[str] = []
+
+    def write_capture(*, market_macro_passes: bool) -> None:
+        manifest = json.loads(json.dumps(captured_manifest))
+        if not market_macro_passes:
+            manifest["status"] = "PARTIAL_CAPTURE"
+            market = next(
+                row
+                for row in manifest["component_results"]
+                if row["component_id"] == "market_macro"
+            )
+            market.update(
+                status="FAIL",
+                blocker_code="REQUEST_FAILED",
+                error_summary="Cboe VIX response had no rows for 2026-05-06 to 2026-05-06",
+            )
+        capture_step.produced_paths[0].write_text(json.dumps(manifest), encoding="utf-8")
+
+    def runner(command, **kwargs):
+        text = " ".join(command)
+        calls.append(text)
+        if "capture-daily-inputs" in text:
+            write_capture(market_macro_passes="--rescue-session" in text)
+        health_failed = " ops health " in f" {text} " and "--rescue-session" not in " ".join(calls)
+        return subprocess.CompletedProcess(command, 1 if health_failed else 0, stdout="", stderr="")
+
+    morning = run_daily_ops_plan_controlled(
+        plan,
+        project_root=tmp_path,
+        env=_daily_env(),
+        runner=runner,
+        run_id="primary",
+        visibility_check_date=as_of,
+        visibility_latest_completed_trading_day=as_of,
+        runtime_control=control,
+    )
+    assert morning.status == "FAIL"
+    assert morning.source_retry is None
+    assert any("extract-sec-metrics" in call for call in calls)
+    assert not any("score-daily" in call for call in calls)
+
+    calls.clear()
+    rescue = run_daily_ops_plan_controlled(
+        plan,
+        project_root=tmp_path,
+        env=_daily_env(),
+        runner=runner,
+        run_id="rescue",
+        visibility_check_date=as_of,
+        visibility_latest_completed_trading_day=as_of,
+        runtime_control=control,
+        source_retry_requested=True,
+    )
+
+    assert rescue.status in {"PASS", "PASS_WITH_SKIPS"}
+    assert rescue.source_retry == "RETRIED"
+    assert any("capture-daily-inputs" in call and "--rescue-session" in call for call in calls)
+    assert any("score-daily" in call for call in calls)
+    assert any("validate-data" in call for call in calls)
+    # Every step after capture reruns on the new manifest; the morning's PIT capture is reused
+    # inside capture itself (tests/test_daily_input_capture.py), not fetched again.
+    assert any("extract-sec-metrics" in call for call in calls)
+    state = json.loads(_execution_state_path(tmp_path / "control" / "states").read_text())
+    assert state["status"] == "PASS"
+    assert state["attempt"] == 2
+
+    calls.clear()
+    third = run_daily_ops_plan_controlled(
+        plan,
+        project_root=tmp_path,
+        env=_daily_env(),
+        runner=runner,
+        run_id="third",
+        visibility_check_date=as_of,
+        visibility_latest_completed_trading_day=as_of,
+        runtime_control=control,
+        source_retry_requested=True,
+    )
+    assert third.status == "RUN_CONTROL_ALREADY_COMPLETE"
+    assert third.source_retry == "NOT_ELIGIBLE:NO_FAILED_RUN"
+    assert calls == []
+
+
+@pytest.mark.parametrize(
+    ("failure", "expected"),
+    [
+        pytest.param("quota", "NOT_ELIGIBLE:COMPONENT_NOT_RETRYABLE:market_macro:", id="quota"),
+        pytest.param("pit", "NOT_ELIGIBLE:COMPONENT_NOT_RETRYABLE:fmp_forward_pit:", id="pit"),
+        pytest.param("step", "NOT_ELIGIBLE:OTHER_STEP_FAILED:sec_metrics", id="other-step"),
+    ],
+)
+def test_controlled_daily_executor_source_retry_leaves_other_failures_to_people(
+    tmp_path: Path, failure: str, expected: str
+) -> None:
+    as_of = date(2026, 5, 6)
+    plan = build_daily_ops_plan(
+        as_of=as_of,
+        project_root=tmp_path,
+        skip_risk_event_openai_precheck=True,
+    )
+    _write_daily_pass_status_artifacts(plan)
+    capture_step = next(step for step in plan.steps if step.step_id == "capture_daily_inputs")
+    manifest = json.loads(capture_step.produced_paths[0].read_text(encoding="utf-8"))
+    manifest["status"] = "PARTIAL_CAPTURE"
+    failed_component, blocker = {
+        "quota": ("market_macro", "PROVIDER_QUOTA_EXHAUSTED"),
+        "pit": ("fmp_forward_pit", "PROVIDER_UNAVAILABLE"),
+        "step": ("market_macro", "REQUEST_FAILED"),
+    }[failure]
+    next(row for row in manifest["component_results"] if row["component_id"] == failed_component)[
+        "status"
+    ] = "FAIL"
+    next(row for row in manifest["component_results"] if row["component_id"] == failed_component)[
+        "blocker_code"
+    ] = blocker
+    capture_step.produced_paths[0].write_text(json.dumps(manifest), encoding="utf-8")
+    control = OperationsRunControl(
+        root=tmp_path / "control",
+        policy=_runtime_policy(
+            daily_cut_in=True,
+            terminal_recovery=True,
+            terminal_recovery_allowed_from_step_ids=("artifact_lineage",),
+            source_retry_from_step_ids=("capture_daily_inputs",),
+        ),
+    )
+    calls: list[str] = []
+
+    def runner(command, **kwargs):
+        text = " ".join(command)
+        calls.append(text)
+        failed = failure == "step" and "extract-sec-metrics" in text
+        return subprocess.CompletedProcess(command, 1 if failed else 0, stdout="", stderr="")
+
+    run_daily_ops_plan_controlled(
+        plan,
+        project_root=tmp_path,
+        env=_daily_env(),
+        runner=runner,
+        run_id="primary",
+        visibility_check_date=as_of,
+        visibility_latest_completed_trading_day=as_of,
+        runtime_control=control,
+    )
+    calls.clear()
+    rescue = run_daily_ops_plan_controlled(
+        plan,
+        project_root=tmp_path,
+        env=_daily_env(),
+        runner=runner,
+        run_id="rescue",
+        visibility_check_date=as_of,
+        visibility_latest_completed_trading_day=as_of,
+        runtime_control=control,
+        source_retry_requested=True,
+    )
+
+    assert rescue.status == "RUN_CONTROL_BLOCKED_TERMINAL_RECOVERY_REQUIRED"
+    assert str(rescue.source_retry).startswith(expected)
+    assert calls == []
+    assert not (tmp_path / "control" / "source_retry").exists()
 
 
 def test_controlled_daily_executor_blocks_concurrent_trigger_before_runner(
