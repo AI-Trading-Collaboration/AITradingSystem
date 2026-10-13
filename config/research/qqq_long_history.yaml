@@ -9,15 +9,16 @@ policy_metadata:
     QQQ-type research questions use 1999-03-10 onward for development and validation (TRADING-2567).
     The QQQ ETF price, SGOV and TQQQ do not reach back that far in the local cache, so the research
     data is the Nasdaq-100 total return index, a T-bill cash proxy and synthetic 2x/3x funds built
-    from them, all from FRED.
+    from them, all from FRED. The actual QQQ adjusted close since 1999-03-10 is kept as a reference
+    that checks those series.
   intended_effect: >
     One reviewed place for which series a long-history snapshot contains, the first observation each
     must have, how the proxies are derived, and which checks a snapshot must pass before research
     code may read it.
   validation_evidence: >
     tests/test_qqq_long_history.py covers snapshot checksums, first-date and structural checks,
-    the calendar and derivation arithmetic on fixed numbers, the dividend-ratio check, overlap
-    tracking and the fail-closed loader. The first real snapshot's check report (first dates,
+    the calendar and derivation arithmetic on fixed numbers, the dividend-ratio check, the
+    comparison with the actual ETF, overlap tracking and the fail-closed loader. The first real snapshot's check report (first dates,
     tracking against local QQQ/TQQQ) and the changes it led to are recorded in the TRADING-2567
     progress section.
   review_condition: >
@@ -65,6 +66,20 @@ series:
     kind: volatility_index
     expected_first_date: "1986-01-02"
     discontinued: true
+
+# The actual ETF's adjusted close (Baker 2026-10-13: check the long-history data against real QQQ).
+# An independent reference: the check compares each index and the QQQ proxy with it per year. QQQ
+# started trading on 1999-03-10; FMP serves it from that day (probe on the PC, 2026-10-13). Same
+# data rules as the FRED series.
+etf_reference:
+  ticker: QQQ
+  expected_first_date: "1999-03-10"
+  source:
+    source_id: fmp_qqq_long_history_research
+    provider: Financial Modeling Prep
+    endpoint: https://financialmodelingprep.com/stable/historical-price-eod/non-split-adjusted; https://financialmodelingprep.com/stable/historical-price-eod/dividend-adjusted
+    redistribution_allowed: false
+    external_llm_allowed: false
 
 # Proxy derivation. The calendar is the price index's dates, minus those from the first
 # total-return date on that have no total-return level (FRED carries the price index over some

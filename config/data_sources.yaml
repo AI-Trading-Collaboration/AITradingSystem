@@ -272,6 +272,54 @@ sources:
       owner_decision:TRADING-2567:2026-10-12:qqq_direction_1999_window。规格（序列、应有首日、派生参数、检查容差）在
       config/research/qqq_long_history.yaml；研究窗口在 config/research/research_window_registry.yaml。
 
+  - source_id: fmp_qqq_long_history_research
+    provider: Financial Modeling Prep
+    source_type: paid_vendor
+    status: active
+    domains:
+      - research_history
+    endpoint: https://financialmodelingprep.com/stable/historical-price-eod/non-split-adjusted; https://financialmodelingprep.com/stable/historical-price-eod/dividend-adjusted
+    adapter: FmpPriceProvider via ai_trading_system.research_data.qqq_long_history
+    cadence: manual
+    requires_credentials: true
+    cache_paths:
+      - data/raw/research/qqq_long_history
+    primary_for:
+      - qqq_long_history_etf_reference
+    audit_fields:
+      - provider
+      - endpoint
+      - request_parameters
+      - downloaded_at
+      - row_count
+      - checksum
+      - adjusted_price_endpoint
+    validation_checks:
+      - snapshot_checksum
+      - expected_first_dates
+      - positive_index_levels
+      - suspicious_index_daily_returns
+      - etf_reference_window_consistency
+      - etf_reference_gap_against_index_series
+      - etf_reference_tracking_against_qqq_proxy
+    limitations:
+      - 研究专用（TRADING-2567）：真实 QQQ 自 1999-03-10 上市起的复权收盘价，和 FRED 序列存进同一个长历史快照，只用来核对纳指 100 总收益、价格指数和合成 QQQ；不进日报价格缓存，不进 `aits validate-data`，不参与 market_prices 的对账。和 fmp_eod_daily_prices 是同一个供应商、同一组端点，只是用途和缓存位置不同。
+      - 2026-10-13 在本机实测，现有 FMP 档的这两个端点返回了 QQQ 1999-03-10 到 2005-12-30 的 1,715 行，复权价齐全。一次下载按 6 年一段、相邻两段重叠一周分段请求，每段不超过实测整段返回的行数；重叠日的复权价不一致或某段没有数据时 fetch 停下、不写快照。
+      - 复权口径由 FMP 的 dividend-adjusted 端点决定；长历史快照的 check 逐年对照两条指数和合成 QQQ，对不上的年份记 WARN。
+    llm_permission:
+      license_scope: paid_vendor_terms_not_reviewed_for_external_llm
+      personal_use_only: true
+      external_llm_allowed: false
+      cache_allowed: true
+      redistribution_allowed: false
+      max_content_sent_level: metadata_only
+      approval_ref: not_approved_for_external_llm_2026-05-05
+      reviewed_at: 2026-05-05
+    owner_notes: >-
+      owner_decision:TRADING-2567:2026-10-13:qqq_actual_price_reference（Baker 在研究线程的卡片上选"加，先核对"：先试 FMP，拿不到再用 Yahoo；FMP 拿到了）。
+      FMP_API_KEY 只从环境变量读取，命令、manifest 和检查报告不输出密钥。和 fred_qqq_long_history_research 共用规格
+      config/research/qqq_long_history.yaml 的 etf_reference 一节。
+
   - source_id: local_trade_theses
     provider: Local YAML input
     source_type: manual_input

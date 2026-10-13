@@ -1,15 +1,17 @@
 """Long-history research data for QQQ-type questions (TRADING-2567 S1).
 
-FRED series (Nasdaq-100 total return and price, 3-month T-bill, VIX/VXN/VXO) are downloaded into
-a content-addressed snapshot under ``data/raw/research/qqq_long_history/<snapshot_id>/``. Research
+FRED series (Nasdaq-100 total return and price, 3-month T-bill, VIX/VXN/VXO) and the actual QQQ
+adjusted close from FMP (an independent reference for the index series) are downloaded into a
+content-addressed snapshot under ``data/raw/research/qqq_long_history/<snapshot_id>/``. Research
 code reads the derived daily frame through ``load_daily``, which refuses a snapshot whose checksum
 does not match its manifest or whose check is missing, stale or FAIL. This check is the data-quality
 gate for these snapshots; they are not part of the daily price cache or ``aits validate-data``.
 
-The Nasdaq series may not be redistributed: snapshots stay on this machine, are never committed,
-and the commands below print summaries only, never rows. Run them from the main checkout, where
-research code reads the snapshot by default; ``--prices-path`` points the overlap check at the
-freshest local ETF prices (read only).
+Neither the Nasdaq series nor the QQQ prices may be redistributed: snapshots stay on this machine,
+are never committed, and the commands below print summaries only, never rows. Run them from the
+main checkout, where research code reads the snapshot by default; ``--prices-path`` points the
+overlap check at the freshest local ETF prices (read only). ``fetch`` reads the FMP key from
+``FMP_API_KEY`` and never prints it.
 
     python -m ai_trading_system.research_data.qqq_long_history fetch [--end YYYY-MM-DD]
     python -m ai_trading_system.research_data.qqq_long_history check [--snapshot ID]
@@ -20,9 +22,10 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
@@ -32,20 +35,35 @@ import typer
 from pydantic import BaseModel, ConfigDict, Field
 
 from ai_trading_system.config import PROJECT_ROOT
-from ai_trading_system.data.market_data import FredRateProvider, RateDataProvider, RateRequest
+from ai_trading_system.data.market_data import (
+    FmpPriceProvider,
+    FredRateProvider,
+    PriceDataProvider,
+    PriceRequest,
+    ProviderDownloadError,
+    RateDataProvider,
+    RateRequest,
+)
+from ai_trading_system.external_request_cache import sanitize_diagnostic_text
 from ai_trading_system.paths import join_root, state_dir
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_SPEC_PATH = PROJECT_ROOT / "config" / "research" / "qqq_long_history.yaml"
 DEFAULT_SNAPSHOT_ROOT = state_dir(PROJECT_ROOT, "data") / "raw" / "research" / "qqq_long_history"
 DEFAULT_PRICES_PATH = state_dir(PROJECT_ROOT, "data") / "raw" / "prices_daily.csv"
-SNAPSHOT_SCHEMA_VERSION = "qqq_long_history_snapshot.v1"
-CHECK_SCHEMA_VERSION = "qqq_long_history_check.v4"
+SNAPSHOT_SCHEMA_VERSION = "qqq_long_history_snapshot.v2"
+CHECK_SCHEMA_VERSION = "qqq_long_history_check.v5"
 LATEST_POINTER = "LATEST"
 SERIES_FILE = "series.csv"
 MANIFEST_FILE = "manifest.json"
 CHECK_JSON_FILE = "check.json"
 CHECK_MD_FILE = "check.md"
+FMP_API_KEY_ENV = "FMP_API_KEY"
+# The ETF reference is requested in windows of this many calendar years, each overlapping the next
+# by a week, so every response stays below the 1,715 rows one FMP request returned in full for
+# QQQ 1999-03-10..2005-12-30 (probe on the PC, 2026-10-13).
+ETF_REFERENCE_REQUEST_YEARS = 6
+ETF_REFERENCE_REQUEST_OVERLAP_DAYS = 7
 # Convention for annualizing daily statistics; not a tunable threshold.
 TRADING_DAYS_PER_YEAR = 252
 # Day-count bases: T-bill discount rates accrue actual/360, fund expense ratios actual/365.
@@ -122,6 +140,12 @@ class SourceSpec(_Strict):
     external_llm_allowed: bool
 
 
+class EtfReferenceSpec(_Strict):
+    ticker: str = Field(min_length=1)
+    expected_first_date: date
+    source: SourceSpec
+
+
 class LongHistorySpec(_Strict):
     schema_version: Literal["qqq_long_history_spec.v1"]
     spec_id: str = Field(min_length=1)
@@ -133,6 +157,7 @@ class LongHistorySpec(_Strict):
     request_start: date
     source: SourceSpec
     series: tuple[SeriesSpec, ...] = Field(min_length=1)
+    etf_reference: EtfReferenceSpec
     derivation: DerivationSpec
     checks: CheckSpec
 
@@ -166,6 +191,8 @@ def load_spec(path: Path = DEFAULT_SPEC_PATH) -> LoadedSpec:
     roles = [item.role for item in spec.series]
     if len(set(roles)) != len(roles):
         raise ValueError("each series role may appear only once")
+    if spec.etf_reference.ticker in {item.series_id for item in spec.series}:
+        raise ValueError("the ETF reference ticker must not reuse a FRED series id")
     for required in ("index_total_return", "index_price", "cash_rate"):
         spec.series_for(required)
     fund_ids = {fund.fund_id for fund in spec.derivation.synthetic_funds}
@@ -183,17 +210,30 @@ def fetch_snapshot(
     *,
     end: date,
     provider: RateDataProvider,
+    price_provider: PriceDataProvider,
     root: Path = DEFAULT_SNAPSHOT_ROOT,
     downloaded_at: datetime | None = None,
 ) -> Path:
-    """Download the spec's series and write (or reuse) the content-addressed snapshot."""
+    """Download the spec's series and ETF reference, then write (or reuse) the snapshot.
+
+    Nothing is written unless every series and the reference arrived. The reference is stored in
+    the same long file as the FRED series: series id = ticker, value = adjusted close.
+    """
 
     spec = loaded.spec
+    reference = spec.etf_reference
     series_ids = [item.series_id for item in spec.series]
     request = RateRequest(series_ids=series_ids, start=spec.request_start, end=end)
     raw = provider.download_rates(request)
-    frame = _normalize_series_frame(raw)
-    missing = sorted(set(series_ids) - set(frame["series"]))
+    reference_requests = etf_reference_requests(
+        reference.ticker, reference.expected_first_date, end
+    )
+    reference_rows = _download_reference(price_provider, reference_requests)
+    reference_raw = reference_rows.rename(columns={"adj_close": "value"}).assign(
+        series=reference.ticker
+    )
+    frame = _normalize_series_frame(pd.concat([raw, reference_raw], ignore_index=True))
+    missing = sorted(set([*series_ids, reference.ticker]) - set(frame["series"]))
     if missing:
         raise ValueError(f"provider returned no rows for: {', '.join(missing)}")
     payload = _series_csv_bytes(frame)
@@ -215,8 +255,20 @@ def fetch_snapshot(
         "source_id": spec.source.source_id,
         "provider": spec.source.provider,
         "endpoint": spec.source.endpoint,
+        "etf_reference": {
+            "ticker": reference.ticker,
+            "price_field": "adj_close",
+            "source_id": reference.source.source_id,
+            "provider": reference.source.provider,
+            "endpoint": reference.source.endpoint,
+        },
         "request_parameters": {
             "series_ids": series_ids,
+            "etf_tickers": [reference.ticker],
+            "etf_requests": [
+                {"start": item.start.isoformat(), "end": item.end.isoformat()}
+                for item in reference_requests
+            ],
             "start": spec.request_start.isoformat(),
             "end": end.isoformat(),
         },
@@ -225,14 +277,60 @@ def fetch_snapshot(
         "row_count": int(len(frame)),
         "series": _series_summary(frame),
         "data_policy": {
-            "redistribution_allowed": spec.source.redistribution_allowed,
-            "external_llm_allowed": spec.source.external_llm_allowed,
+            "redistribution_allowed": spec.source.redistribution_allowed
+            and reference.source.redistribution_allowed,
+            "external_llm_allowed": spec.source.external_llm_allowed
+            and reference.source.external_llm_allowed,
             "local_only": True,
         },
     }
     _write_text(snapshot_dir / MANIFEST_FILE, json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     _write_text(join_root(root, LATEST_POINTER), snapshot_id + "\n")
     return snapshot_dir
+
+
+def etf_reference_requests(ticker: str, start: date, end: date) -> list[PriceRequest]:
+    """Split ``start..end`` into windows of a few calendar years that overlap by a week."""
+
+    requests: list[PriceRequest] = []
+    window_start = start
+    while window_start <= end:
+        next_start = date(window_start.year + ETF_REFERENCE_REQUEST_YEARS, 1, 1)
+        window_end = min(next_start + timedelta(days=ETF_REFERENCE_REQUEST_OVERLAP_DAYS), end)
+        requests.append(PriceRequest(tickers=[ticker], start=window_start, end=window_end))
+        window_start = next_start
+    return requests
+
+
+def _download_reference(
+    price_provider: PriceDataProvider, requests: Sequence[PriceRequest]
+) -> pd.DataFrame:
+    """Adjusted close for each window, joined. Stops on an empty window or on overlapping days
+    whose adjusted close differs between windows (the adjustment changed mid-download)."""
+
+    frames: list[pd.DataFrame] = []
+    for request in requests:
+        ticker = request.tickers[0]
+        prices = price_provider.download_prices(request)
+        rows = prices.loc[prices["ticker"] == ticker, ["date", "adj_close"]]
+        if rows.empty:
+            raise ValueError(
+                f"price provider returned no {ticker} rows for {request.start}..{request.end}"
+            )
+        frames.append(rows)
+    if not frames:
+        raise ValueError("no ETF reference window to download")
+    joined = pd.concat(frames, ignore_index=True)
+    joined["date"] = pd.to_datetime(joined["date"]).dt.strftime("%Y-%m-%d")
+    joined["adj_close"] = pd.to_numeric(joined["adj_close"], errors="coerce")
+    spread = joined.groupby("date")["adj_close"].agg(["min", "max"])
+    disagree = spread.index[(spread["max"] - spread["min"]).abs() > 1e-9 * spread["max"].abs()]
+    if len(disagree):
+        raise ValueError(
+            f"ETF reference windows disagree on {len(disagree)} overlapping days "
+            f"(first {disagree[0]}); download again"
+        )
+    return joined.drop_duplicates(subset="date", keep="last").reset_index(drop=True)
 
 
 def resolve_snapshot_dir(
@@ -275,7 +373,8 @@ def derive_daily(frame: pd.DataFrame, spec: LongHistorySpec) -> pd.DataFrame:
     ``*_repaired`` columns mark those dates. Returns on day t cover the previous index date to t.
     Cash and financing accrue at the T-bill rate dated on or before the previous index date.
     ``cash_rate_annual`` on day t is the rate dated t, which FRED publishes the next business day: a
-    signal that reads it lags it by one day.
+    signal that reads it lags it by one day. ``etf_reference_return`` is the actual ETF's adjusted
+    close return over the same calendar dates, kept as a reference for checking the proxies.
     """
 
     wide = _wide_series(frame)
@@ -324,6 +423,12 @@ def derive_daily(frame: pd.DataFrame, spec: LongHistorySpec) -> pd.DataFrame:
             - financing * days / CASH_DAY_COUNT
             - fund.expense_ratio_annual * days / EXPENSE_DAY_COUNT
         )
+    ticker = spec.etf_reference.ticker
+    if ticker in wide.columns:
+        actual = wide[ticker].reindex(calendar).astype(float)
+        out["etf_reference_return"] = (actual / actual.shift(1) - 1).to_numpy()
+    else:
+        out["etf_reference_return"] = math.nan
     for item in spec.series:
         column = VOLATILITY_COLUMNS.get(item.role)
         if column is None:
@@ -459,33 +564,70 @@ def check_snapshot(
                 f"last observation {last} is more than {checks.stale_last_observation_days} days "
                 f"before the request end {request_end}",
             )
-        _check_ranges(item, rows["date"], values, checks, issues)
+        _check_ranges(item.series_id, item.kind, rows["date"], values, checks, issues)
+    _check_reference_series(spec, frame, series_rows, issues)
 
     if any(issue["severity"] == "FAIL" for issue in issues.items):
-        report = _check_report(loaded, manifest, series_rows, issues, {}, {}, checked_at)
+        report = _check_report(loaded, manifest, series_rows, issues, {}, {}, {}, checked_at)
         _write_check(snapshot_dir, report)
         return report
 
     daily = derive_daily(frame, spec)
     calendar_summary = _check_calendar(frame, daily, spec, issues)
+    reference = _check_etf_reference(daily, spec, issues)
     overlap = _check_overlap(daily, prices_path, checks, issues)
     report = _check_report(
-        loaded, manifest, series_rows, issues, calendar_summary, overlap, checked_at
+        loaded, manifest, series_rows, issues, calendar_summary, reference, overlap, checked_at
     )
     _write_check(snapshot_dir, report)
     return report
 
 
+def _check_reference_series(
+    spec: LongHistorySpec,
+    frame: pd.DataFrame,
+    series_rows: dict[str, dict[str, Any]],
+    issues: _Issues,
+) -> None:
+    reference = spec.etf_reference
+    rows = frame[frame["series"] == reference.ticker].sort_values("date")
+    record: dict[str, Any] = {
+        "role": "etf_reference",
+        "row_count": int(len(rows)),
+        "expected_first_date": reference.expected_first_date.isoformat(),
+    }
+    series_rows[reference.ticker] = record
+    if rows.empty:
+        issues.add("FAIL", "series_missing", reference.ticker, "no observations in the snapshot")
+        return
+    first = date.fromisoformat(rows["date"].iloc[0])
+    record.update(first_date=first.isoformat(), last_date=rows["date"].iloc[-1])
+    late_by = (first - reference.expected_first_date).days
+    if late_by > spec.checks.first_date_tolerance_days:
+        issues.add(
+            "FAIL",
+            "first_date_late",
+            reference.ticker,
+            f"first observation {first} is {late_by} days after the expected "
+            f"{reference.expected_first_date}",
+        )
+    values = pd.to_numeric(rows["value"], errors="coerce")
+    if values.isna().any():
+        issues.add("FAIL", "non_numeric_values", reference.ticker, "non-numeric values present")
+    _check_ranges(reference.ticker, "index_level", rows["date"], values, spec.checks, issues)
+
+
 def _check_ranges(
-    item: SeriesSpec,
+    series_id: str,
+    kind: str,
     dates: pd.Series,
     values: pd.Series,
     checks: CheckSpec,
     issues: _Issues,
 ) -> None:
-    if item.kind == "index_level":
+    if kind == "index_level":
         if (values <= 0).any():
-            issues.add("FAIL", "nonpositive_index_level", item.series_id, "index level <= 0")
+            issues.add("FAIL", "nonpositive_index_level", series_id, "index level <= 0")
             return
         returns = values / values.shift(1) - 1
         flagged = dates[returns.abs() > checks.suspicious_index_daily_return_abs]
@@ -493,21 +635,21 @@ def _check_ranges(
             issues.add(
                 "WARN",
                 "suspicious_index_return",
-                item.series_id,
+                series_id,
                 f"{len(flagged)} daily moves above {checks.suspicious_index_daily_return_abs:.0%}",
                 dates=flagged.head(MAX_LISTED_DATES).tolist(),
             )
         return
     low, high = (
-        checks.rate_percent_range if item.kind == "rate_percent" else checks.volatility_index_range
+        checks.rate_percent_range if kind == "rate_percent" else checks.volatility_index_range
     )
     flagged = dates[(values < low) | (values > high)]
     if not flagged.empty:
-        code = "rate_out_of_range" if item.kind == "rate_percent" else "volatility_out_of_range"
+        code = "rate_out_of_range" if kind == "rate_percent" else "volatility_out_of_range"
         issues.add(
             "WARN",
             code,
-            item.series_id,
+            series_id,
             f"{len(flagged)} values outside [{low}, {high}]",
             dates=flagged.head(MAX_LISTED_DATES).tolist(),
         )
@@ -756,6 +898,79 @@ def _attribution_fields(
     }
 
 
+def _check_etf_reference(
+    daily: pd.DataFrame, spec: LongHistorySpec, issues: _Issues
+) -> dict[str, Any]:
+    """Compare the index series and the QQQ proxy with the actual ETF, overall and per year.
+
+    The daily gap between the ETF's return and each index's return is mostly the ETF's own small
+    tracking noise; an index with level errors or a lag shows a clearly larger gap in those years.
+    The proxy's tracking difference and error are reported per year; a year outside the QQQ
+    tracking tolerance is a WARN. Only differences between series are reported, never returns.
+    """
+
+    columns = ["etf_reference_return", "ndx_tr_return", "ndx_price_return", "qqq_proxy_return"]
+    joined = daily[columns].dropna()
+    if len(joined) < 2:
+        issues.add(
+            "WARN",
+            "etf_reference_unavailable",
+            spec.etf_reference.ticker,
+            "fewer than 2 dates with the ETF and both indexes",
+        )
+        return {}
+    tolerance = spec.checks.max_abs_annual_tracking_difference.get("qqq_proxy")
+    years = pd.DatetimeIndex(joined.index).year
+    by_year = [
+        {"year": year, **_reference_gap_stats(joined[years == year])}
+        for year in sorted(set(years.tolist()))
+    ]
+    outside = [
+        row["year"]
+        for row in by_year
+        if tolerance is not None
+        and row["annual_tracking_difference"] is not None
+        and abs(row["annual_tracking_difference"]) > tolerance
+    ]
+    if outside:
+        issues.add(
+            "WARN",
+            "etf_reference_tracking_outside_tolerance",
+            spec.etf_reference.ticker,
+            f"{len(outside)} years where the QQQ proxy's annual tracking difference against the "
+            f"actual ETF exceeds {tolerance}",
+            dates=[str(year) for year in outside[:MAX_LISTED_DATES]],
+        )
+    return {
+        "ticker": spec.etf_reference.ticker,
+        "first_date": _iso(joined.index[0]),
+        "last_date": _iso(joined.index[-1]),
+        "tolerance_abs_annual_tracking_difference": tolerance,
+        **_reference_gap_stats(joined),
+        "by_year": by_year,
+    }
+
+
+def _reference_gap_stats(joined: pd.DataFrame) -> dict[str, Any]:
+    actual = joined["etf_reference_return"]
+    proxy_gap = actual - joined["qqq_proxy_return"]
+    enough = len(joined) > 1
+    return {
+        "trading_days": int(len(joined)),
+        "total_return_gap_daily_std": (
+            _round((actual - joined["ndx_tr_return"]).std()) if enough else None
+        ),
+        "price_gap_daily_std": (
+            _round((actual - joined["ndx_price_return"]).std()) if enough else None
+        ),
+        "annual_tracking_difference": _round(proxy_gap.mean() * TRADING_DAYS_PER_YEAR),
+        "annual_tracking_error": (
+            _round(proxy_gap.std() * math.sqrt(TRADING_DAYS_PER_YEAR)) if enough else None
+        ),
+        "correlation": _round(actual.corr(joined["qqq_proxy_return"])) if enough else None,
+    }
+
+
 def _check_overlap(
     daily: pd.DataFrame,
     prices_path: Path,
@@ -833,6 +1048,7 @@ def _check_report(
     series_rows: Mapping[str, Any],
     issues: _Issues,
     calendar_summary: Mapping[str, Any],
+    reference: Mapping[str, Any],
     overlap: Mapping[str, Any],
     checked_at: datetime | None,
 ) -> dict[str, Any]:
@@ -849,6 +1065,7 @@ def _check_report(
         "request_parameters": manifest["request_parameters"],
         "series": dict(series_rows),
         "calendar": dict(calendar_summary),
+        "etf_reference": dict(reference),
         "overlap_tracking": dict(overlap),
         "issues": issues.items,
         "production_effect": "none",
@@ -943,6 +1160,7 @@ def render_check_markdown(report: Mapping[str, Any]) -> str:
                 f"\n标准误不小于 {MAX_SHOWN_STANDARD_ERROR:g} 的估计显示为 -"
                 "（两个指数几乎没有差别的年份测不出来）。"
             )
+    lines += _render_etf_reference(report.get("etf_reference") or {})
     tracking = report.get("overlap_tracking") or {}
     overlap = {key: value for key, value in tracking.items() if isinstance(value, dict)}
     if overlap:
@@ -970,6 +1188,37 @@ def render_check_markdown(report: Mapping[str, Any]) -> str:
             f"- {issue['severity']} `{issue['code']}` {issue['subject']}：{issue['message']}{dates}"
         )
     return "\n".join(lines) + "\n"
+
+
+def _render_etf_reference(reference: Mapping[str, Any]) -> list[str]:
+    if not reference:
+        return []
+    ticker = reference["ticker"]
+    lines = [
+        "",
+        f"## 与真实 {ticker} 的对照（复权收盘价，{reference['first_date']} 到 "
+        f"{reference['last_date']}）",
+        "",
+        f"- 交易日：{reference['trading_days']}；{ticker} 日收益减指数日收益的标准差："
+        f"对总收益指数 {reference['total_return_gap_daily_std']}，"
+        f"对价格指数 {reference['price_gap_daily_std']}（明显大的那个指数和真实 ETF 对不上）",
+        f"- 合成 {ticker}（实际减合成）：年化跟踪差 {reference['annual_tracking_difference']}，"
+        f"年化跟踪误差 {reference['annual_tracking_error']}，相关 {reference['correlation']}；"
+        f"逐年跟踪差的容差 {reference['tolerance_abs_annual_tracking_difference']}",
+        "",
+        "### 逐年对照",
+        "",
+        "| 年 | 交易日 | 对总收益日差标准差 | 对价格日差标准差 | 年化跟踪差 | 年化跟踪误差 "
+        "| 相关 |",
+        "|---|---:|---:|---:|---:|---:|---:|",
+    ]
+    lines += [
+        f"| {row['year']} | {row['trading_days']} | {row['total_return_gap_daily_std']} | "
+        f"{row['price_gap_daily_std']} | {row['annual_tracking_difference']} | "
+        f"{row['annual_tracking_error']} | {row['correlation']} |"
+        for row in reference["by_year"]
+    ]
+    return lines
 
 
 def _estimate_text(row: Mapping[str, Any], key: str) -> str:
@@ -1068,6 +1317,19 @@ def _round(value: float | None) -> float | None:
 
 ProviderFactory = Callable[[], RateDataProvider]
 provider_factory: ProviderFactory = FredRateProvider
+PriceProviderFactory = Callable[[], PriceDataProvider]
+
+
+def fmp_price_provider() -> PriceDataProvider:
+    """FMP, the paid daily price vendor; the key comes from the environment and is never printed."""
+
+    api_key = os.environ.get(FMP_API_KEY_ENV, "").strip()
+    if not api_key:
+        raise RuntimeError(f"{FMP_API_KEY_ENV} is not set; fetch needs it for the QQQ reference")
+    return FmpPriceProvider(api_key=api_key)
+
+
+price_provider_factory: PriceProviderFactory = fmp_price_provider
 
 app = typer.Typer(
     help="QQQ 长历史研究数据（TRADING-2567 S1）：只在本机，输出只有汇总。", no_args_is_help=True
@@ -1084,11 +1346,28 @@ def fetch_command(
     spec_path: SpecOption = DEFAULT_SPEC_PATH,
     prices_path: PricesOption = DEFAULT_PRICES_PATH,
 ) -> None:
-    """下载 FRED 序列成快照，然后检查。"""
+    """下载 FRED 序列和真实 QQQ 复权价成快照，然后检查。"""
 
     loaded = load_spec(spec_path)
     end_date = date.fromisoformat(end) if end else datetime.now(tz=UTC).date()
-    snapshot_dir = fetch_snapshot(loaded, end=end_date, provider=provider_factory(), root=root)
+    try:
+        price_provider = price_provider_factory()
+    except RuntimeError as exc:
+        typer.echo(f"fetch: {exc}")
+        raise typer.Exit(code=1) from exc
+    try:
+        snapshot_dir = fetch_snapshot(
+            loaded,
+            end=end_date,
+            provider=provider_factory(),
+            price_provider=price_provider,
+            root=root,
+        )
+    except Exception as exc:
+        # A failed request's error can carry the FMP request URL, key included: print one
+        # sanitized line instead of the traceback.
+        typer.echo(f"fetch: {_safe_error_text(exc)}")
+        raise typer.Exit(code=1) from None
     typer.echo(f"snapshot: {snapshot_dir.name}")
     _finish_check(snapshot_dir, loaded, prices_path)
 
@@ -1105,6 +1384,16 @@ def check_command(
     loaded = load_spec(spec_path)
     snapshot_dir = resolve_snapshot_dir(root, snapshot or None)
     _finish_check(snapshot_dir, loaded, prices_path)
+
+
+def _safe_error_text(exc: Exception) -> str:
+    text = f"{type(exc).__name__}: {exc}"
+    if isinstance(exc, ProviderDownloadError) and exc.diagnostic.exception_type:
+        diagnostic = exc.diagnostic
+        text += f" ({diagnostic.exception_type}: {diagnostic.exception_message})"
+    return sanitize_diagnostic_text(
+        text, extra_secrets=(os.environ.get(FMP_API_KEY_ENV, "").strip(),)
+    )
 
 
 def _finish_check(snapshot_dir: Path, loaded: LoadedSpec, prices_path: Path) -> None:

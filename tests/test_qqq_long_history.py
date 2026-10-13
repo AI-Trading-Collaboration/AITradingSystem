@@ -13,7 +13,7 @@ import yaml
 from typer.testing import CliRunner
 
 from ai_trading_system.config import PROJECT_ROOT, load_data_sources
-from ai_trading_system.data.market_data import RateRequest
+from ai_trading_system.data.market_data import FmpPriceProvider, PriceRequest, RateRequest
 from ai_trading_system.research_data import qqq_long_history as qlh
 
 REQUEST_END = date(2020, 6, 30)
@@ -29,6 +29,18 @@ class FakeProvider:
         return self.frame[self.frame["series"].isin(request.series_ids)].copy()
 
 
+class FakePriceProvider:
+    def __init__(self, prices: pd.DataFrame) -> None:
+        self.prices = prices
+        self.requests: list[PriceRequest] = []
+
+    def download_prices(self, request: PriceRequest) -> pd.DataFrame:
+        self.requests.append(request)
+        dates = pd.to_datetime(self.prices["date"]).dt.date
+        in_window = (dates >= request.start) & (dates <= request.end)
+        return self.prices[self.prices["ticker"].isin(request.tickers) & in_window].copy()
+
+
 def _write_spec(tmp_path: Path) -> Path:
     raw = yaml.safe_load(qlh.DEFAULT_SPEC_PATH.read_text(encoding="utf-8"))
     raw["request_start"] = "2019-12-01"
@@ -42,6 +54,7 @@ def _write_spec(tmp_path: Path) -> Path:
     }
     for item in raw["series"]:
         item["expected_first_date"] = first_dates[item["series_id"]]
+    raw["etf_reference"]["expected_first_date"] = "2020-01-02"
     path = tmp_path / "qqq_long_history.yaml"
     path.write_text(yaml.safe_dump(raw, sort_keys=False, allow_unicode=True), encoding="utf-8")
     return path
@@ -82,31 +95,50 @@ def _write_prices(
     rows = []
     for ticker, column in (("QQQ", "qqq_proxy"), ("QLD", "lev2"), ("TQQQ", "lev3")):
         returns = daily[f"{column}_return"].dropna() + drift.get(ticker, 0.0)
-        levels = 100 * (1 + returns).cumprod()
-        rows.append(
-            pd.DataFrame(
-                {
-                    "date": levels.index.strftime("%Y-%m-%d"),
-                    "ticker": ticker,
-                    "open": levels.to_numpy(),
-                    "high": levels.to_numpy(),
-                    "low": levels.to_numpy(),
-                    "close": levels.to_numpy(),
-                    "adj_close": levels.to_numpy(),
-                    "volume": 1000,
-                }
-            )
-        )
+        rows.append(_price_rows(ticker, 100 * (1 + returns).cumprod()))
     path = tmp_path / "prices_daily.csv"
     pd.concat(rows, ignore_index=True).to_csv(path, index=False)
     return path
 
 
-def _fetch(tmp_path: Path, spec_path: Path, frame: pd.DataFrame) -> Path:
+def _price_rows(ticker: str, levels: pd.Series) -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "date": levels.index.strftime("%Y-%m-%d"),
+            "ticker": ticker,
+            "open": levels.to_numpy(),
+            "high": levels.to_numpy(),
+            "low": levels.to_numpy(),
+            "close": levels.to_numpy(),
+            "adj_close": levels.to_numpy(),
+            "volume": 1000,
+        }
+    )
+
+
+def _reference_prices(spec_path: Path, frame: pd.DataFrame, drift: float = 0.0) -> pd.DataFrame:
+    """Actual QQQ that tracks the proxy exactly, plus ``drift`` per day."""
+
+    daily = qlh.derive_daily(frame, qlh.load_spec(spec_path).spec)
+    returns = daily["qqq_proxy_return"].dropna() + drift
+    first = returns.index[0] - pd.offsets.BDay(1)
+    levels = pd.concat([pd.Series([100.0], index=[first]), 100 * (1 + returns).cumprod()])
+    return _price_rows("QQQ", levels)
+
+
+def _fetch(
+    tmp_path: Path,
+    spec_path: Path,
+    frame: pd.DataFrame,
+    prices: pd.DataFrame | None = None,
+) -> Path:
+    if prices is None:
+        prices = _reference_prices(spec_path, frame)
     return qlh.fetch_snapshot(
         qlh.load_spec(spec_path),
         end=REQUEST_END,
         provider=FakeProvider(frame),
+        price_provider=FakePriceProvider(prices),
         root=tmp_path / "snapshots",
     )
 
@@ -130,19 +162,30 @@ def test_real_spec_names_the_reviewed_series_and_funds() -> None:
     }
     assert spec.source.redistribution_allowed is False
     assert spec.source.external_llm_allowed is False
+    assert spec.etf_reference.ticker == "QQQ"
+    assert spec.etf_reference.expected_first_date == date(1999, 3, 10)
+    assert spec.etf_reference.source.redistribution_allowed is False
+    assert spec.etf_reference.source.external_llm_allowed is False
     # Calibrated on TQQQ after the first snapshot (TRADING-2567 progress, 2026-10-13).
     assert spec.derivation.financing_spread_annual == 0.0125
 
 
-def test_data_source_entry_matches_the_spec_and_stays_out_of_reconciliation() -> None:
+def test_data_source_entries_match_the_spec_and_stay_out_of_reconciliation() -> None:
     sources = {source.source_id: source for source in load_data_sources().sources}
-    source = sources[qlh.load_spec().spec.source.source_id]
+    spec = qlh.load_spec().spec
 
-    assert source.domains == ["research_history"]
-    assert source.cadence == "manual"
-    assert source.llm_permission.external_llm_allowed is False
-    assert source.llm_permission.redistribution_allowed is False
-    assert source.cache_paths == [qlh.DEFAULT_SNAPSHOT_ROOT.relative_to(PROJECT_ROOT).as_posix()]
+    for source_spec in (spec.source, spec.etf_reference.source):
+        source = sources[source_spec.source_id]
+        assert source.provider == source_spec.provider
+        assert source.endpoint == source_spec.endpoint
+        assert source.status == "active"
+        assert source.domains == ["research_history"]
+        assert source.cadence == "manual"
+        assert source.llm_permission.external_llm_allowed is False
+        assert source.llm_permission.redistribution_allowed is False
+        assert source.cache_paths == [
+            qlh.DEFAULT_SNAPSHOT_ROOT.relative_to(PROJECT_ROOT).as_posix()
+        ]
 
 
 def test_window_registry_and_policy_split_the_qqq_question_windows() -> None:
@@ -187,6 +230,12 @@ def test_fetch_writes_a_content_addressed_snapshot_once(tmp_path: Path) -> None:
     assert manifest["series"]["NASDAQXNDX"]["first_date"] == "2020-01-02"
     assert manifest["request_parameters"]["start"] == "2019-12-01"
     assert manifest["data_policy"]["redistribution_allowed"] is False
+    assert manifest["series"]["QQQ"]["first_date"] == "2020-01-02"
+    assert manifest["etf_reference"]["source_id"] == "fmp_qqq_long_history_research"
+    assert manifest["request_parameters"]["etf_tickers"] == ["QQQ"]
+    assert manifest["request_parameters"]["etf_requests"] == [
+        {"start": "2020-01-02", "end": "2020-06-30"}
+    ]
     assert (tmp_path / "snapshots" / qlh.LATEST_POINTER).read_text().strip() == first.name
     assert b"\r\n" not in (first / qlh.SERIES_FILE).read_bytes()
 
@@ -197,6 +246,68 @@ def test_fetch_refuses_when_a_series_is_missing(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="VXNCLS"):
         _fetch(tmp_path, spec_path, frame[frame["series"] != "VXNCLS"])
+    prices = _reference_prices(spec_path, frame)
+    with pytest.raises(ValueError, match="QQQ"):
+        _fetch(tmp_path, spec_path, frame, prices[prices["ticker"] != "QQQ"])
+    assert not (tmp_path / "snapshots").exists()
+
+
+def test_etf_reference_requests_cover_the_range_in_overlapping_windows() -> None:
+    requests = qlh.etf_reference_requests("QQQ", date(1999, 3, 10), date(2026, 10, 13))
+
+    assert [(item.start, item.end) for item in requests] == [
+        (date(1999, 3, 10), date(2005, 1, 8)),
+        (date(2005, 1, 1), date(2011, 1, 8)),
+        (date(2011, 1, 1), date(2017, 1, 8)),
+        (date(2017, 1, 1), date(2023, 1, 8)),
+        (date(2023, 1, 1), date(2026, 10, 13)),
+    ]
+    assert all(item.tickers == ["QQQ"] for item in requests)
+    # Every window holds fewer trading days than the 1,715 one FMP request returned in full.
+    assert max(len(pd.bdate_range(item.start, item.end)) for item in requests) < 1715
+    assert qlh.etf_reference_requests("QQQ", date(2020, 1, 2), date(2020, 6, 30))[0].end == date(
+        2020, 6, 30
+    )
+
+
+def test_etf_reference_download_joins_windows_and_stops_on_disagreement() -> None:
+    levels = pd.Series(1.0, index=pd.bdate_range("1999-03-10", "2012-12-31")).cumsum()
+    prices = _price_rows("QQQ", levels)
+    requests = qlh.etf_reference_requests("QQQ", date(1999, 3, 10), date(2012, 12, 31))
+
+    joined = qlh._download_reference(FakePriceProvider(prices), requests)
+
+    assert len(requests) == 3
+    assert joined["date"].tolist() == prices["date"].tolist()
+    assert joined["adj_close"].tolist() == prices["adj_close"].tolist()
+
+    class ShiftedProvider(FakePriceProvider):
+        def download_prices(self, request: PriceRequest) -> pd.DataFrame:
+            rows = super().download_prices(request)
+            if len(self.requests) == 2:
+                rows["adj_close"] = rows["adj_close"] * 1.01
+            return rows
+
+    with pytest.raises(ValueError, match=r"disagree on 10 overlapping days \(first 2005-01-03\)"):
+        qlh._download_reference(ShiftedProvider(prices), requests)
+    gap = prices[~prices["date"].between("2005-01-01", "2011-12-31")]
+    with pytest.raises(ValueError, match="no QQQ rows for 2005-01-01..2011-01-08"):
+        qlh._download_reference(FakePriceProvider(gap), requests)
+
+
+def test_fmp_price_provider_reads_the_key_from_the_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv(qlh.FMP_API_KEY_ENV, raising=False)
+    with pytest.raises(RuntimeError, match="FMP_API_KEY is not set"):
+        qlh.fmp_price_provider()
+
+    monkeypatch.setenv(qlh.FMP_API_KEY_ENV, "test-key")
+    provider = qlh.fmp_price_provider()
+
+    assert isinstance(provider, FmpPriceProvider)
+    assert provider.api_key == "test-key"
+    assert qlh.price_provider_factory is qlh.fmp_price_provider
 
 
 def test_read_snapshot_detects_edited_data(tmp_path: Path) -> None:
@@ -352,11 +463,17 @@ def test_check_passes_clean_data_and_measures_tracking(tmp_path: Path) -> None:
     assert calendar["dividend_windows"]["min_change"] > 0
     assert calendar["noise_attribution"] == {}
     assert [row["year"] for row in calendar["dividend_by_year"]] == [2020]
+    reference = report["etf_reference"]
+    assert reference["first_date"] == "2020-01-03"
+    assert reference["annual_tracking_difference"] == pytest.approx(0, abs=1e-9)
+    assert reference["by_year"][0]["year"] == 2020
+    assert report["series"]["QQQ"]["role"] == "etf_reference"
     assert (snapshot / qlh.CHECK_JSON_FILE).exists()
     markdown = (snapshot / qlh.CHECK_MD_FILE).read_text(encoding="utf-8")
     assert "状态：**PASS**" in markdown
     assert "TQQQ" in markdown
     assert "| 2020 |" in markdown
+    assert "与真实 QQQ 的对照" in markdown
 
 
 def test_check_fails_when_coverage_starts_late(tmp_path: Path) -> None:
@@ -432,7 +549,7 @@ def test_check_flags_suspicious_moves_and_bad_levels(tmp_path: Path) -> None:
 
     zero = frame.copy()
     zero.loc[(zero["series"] == "NASDAQXNDX") & (zero["date"] == "2020-02-03"), "value"] = 0.0
-    bad = _fetch(tmp_path / "bad", spec_path, zero)
+    bad = _fetch(tmp_path / "bad", spec_path, zero, _reference_prices(spec_path, frame))
     report = qlh.check_snapshot(bad, qlh.load_spec(spec_path), prices_path=tmp_path / "x.csv")
     assert report["status"] == "FAIL"
     assert "nonpositive_index_level" in {issue["code"] for issue in report["issues"]}
@@ -591,6 +708,52 @@ def test_check_attributes_window_noise_to_the_noisy_index(
     assert "总收益滞后系数" in markdown
 
 
+@pytest.mark.parametrize(
+    ("series_id", "noisier"), [("NASDAQ100", "price"), ("NASDAQXNDX", "total_return")]
+)
+def test_check_shows_which_index_the_actual_etf_disagrees_with(
+    tmp_path: Path, series_id: str, noisier: str
+) -> None:
+    spec_path = _write_spec(tmp_path)
+    clean = _series_frame()
+    prices = _reference_prices(spec_path, clean)
+    dates = pd.bdate_range("2020-03-02", "2020-04-30").strftime("%Y-%m-%d")
+    noisy = _scale(clean, series_id, {day: 1.008 for day in dates[::3]})
+    snapshot = _fetch(tmp_path, spec_path, noisy, prices)
+
+    report = qlh.check_snapshot(
+        snapshot, qlh.load_spec(spec_path), prices_path=tmp_path / "missing.csv"
+    )
+    reference = report["etf_reference"]
+    gaps = {
+        "price": reference["price_gap_daily_std"],
+        "total_return": reference["total_return_gap_daily_std"],
+    }
+    quieter = "total_return" if noisier == "price" else "price"
+
+    assert gaps[noisier] > 0.003
+    assert gaps[quieter] < 0.001
+    assert reference["by_year"][0][f"{noisier}_gap_daily_std"] == gaps[noisier]
+
+
+def test_check_warns_when_the_proxy_drifts_from_the_actual_etf(tmp_path: Path) -> None:
+    spec_path = _write_spec(tmp_path)
+    frame = _series_frame()
+    snapshot = _fetch(tmp_path, spec_path, frame, _reference_prices(spec_path, frame, -0.0001))
+
+    report = qlh.check_snapshot(
+        snapshot, qlh.load_spec(spec_path), prices_path=tmp_path / "missing.csv"
+    )
+    codes = {issue["code"]: issue for issue in report["issues"]}
+
+    assert report["etf_reference"]["annual_tracking_difference"] == pytest.approx(
+        -0.0001 * qlh.TRADING_DAYS_PER_YEAR, rel=1e-3
+    )
+    assert codes["etf_reference_tracking_outside_tolerance"]["dates"] == ["2020"]
+    daily, _ = qlh.load_daily(snapshot, qlh.load_spec(spec_path))
+    assert daily["etf_reference_return"].notna().sum() == len(daily.loc["2020-01-03":])
+
+
 def test_load_daily_refuses_unchecked_failed_or_stale_checks(tmp_path: Path) -> None:
     spec_path = _write_spec(tmp_path)
     frame = _series_frame()
@@ -624,6 +787,8 @@ def test_cli_fetch_and_check_print_summaries_only(
     frame = _series_frame()
     prices = _write_prices(tmp_path, spec_path, frame, {})
     monkeypatch.setattr(qlh, "provider_factory", lambda: FakeProvider(frame))
+    reference = _reference_prices(spec_path, frame)
+    monkeypatch.setattr(qlh, "price_provider_factory", lambda: FakePriceProvider(reference))
     root = tmp_path / "snapshots"
     common = ["--root", str(root), "--spec-path", str(spec_path), "--prices-path", str(prices)]
 
@@ -636,3 +801,47 @@ def test_cli_fetch_and_check_print_summaries_only(
     for output in (fetched.output, checked.output):
         assert not re.search(r"^\d{4}-\d{2}-\d{2},", output, flags=re.MULTILINE)
         assert "8000" not in output
+
+
+def test_cli_fetch_stops_before_downloading_without_the_fmp_key(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    spec_path = _write_spec(tmp_path)
+    fred = FakeProvider(_series_frame())
+    monkeypatch.setattr(qlh, "provider_factory", lambda: fred)
+    monkeypatch.delenv(qlh.FMP_API_KEY_ENV, raising=False)
+    root = tmp_path / "snapshots"
+    arguments = ["fetch", "--end", "2020-06-30", "--root", str(root), "--spec-path", str(spec_path)]
+
+    fetched = CliRunner().invoke(qlh.app, arguments)
+
+    assert fetched.exit_code == 1
+    assert "FMP_API_KEY is not set" in fetched.output
+    assert fred.requests == []
+    assert not root.exists()
+
+
+def test_cli_fetch_prints_a_failed_download_without_the_key(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    spec_path = _write_spec(tmp_path)
+    monkeypatch.setattr(qlh, "provider_factory", lambda: FakeProvider(_series_frame()))
+    monkeypatch.setenv(qlh.FMP_API_KEY_ENV, "secret-key-123")
+
+    class FailingProvider:
+        def download_prices(self, request: PriceRequest) -> pd.DataFrame:
+            raise ConnectionError(
+                "Max retries exceeded with url: /stable/x?symbol=QQQ&apikey=secret-key-123"
+            )
+
+    monkeypatch.setattr(qlh, "price_provider_factory", FailingProvider)
+    root = tmp_path / "snapshots"
+    arguments = ["fetch", "--end", "2020-06-30", "--root", str(root), "--spec-path", str(spec_path)]
+
+    fetched = CliRunner().invoke(qlh.app, arguments)
+
+    assert fetched.exit_code == 1
+    assert "fetch: ConnectionError: Max retries exceeded" in fetched.output
+    assert "secret-key-123" not in fetched.output
+    assert "Traceback" not in fetched.output
+    assert not root.exists()
