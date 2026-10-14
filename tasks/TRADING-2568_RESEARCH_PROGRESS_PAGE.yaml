@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2568_RESEARCH_PROGRESS_PAGE
+area: 研究方法 / 研究进展页面（GitHub Pages）
+priority: P2
+status: IN_PROGRESS
+next_owner: Project Owner
+next_step: 运行 01（research_site 页面生成器和验收测试，A/B 区）发布后，运行 02 加 .github/workflows/research-site.yml（C 区，按 tree 批）；owner 在仓库 Settings → Pages 把 Source 设为 GitHub Actions；运行 03（B 区，待写）等 S4b 和 TRADING-2569 J3、J4 的记录出现后加深筛选面板并接快筛和判断对账面板（公开页只放状态和进度）
+acceptance: 见 docs/requirements/TRADING-2568_Research_Progress_Page.md 第 6 节：验收测试 tests/test_research_site.py 全过；页面只读仓库里的研究记录，同样内容生成同样页面；研究记录发布到 main 后 GitHub Pages 自动更新
+notes: production_effect=none；broker_action=none；requirement=docs/requirements/TRADING-2568_Research_Progress_Page.md；owner_decision:TRADING-2568:2026-10-14:research_progress_page（2026-10-13 23:44:05Z 卡上选 GitHub Pages）；替代 2026-10-10 退役的 Atlas（TRADING-2466）
