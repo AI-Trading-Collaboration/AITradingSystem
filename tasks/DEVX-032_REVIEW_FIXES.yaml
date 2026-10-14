@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-032_REVIEW_FIXES
+area: Developer workflow / 发布门禁修补
+priority: P1
+status: IN_PROGRESS
+next_owner: pi 队列（按 tree 批）
+next_step: 包 DEVX-032-01：ship 门禁后复检、research_data 进 C 区、任务卡门禁；Baker 按结果 tree 批准后发布
+acceptance: 见 docs/requirements/DEVX-032_Review_Fixes.md 第 4 节
+notes: production_effect=none；broker_action=none；requirement=docs/requirements/DEVX-032_Review_Fixes.md；owner_decision:GOV-008:2026-10-14:review_fixes_v1；ship.py 和 gov008_ship.yaml 在 decision_record_excluded 里，按 tree 批
