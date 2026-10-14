@@ -8,9 +8,10 @@ says which run, branch and allowed paths it holds.
 
 Actions (each prints one JSON line; exit 0 ok, 1 failed step, 2 refused before doing anything):
   setup   --lane L               create the lane worktree (detached at main) and its .venv
-  start   --lane L --run R [--fix FILE]
+  start   --lane L --run R [--fix FILE] [--with-state-root]
                                  check the run dir against SHA256SUMS, put the lane on main, run
-                                 run-brief.ps1 -Direct in the lane (blocks until pi stops)
+                                 run-brief.ps1 -Direct in the lane (blocks until pi stops);
+                                 --with-state-root adds -StateRoot <main> (AITS_STATE_ROOT)
   report  --lane L --run R       mechanical checks (main's accept_checks), gate in the lane, checks
                                  again with --gate, main's ship.py --dry-run for the fingerprints,
                                  push the branch to origin for review
@@ -466,7 +467,9 @@ class Lanes:
                 busy.append(f"{other}:{state.get('run')}")
         return busy
 
-    def start(self, lane: str, run_id: str, fix: Path | None) -> dict[str, Any]:
+    def start(
+        self, lane: str, run_id: str, fix: Path | None, state_root: bool = False
+    ) -> dict[str, Any]:
         path = self.lane_path(lane)
         run_dir = self.run_dir(run_id)
         self.check_lane_checkout(lane, path)
@@ -524,9 +527,11 @@ class Lanes:
             "-Direct",
             "-Repo",
             str(path),
-            "-StateRoot",
-            str(self.main),
         ]
+        if state_root:
+            # AITS_STATE_ROOT sends the pi process's own tests to the main checkout's data; only a
+            # batch that must read research data from main asks for it (--with-state-root).
+            argv += ["-StateRoot", str(self.main)]
         if fix is not None:
             argv += ["-Fix", str(fix)]
         done = run(argv, check=False, log=run_dir / "lane.log")
@@ -869,6 +874,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--lane")
     parser.add_argument("--run")
     parser.add_argument("--fix", type=Path)
+    parser.add_argument("--with-state-root", action="store_true")
     parser.add_argument("--expected-tree")
     parser.add_argument("--expected-patch")
     parser.add_argument("--expected-change")
@@ -880,6 +886,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.error(f"{args.action} needs {' '.join(missing)}")
     if args.fix is not None and args.action != "start":
         parser.error("--fix goes with start")
+    if args.with_state_root and args.action != "start":
+        parser.error("--with-state-root goes with start")
     expected = {
         k: v
         for k, v in {
@@ -905,7 +913,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.action == "setup":
             result = lanes.setup(args.lane)
         elif args.action == "start":
-            result = lanes.start(args.lane, args.run, args.fix)
+            result = lanes.start(args.lane, args.run, args.fix, args.with_state_root)
         elif args.action == "report":
             result = lanes.report(args.lane, args.run)
         elif args.action == "refresh":

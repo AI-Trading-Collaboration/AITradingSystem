@@ -44,7 +44,7 @@ owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes：owner（Baker）在项目
 - 车道是主工作区的 git worktree，各有自己的 `.venv`。
   - 名字和路径写在 `scripts/agent/agent_config.json` 的 `lanes`：`lane1`、`lane2`、`lane3`，即 `D:\Work\AITradingSystem_lane1`…`lane3`。
   - 用 `lane.py setup` 建。
-- pi 在车道里跑：`run-brief.ps1 -Direct -Repo <车道> -StateRoot <主工作区>`。研究数据和状态读主工作区，和研究车道一样。
+- pi 在车道里跑：`run-brief.ps1 -Direct -Repo <车道>`。默认不带 `-StateRoot`：带上 `AITS_STATE_ROOT=<主工作区>` 会让 pi 自己在车道里跑的测试去读主工作区的数据（2026-10-14 第一次真车道运行里，`test_qqq_long_history` 失败，`test_secret_hygiene` 扫主工作区 outputs 太久，pi 用了 72 分钟而不是约 35 分钟）。需要读主工作区研究数据的批次，在 `lane.py start` 加 `--with-state-root`。门禁和检查本来就不带它。
 - 主工作区只用来发布。
 - 一条车道从 `start` 起被一个运行占用，直到它发布或 `release`。占用状态写在 `<runs_root>\lanes\<车道>.json`。
 

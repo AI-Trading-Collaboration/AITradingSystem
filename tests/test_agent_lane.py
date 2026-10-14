@@ -332,11 +332,20 @@ def test_start_runs_pi_in_the_lane_and_holds_it(lanes: Setup) -> None:
     assert out["branch"] == "pi/T-01" and out["commits"] == "1"
     call = json.loads((lanes.runs / "T-01/pi-calls.jsonl").read_text().splitlines()[0])
     assert call[call.index("-Repo") + 1] == str(lanes.lanes["lane1"])
-    assert call[call.index("-StateRoot") + 1] == str(lanes.main)
+    assert "-StateRoot" not in call
     assert "-Direct" in call
     state = json.loads((lanes.runs / "lanes/lane1.json").read_text())
     assert state["run"] == "T-01" and state["phase"] == "stopped" and state["branch"] == "pi/T-01"
     assert run_git(lanes.main, "rev-parse", "main") == state["base_at_start"]
+
+
+def test_start_passes_the_state_root_only_when_asked(lanes: Setup) -> None:
+    # DEVX-031-05: AITS_STATE_ROOT made pi's own tests in a lane read the main checkout's data.
+    lanes.batch("T-01", {"src/a/x.py": "x\n"}, ["src/a/**"])
+    code, out = lanes.lane("start", "--lane", "lane1", "--run", "T-01", "--with-state-root")
+    assert code == 0, out
+    call = json.loads((lanes.runs / "T-01/pi-calls.jsonl").read_text().splitlines()[0])
+    assert call[call.index("-StateRoot") + 1] == str(lanes.main)
 
 
 def test_start_frees_the_lane_when_run_brief_stops_before_pi_starts(lanes: Setup) -> None:
@@ -706,6 +715,7 @@ def test_status_lists_lanes_and_their_runs(lanes: Setup) -> None:
         ],
         ["report", "--lane", "lane1", "--run", "T-01", "--expected-tree", "a" * 40],
         ["report", "--lane", "lane1", "--run", "T-01", "--fix", "x.md"],
+        ["report", "--lane", "lane1", "--run", "T-01", "--with-state-root"],
     ],
 )
 def test_cli_argument_rules(lanes: Setup, args: list[str]) -> None:
