@@ -13,15 +13,25 @@
     {
       "start": "11:50",
       "end": "13:00",
-      "note": "OPS-084 12:00 JST daily trigger (09:30 until 2026-10-13); a full run took 915 s on 2026-10-11"
+      "note": "OPS-084 12:00 JST daily trigger (09:30 until 2026-10-13); a full run took 915 s on 2026-10-11; opens early once that run's summary is written (DEVX-031)",
+      "label": "PRIMARY"
     },
     {
       "start": "17:20",
       "end": "18:30",
-      "note": "placeholder for OPS-082 17:30 JST daily trigger; revise after measured daily-run duration"
+      "note": "OPS-082 17:30 JST rescue trigger (OPS-085); opens early once that run's summary is written (DEVX-031)",
+      "label": "RESCUE"
     }
   ],
   "scheduled_task_name": "AITradingSystem pi agent",
   "agent_clone": "D:\\Work\\AITradingSystem_agent",
-  "queue_file": "D:\\Work\\AITradingSystem_agent_runs\\queue\\request.json"
+  "queue_file": "D:\\Work\\AITradingSystem_agent_runs\\queue\\request.json",
+  "daily_scheduler_dir": "D:\\Work\\AITradingSystem_ops_runtime\\outputs\\run_control\\scheduler",
+  "main_checkout": "D:\\Work\\AITradingSystem",
+  "lanes": {
+    "lane1": "D:\\Work\\AITradingSystem_lane1",
+    "lane2": "D:\\Work\\AITradingSystem_lane2",
+    "lane3": "D:\\Work\\AITradingSystem_lane3"
+  },
+  "lane_remote": "origin"
 }

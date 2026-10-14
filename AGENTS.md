@@ -90,6 +90,16 @@ the tested tree -> ordinary push, with the remote checked before and after.
   preregistration, and signal files by hash. Their gate is the ledger invariants (`gates.records`).
   Research runs use the research worktree, one run at a time (`research/_template/brief.md`); the
   session publishes them with the patch and message fingerprints its own `--dry-run` prints.
+- **Parallel lanes** (`owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes`): pi batches run in lane
+  worktrees (`lanes` in `scripts/agent/agent_config.json`) through `scripts/agent/lane.py` only. A
+  lane is held by one run from `start` until it publishes or is released; no two lanes hold
+  overlapping `allowed_paths`, one local-model run at a time, and no start, gate or publish inside a
+  closed daily-run window (`scripts/agent/daily_window.py`: a window opens early once that day's
+  scheduled run wrote its summary). `lane.py report` runs `main`'s checks and the gate in the lane
+  and pushes the `pi/*` branch for review. Publishing stays one at a time, in the main checkout,
+  through `publish.ps1`. A change that waited is moved onto the new `main` by `ship.py --replay`
+  and gated again; it then publishes with `-ExpectedChange` (the patch fingerprint without context
+  lines) and the same message. A per-tree approval is given for the tree after the replay.
 - Never pass hundreds of test file paths to pytest (collection becomes quadratic on Windows); pass
   `tests` and select with markers. Run serial pytest only to reproduce a parallelism-related failure
   and say so. Use the project venv interpreter, not a system Python.
@@ -99,9 +109,11 @@ the tested tree -> ordinary push, with the remote checked before and after.
 - Work on a task branch. `main` only moves by fast-forward to a gated tree. No merge commits, rebase,
   force-push, history rewrite, or remote-divergence repair by the agent.
 - Parallel work (several agents or sessions) uses separate worktrees and branches. Git's fast-forward
-  check is the only coordination: whoever ships second brings the new `main` into its branch and
-  re-runs the gate. A research records commit is instead re-created on the new `main` by
-  `ship.py --replay-records` (same patch, message, and author; it refuses anything else).
+  check is the only coordination: whoever ships second re-creates its one commit on the new `main`
+  with `ship.py --replay` (same change fingerprint, message, and author; a conflict outside the
+  rendered task views refuses) and re-runs the gate. A research records commit is re-created by
+  `ship.py --replay-records` instead (same patch, message, and author; it refuses anything else).
+  Nothing else moves a change onto a newer `main`.
 - Pushing `main` (ordinary, non-force) after a green gate is a standing authorization; no per-change
   question. Pull requests and force-pushes always need explicit authorization.
 - Stop and report instead of pushing when the owner said not to, the tree holds unrelated user changes,
@@ -120,7 +132,7 @@ the tested tree -> ordinary push, with the remote checked before and after.
   them in the `Owner-Decision:` trailer.
 - The owner signs decisions, not executions (`owner_decision:DEVX-025:2026-10-12:signoff_policy`):
   direction and scope, zone C changes, these rules and the gates themselves (this file, the ship
-  policy, the pi guard, `publish.ps1`, `approve.ps1`), R2 and R3 actions, machine permissions, and any result that
+  policy, the pi guard, `publish.ps1`, `approve.ps1`, `lane.py`), R2 and R3 actions, machine permissions, and any result that
   departs from what was approved. A decision states its scope and expected result; work that matches
   it goes ahead without asking again. A zone C decision is recorded once
   (`owner_decision:DEVX-029:2026-10-13:decision_scoped_signoff`): `scripts/agent/approve.ps1` writes

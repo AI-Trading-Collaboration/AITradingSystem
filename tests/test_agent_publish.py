@@ -598,3 +598,68 @@ def test_publish_reviewed_patch_zone_c_tree_record_must_be_branch_tree(tmp_path:
     write_acceptance(run_dir, tree=current_tree(repo))
     done = run_publish(repo, run_dir, reviewed=reviewed)
     assert done.returncode == 0, done.stdout + done.stderr
+
+
+def reviewed_change(repo: Path) -> list[str]:
+    change = ship.change_fingerprint(repo, "main", MINI_POLICY)
+    return ["-ExpectedChange", change, "-ExpectedMessage", ship.message_fingerprint(repo)]
+
+
+def test_publish_by_reviewed_change_after_replay_onto_moved_main(tmp_path: Path) -> None:
+    # DEVX-031: main moved next to the reviewed lines, so the patch fingerprint changed; the change
+    # fingerprint and the message did not.
+    repo, origin, run_dir = setup_repo(tmp_path)
+    lines = "".join(f"{n}\n" for n in range(1, 11))
+    run_git(repo, "switch", "main")
+    commit_file(repo, "src/app.py", lines, "base app")
+    run_git(repo, "push", "origin", "main")
+    run_git(repo, "switch", "-C", "task/x", "main")
+    commit_file(repo, "src/app.py", lines.replace("5\n", "five\n"), "code: five")
+    by_patch = reviewed_patch(repo)
+    by_change = reviewed_change(repo)
+    run_git(repo, "switch", "main")
+    commit_file(repo, "src/app.py", lines.replace("7\n", "seven\n"), "main moved")
+    run_git(repo, "push", "origin", "main")
+    run_git(repo, "switch", "task/x")
+    assert run_ship(repo, "--base", "main", "--replay").returncode == 0
+    assert run_ship(repo, "--base", "main", "--gate").returncode == 0
+    run_git(repo, "switch", "main")
+    run_dir.mkdir()
+    refused = run_publish(repo, run_dir, reviewed=by_patch)
+    assert refused.returncode == 1
+    assert "does not match the reviewed patch" in refused.stdout
+    run_git(repo, "switch", "main")
+    done = run_publish(repo, run_dir, reviewed=by_change)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert run_git(origin, "rev-parse", "main") == run_git(repo, "rev-parse", "main")
+    assert (repo / "src/app.py").read_text(encoding="utf-8") == lines.replace(
+        "5\n", "five\n"
+    ).replace("7\n", "seven\n")
+
+
+@pytest.mark.parametrize(
+    ("args", "problem"),
+    [
+        (
+            ["-ExpectedPatch", "a" * 40, "-ExpectedChange", "a" * 40, "-ExpectedMessage", "a" * 64],
+            "not both",
+        ),
+        (
+            ["-ExpectedTree", "a" * 40, "-ExpectedChange", "a" * 40, "-ExpectedMessage", "a" * 64],
+            "not both",
+        ),
+        (["-ExpectedChange", "A" * 40, "-ExpectedMessage", "a" * 64], "ExpectedChange is not"),
+        (["-ExpectedChange", "a" * 40], "ExpectedMessage is not"),
+    ],
+)
+def test_publish_reviewed_change_validation_without_json(
+    tmp_path: Path, args: list[str], problem: str
+) -> None:
+    repo, _origin, run_dir = setup_repo(tmp_path)
+    commit_file(repo, "src/app.py", "x\n", "code")
+    assert run_ship(repo, "--base", "main", "--gate").returncode == 0
+    run_dir.mkdir()
+    done = run_publish(repo, run_dir, reviewed=args)
+    assert done.returncode == 2
+    assert problem in done.stdout
+    assert not (run_dir / "publish.json").exists()

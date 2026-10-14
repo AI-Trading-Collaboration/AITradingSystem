@@ -3,6 +3,7 @@ param(
   [Parameter(Mandatory=$true)][string]$RunDir,
   [string]$ExpectedTree,
   [string]$ExpectedPatch,
+  [string]$ExpectedChange,
   [string]$ExpectedMessage,
   [string]$Repo,
   [string]$Base = "main",
@@ -118,7 +119,7 @@ $validationErrors = @()
 $acceptedTree = $null
 $reviewRoot = $null
 $useDecisionRecords = $false
-$patchMode = (-not [string]::IsNullOrEmpty($ExpectedPatch)) -or (-not [string]::IsNullOrEmpty($ExpectedMessage))
+$patchMode = (-not [string]::IsNullOrEmpty($ExpectedPatch)) -or (-not [string]::IsNullOrEmpty($ExpectedChange)) -or (-not [string]::IsNullOrEmpty($ExpectedMessage))
 foreach ($entry in [System.Environment]::GetEnvironmentVariables().GetEnumerator()) {
   if ([string]$entry.Key -like "AITS_PI_*") { $validationErrors += "AITS_PI environment variable is set: $($entry.Key)" }
 }
@@ -131,9 +132,15 @@ foreach ($entry in [System.Environment]::GetEnvironmentVariables().GetEnumerator
 # commit on Base whose patch fingerprint and message match, so a package stays valid when Base moves. A zone C
 # branch without an accepted per-tree review is passed to ship.py with --review-root, which then requires owner
 # decision records under review_root\decisions covering every changed zone C path.
+# -ExpectedChange takes the place of -ExpectedPatch for a change replayed onto a moved Base
+# (owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes): the patch fingerprint without context lines.
 if ($patchMode) {
-  if (-not [string]::IsNullOrEmpty($ExpectedTree)) { $validationErrors += "use either -ExpectedTree or -ExpectedPatch with -ExpectedMessage, not both" }
-  if ($ExpectedPatch -cnotmatch "^[0-9a-f]{40}$") { $validationErrors += "ExpectedPatch is not a 40-character lowercase hex patch id" }
+  if (-not [string]::IsNullOrEmpty($ExpectedTree)) { $validationErrors += "use either -ExpectedTree or -ExpectedPatch (or -ExpectedChange) with -ExpectedMessage, not both" }
+  if ((-not [string]::IsNullOrEmpty($ExpectedPatch)) -and (-not [string]::IsNullOrEmpty($ExpectedChange))) {
+    $validationErrors += "use either -ExpectedPatch or -ExpectedChange, not both"
+  } elseif (-not [string]::IsNullOrEmpty($ExpectedChange)) {
+    if ($ExpectedChange -cnotmatch "^[0-9a-f]{40}$") { $validationErrors += "ExpectedChange is not a 40-character lowercase hex patch id" }
+  } elseif ($ExpectedPatch -cnotmatch "^[0-9a-f]{40}$") { $validationErrors += "ExpectedPatch is not a 40-character lowercase hex patch id" }
   if ($ExpectedMessage -cnotmatch "^[0-9a-f]{64}$") { $validationErrors += "ExpectedMessage is not a 64-character lowercase hex SHA-256" }
 } elseif ($ExpectedTree -cnotmatch "^[0-9a-f]{40}$") {
   $validationErrors += "ExpectedTree is not a 40-character lowercase hex tree"
@@ -247,7 +254,10 @@ try {
   if ($tempHash -cne $baseHash) { throw "temporary ship.py hash does not match $Base" }
 
   $publishArgs = @("-I", $tempShip, "--repo", $Repo, "--base", $Base, "--publish")
-  if ($patchMode) { $publishArgs += @("--expected-patch", $ExpectedPatch, "--expected-message", $ExpectedMessage) }
+  if ($patchMode) {
+    if (-not [string]::IsNullOrEmpty($ExpectedChange)) { $publishArgs += @("--expected-change", $ExpectedChange) } else { $publishArgs += @("--expected-patch", $ExpectedPatch) }
+    $publishArgs += @("--expected-message", $ExpectedMessage)
+  }
   if ($useDecisionRecords) { $publishArgs += @("--review-root", $reviewRoot) }
   if (-not $NoPush) { $publishArgs += "--push" }
   $publishResult = Invoke-Native $Python $publishArgs $Repo

@@ -23,17 +23,25 @@ function Read-JsonFile([string]$Path) { return Get-Content -LiteralPath $Path -R
 function Write-JsonNoBom([string]$Path, $Object) { [IO.File]::WriteAllText($Path, ($Object | ConvertTo-Json -Depth 10), $Utf8NoBom) }
 function ConvertTo-Hashtable($Object) { $h = @{}; $Object.PSObject.Properties | ForEach-Object { $h[$_.Name] = $_.Value }; return $h }
 
-function Test-InDailyWindow($Config, [string]$NowValue) {
-    if ($NowValue) { $nowDt = [DateTimeOffset]::Parse($NowValue) } else { $nowDt = [DateTimeOffset]::Now }
-    $tz = [TimeZoneInfo]::FindSystemTimeZoneById("Tokyo Standard Time")
-    $jst = [TimeZoneInfo]::ConvertTime($nowDt, $tz)
-    foreach ($w in $Config.daily_windows_jst) {
-        $s = $w.start.Split(":"); $e = $w.end.Split(":")
-        $start = [DateTimeOffset]::new($jst.Year, $jst.Month, $jst.Day, [int]$s[0], [int]$s[1], 0, $jst.Offset)
-        $end = [DateTimeOffset]::new($jst.Year, $jst.Month, $jst.Day, [int]$e[0], [int]$e[1], 0, $jst.Offset)
-        if ($jst -ge $start -and $jst -le $end) { return @{ in_window=$true; window=("{0}-{1} JST" -f $w.start,$w.end); now=$jst.ToString("yyyy-MM-dd HH:mm zzz") } }
+function Test-InDailyWindow([string]$ConfigFile, [string]$NowValue) {
+    # daily_window.py (DEVX-031): a window with a label opens early once that day's scheduled run
+    # wrote its summary; exit 3 means a closed window, any other non-zero exit refuses too.
+    $windowArgs = @("-I", (Join-Path $ScriptDir "daily_window.py"), "--config", $ConfigFile)
+    if ($NowValue) { $windowArgs += @("--now", $NowValue) }
+    $oldEap = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $windowText = (& $Python @windowArgs 2>&1 | ForEach-Object { "$_" }) -join "`n"
+        $windowCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $oldEap
     }
-    return @{ in_window=$false; now=$jst.ToString("yyyy-MM-dd HH:mm zzz") }
+    if ($windowCode -eq 0) { return @{ in_window=$false } }
+    if ($windowCode -eq 3) {
+        $state = $windowText | ConvertFrom-Json
+        return @{ in_window=$true; window=[string]$state.window; now=[string]$state.now; reason=[string]$state.reason }
+    }
+    return @{ in_window=$true; window="(unknown)"; now="(unknown)"; reason=$windowText }
 }
 
 $config = Read-JsonFile $ConfigPath
@@ -54,8 +62,8 @@ if ($briefCode -ne 0) {
     exit 2
 }
 $brief = ($briefJsonText -join "`n") | ConvertFrom-Json
-$window = Test-InDailyWindow $config $Now
-if ($window.in_window) { Write-Host ("拒绝启动：当前 {0} 落在日报窗口 {1}" -f $window.now, $window.window); exit 2 }
+$window = Test-InDailyWindow $ConfigPath $Now
+if ($window.in_window) { Write-Host ("拒绝启动：当前 {0} 落在日报窗口 {1} ({2})" -f $window.now, $window.window, $window.reason); exit 2 }
 
 $runId = if ($brief.run) { [string]$brief.run } else { [IO.Path]::GetFileNameWithoutExtension($briefFull) }
 $runDir = Join-Path $config.runs_root $runId

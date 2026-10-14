@@ -11,6 +11,13 @@ touches nothing else, and every plan checks them mechanically (new files or appe
 numbered and chained after the records on the base, made on a published commit without local code
 changes). ``--replay-records`` re-creates such a one-commit change on a base that moved meanwhile.
 
+Parallel lanes (``owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes``): several reviewed
+one-commit changes wait for their turn to publish. ``--replay`` re-creates any other one-commit
+change on the moved base with ``git merge-tree``, refuses a conflict outside the rendered task
+views, and checks that the change itself (``--expected-change``: the patch fingerprint without
+context lines) and the message stay the same. It is the only way an agent moves a change onto a
+newer base; the gate runs again afterwards.
+
 This is an agent-run gate, not an independent verifier (no branch protection; owner decision
 2026-10-10). Zone C changes (see config/gov008_ship.yaml) must carry an ``Owner-Decision:`` trailer.
 
@@ -20,6 +27,7 @@ usage:
   python tools/gov008/ship.py --repo . --gate             # run gate and amend trailer only
   python tools/gov008/ship.py --repo . --publish [--push] # verify Gate trailer, move main
   python tools/gov008/ship.py --repo . --replay-records   # records-only commit onto a moved main
+  python tools/gov008/ship.py --repo . --replay           # any other one-commit change onto it
   python tools/gov008/ship.py --check-decision-record <file> # validate one owner decision record
 """
 
@@ -74,6 +82,7 @@ PATCH_DIFF_OPTIONS = (
     "--src-prefix=a/",
     "--dst-prefix=b/",
 )
+CHANGE_DIFF_OPTIONS = tuple("--unified=0" if o == "--unified=3" else o for o in PATCH_DIFF_OPTIONS)
 # On a failing gate command the terminal shows only this many trailing lines, enough to see pytest's
 # short test summary. Display truncation only: the full output always goes to the gate log file.
 GATE_FAILURE_TAIL_LINES = 60
@@ -434,6 +443,16 @@ def plan(repo: Path, base: str = "main", policy: dict | None = None) -> dict:
     }
     if research is not None:
         result["research_records"] = research
+    if ancestor and changed and git(repo, "rev-list", "--count", f"{base}..HEAD") == "1":
+        # What a review names (DEVX-031): publish checks one of these with the message.
+        try:
+            result["fingerprints"] = {
+                "patch": patch_fingerprint(repo, base, policy),
+                "change": change_fingerprint(repo, base, policy),
+                "message": message_fingerprint(repo),
+            }
+        except ShipError as exc:
+            result["fingerprints"] = {"error": str(exc)}
     return result
 
 
@@ -533,10 +552,23 @@ def check_decision_records(
 
 def patch_fingerprint(repo: Path, base: str, policy: dict, head: str = "HEAD") -> str:
     """``git patch-id --stable`` of base..head without rendered views and registered exclusions."""
+    return _fingerprint(repo, base, policy, head, PATCH_DIFF_OPTIONS)
+
+
+def change_fingerprint(repo: Path, base: str, policy: dict, head: str = "HEAD") -> str:
+    """The patch fingerprint without context lines: the lines each file gains and loses.
+
+    A change moved onto a newer base keeps it when the base only changed lines near it, which the
+    patch fingerprint counts through its context lines (DEVX-031). Where the lines land is left to
+    the gate, which runs again on the moved change."""
+    return _fingerprint(repo, base, policy, head, CHANGE_DIFF_OPTIONS)
+
+
+def _fingerprint(repo: Path, base: str, policy: dict, head: str, options: tuple[str, ...]) -> str:
     excluded = [*policy.get("tree_clean_exclusions", []), *RENDERED_VIEWS]
     spec = [".", *[f":(exclude,literal){p}" for p in excluded]]
     diff = subprocess.run(
-        ["git", "-C", str(repo), "diff", *PATCH_DIFF_OPTIONS, f"{base}..{head}", "--", *spec],
+        ["git", "-C", str(repo), "diff", *options, f"{base}..{head}", "--", *spec],
         capture_output=True,
         check=False,
     )
@@ -565,24 +597,35 @@ def message_fingerprint(repo: Path, rev: str = "HEAD") -> str:
 
 
 def check_reviewed_patch(
-    repo: Path, base: str, policy: dict, expected_patch: str, expected_message: str
+    repo: Path,
+    base: str,
+    policy: dict,
+    expected_patch: str | None,
+    expected_message: str,
+    expected_change: str | None = None,
 ) -> dict:
-    if re.fullmatch(r"[0-9a-f]{40}", expected_patch) is None:
-        raise ShipError("expected patch must be a 40-character lowercase hex patch id")
+    """The branch is one commit on base with the reviewed patch (or change) and message."""
+    if (expected_patch is None) == (expected_change is None):
+        raise ShipError("name exactly one of the reviewed patch and the reviewed change")
+    expected = expected_patch if expected_patch is not None else expected_change
+    kind = "patch" if expected_patch is not None else "change"
+    if re.fullmatch(r"[0-9a-f]{40}", expected or "") is None:
+        raise ShipError(f"expected {kind} must be a 40-character lowercase hex patch id")
     if re.fullmatch(r"[0-9a-f]{64}", expected_message) is None:
         raise ShipError("expected message must be a 64-character lowercase hex SHA-256")
     count = git(repo, "rev-list", "--count", f"{base}..HEAD")
     if count != "1":
-        raise ShipError(f"a reviewed patch publishes exactly one commit on {base}, found {count}")
-    patch = patch_fingerprint(repo, base, policy)
-    if patch != expected_patch:
-        raise ShipError(f"patch {patch} does not match the reviewed patch {expected_patch}")
+        raise ShipError(f"a reviewed {kind} publishes exactly one commit on {base}, found {count}")
+    fingerprint = patch_fingerprint if kind == "patch" else change_fingerprint
+    actual = fingerprint(repo, base, policy)
+    if actual != expected:
+        raise ShipError(f"{kind} {actual} does not match the reviewed {kind} {expected}")
     message = message_fingerprint(repo)
     if message != expected_message:
         raise ShipError(
             f"commit message {message} does not match the reviewed message {expected_message}"
         )
-    return {"patch": patch, "message": message}
+    return {kind: actual, "message": message}
 
 
 def git_dir(repo: Path) -> Path:
@@ -734,10 +777,12 @@ def publish(
     review_root: Path | None = None,
     expected_patch: str | None = None,
     expected_message: str | None = None,
+    expected_change: str | None = None,
 ) -> dict:
     """Verify HEAD's Gate trailer against base policy, then fast-forward ``base``.
 
-    With ``expected_patch`` the commit must be the reviewed patch and message. With
+    With ``expected_patch`` (or ``expected_change``) the commit must be the reviewed patch (or
+    change) and message. With
     ``review_root`` a zone C change also needs decision records covering its zone C paths
     (publish.ps1 passes it when there is no per-tree acceptance)."""
     policy = load_policy_from_ref(repo, base)
@@ -747,9 +792,9 @@ def publish(
     trailer = read_gate_trailer(repo)
     validate_gate_trailer(repo, trailer, p)
     result: dict = {}
-    if expected_patch is not None or expected_message is not None:
+    if expected_patch is not None or expected_change is not None or expected_message is not None:
         result["reviewed_patch"] = check_reviewed_patch(
-            repo, base, policy, expected_patch or "", expected_message or ""
+            repo, base, policy, expected_patch, expected_message or "", expected_change
         )
     if review_root is not None and p["zone"] == "C":
         result["decision_records"] = check_decision_records(repo, base, policy, review_root)
@@ -773,6 +818,32 @@ def ship(repo: Path, base: str, push: bool) -> dict:
 
 def blob_id(repo: Path, rev: str, path: str) -> str | None:
     return git(repo, "rev-parse", "--verify", "--quiet", f"{rev}:{path}", check=False) or None
+
+
+def commit_like(repo: Path, old: str, tree: str, parent: str) -> str:
+    """A commit of ``tree`` on ``parent`` with ``old``'s author and message, minus Gate trailers."""
+    name, email, date = git(
+        repo, "log", "-1", "--format=%an%x00%ae%x00%ad", "--date=raw", old
+    ).split("\x00")
+    message = git(repo, "log", "-1", "--format=%B", old)
+    lines = [line for line in message.splitlines() if not line.startswith(f"{GATE_TRAILER}: ")]
+    author = {"GIT_AUTHOR_NAME": name, "GIT_AUTHOR_EMAIL": email, "GIT_AUTHOR_DATE": date}
+    # The message goes to git as bytes: text-mode stdin turns "\n" into "\r\n" on Windows.
+    message_file = git_dir(repo) / f"gov008-replay-{os.getpid()}.msg"
+    message_file.write_bytes(("\n".join(lines).rstrip() + "\n").encode("utf-8"))
+    try:
+        return git(
+            repo,
+            "commit-tree",
+            tree,
+            "-p",
+            parent,
+            "-F",
+            str(message_file),
+            env={**os.environ, **author},
+        )
+    finally:
+        message_file.unlink(missing_ok=True)
 
 
 def replay_records(repo: Path, base: str = "main") -> dict:
@@ -814,28 +885,7 @@ def replay_records(repo: Path, base: str = "main") -> dict:
         tree = git(repo, "write-tree", env=env)
     finally:
         index.unlink(missing_ok=True)
-    name, email, date = git(
-        repo, "log", "-1", "--format=%an%x00%ae%x00%ad", "--date=raw", old
-    ).split("\x00")
-    message = git(repo, "log", "-1", "--format=%B", old)
-    lines = [line for line in message.splitlines() if not line.startswith(f"{GATE_TRAILER}: ")]
-    author = {"GIT_AUTHOR_NAME": name, "GIT_AUTHOR_EMAIL": email, "GIT_AUTHOR_DATE": date}
-    # The message goes to git as bytes: text-mode stdin turns "\n" into "\r\n" on Windows.
-    message_file = git_dir(repo) / f"gov008-replay-{os.getpid()}.msg"
-    message_file.write_bytes(("\n".join(lines).rstrip() + "\n").encode("utf-8"))
-    try:
-        new = git(
-            repo,
-            "commit-tree",
-            tree,
-            "-p",
-            new_base,
-            "-F",
-            str(message_file),
-            env={**os.environ, **author},
-        )
-    finally:
-        message_file.unlink(missing_ok=True)
+    new = commit_like(repo, old, tree, new_base)
     patch = patch_fingerprint(repo, parent, policy, head=old)
     if patch_fingerprint(repo, new_base, policy, head=new) != patch:
         raise ShipError("the replayed commit's patch differs from the original: refusing")
@@ -855,6 +905,128 @@ def replay_records(repo: Path, base: str = "main") -> dict:
     }
 
 
+def replay(repo: Path, base: str = "main", python: str | None = None) -> dict:
+    """Re-create the branch's one reviewed commit on the current ``base`` (DEVX-031).
+
+    For a change that waited while other changes published. ``git merge-tree`` merges it onto the
+    moved base without touching the working tree; a conflict refuses, except in the rendered task
+    views, which come from the base and are rendered again (``tools/tasks.py render``). The new
+    commit keeps the author, the message without Gate trailers, and the change fingerprint; it needs
+    a new gate."""
+    policy = load_policy_from_ref(repo, base)
+    branch = git(repo, "branch", "--show-current")
+    if branch in ("", base):
+        raise ShipError(f"must run from a task branch, not '{branch or 'detached HEAD'}'")
+    dirty = dirty_paths(repo, policy.get("tree_clean_exclusions", []))
+    if dirty:
+        raise ShipError(f"working tree is not clean: {dirty[:5]}")
+    old = git(repo, "rev-parse", "HEAD")
+    new_base = git(repo, "rev-parse", base)
+    if is_ancestor(repo, new_base, old):
+        raise ShipError(f"{base} is already an ancestor of HEAD: nothing to replay")
+    parent = git(repo, "rev-parse", "--verify", "--quiet", f"{old}^", check=False)
+    if not parent or git(repo, "merge-base", new_base, old) != parent:
+        raise ShipError(f"replay takes exactly one commit on top of a commit of {base}")
+    changed = [p for p in git(repo, "diff", "--name-only", f"{parent}..{old}").splitlines() if p]
+    if not changed:
+        raise ShipError("the commit to replay changes nothing")
+    if all(record_rule(p, policy) is not None for p in changed):
+        raise ShipError("a research records commit replays with --replay-records")
+    change = change_fingerprint(repo, parent, policy, head=old)
+    message = message_fingerprint(repo, old)
+    merged = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repo),
+            "merge-tree",
+            "--write-tree",
+            "--name-only",
+            "--no-messages",
+            f"--merge-base={parent}",
+            new_base,
+            old,
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+    if merged.returncode not in (0, 1):
+        raise ShipError(f"git merge-tree failed: {merged.stderr.strip()}")
+    lines = [line for line in merged.stdout.splitlines() if line.strip()]
+    if not lines:
+        raise ShipError("git merge-tree printed no tree")
+    conflicts = sorted(set(lines[1:])) if merged.returncode == 1 else []
+    others = [p for p in conflicts if p not in RENDERED_VIEWS]
+    if others:
+        raise ShipError(f"the change conflicts with {base} in {others[:10]}: refusing")
+    views = [v for v in RENDERED_VIEWS if v in changed or v in conflicts]
+    index = git_dir(repo) / f"gov008-replay-{os.getpid()}.index"
+    env = {**os.environ, "GIT_INDEX_FILE": str(index)}
+    try:
+        git(repo, "read-tree", lines[0], env=env)
+        for view in views:
+            blob = blob_id(repo, new_base, view)
+            if blob is None:
+                git(repo, "update-index", "--force-remove", "--", view, env=env)
+            else:
+                git(repo, "update-index", "--add", "--cacheinfo", f"100644,{blob},{view}", env=env)
+        tree = git(repo, "write-tree", env=env)
+    finally:
+        index.unlink(missing_ok=True)
+    new = commit_like(repo, old, tree, new_base)
+    git(repo, "update-ref", f"refs/heads/{branch}", new, old)
+    git(repo, "read-tree", "-m", "-u", old, new)
+    if views:
+        # The views are rendered from tasks/*.yaml; the gate's staleness test checks the result.
+        rendered_run = subprocess.run(
+            [python or sys.executable, "tools/tasks.py", "render"],
+            cwd=repo,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+        if rendered_run.returncode != 0:
+            raise ShipError(
+                f"tools/tasks.py render failed (branch is now {new}, was {old}): "
+                f"{rendered_run.stderr.strip()[-500:]}"
+            )
+        for view in RENDERED_VIEWS:
+            if (repo / view).exists():
+                git(repo, "add", "--", view)
+            else:
+                git(repo, "rm", "-q", "--cached", "--ignore-unmatch", "--", view)
+        rendered = git(repo, "write-tree")
+        if rendered != tree:
+            newer = commit_like(repo, old, rendered, new_base)
+            git(repo, "update-ref", f"refs/heads/{branch}", newer, new)
+            new, tree = newer, rendered
+    if change_fingerprint(repo, new_base, policy, head=new) != change:
+        raise ShipError(
+            f"the replayed change differs from the original: refusing (branch is now {new}, "
+            f"was {old})"
+        )
+    if message_fingerprint(repo, new) != message:
+        raise ShipError(
+            f"the replayed message differs from the original: refusing (branch is now {new}, "
+            f"was {old})"
+        )
+    return {
+        "branch": branch,
+        "replayed_from": old,
+        "replayed_sha": new,
+        "base_sha": new_base,
+        "tree": tree,
+        "rendered_views": views,
+        "patch": patch_fingerprint(repo, new_base, policy, head=new),
+        "change": change,
+        "message": message,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path("."))
@@ -865,6 +1037,7 @@ def main() -> int:
     mode.add_argument("--gate", action="store_true")
     mode.add_argument("--publish", action="store_true")
     mode.add_argument("--replay-records", action="store_true")
+    mode.add_argument("--replay", action="store_true")
     mode.add_argument("--check-decision-record", type=Path, metavar="FILE")
     parser.add_argument(
         "--push", action="store_true", help="with --execute or --publish: ordinary push of base"
@@ -872,15 +1045,24 @@ def main() -> int:
     parser.add_argument("--review-root", type=Path, help="with --publish: zone C decision records")
     parser.add_argument("--expected-patch", help="with --publish: reviewed git patch-id --stable")
     parser.add_argument(
+        "--expected-change", help="with --publish: reviewed change fingerprint (no context lines)"
+    )
+    parser.add_argument(
         "--expected-message", help="with --publish: SHA-256 of the reviewed message"
     )
     args = parser.parse_args()
     if args.push and not (args.execute or args.publish):
         parser.error("--push can only be used with --execute or --publish")
-    if (args.review_root or args.expected_patch or args.expected_message) and not args.publish:
-        parser.error("--review-root, --expected-patch and --expected-message need --publish")
-    if bool(args.expected_patch) != bool(args.expected_message):
-        parser.error("--expected-patch and --expected-message go together")
+    reviewed = (args.expected_patch, args.expected_change, args.expected_message)
+    if (args.review_root or any(reviewed)) and not args.publish:
+        parser.error(
+            "--review-root, --expected-patch, --expected-change and --expected-message need "
+            "--publish"
+        )
+    if args.expected_patch and args.expected_change:
+        parser.error("use either --expected-patch or --expected-change, not both")
+    if bool(args.expected_patch or args.expected_change) != bool(args.expected_message):
+        parser.error("--expected-patch (or --expected-change) and --expected-message go together")
     repo = args.repo.resolve()
     try:
         # Compact one-line JSON: the full plan/ship result stays machine-readable without spending
@@ -902,6 +1084,8 @@ def main() -> int:
             result = gate(repo, args.base)
         elif args.replay_records:
             result = replay_records(repo, args.base)
+        elif args.replay:
+            result = replay(repo, args.base)
         elif args.publish:
             result = publish(
                 repo,
@@ -910,6 +1094,7 @@ def main() -> int:
                 review_root=args.review_root,
                 expected_patch=args.expected_patch,
                 expected_message=args.expected_message,
+                expected_change=args.expected_change,
             )
         else:
             result = ship(repo, args.base, args.push)

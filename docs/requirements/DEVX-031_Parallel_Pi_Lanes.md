@@ -128,8 +128,8 @@ owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes：owner（Baker）在项目
 
 | 步 | 内容 | 状态 |
 |---|---|---|
-| 01 | 本需求文档（A 区） | 本批 |
-| 02 | `ship.py`、`publish.ps1`、`lane.py`、`daily_window.py`、`run-brief.ps1`、`agent_config.json`、规则 1.3.0、AGENTS.md、测试、任务卡（C 区，按 tree 批） | 待 01 发布 |
+| 01 | 本需求文档（A 区） | 已发布 |
+| 02 | `ship.py`、`publish.ps1`、`lane.py`、`daily_window.py`、`run-brief.ps1`、`agent_config.json`、规则 1.3.0、AGENTS.md、测试、任务卡（C 区，按 tree 批） | 本批 |
 | 03 | 电脑准备：owner 的设置里加车道放行规则；`lane.py setup` 建 lane1–lane3 | 02 发布后 |
 | 04 | 试跑：两批不相干的 B 区批次同时跑；记录测试用时和 CPU 争用；决定开 2 条还是 3 条车道 | 03 后 |
 
@@ -143,3 +143,6 @@ owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes：owner（Baker）在项目
 ## 7. 进展
 
 - 2026-10-14：需求和实现由 Claude 写（规则和门禁本身由 Claude 端到端负责，见 token-usage 分工），云端测试见第 4 节。
+- 2026-10-14，02 的云端验证（Linux、Python 3.13、PowerShell 7）：
+  - 全套 PR 测试除 30 个失败外都通过；这 30 个在改动前的 main 上同样失败（Windows 专用的 schtasks、icacls 用例，IBKR 模拟、交易时段检查和两条报告用例）。
+  - 对 `ship.py`、`lane.py`、`daily_window.py` 的关键检查做了 22 个变异，20 个让测试失败。剩下 2 个是兜底检查，正常路径上碰不到：replay 后再核对一次提交信息；冲突的任务总表先取 main 的版本，再被重新渲染覆盖。

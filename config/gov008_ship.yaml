@@ -1,6 +1,6 @@
 schema_version: gov008_ship_policy.v1
 policy_id: GOV-008-SHIP
-version: 1.2.2
+version: 1.3.0
 # In force from the GOV-008 P3 cutover (owner_decision:GOV-008:2026-10-10:bootstrap_route_b_v1).
 # 1.1.0: decision_record_excluded (owner_decision:DEVX-029:2026-10-13:decision_scoped_signoff).
 # 1.1.1: strategy modules research/*/*.py in zone C (owner_decision:TRADING-2567:2026-10-13:pi_research_runs).
@@ -8,6 +8,7 @@ version: 1.2.2
 # 1.2.1: research bench S4 settings config/research/research_screen.yaml in zone C (owner_decision:TRADING-2565:2026-10-13:signal_screen_layer).
 # 1.2.2: bench settings by name pattern config/research/research_*.yaml and the bench's cost model
 #        config/research/transaction_cost_model.yaml in zone C (owner_decision:TRADING-2565:2026-10-14:bench_config_zone).
+# 1.3.0: parallel lanes, scripts/agent/lane.py in zone C and decision_record_excluded (owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes).
 status: OWNER_APPROVED_ENFORCED
 owner: Project Owner
 rationale: >
@@ -69,6 +70,7 @@ zones:
     - .pi/extensions/aits-guard/**
     - scripts/agent/publish.ps1
     - scripts/agent/approve.ps1
+    - scripts/agent/lane.py
   # Zone A: records. Documentation, task and experiment records, generated lists.
   A:
     - docs/**
@@ -87,6 +89,7 @@ decision_record_excluded:
   - .pi/extensions/aits-guard/**
   - scripts/agent/publish.ps1
   - scripts/agent/approve.ps1
+  - scripts/agent/lane.py
   - .github/**
   - src/ai_trading_system/core/production_effect.py
   - src/ai_trading_system/trading_engine/brokers/**

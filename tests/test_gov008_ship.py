@@ -103,6 +103,8 @@ def test_real_policy_zone_c_globs_match_tracked_files() -> None:
         (".pi/extensions/aits-guard/index.ts", "C"),
         ("scripts/agent/publish.ps1", "C"),
         ("scripts/agent/approve.ps1", "C"),
+        ("scripts/agent/lane.py", "C"),
+        ("scripts/agent/daily_window.py", "B"),
         ("scripts/agent/run-brief.ps1", "B"),
         ("docs/requirements/x.md", "A"),
         ("registry/development_tasks/aa/x.yaml", "A"),
