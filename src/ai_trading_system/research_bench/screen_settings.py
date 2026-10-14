@@ -5,11 +5,12 @@ from __future__ import annotations
 import hashlib
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.research_bench.sources import SourceSpec
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_SCREEN_SETTINGS_PATH = PROJECT_ROOT / "config" / "research" / "research_screen.yaml"
@@ -30,8 +31,16 @@ class EventSettings(_Strict):
 class ScreenSettings(_Strict):
     schema_version: Literal["research_screen.v1"]
     derisk_events: EventSettings
+    sources: tuple[SourceSpec, ...] = Field(min_length=1)
     production_effect: Literal["none"]
     broker_action: Literal["none"]
+
+    @model_validator(mode="after")
+    def unique_sources(self) -> Self:
+        ids = [source.source_id for source in self.sources]
+        if len(set(ids)) != len(ids):
+            raise ValueError("source_id must be unique")
+        return self
 
 
 @dataclass(frozen=True)

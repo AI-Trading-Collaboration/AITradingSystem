@@ -96,6 +96,8 @@ def test_real_policy_zone_c_globs_match_tracked_files() -> None:
         ("config/research/experiments/x.yaml", "B"),
         ("config/research/other_registry.yaml", "B"),
         ("src/ai_trading_system/research_bench/events.py", "C"),
+        ("src/ai_trading_system/research_bench/sources.py", "C"),
+        ("src/ai_trading_system/research_data/signal_sources.py", "B"),
         ("research/QQQ-Q1/prereg.yaml", "C"),
         ("research/QQQ-Q1/strategy.py", "C"),
         ("research/_template/strategy.py", "C"),

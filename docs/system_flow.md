@@ -71,6 +71,8 @@ ad hoc 的 SEC PIT 回填/评估与缓存回放。
 
 研究只走评估台（TRADING-2565），按 TRADING-2567 的问题和窗口进行；入口说明在 `research/README.md`。
 
+信号筛选的数据入口（TRADING-2565 S4a）：`research_data.signal_sources` 下载 FRED 日度序列和 Ken French 数据成本机快照，`research_bench.sources.known_at` 按发布滞后对齐；来源列在 `config/research/research_screen.yaml`。
+
 ```mermaid
 flowchart LR
     Q["Owner 定问题（TRADING-2567）"] --> PRE["research/&lt;题号&gt;/prereg.yaml + strategy.py<br/>C 区：随 Owner-Decision ship 进 main"]

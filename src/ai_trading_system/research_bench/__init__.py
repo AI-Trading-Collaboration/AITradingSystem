@@ -40,6 +40,7 @@ from ai_trading_system.research_bench.simulate import (
     simulate,
     simulate_many,
 )
+from ai_trading_system.research_bench.sources import SourceSpec, known_at
 
 __all__ = [
     "BenchCheckError",
@@ -50,6 +51,7 @@ __all__ = [
     "RunResult",
     "RunSpec",
     "SimulationBatch",
+    "SourceSpec",
     "Strategy",
     "TrialCapError",
     "WindowNotOpenError",
@@ -57,6 +59,7 @@ __all__ = [
     "benchmark_summaries",
     "from_daily_frame",
     "from_snapshot",
+    "known_at",
     "load_question",
     "load_settings",
     "register_read",

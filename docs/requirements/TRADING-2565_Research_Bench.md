@@ -127,7 +127,7 @@
 
 ## S4c 的实现（2026-10-13）
 
-- **范围和后续**：本批 TRADING-2565-05 只做向量化随机择时和减仓事件表；之后 S4a 做数据入口，S4b 做筛选和全局账。需求文件不在仓库，按 brief 实现。S4a/S4b 的开放问题和逐批验收待各批需求细化，本批不引入筛选或晋级判定。
+- **范围和后续**：本批 TRADING-2565-05 只做向量化随机择时和减仓事件表；之后 S4a 做数据入口，S4b 做筛选和全局账。S4a/S4b 的开放问题和逐批验收待各批需求细化，本批不引入筛选或晋级判定。
 - **向量模拟**：`simulate_many` 接收按完整收益日历对齐的目标矩阵，一行一条路径；只按交易日迭代，路径一起算。开仓目标、可执行日期、范围检查、持仓漂移、调度、无交易带、延迟和乘法成本与未改动的 `simulate` 一致。亏光和不可用目标报错带路径号。随机择时按原来的 `placebo_targets` 顺序分块送入它，再作成对比较；随机数顺序不变，与逐条模拟的差不超过 1e-12。速度用 3,000 个交易日、1,000 条路径、月度调度的合成数据对照，验收要求批模拟少于 5 秒；本机逐条 19.082099 秒、批模拟 0.153203 秒（约 124.55 倍），净收益最大绝对差为 0，完整条件记在运行报告。
 - **事件定义**（`events`，配置 `screen_settings`）：
   - 参考敞口是窗口里实际持有敞口的均值。持有敞口不大于参考的 `derisk_ratio` 倍（数值容差 1e-12）算减仓日。
@@ -139,6 +139,14 @@
 - **记录与报告**：每次运行按自己的持有敞口和同日 QQQ 收益生成表。`RunResult.events` 和 ledger 的结果记录保存事件；和 falsification 一样，`events` 不进结果指纹或试验判定键。`report` 每个策略每个窗口的最近成功运行增加“减仓事件”小节，只用已记录汇总；旧记录没有该字段时写“无（S4c 之前的运行）”。
 - **验收**：Claude 提供且不修改的 `tests/invariants/test_research_vector_events_invariants.py` 守住不变量 23（批模拟逐项等价）、24（亏光停止并点名）、25（随机择时结果不变）、26（手算事件及段内延迟）、27（全部设置生效、默认值与指纹隔离）。反向对照和四项变异检查记录在 `tests/invariants/README.md`；合成测试、静态检查、任务检查、全量测试和 zone C dry-run 的结果记在运行报告，Baker 按 tree 批后才发布。
 
+## S4a 的实现
+
+- **来源规格**：`research_bench.sources.SourceSpec` 冻结并拒绝未知字段，校验来源 id、daily 频率、非负交易日滞后；FRED 至少晚 1 个交易日，Ken French 只允许批准的日度因子和 49 行业组合。`screen_settings.sources` 拒绝重复 id；四个来源配置在 `config/research/research_screen.yaml`，原 `research_bench.yaml` 字节不变。
+- **已知时点规则**：`known_at` 先去掉 NaN，再按第 i−lag 个交易日取不晚于参照日的最后观测；缺失值不重置观测年龄。观测日在交易日历中的位置用 `searchsorted(..., side="right")−1`，包括非交易日；早于参照日超过 5 个交易日的位置则丢弃，正好 5 日保留。这是本批批准的数据缺失规则，不是信号筛选或候选准入标准。
+- **快照和检查**：`research_data.signal_sources fetch|check [--snapshot ID]` 使用 `state_dir`，代码根为 `PROJECT_ROOT`，研究工作区通过 `AITS_STATE_ROOT` 读取本机状态。每来源一个 CSV，保留抓取顺序、重复和缺失；Ken French 只读首个数据块，缺失码转 NaN，百分比转小数。规范 JSON 清单带规格、文件、sha256、行数及首末日期，以其 sha256 前 12 位生成 `sig-...`，抓取时间单列 `fetch.json`，不影响 id。
+- **质量门禁**：检查文件哈希、日期递增且唯一非空、列非空比例；全空、文件不匹配、重复和乱序为 FAIL，相邻日期间缺失工作日严格超过 5 为 WARN，否则 PASS。`check.json` 和 `check.md` 只含 id、状态、计数、日期、比例。`load_snapshot` 拒绝未检查、FAIL 或校验和漂移，只返回按日期索引的原抓取值。快照清单内容地址也复核，WARN 可读但不是候选通过。
+- **数据规则**：数据只在本机、不提交、不打印数据行、不发给外部模型。本批只用 Claude 原样提供的合成验收数据，不联网下载；真实 fetch 留待发布后单独执行。验收不变量 28–33 与五项变异证据见 `tests/invariants/README.md`。本批仅实现数据入口，不实现 S4b 的筛选和全局账，不改变 production/broker 边界。
+
 ## 进展
 
 - 2026-10-12：随 TRADING-2567 激活（READY）。production_effect=none；broker_action=none。
@@ -147,3 +155,4 @@
 - 2026-10-13：S3b（TRADING-2565-02）Baker 按结果 tree d2f4d858 事先批准，排在 S3a 之后发布。S3c 写好：标准证伪、报告第一屏、pi 研究运行的 brief 模板，打包等 S3b 发布后的 main。production_effect=none；broker_action=none。
 - 2026-10-14：S4c（TRADING-2565-05）：向量化随机择时、减仓事件表。production_effect=none；broker_action=none。
 - 2026-10-14：TRADING-2565-09：ship 规则 1.2.2，评估台配置按 `config/research/research_*.yaml` 通配进 C 区，成本模型 `transaction_cost_model.yaml` 进 C 区；`tests/test_gov008_ship.py` 守住评估台设置和它点名的配置文件都在 C 区。production_effect=none；broker_action=none。
+- 2026-10-14：S4a（TRADING-2565-06）：信号筛选的数据入口、发布滞后对齐、本机内容寻址快照和检查；待按决定记录批准，之后 S4b。production_effect=none；broker_action=none。

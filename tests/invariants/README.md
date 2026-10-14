@@ -16,6 +16,7 @@ caught, or a recorded mutation of the guarded code that makes the test fail.
 | G3 trial ledger | Every research run is recorded, failed ones too, in a hash chain; trials are counted and capped; the validation window is read once per question and only for a preregistration approved on main; records hold summaries only; the deflated Sharpe ratio matches the paper's worked example; this repository's records were never changed or removed and decisions cite only recorded runs (TRADING-2565 S3b) | `test_research_ledger_invariants.py` |
 | G3 standard falsification | A result counts only after it survives the standard falsification, and each check can fail: the placebo is a same-exposure random timing that a strategy knowing the next return beats every time; the bootstrap interval is zero, positive or around zero as it should be and widens with noise and with lumpy edges; leave-one-out exposes an edge earned in one year or one episode; cost and delay reruns use the bench; validation and consistency runs are always falsified and their rules read it; a rule naming a metric no run has refuses the read (TRADING-2565 S3c) | `test_research_falsify_invariants.py`; invariant 22 in `test_research_ledger_invariants.py` |
 | G2/G3 vectorization and event accounting | Batch simulation preserves scalar results, random timing order and costs; losses stop the batch; descriptive events and episode lags follow hand-checked definitions; S4 settings are separate from the original fingerprint (TRADING-2565 S4c, invariants 23–27) | `test_research_vector_events_invariants.py` |
+| G1/G2 signal intake | 发布滞后和缺失年龄、Ken French 首块和单位、本机内容地址、检查后才能读且拒绝漂移、汇总不泄露数据值、严格来源规格与原配置不变（TRADING-2565 S4a，不变量 28–33） | `test_research_sources_invariants.py` |
 
 Existing tests that already guard the same guarantees and stay in the suite (not duplicated here):
 
@@ -122,3 +123,30 @@ and bench tests were run (`tests/invariants/test_research_falsify_invariants.py`
 | 回补只从段末下一天搜索（保持相对段末的 +1 位置换算） | `test_events_follow_their_definitions` | 1 failed，段末当天已经回补时错误报 1 而非 0；另一个边缘用例通过 |
 
 变异及合成计时日志保存在运行目录 `TRADING-2565-05`，没有读取真实快照。合成计时（3,000 个交易日、1,000 条路径、月度调度）：逐条 `simulate` 19.082099 秒，`simulate_many` 0.153203 秒，约 124.55 倍；净收益最大绝对差为 0。这些是执行性能证据，不是投资结论。
+
+## S4a 不变量及反向对照（2026-10-14）
+
+以下全部在 `test_research_sources_invariants.py`，Claude 提供的验收文件按 SHA256SUMS 原样复制，未修改；只用合成数据。
+
+| 编号 | 守住的语义 / 测试 | 反向对照 |
+|---|---|---|
+| 28 | `test_known_at_follows_the_publication_lag`、`test_known_at_drops_stale_values`、`test_known_at_never_uses_a_later_value` 及默认过期、缺失和非交易日边缘用例 | 改未来值不能改变当时已知值；不减 lag、不丢 NaN、过期 `>=` 的变异必须失败；正好 5 日保留 |
+| 29 | `test_the_ken_french_parser_reads_the_first_block_in_decimals`、`test_the_csv_comes_out_of_the_zip` | 行业文件第二块 9.99 不能进入首块；-99.99/-999 转 NaN；非 zip、零个/多个 CSV 拒绝 |
+| 30 | `test_snapshots_are_content_addressed`、`test_the_id_is_twelve_hex_digits_and_the_manifest_has_no_fetch_time` | 不同目录同数据同 id；改一个值改变 id；抓取时间进清单的变异失败 |
+| 31 | `test_load_refuses_unchecked_failed_and_altered_snapshots`、`test_check_fails_unordered_empty_and_altered_sources_and_warns_on_gaps`、`test_loaded_frames_are_the_fetched_values_on_their_dates` | 无检查、重复、乱序、空来源、校验和漂移拒绝；WARN 可读；载入值和抓取值一致；正好缺 5 个工作日 PASS，6 个 WARN |
+| 32 | `test_no_data_value_is_printed_or_written_to_check_md`、`test_no_value_leaks_from_first_last_or_duplicated_rows` | 合成标记放在首行、末行及重复行，stdout/stderr、check.json/check.md 均不能出现原值或两位小数值 |
+| 33 | `test_source_specs_are_strict`、`test_source_specs_refuse_empty_text_and_negative_lags`、`test_duplicate_source_ids_are_refused`、批准来源和原配置哈希测试 | 非法 provider/dataset、额外字段、空文本、负 lag、FRED 零 lag、重复 id 必须拒绝；research_bench.yaml SHA-256 锁定 |
+
+## S4a 变异证据（2026-10-14）
+
+每项只在本地临时变异实现，用 `pytest -n 16 --dist loadfile tests/invariants/test_research_sources_invariants.py -q` 运行，随后还原；验收文件未改。
+
+| 变异 | 失败的验收测试 | 结果 |
+|---|---|---|
+| `known_at` 参照位置不减 lag | `test_known_at_follows_the_publication_lag`、`test_known_at_drops_stale_values`、`test_known_at_never_uses_a_later_value[1]` 和 `[3]` | 4 failed，28 passed |
+| `known_at` 不去掉 NaN | `test_known_at_follows_the_publication_lag`、`test_known_at_does_not_carry_missing_values_past_the_stale_limit` | 2 failed，30 passed |
+| 过期判断 `>` 改成 `>=` | `test_known_at_drops_stale_values`、`test_known_at_drops_values_older_than_five_trading_days_by_default`、`test_known_at_does_not_carry_missing_values_past_the_stale_limit`、`test_known_at_places_an_off_calendar_date_on_the_calendar_day_before` | 4 failed，28 passed |
+| 解析器非数据行 `break` 改成 `continue`，读到第二块 | `test_the_ken_french_parser_reads_the_first_block_in_decimals`、`test_load_refuses_unchecked_failed_and_altered_snapshots`、`test_check_fails_unordered_empty_and_altered_sources_and_warns_on_gaps`、`test_loaded_frames_are_the_fetched_values_on_their_dates`、`test_a_gap_is_more_than_five_missing_business_days` | 5 failed，27 passed |
+| 清单放进抓取时间 | `test_snapshots_are_content_addressed`、`test_the_id_is_twelve_hex_digits_and_the_manifest_has_no_fetch_time` | 2 failed，30 passed |
+
+日志保存在运行目录 `TRADING-2565-06` 的 `mutation-*.log`，不包含真实快照。这些是数据入口正确性证据，不是投资结论。

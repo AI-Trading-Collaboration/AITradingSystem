@@ -1,0 +1,391 @@
+"""Local-only, content-addressed signal intake (TRADING-2565 S4a).
+
+Never print rows or send snapshots to external models. Research consumers must use load_snapshot,
+which verifies the content address, each CSV checksum and the local quality check.
+"""
+
+from __future__ import annotations
+
+import csv
+import hashlib
+import io
+import json
+import re
+import zipfile
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import UTC, date, datetime
+from pathlib import Path
+from typing import Annotated, Any
+
+import numpy as np
+import pandas as pd
+import requests
+import typer
+
+from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.data.market_data import FredRateProvider, ProviderDownloadError, RateRequest
+from ai_trading_system.external_request_cache import sanitize_diagnostic_text
+from ai_trading_system.paths import state_dir
+from ai_trading_system.research_bench.screen_settings import (
+    LoadedScreenSettings,
+    load_screen_settings,
+)
+from ai_trading_system.research_bench.sources import SourceSpec
+
+# S4a's fixed data-quality contract: a gap requires MORE than five missing weekdays. Weekday
+# counting (not an exchange calendar) is deliberate and never determines signal eligibility.
+MAX_MISSING_BUSINESS_DAYS = 5
+KEN_FRENCH_URL = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/{dataset}_CSV.zip"
+# Download history, not an evaluation window: all approved FRED sources begin after 1900.
+FRED_HISTORY_START = date(1900, 1, 1)
+
+
+@dataclass(frozen=True)
+class SignalSnapshot:
+    snapshot_id: str
+    frames: dict[str, pd.DataFrame]
+    specs: tuple[SourceSpec, ...]
+
+
+def parse_ken_french_csv(text: str) -> pd.DataFrame:
+    """Read only the first daily block (the value-weighted block for industry portfolios)."""
+
+    lines = text.splitlines()
+    header_position = next(
+        (i for i, line in enumerate(lines) if line.lstrip().startswith(",")), None
+    )
+    if header_position is None:
+        raise ValueError("Ken French CSV has no header")
+    columns = [name.strip() for name in next(csv.reader([lines[header_position]]))[1:]]
+    if not columns or any(not name for name in columns) or len(set(columns)) != len(columns):
+        raise ValueError("Ken French CSV has invalid columns")
+    rows: list[list[str]] = []
+    for line in lines[header_position + 1 :]:
+        if not re.match(r"^\d{8},", line):
+            break
+        row = next(csv.reader([line]))
+        if len(row) != len(columns) + 1:
+            raise ValueError("Ken French CSV has an invalid row width")
+        rows.append(row)
+    try:
+        dates = pd.to_datetime([row[0] for row in rows], format="%Y%m%d")
+        frame = pd.DataFrame([row[1:] for row in rows], columns=columns, index=dates).astype(float)
+    except (ValueError, TypeError):
+        raise ValueError("Ken French CSV has invalid dates or numbers") from None
+    frame.index.name = "date"
+    return frame.replace([-99.99, -999], np.nan) / 100
+
+
+def extract_csv(data: bytes) -> str:
+    try:
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            files = [
+                info
+                for info in archive.infolist()
+                if not info.is_dir() and info.filename.lower().endswith(".csv")
+            ]
+            if len(files) != 1:
+                raise ValueError("download must contain exactly one CSV")
+            return archive.read(files[0]).decode("utf-8")
+    except (zipfile.BadZipFile, UnicodeDecodeError, RuntimeError, NotImplementedError):
+        raise ValueError("download is not a readable UTF-8 CSV zip") from None
+
+
+def _canonical_json(value: Any) -> bytes:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode(
+        "utf-8"
+    )
+
+
+def _digest(payload: bytes) -> str:
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _snapshot_root(root: Path) -> Path:
+    return state_dir(root, "data", "raw", "research", "signal_sources")
+
+
+def _snapshot_dir(root: Path, snapshot_id: str) -> Path:
+    if not re.fullmatch(r"sig-[0-9a-f]{12}", snapshot_id):
+        raise ValueError("invalid signal snapshot id")
+    return state_dir(root, "data", "raw", "research", "signal_sources", snapshot_id)
+
+
+def _date_range(dates: pd.DatetimeIndex) -> dict[str, str | None]:
+    valid = dates.dropna()
+    return {
+        "first_date": valid.min().date().isoformat() if len(valid) else None,
+        "last_date": valid.max().date().isoformat() if len(valid) else None,
+    }
+
+
+def fetch_snapshot(
+    settings: LoadedScreenSettings,
+    root: Path,
+    *,
+    fred_fetch: Callable[[str], pd.Series],
+    ken_french_fetch: Callable[[str], bytes],
+) -> str:
+    """Preserve returned row order, duplicates and missing values; only check judges quality."""
+
+    sources: list[dict[str, Any]] = []
+    payloads: dict[str, bytes] = {}
+    for spec in settings.settings.sources:
+        if spec.provider == "fred":
+            frame = fred_fetch(spec.dataset).to_frame(name="value")
+        else:
+            frame = parse_ken_french_csv(extract_csv(ken_french_fetch(spec.dataset)))
+        dates = pd.DatetimeIndex(frame.index)
+        frame.index = dates
+        payload = frame.to_csv(
+            index_label="date", date_format="%Y-%m-%d", lineterminator="\n"
+        ).encode("utf-8")
+        filename = f"{spec.source_id}.csv"
+        payloads[filename] = payload
+        sources.append(
+            {
+                "spec": spec.model_dump(mode="json"),
+                "filename": filename,
+                "sha256": _digest(payload),
+                "row_count": len(frame),
+                **_date_range(dates),
+            }
+        )
+    manifest = {"schema_version": "research_signal_snapshot.v1", "sources": sources}
+    manifest_payload = _canonical_json(manifest)
+    snapshot_id = "sig-" + _digest(manifest_payload)[:12]
+    directory = _snapshot_dir(root, snapshot_id)
+    directory.mkdir(parents=True, exist_ok=True)
+    for filename, payload in payloads.items():
+        (directory / filename).write_bytes(payload)
+    (directory / "manifest.json").write_bytes(manifest_payload + b"\n")
+    # Fetch time is operational metadata, deliberately excluded from the content address.
+    (directory / "fetch.json").write_bytes(
+        _canonical_json(
+            {
+                "downloaded_at": datetime.now(tz=UTC).isoformat(),
+                "sources": [
+                    {
+                        "source_id": spec.source_id,
+                        "provider": spec.provider,
+                        "source_class": "public-convenience",
+                        "endpoint": FredRateProvider.base_url
+                        if spec.provider == "fred"
+                        else KEN_FRENCH_URL.format(dataset=spec.dataset),
+                        "request_parameters": {"dataset": spec.dataset},
+                    }
+                    for spec in settings.settings.sources
+                ],
+            }
+        )
+        + b"\n"
+    )
+    (_snapshot_root(root) / "LATEST").write_text(snapshot_id + "\n", encoding="utf-8")
+    typer.echo(f"快照：{snapshot_id}")
+    for source in sources:
+        typer.echo(
+            f"  {source['spec']['source_id']}：{source['row_count']} 行，"
+            f"{source['first_date']}..{source['last_date']}"
+        )
+    return snapshot_id
+
+
+def _read_manifest(directory: Path, snapshot_id: str) -> dict[str, Any]:
+    try:
+        manifest = json.loads((directory / "manifest.json").read_bytes())
+        if manifest["schema_version"] != "research_signal_snapshot.v1":
+            raise ValueError("unsupported manifest schema")
+        if "sig-" + _digest(_canonical_json(manifest))[:12] != snapshot_id:
+            raise ValueError("manifest does not match snapshot id")
+        sources = manifest["sources"]
+        if not sources:
+            raise ValueError("manifest has no sources")
+        ids = []
+        for source in sources:
+            spec = SourceSpec.model_validate(source["spec"])
+            ids.append(spec.source_id)
+            if source["filename"] != f"{spec.source_id}.csv":
+                raise ValueError("invalid snapshot filename")
+        if len(set(ids)) != len(ids):
+            raise ValueError("manifest has duplicate sources")
+        return dict(manifest)
+    except (OSError, KeyError, TypeError, ValueError):
+        raise ValueError("signal snapshot manifest is missing or invalid") from None
+
+
+def _read_frame(payload: bytes) -> pd.DataFrame:
+    try:
+        frame = pd.read_csv(io.BytesIO(payload), dtype={"date": str}, float_precision="round_trip")
+        if "date" not in frame or len(frame.columns) < 2:
+            raise ValueError("missing CSV columns")
+        dates = pd.to_datetime(frame.pop("date"), format="%Y-%m-%d", errors="coerce")
+        frame.index = pd.DatetimeIndex(dates, name="date")
+        return frame
+    except (ValueError, UnicodeDecodeError, pd.errors.ParserError):
+        raise ValueError("signal snapshot CSV has an invalid schema") from None
+
+
+def check_snapshot(root: Path, snapshot_id: str) -> dict[str, Any]:
+    """Check without repairs; reports contain only identifiers, counts, dates and ratios."""
+
+    directory = _snapshot_dir(root, snapshot_id)
+    summaries: dict[str, dict[str, Any]] = {}
+    failed = False
+    warned = False
+    try:
+        manifest = _read_manifest(directory, snapshot_id)
+    except ValueError:
+        manifest = {"sources": []}
+        failed = True
+    for source in manifest["sources"]:
+        source_id = source["spec"]["source_id"]
+        record: dict[str, Any] = {"file_mismatch_count": 0, "invalid_file_count": 0}
+        summaries[source_id] = record
+        try:
+            payload = (directory / source["filename"]).read_bytes()
+            record["file_mismatch_count"] = int(_digest(payload) != source["sha256"])
+            frame = _read_frame(payload)
+        except (OSError, ValueError):
+            record["invalid_file_count"] = 1
+            failed = True
+            continue
+        dates = pd.DatetimeIndex(frame.index)
+        numeric = frame.apply(pd.to_numeric, errors="coerce")
+        ratios = {
+            str(column): float(numeric[column].notna().mean()) if len(frame) else 0.0
+            for column in frame.columns
+        }
+        invalid_numeric = int((frame.notna() & numeric.isna()).to_numpy().sum())
+        gaps = 0
+        if not dates.hasnans:
+            gaps = sum(
+                bool(
+                    np.busday_count(previous.date(), following.date()) - 1
+                    > MAX_MISSING_BUSINESS_DAYS
+                )
+                for previous, following in zip(dates[:-1], dates[1:], strict=True)
+            )
+        record.update(
+            row_count=len(frame),
+            **_date_range(dates),
+            invalid_date_count=int(np.count_nonzero(dates.isna())),
+            duplicate_date_count=int(dates.duplicated().sum()),
+            unordered_count=int(not dates.is_monotonic_increasing),
+            nonempty_ratio=ratios,
+            invalid_numeric_count=invalid_numeric,
+            gap_count=int(gaps),
+            metadata_mismatch_count=int(
+                len(frame) != source["row_count"]
+                or _date_range(dates)
+                != {"first_date": source["first_date"], "last_date": source["last_date"]}
+            ),
+        )
+        failed |= bool(
+            record["file_mismatch_count"]
+            or record["metadata_mismatch_count"]
+            or dates.hasnans
+            or dates.has_duplicates
+            or not dates.is_monotonic_increasing
+            or not len(frame)
+            or not ratios
+            or any(ratio == 0 for ratio in ratios.values())
+            or invalid_numeric
+        )
+        warned |= gaps > 0
+    report = {
+        "snapshot_id": snapshot_id,
+        "status": "FAIL" if failed else "WARN" if warned else "PASS",
+        "sources": summaries,
+    }
+    (directory / "check.json").write_bytes(_canonical_json(report) + b"\n")
+    lines = [f"# 信号快照检查：{snapshot_id}", "", f"状态：{report['status']}", ""]
+    for source_id, record in summaries.items():
+        lines.append(f"## {source_id}")
+        for key, value in record.items():
+            lines.append(f"- {key}：{json.dumps(value, ensure_ascii=False, sort_keys=True)}")
+    (directory / "check.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return report
+
+
+def load_snapshot(root: Path, snapshot_id: str) -> SignalSnapshot:
+    directory = _snapshot_dir(root, snapshot_id)
+    manifest = _read_manifest(directory, snapshot_id)
+    try:
+        check = json.loads((directory / "check.json").read_bytes())
+        if check.get("status") not in {"PASS", "WARN"} or check.get("snapshot_id") != snapshot_id:
+            raise ValueError("snapshot check did not pass")
+    except (OSError, ValueError, AttributeError):
+        raise ValueError("signal snapshot is unchecked or failed") from None
+    frames: dict[str, pd.DataFrame] = {}
+    specs = []
+    for source in manifest["sources"]:
+        spec = SourceSpec.model_validate(source["spec"])
+        try:
+            payload = (directory / source["filename"]).read_bytes()
+        except OSError:
+            raise ValueError("signal snapshot CSV is missing") from None
+        if _digest(payload) != source["sha256"]:
+            raise ValueError("signal snapshot CSV checksum mismatch")
+        frames[spec.source_id] = _read_frame(payload)
+        specs.append(spec)
+    return SignalSnapshot(snapshot_id, frames, tuple(specs))
+
+
+def _fred_fetch(dataset: str) -> pd.Series:
+    request = RateRequest(series_ids=[dataset], start=FRED_HISTORY_START, end=date.today())
+    frame = FredRateProvider().download_rates(request)
+    rows = frame.loc[frame["series"] == dataset]
+    return pd.Series(rows["value"].to_numpy(), index=pd.to_datetime(rows["date"]))
+
+
+def _ken_french_fetch(dataset: str) -> bytes:
+    response = requests.get(KEN_FRENCH_URL.format(dataset=dataset), timeout=60)
+    response.raise_for_status()
+    return bytes(response.content)
+
+
+def _safe_error_text(exc: Exception) -> str:
+    text = f"{type(exc).__name__}: {exc}"
+    if isinstance(exc, ProviderDownloadError) and exc.diagnostic.exception_type:
+        text += f" ({exc.diagnostic.exception_type}: {exc.diagnostic.exception_message})"
+    return sanitize_diagnostic_text(text)
+
+
+app = typer.Typer(help="信号筛选数据入口：只在本机，只输出汇总。", no_args_is_help=True)
+RootOption = Annotated[Path, typer.Option(help="代码根目录；状态路径遵循 AITS_STATE_ROOT。")]
+
+
+@app.command("fetch")
+def fetch_command(root: RootOption = PROJECT_ROOT) -> None:
+    """下载全部批准来源为本机快照；不打印数据行。"""
+
+    try:
+        fetch_snapshot(
+            load_screen_settings(), root, fred_fetch=_fred_fetch, ken_french_fetch=_ken_french_fetch
+        )
+    except Exception as exc:
+        typer.echo(f"下载失败：{_safe_error_text(exc)}")
+        raise typer.Exit(code=1) from None
+
+
+@app.command("check")
+def check_command(
+    snapshot: Annotated[str, typer.Option(help="快照 ID，默认 LATEST。")] = "",
+    root: RootOption = PROJECT_ROOT,
+) -> None:
+    """检查已有快照，写只含汇总的 check.json 和 check.md。"""
+
+    try:
+        snapshot_id = snapshot or (_snapshot_root(root) / "LATEST").read_text("utf-8").strip()
+        report = check_snapshot(root, snapshot_id)
+    except Exception as exc:
+        typer.echo(f"检查失败：{_safe_error_text(exc)}")
+        raise typer.Exit(code=1) from None
+    typer.echo(f"快照：{snapshot_id}；检查：{report['status']}")
+    if report["status"] == "FAIL":
+        raise typer.Exit(code=1)
+
+
+if __name__ == "__main__":
+    app()

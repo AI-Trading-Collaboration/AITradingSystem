@@ -10,5 +10,33 @@ derisk_events:
   protective_loss: -0.05     # QQQ's compounded return over the event at or below this: protective
   false_alarm_gain: 0.05     # at or above this: false alarm; otherwise neutral
   short_event_days: 21       # events shorter than this are counted again as short (whipsaws)
+# Signal sources (S4a). known_lag_trading_days: a value dated t counts as known at the close this
+# many trading days later. FRED daily series are published the next business day; Ken French daily
+# returns are the market's own returns of day t.
+sources:
+  - source_id: baa10y
+    provider: fred
+    dataset: BAA10Y
+    frequency: daily
+    known_lag_trading_days: 1
+    description: Moody's seasoned Baa corporate bond yield minus the 10-year Treasury yield (credit spread)
+  - source_id: t10y3m
+    provider: fred
+    dataset: T10Y3M
+    frequency: daily
+    known_lag_trading_days: 1
+    description: 10-year minus 3-month Treasury yield (term spread)
+  - source_id: ff_factors_daily
+    provider: ken_french
+    dataset: F-F_Research_Data_Factors_daily
+    frequency: daily
+    known_lag_trading_days: 0
+    description: Ken French US market excess return and risk-free rate, daily from 1926-07
+  - source_id: ff_49_industries_daily
+    provider: ken_french
+    dataset: 49_Industry_Portfolios_daily
+    frequency: daily
+    known_lag_trading_days: 0
+    description: Ken French 49 industry portfolios, value weighted, daily from 1926-07
 production_effect: none
 broker_action: none
