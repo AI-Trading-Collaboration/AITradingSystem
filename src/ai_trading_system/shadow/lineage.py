@@ -9,6 +9,12 @@ from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.paths import join_root
+from ai_trading_system.release_identity import (
+    ReleaseManifestError,
+    is_release_root,
+    read_release_manifest,
+    release_mismatches,
+)
 
 
 def sha256_file(path: Path) -> str:
@@ -29,6 +35,11 @@ def sha256_search_snapshots(snapshots: Iterable[tuple[date, Path, dict[str, Any]
 
 
 def git_commit_sha() -> str | None:
+    if is_release_root(PROJECT_ROOT):
+        try:
+            return read_release_manifest(PROJECT_ROOT).source_commit
+        except ReleaseManifestError:
+            return None
     try:
         result = subprocess.run(
             ["git", "rev-parse", "HEAD"],
@@ -45,6 +56,11 @@ def git_commit_sha() -> str | None:
 
 
 def git_worktree_dirty() -> bool | None:
+    if is_release_root(PROJECT_ROOT):
+        try:
+            return bool(release_mismatches(PROJECT_ROOT))
+        except ReleaseManifestError:
+            return None
     try:
         result = subprocess.run(
             ["git", "status", "--porcelain"],

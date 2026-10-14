@@ -164,6 +164,13 @@ flowchart LR
 终止恢复绑定的当前版本是运行副本 HEAD（工作区干净、可从 `origin/main` 到达、与父运行 `git_commit` 不同），
 `OperationsRecoveryRequest` v2 记录 HEAD、运行副本路径与 `origin/main`；不再使用 deployment receipt。
 
+**发布身份与状态根（OPS-086，`owner_decision:DATA-023:2026-10-13:state_root_separation`）**：运行副本也可以是发布包：
+目录里有 `RELEASE.json`（`aits_release.v1`，逐文件记 sha256 和大小）、没有 `.git`。`ai_trading_system.release_identity` 校验清单；
+运行溯源（`core/provenance.py`）、`run_artifacts`、`ops_daily` 元数据、shadow 谱系、候选复核、运行副本检查（`runtime_checkout`）
+和 `daily_scheduler_run.ps1` 的前置检查在发布包里从清单读提交、`release_id` 和“是否被改过”，不调用 git；有 `.git` 的工作区行为不变。
+环境变量 `AITS_STATE_ROOT` 指向别处时，`data/`、`outputs/`、`artifacts/` 在那里，包装脚本的日志和 `daily_scheduler_summary.py`
+读的证据（运行状态、台账、capture、DQ 指针）也从状态根来；摘要 JSON 多 `state_root` 和 `release_id` 两个字段。
+
 ## 6. 已退役、不再运行
 
 | 部分 | 退役时间 | 去向 |

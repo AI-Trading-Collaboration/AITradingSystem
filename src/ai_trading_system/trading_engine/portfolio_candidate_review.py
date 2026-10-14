@@ -11,6 +11,11 @@ import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.paths import glob_root, join_root, relative_to_root, state_dir
+from ai_trading_system.release_identity import (
+    ReleaseManifestError,
+    is_release_root,
+    read_release_manifest,
+)
 from ai_trading_system.shadow.lineage import git_commit_sha, git_worktree_dirty, sha256_file
 from ai_trading_system.trading_engine.parameters.parameter_loader import resolve_project_path
 from ai_trading_system.trading_engine.portfolio_candidates import (
@@ -1191,6 +1196,14 @@ def _sha256_if_exists(path: Path | None) -> str:
 def _git_path_modified(path: Path) -> bool:
     if not path.exists():
         return False
+    if is_release_root(PROJECT_ROOT):
+        try:
+            relative_path = relative_to_root(path.resolve(), PROJECT_ROOT.resolve()).as_posix()
+            manifest = read_release_manifest(PROJECT_ROOT)
+            entry = next((item for item in manifest.files if item.path == relative_path), None)
+            return entry is None or sha256_file(path) != entry.sha256
+        except (ReleaseManifestError, OSError, ValueError):
+            return True
     try:
         relative = relative_to_root(path.resolve(), PROJECT_ROOT.resolve())
     except ValueError:

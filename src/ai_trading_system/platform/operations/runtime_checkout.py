@@ -22,6 +22,13 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
+from ai_trading_system.release_identity import (
+    ReleaseManifestError,
+    is_release_root,
+    read_release_manifest,
+    release_mismatches,
+)
+
 ORIGIN_MAIN_REF = "refs/remotes/origin/main"
 # Protocol timeout for local git plumbing calls; not a policy threshold.
 _GIT_TIMEOUT_SECONDS = 60
@@ -51,6 +58,7 @@ class RuntimeCheckoutState:
     origin_main_commit: str
     dirty_entries: tuple[str, ...]
     head_on_origin_main: bool
+    release_id: str | None = None
 
     @property
     def clean(self) -> bool:
@@ -61,6 +69,20 @@ def inspect_runtime_checkout(root: Path) -> RuntimeCheckoutState:
     """Read HEAD, origin/main, cleanliness and reachability without changing the checkout."""
 
     resolved = Path(root).resolve()
+    if is_release_root(resolved):
+        try:
+            manifest = read_release_manifest(resolved)
+            dirty_entries = release_mismatches(resolved, manifest)
+        except ReleaseManifestError as exc:
+            raise RuntimeCheckoutError("RUNTIME_RELEASE_INVALID", f"root={resolved};{exc}") from exc
+        return RuntimeCheckoutState(
+            root=resolved,
+            head_commit=manifest.source_commit,
+            origin_main_commit=manifest.origin_main_commit,
+            dirty_entries=dirty_entries,
+            head_on_origin_main=True,
+            release_id=manifest.release_id,
+        )
     head = _rev_parse(resolved, "HEAD")
     origin_main = _rev_parse(resolved, ORIGIN_MAIN_REF)
     status = _git(resolved, "status", "--porcelain=v1", "--untracked-files=normal")

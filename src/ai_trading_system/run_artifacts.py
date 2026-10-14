@@ -13,6 +13,11 @@ from typing import Any
 
 from ai_trading_system.core.artifacts import ArtifactRef
 from ai_trading_system.platform.artifacts import write_json_atomic
+from ai_trading_system.release_identity import (
+    ReleaseManifestError,
+    is_release_root,
+    read_release_manifest,
+)
 
 SCHEMA_VERSION = 1
 LEGACY_OUTPUT_MODES = {"mirror", "off"}
@@ -364,6 +369,11 @@ def _environment_summary() -> dict[str, str]:
 
 
 def _git_commit(project_root: Path) -> str | None:
+    if is_release_root(project_root):
+        try:
+            return read_release_manifest(project_root).source_commit
+        except ReleaseManifestError:
+            return None
     try:
         completed = subprocess.run(
             ("git", "rev-parse", "HEAD"),

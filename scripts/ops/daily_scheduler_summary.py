@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Any
 
 SCHEMA_VERSION = "ops_daily_scheduler_summary.v1"
+STATE_DIRS = ("data", "outputs", "artifacts")
 
 NONE = "NONE"
 DATA_SOURCE_UNAVAILABLE = "DATA_SOURCE_UNAVAILABLE"
@@ -117,6 +118,7 @@ class Evidence:
     dq_pointer_path: Path | None = None
     dq_receipt: Mapping[str, Any] | None = None
     read_errors: list[str] = field(default_factory=list)
+    state_root: Path | None = None
 
 
 def parse_cli_output(text: str) -> dict[str, Any]:
@@ -200,7 +202,9 @@ def collect_evidence(
     exit_code: int | None,
     precheck_blocker: str | None,
     log_path: Path | None,
+    state_root: Path | None = None,
 ) -> Evidence:
+    state_root = runtime_root if state_root is None else state_root
     log_text: str | None = None
     read_errors: list[str] = []
     if log_path is not None and log_path.is_file():
@@ -214,6 +218,7 @@ def collect_evidence(
         precheck_blocker=precheck_blocker,
         log_text=log_text,
         read_errors=read_errors,
+        state_root=state_root,
     )
     if log_text is None:
         return evidence
@@ -224,7 +229,7 @@ def collect_evidence(
     if evidence.as_of is None:
         return evidence
 
-    states_dir = runtime_root / "outputs" / "run_control" / "daily" / "states"
+    states_dir = state_root / "outputs" / "run_control" / "daily" / "states"
     candidates: list[tuple[Path, Mapping[str, Any]]] = []
     for path in sorted(states_dir.glob("*.json")):
         if path.name.endswith(".run_ledger.json"):
@@ -254,14 +259,14 @@ def collect_evidence(
             f"*/as_of_{evidence.as_of}__{safe_run_id(metadata_run_id)}/metadata/"
             f"daily_ops_run_metadata_{evidence.as_of}.json"
         )
-        matches = sorted((runtime_root / "outputs" / "runs" / "daily").glob(pattern))
+        matches = sorted((state_root / "outputs" / "runs" / "daily").glob(pattern))
         if matches:
             evidence.metadata_path = matches[-1]
             metadata = _load_json(matches[-1], evidence)
             evidence.metadata = metadata if isinstance(metadata, Mapping) else None
 
     capture_path = (
-        runtime_root
+        state_root
         / "outputs"
         / "daily_input_capture"
         / evidence.as_of
@@ -273,7 +278,7 @@ def collect_evidence(
         evidence.capture = capture if isinstance(capture, Mapping) else None
 
     pointer_path = (
-        runtime_root
+        state_root
         / "outputs"
         / "data_quality"
         / "executions"
@@ -287,7 +292,13 @@ def collect_evidence(
         pointer = _load_json(pointer_path, evidence)
         if isinstance(pointer, Mapping):
             evidence.dq_pointer = pointer
-            receipt_path = runtime_root / str(pointer.get("receipt_path", ""))
+            receipt_relative = Path(str(pointer.get("receipt_path", "")))
+            receipt_root = (
+                state_root
+                if receipt_relative.parts and receipt_relative.parts[0] in STATE_DIRS
+                else runtime_root
+            )
+            receipt_path = receipt_root / receipt_relative
             if pointer.get("receipt_path") and receipt_path.is_file():
                 receipt = _load_json(receipt_path, evidence)
                 evidence.dq_receipt = receipt if isinstance(receipt, Mapping) else None
@@ -500,6 +511,7 @@ def build_summary(
     runtime_head: str | None,
     log_path: Path | None,
     env: Mapping[str, str],
+    release_id: str | None = None,
 ) -> dict[str, Any]:
     primary, findings = classify(evidence)
     state = evidence.state or {}
@@ -515,6 +527,8 @@ def build_summary(
         "finished_at": finished_at,
         "runtime_root": str(evidence.runtime_root),
         "runtime_head": runtime_head,
+        "state_root": str(evidence.state_root or evidence.runtime_root),
+        "release_id": release_id,
         "daily_run_exit_code": evidence.exit_code,
         "precheck_blocker": evidence.precheck_blocker,
         "run_id": evidence.run_id,
@@ -573,6 +587,11 @@ def render_markdown(summary: Mapping[str, Any]) -> str:
         f"- 窗口：{WINDOW_LABELS.get(summary['window'], summary['window'])}",
         f"- 开始 / 结束：{summary.get('started_at')} / {summary.get('finished_at')}",
         f"- 运行副本：`{summary['runtime_root']}`；HEAD `{summary.get('runtime_head')}`",
+    ]
+    state_root = summary.get("state_root") or summary["runtime_root"]
+    if summary.get("release_id") or state_root != summary["runtime_root"]:
+        lines.append(f"- 发布包：`{summary.get('release_id')}`；状态根：`{state_root}`")
+    lines += [
         f"- daily-run 退出码：{summary.get('daily_run_exit_code')}",
         f"- Run ID：`{summary.get('run_id')}`；as_of：{summary.get('as_of')}",
         f"- CLI 结果：`{summary.get('cli_status')}`",
@@ -674,6 +693,8 @@ def _cell(value: object) -> str:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--runtime-root", required=True)
+    parser.add_argument("--state-root")
+    parser.add_argument("--release-id")
     parser.add_argument("--window", required=True, choices=sorted(WINDOW_LABELS))
     parser.add_argument("--output-stem", required=True)
     parser.add_argument("--log")
@@ -690,6 +711,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         exit_code=args.exit_code,
         precheck_blocker=args.precheck_blocker,
         log_path=log_path,
+        state_root=Path(args.state_root) if args.state_root else None,
     )
     summary = build_summary(
         evidence,
@@ -698,6 +720,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         runtime_head=args.runtime_head,
         log_path=log_path,
         env=os.environ,
+        release_id=args.release_id,
     )
     md_path, json_path = write_summary(summary, Path(args.output_stem))
     print(f"summary_md={md_path}")

@@ -93,6 +93,12 @@ from ai_trading_system.platform.operations import (
     OperationsRunControlLease,
     load_operations_runtime_control_policy,
 )
+from ai_trading_system.release_identity import (
+    ReleaseManifestError,
+    is_release_root,
+    read_release_manifest,
+    release_mismatches,
+)
 from ai_trading_system.reports.artifact_lineage import (
     default_artifact_lineage_json_path,
     default_artifact_lineage_markdown_path,
@@ -3397,7 +3403,33 @@ def _safe_file_size(path: Path) -> int | None:
         return None
 
 
+def _release_metadata(project_root: Path) -> Mapping[str, object]:
+    try:
+        manifest = read_release_manifest(project_root)
+        mismatches = release_mismatches(project_root, manifest)
+    except ReleaseManifestError:
+        return {
+            "available": False,
+            "commit": None,
+            "dirty": True,
+            "status_sha256": _text_sha256(""),
+            "dirty_diff_sha256": _text_sha256(""),
+            "release_id": None,
+        }
+    digest = _text_sha256("\n".join(mismatches))
+    return {
+        "available": True,
+        "commit": manifest.source_commit,
+        "dirty": bool(mismatches),
+        "status_sha256": digest,
+        "dirty_diff_sha256": digest,
+        "release_id": manifest.release_id,
+    }
+
+
 def _git_metadata(project_root: Path) -> Mapping[str, object]:
+    if is_release_root(project_root):
+        return _release_metadata(project_root)
     commit = _git_output(project_root, ("rev-parse", "HEAD"))
     status_text = _git_output(project_root, ("status", "--short"))
     unstaged_diff = _git_output(

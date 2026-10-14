@@ -17,6 +17,13 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.release_identity import (
+    ReleaseManifestError,
+    find_release_root,
+    read_release_manifest,
+    release_mismatches,
+)
+
 # Paths whose modification changes what a run computes. Documentation and task records are excluded
 # so that writing notes does not mark a run as produced by modified code.
 CODE_PATHS = ("src", "config", "scripts", "tools")
@@ -52,6 +59,18 @@ def file_sha256(path: Path) -> str:
 def git_provenance(anchor: Path) -> dict[str, Any]:
     """Commit, branch and whether result-affecting code differs from that commit."""
     directory = anchor if anchor.is_dir() else anchor.parent
+    release_root = find_release_root(directory)
+    if release_root is not None:
+        try:
+            manifest = read_release_manifest(release_root)
+            modified = bool(release_mismatches(release_root, manifest, prefixes=CODE_PATHS))
+        except ReleaseManifestError:
+            return {"commit": UNAVAILABLE, "branch": UNAVAILABLE, "code_modified": UNAVAILABLE}
+        return {
+            "commit": manifest.source_commit,
+            "branch": f"release:{manifest.release_id}",
+            "code_modified": modified,
+        }
     root_text = git_output(directory, "rev-parse", "--show-toplevel")
     if root_text is None:
         return {"commit": UNAVAILABLE, "branch": UNAVAILABLE, "code_modified": UNAVAILABLE}

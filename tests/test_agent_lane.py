@@ -732,7 +732,7 @@ def test_real_config_labels_windows_by_scheduler_window_and_names_its_summary_di
     wrapper = (ROOT / "scripts/ops/daily_scheduler_run.ps1").read_text(encoding="utf-8")
     labels = [w.get("label") for w in config["daily_windows_jst"]]
     assert labels == ["PRIMARY", "RESCUE"]
-    assert "$OutputDir = Join-Path $RuntimeRoot 'outputs\\run_control\\scheduler'" in wrapper
+    assert "$OutputDir = Join-Path $StateRoot 'outputs\\run_control\\scheduler'" in wrapper
     assert config["daily_scheduler_dir"].endswith("\\outputs\\run_control\\scheduler")
     assert "'{0}_{1}' -f $tokyoNow.ToString('yyyy-MM-dd'), $Window" in wrapper
     paths = [config["main_checkout"], *config["lanes"].values()]

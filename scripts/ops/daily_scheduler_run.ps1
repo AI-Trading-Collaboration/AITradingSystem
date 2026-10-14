@@ -8,9 +8,9 @@ from the runtime checkout (owner_decision:OPS-082:2026-10-11:deterministic_sched
 runtime checkout is the repository two levels above this file.
 
 Order, each step fail-closed:
-  1. Precheck: the runtime working tree is clean (git status --porcelain), HEAD is reachable from
-     the local origin/main ref, and .venv\Scripts\aits.exe exists. On failure daily-run is NOT
-     called; the summary records a control-plane blocker.
+  1. Precheck: a checkout is clean with HEAD reachable from local origin/main; a git-free
+     release passes RELEASE.json verification and uses a separate absolute AITS_STATE_ROOT.
+     .venv\Scripts\aits.exe must exist. Failure skips daily-run with a control-plane blocker.
   2. Environment: only the variables daily-run reads (see $DailyRunEnvironment). A missing process
      value is taken from the user environment scope. Values are never printed or logged; the log
      records PRESENT or MISSING per name.
@@ -19,7 +19,8 @@ Order, each step fail-closed:
      rescue window adds --retry-after-source-failure (OPS-085): daily-run then retries the as_of
      once, from the capture step, when its first run failed only on a temporary data-source
      failure; any other terminal state is refused as before.
-  4. Exit code and output go to <runtime>\outputs\run_control\scheduler\<date>_<window>.log.
+  4. Exit code and output go to <state-root>\outputs\run_control\scheduler\<date>_<window>.log
+     (state-root is AITS_STATE_ROOT when set, otherwise the runtime directory).
   5. scripts\ops\daily_scheduler_summary.py writes the Chinese summary next to the log, by code.
      Notification is these files only.
 
@@ -59,7 +60,18 @@ $RuntimeRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $Aits = Join-Path $RuntimeRoot '.venv\Scripts\aits.exe'
 $Python = Join-Path $RuntimeRoot '.venv\Scripts\python.exe'
 $SummaryScript = Join-Path $RuntimeRoot 'scripts\ops\daily_scheduler_summary.py'
-$OutputDir = Join-Path $RuntimeRoot 'outputs\run_control\scheduler'
+$ReleaseManifest = Join-Path $RuntimeRoot 'RELEASE.json'
+$precheckBlocker = $null
+$StateRoot = $RuntimeRoot
+$stateRootValue = [Environment]::GetEnvironmentVariable('AITS_STATE_ROOT', 'Process')
+if (-not [string]::IsNullOrWhiteSpace($stateRootValue)) {
+    if ($stateRootValue -match '^([A-Za-z]:\\|\\\\)') {
+        $StateRoot = [System.IO.Path]::GetFullPath($stateRootValue).TrimEnd('\')
+    } else {
+        $precheckBlocker = 'STATE_ROOT_INVALID'
+    }
+}
+$OutputDir = Join-Path $StateRoot 'outputs\run_control\scheduler'
 
 function Get-TokyoNow {
     [TimeZoneInfo]::ConvertTimeBySystemTimeZoneId([DateTime]::UtcNow, 'Tokyo Standard Time')
@@ -91,6 +103,20 @@ function Invoke-Git([string[]]$Arguments) {
     return [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = @($output | ForEach-Object { "$_" }) }
 }
 
+function Invoke-ReleaseVerify {
+    # Match Invoke-Git's native stderr handling on Windows PowerShell 5.1.
+    $ErrorActionPreference = 'Continue'
+    $output = & $Python -I -m ai_trading_system.release_identity verify --root $RuntimeRoot 2>&1
+    return [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = @($output | ForEach-Object { "$_" }) }
+}
+
+function Get-VerifyValue([string[]]$Lines, [string]$Name) {
+    $prefix = $Name + '='
+    $line = @($Lines | Where-Object { $_.StartsWith($prefix) } | Select-Object -First 1)
+    if ($line.Count -gt 0) { return $line[0].Substring($prefix.Length).Trim() }
+    return $null
+}
+
 $tokyoNow = Get-TokyoNow
 if ($Window -eq 'AUTO') {
     if ($tokyoNow.Hour -lt $RescueWindowStartHour) { $Window = 'PRIMARY' } else { $Window = 'RESCUE' }
@@ -107,30 +133,63 @@ $logPath = $stem + '.log'
 $startedAt = Get-IsoNow
 Add-LogText $logPath ("ops_daily_scheduler_run log (OPS-082)`nwindow={0}`nstarted_at={1}`nruntime_root={2}`n" -f $Window, $startedAt, $RuntimeRoot)
 
-$precheckBlocker = $null
-$runtimeHead = $null
-$status = Invoke-Git @('status', '--porcelain=v1', '--untracked-files=normal')
-if ($status.ExitCode -ne 0) {
-    $precheckBlocker = 'RUNTIME_CHECKOUT_GIT_FAILED'
-} elseif (@($status.Output | Where-Object { $_.Trim() }).Count -gt 0) {
-    $precheckBlocker = 'RUNTIME_CHECKOUT_DIRTY'
-    Add-LogText $logPath ("dirty_entries={0}`n" -f @($status.Output | Where-Object { $_.Trim() }).Count)
+if ($StateRoot -ne $RuntimeRoot) {
+    Add-LogText $logPath ("state_root={0}`n" -f $StateRoot)
 }
-if (-not $precheckBlocker) {
-    $head = Invoke-Git @('rev-parse', '--verify', 'HEAD^{commit}')
-    $origin = Invoke-Git @('rev-parse', '--verify', ($OriginMainRef + '^{commit}'))
-    if ($head.ExitCode -ne 0 -or $origin.ExitCode -ne 0) {
+$runtimeHead = $null
+$releaseId = $null
+if ($precheckBlocker -eq 'STATE_ROOT_INVALID') {
+    # Keep the invalid-state-root blocker and write the log under the runtime directory.
+} elseif (Test-Path -LiteralPath (Join-Path $RuntimeRoot '.git')) {
+    $status = Invoke-Git @('status', '--porcelain=v1', '--untracked-files=normal')
+    if ($status.ExitCode -ne 0) {
         $precheckBlocker = 'RUNTIME_CHECKOUT_GIT_FAILED'
-    } else {
-        $runtimeHead = $head.Output[0].Trim()
-        Add-LogText $logPath ("runtime_head={0}`norigin_main={1}`n" -f $runtimeHead, $origin.Output[0].Trim())
-        $ancestor = Invoke-Git @('merge-base', '--is-ancestor', $runtimeHead, $OriginMainRef)
-        if ($ancestor.ExitCode -eq 1) {
-            $precheckBlocker = 'RUNTIME_CHECKOUT_HEAD_NOT_ON_ORIGIN_MAIN'
-        } elseif ($ancestor.ExitCode -ne 0) {
+    } elseif (@($status.Output | Where-Object { $_.Trim() }).Count -gt 0) {
+        $precheckBlocker = 'RUNTIME_CHECKOUT_DIRTY'
+        Add-LogText $logPath ("dirty_entries={0}`n" -f @($status.Output | Where-Object { $_.Trim() }).Count)
+    }
+    if (-not $precheckBlocker) {
+        $head = Invoke-Git @('rev-parse', '--verify', 'HEAD^{commit}')
+        $origin = Invoke-Git @('rev-parse', '--verify', ($OriginMainRef + '^{commit}'))
+        if ($head.ExitCode -ne 0 -or $origin.ExitCode -ne 0) {
             $precheckBlocker = 'RUNTIME_CHECKOUT_GIT_FAILED'
+        } else {
+            $runtimeHead = $head.Output[0].Trim()
+            Add-LogText $logPath ("runtime_head={0}`norigin_main={1}`n" -f $runtimeHead, $origin.Output[0].Trim())
+            $ancestor = Invoke-Git @('merge-base', '--is-ancestor', $runtimeHead, $OriginMainRef)
+            if ($ancestor.ExitCode -eq 1) {
+                $precheckBlocker = 'RUNTIME_CHECKOUT_HEAD_NOT_ON_ORIGIN_MAIN'
+            } elseif ($ancestor.ExitCode -ne 0) {
+                $precheckBlocker = 'RUNTIME_CHECKOUT_GIT_FAILED'
+            }
         }
     }
+} elseif (Test-Path -LiteralPath $ReleaseManifest) {
+    if ($StateRoot -eq $RuntimeRoot) {
+        $precheckBlocker = 'STATE_ROOT_NOT_SET'
+    } elseif (-not (Test-Path -LiteralPath $Python)) {
+        $precheckBlocker = 'AITS_EXECUTABLE_MISSING'
+    } else {
+        $verify = Invoke-ReleaseVerify
+        Add-LogText $logPath ("release_verify_exit_code={0}`n" -f $verify.ExitCode)
+        if ($verify.ExitCode -eq 0) {
+            $runtimeHead = Get-VerifyValue $verify.Output 'source_commit'
+            $releaseId = Get-VerifyValue $verify.Output 'release_id'
+            if (-not $runtimeHead -or -not $releaseId) {
+                $precheckBlocker = 'RUNTIME_RELEASE_INVALID'
+            } else {
+                Add-LogText $logPath ("release_id={0}`nruntime_head={1}`n" -f $releaseId, $runtimeHead)
+            }
+        } elseif ($verify.ExitCode -eq 1) {
+            $precheckBlocker = 'RUNTIME_RELEASE_MODIFIED'
+            $mismatchCount = Get-VerifyValue $verify.Output 'mismatches'
+            Add-LogText $logPath ("release_mismatches={0}`n" -f $mismatchCount)
+        } else {
+            $precheckBlocker = 'RUNTIME_RELEASE_INVALID'
+        }
+    }
+} else {
+    $precheckBlocker = 'RUNTIME_IDENTITY_MISSING'
 }
 if (-not $precheckBlocker -and -not (Test-Path -LiteralPath $Aits)) {
     $precheckBlocker = 'AITS_EXECUTABLE_MISSING'
@@ -178,7 +237,9 @@ $finishedAt = Get-IsoNow
 Add-LogText $logPath ("finished_at={0}`n" -f $finishedAt)
 
 $summaryArgs = @('-I', $SummaryScript, '--runtime-root', $RuntimeRoot, '--window', $Window,
+    '--state-root', $StateRoot,
     '--output-stem', $stem, '--started-at', $startedAt, '--finished-at', $finishedAt)
+if ($releaseId) { $summaryArgs += @('--release-id', $releaseId) }
 if ($runtimeHead) { $summaryArgs += @('--runtime-head', $runtimeHead) }
 if ($precheckBlocker) {
     $summaryArgs += @('--precheck-blocker', $precheckBlocker)
