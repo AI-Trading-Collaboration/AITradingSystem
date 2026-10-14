@@ -18,11 +18,17 @@ conhost does not forward the child's exit code: the task's last run result only 
 started. The run outcome is in <runtime>\outputs\run_control\scheduler\<date>_<window>.log and the
 summary files next to it.
 
+With -DailyRoot (OPS-086), the task starts <daily_root>\run_daily.ps1 and current.json selects the
+release and state root. Logs are under <state_root>\outputs\run_control\scheduler; pointer errors
+are in <daily_root>\run_daily_error.log. Without -DailyRoot the runtime checkout checks are unchanged.
+
 This file is ASCII on purpose (Windows PowerShell 5.1 reads BOM-less scripts as ANSI).
 #>
 [CmdletBinding()]
 param(
     [string]$RuntimeRoot = 'D:\Work\AITradingSystem_ops_runtime',
+    # OPS-086: optional git-free daily release root instead of the runtime checkout.
+    [string]$DailyRoot = '',
     [string]$TaskName = 'AITradingSystem Daily Run',
     [string]$TaskPath = '\'
 )
@@ -43,11 +49,19 @@ $ExecutionTimeLimit = New-TimeSpan -Hours 6
 if ((Get-TimeZone).Id -ne $TriggerTimeZoneId) {
     throw ("Trigger times are Asia/Tokyo but the host time zone is {0}; refusing to register." -f (Get-TimeZone).Id)
 }
-$root = (Resolve-Path -LiteralPath $RuntimeRoot).Path
-$wrapper = Join-Path $root 'scripts\ops\daily_scheduler_run.ps1'
-$aits = Join-Path $root '.venv\Scripts\aits.exe'
-foreach ($required in @($wrapper, $aits)) {
-    if (-not (Test-Path -LiteralPath $required)) { throw "Runtime checkout is missing $required" }
+if ($DailyRoot) {
+    $root = (Resolve-Path -LiteralPath $DailyRoot).Path
+    $wrapper = Join-Path $root 'run_daily.ps1'
+    foreach ($required in @($wrapper, (Join-Path $root 'current.json'))) {
+        if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Daily root is missing $required" }
+    }
+} else {
+    $root = (Resolve-Path -LiteralPath $RuntimeRoot).Path
+    $wrapper = Join-Path $root 'scripts\ops\daily_scheduler_run.ps1'
+    $aits = Join-Path $root '.venv\Scripts\aits.exe'
+    foreach ($required in @($wrapper, $aits)) {
+        if (-not (Test-Path -LiteralPath $required)) { throw "Runtime checkout is missing $required" }
+    }
 }
 
 $others = @(Get-ScheduledTask | Where-Object {
@@ -58,7 +72,7 @@ $others = @(Get-ScheduledTask | Where-Object {
         $arguments = $_.PSObject.Properties['Arguments']
         '{0} {1}' -f $(if ($execute) { $execute.Value }), $(if ($arguments) { $arguments.Value })
     }) -join ' '
-    $text -match 'daily_scheduler_run\.ps1|ops daily-run'
+    $text -match 'daily_scheduler_run\.ps1|run_daily\.ps1|ops daily-run'
 })
 if ($others.Count -gt 0) {
     $names = ($others | ForEach-Object { $_.TaskPath + $_.TaskName }) -join ', '
@@ -77,9 +91,15 @@ $user = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
 $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Limited
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -MultipleInstances IgnoreNew `
     -ExecutionTimeLimit $ExecutionTimeLimit -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
-$description = ('OPS-082 deterministic daily scheduler: one call of aits ops daily-run in {0} ' +
-    'via scripts\ops\daily_scheduler_run.ps1. Outcome: outputs\run_control\scheduler\. ' +
-    'production_effect=none; broker_action=none.') -f $root
+if ($DailyRoot) {
+    $description = ('OPS-086 daily release scheduler: entry {0}\run_daily.ps1 via current.json. ' +
+        'Outcome: <state_root>\outputs\run_control\scheduler\ (state_root from current.json); ' +
+        'pointer errors: {0}\run_daily_error.log. production_effect=none; broker_action=none.') -f $root
+} else {
+    $description = ('OPS-082 deterministic daily scheduler: one call of aits ops daily-run in {0} ' +
+        'via scripts\ops\daily_scheduler_run.ps1. Outcome: {0}\outputs\run_control\scheduler\. ' +
+        'production_effect=none; broker_action=none.') -f $root
+}
 
 Register-ScheduledTask -TaskName $TaskName -TaskPath $TaskPath -Action $action -Trigger $triggers `
     -Principal $principal -Settings $settings -Description $description -Force | Out-Null

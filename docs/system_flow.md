@@ -173,6 +173,14 @@ flowchart LR
 环境变量 `AITS_STATE_ROOT` 指向别处时，`data/`、`outputs/`、`artifacts/` 在那里，包装脚本的日志和 `daily_scheduler_summary.py`
 读的证据（运行状态、台账、capture、DQ 指针）也从状态根来；摘要 JSON 多 `state_root` 和 `release_id` 两个字段。
 
+**日报发布包（OPS-086，`owner_decision:DATA-023:2026-10-13:state_root_separation`）**：`tools/release/build_daily_release.py`
+从已在 `origin/main` 上的一个提交，按 `config/release/daily_release.yaml` 加报告登记表选出日报用的文件，写出 `<release_id>.zip` 和
+`.sha256`，包里有逐文件 sha256 的 `RELEASE.json`。`tools/release/deploy_daily_release.py` 解到 `<daily_root>\releases\<release_id>`，
+建 `.venv`、校验、试跑 `ops daily-plan`，全部通过才切换 `current.json` 和 `<daily_root>\run_daily.ps1`。`run_daily.ps1` 读
+`current.json`，设 `AITS_STATE_ROOT` 和 `PYTHONDONTWRITEBYTECODE=1`，再用同一个窗口调用发布包里的
+`scripts\ops\daily_scheduler_run.ps1 -Window <窗口>`。发布包只读，状态只写在状态根里，没有 `.git`。切换到发布包（OPS-086 步骤 7）
+由 owner 决定，在此之前日报仍按本节上面的运行副本运行。
+
 ## 6. 已退役、不再运行
 
 | 部分 | 退役时间 | 去向 |

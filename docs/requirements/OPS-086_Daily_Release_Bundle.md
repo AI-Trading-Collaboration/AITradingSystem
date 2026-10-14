@@ -320,3 +320,4 @@ python tools/release/deploy_daily_release.py --activate <release_id> --daily-roo
 - 2026-10-14：需求和步骤 1～3 的验收测试由 Claude 写好，pi 按 OPS-086-01 起依次实现。
 - 2026-10-14：步骤 1（OPS-086-01）：35 个文件搬到 inputs/ 和 research/_results/，读取方、登记表和 3 个 C 区文件的路径文字（决定记录）一并改。production_effect=none；broker_action=none。
 - 2026-10-15：步骤 2（OPS-086-02）：release_identity 模块、7 处发布身份、包装脚本和摘要接受状态根。production_effect=none；broker_action=none。
+- 2026-10-15：步骤 3（OPS-086-03）：清单规则、构建和部署脚本、run_daily.ps1、注册脚本 -DailyRoot、运维手册 9.3。production_effect=none；broker_action=none。

@@ -194,3 +194,44 @@ dynamic-v3 rescue、候选跟踪每日步骤）。发布改由 `python tools/gov
 | 代码缺陷 | 未处理异常、非数据原因的步骤失败、finalization 失败 | 任务记录 + `ship-change` 修复，再更新运行副本 |
 | 控制面问题 | 前置检查失败、运行控制拒绝（并发、恢复无效）、缺环境变量、本地 source-control 问题 | 按证据修复环境；不删状态或锁 |
 | 等待新 as_of | 同一 as-of 已有 BLOCKED/FAILED 终态的重复触发；as-of 尚未 provider-ready | 等下一个 provider-ready 交易日的普通运行；只有 owner 指示才做终止恢复 |
+
+### 9.3 发布包（OPS-086）
+
+以下是步骤 6 试运行、步骤 7 切换时的操作说明，不是当前切换授权。**切换前日报仍按 9.1、9.2 在运行副本运行**。
+步骤 7 必须先由 owner 决定，之后才把同一个计划任务改指向发布包；不登记第二个调度来源。
+在开发仓运行下列命令，`<已发布SHA>` 必须已在本地 `origin/main` 上，`<daily_root>`、`<state_root>` 为独立绝对路径，
+`<bundle_dir>` 为构建产物目录；执行前替换占位符。不得把发布包目录当状态根。
+
+```powershell
+# 构建：只读提交里的清单规则、报告登记表和 git archive 内容，不读未提交改动。
+.venv/Scripts/python.exe tools/release/build_daily_release.py --commit <已发布SHA> --out-dir <bundle_dir>
+# 首次部署：必须明确状态根，并从现有环境提取依赖约束。
+.venv/Scripts/python.exe tools/release/deploy_daily_release.py --bundle <bundle_dir>/<release_id>.zip --daily-root <daily_root> --state-root <state_root> --constraints-from D:\Work\AITradingSystem_ops_runtime\.venv\Scripts\python.exe
+# 若 owner 明确选择不固定依赖，首次部署用 --unpinned 替代 --constraints-from。
+.venv/Scripts/python.exe tools/release/deploy_daily_release.py --bundle <bundle_dir>/<release_id>.zip --daily-root <daily_root> --state-root <state_root> --unpinned
+# 后续部署：沿用 current.json 的状态根、当前 release 的 .venv_freeze.txt 约束。
+.venv/Scripts/python.exe tools/release/deploy_daily_release.py --bundle <bundle_dir>/<新release_id>.zip --daily-root <daily_root>
+# 回退或切换：只核对已安装的 release，不再安装；仍须无活动运行。
+.venv/Scripts/python.exe tools/release/deploy_daily_release.py --activate <旧release_id> --daily-root <daily_root>
+# 仅在 owner 决定步骤 7 后执行：更新同一个任务的入口与工作目录。
+powershell -NoProfile -File scripts/ops/register_daily_scheduler_task.ps1 -DailyRoot <daily_root>
+schtasks /query /tn "\AITradingSystem Daily Run" /xml
+```
+
+部署先确认状态根（首次必填，后续不可改变）、任务不在 `Running`、状态根里无日报锁、依赖约束来源明确；
+然后核对 zip 旁的 `.sha256`、`RELEASE.json`、文件集合、路径安全及逐文件 sha256，拒绝覆盖已有 release。
+检查通过才解到 `<daily_root>\releases\<release_id>`，建 `.venv`、按约束 editable 安装、保存 freeze，
+运行隔离的 `release_identity verify`，将清单文件和 `RELEASE.json` 设为只读，再以状态根环境在临时目录输出
+`ops daily-plan --fail-on-missing-env`。计划报告不写进生产状态；失败不切换指针或入口。
+
+全部成功才原子替换 `current.json`（版本 `aits_daily_current.v1`，记录当前/上一 release、状态根、源提交与激活时间），
+再原子复制该 release 的入口为 `<daily_root>\run_daily.ps1`。该入口设置 `AITS_STATE_ROOT`、
+`PYTHONDONTWRITEBYTECODE=1` 后调用发布包里的包装脚本；日报日志和摘要在
+`<state_root>\outputs\run_control\scheduler\`，不是 release 目录。
+入口读不到指针、字段或文件无效时，向 `<daily_root>\run_daily_error.log` 追加错误并退出 2。
+每次部署/回退（含拒绝）向 `<daily_root>\deploy_log.jsonl` 追加时间、动作、结果、拒绝码、release_id 和原因。
+
+安装、freeze、核对、只读设置或计划检查失败时，保留目录并改名为 `<release_id>.failed-<UTC时间戳>`，不删除。
+部署脚本**从不删除 release**；超过 3 个只打印 `cleanup_candidate`（排除最新 3 个、当前和上一个），由 owner 决定清理。
+不得手改 release 文件；修复应从新提交重新构建、部署，或用 `--activate` 回退。发布包不含 `.git` 和状态目录。
+本批只改仓库，production_effect=none；broker_action=none，不更改现有运行副本或计划任务。

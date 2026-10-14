@@ -1,0 +1,21 @@
+# OPS-086: tracked files for the git-free daily release bundle.
+schema_version: daily_release_manifest.v1
+include:
+  - src/**
+  - config/**
+  - scripts/ops/**
+  - inputs/**
+  - pyproject.toml
+  - README.md
+  - .python-version
+  - docs/artifact_catalog.md
+  - docs/schema/historical_gap_recovery.v1.schema.json
+include_registry_globs: config/report_registry.yaml
+exclude:
+  - data/**
+  - outputs/**
+  - artifacts/**
+  - "**/__pycache__/**"
+  - "**/*.pyc"
+production_effect: none
+broker_action: none

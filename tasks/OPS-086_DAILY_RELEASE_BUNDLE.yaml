@@ -3,7 +3,7 @@ id: OPS-086_DAILY_RELEASE_BUNDLE
 area: Operations / 日报从不带 git 的发布包运行
 priority: P1
 status: IN_PROGRESS
-next_owner: Claude（审 OPS-086-02）；之后 pi（OPS-086-03）
-next_step: OPS-086-02 发布身份待审；之后 OPS-086-03（构建和部署）、04（scripts 其余路径）
+next_owner: Claude（审 OPS-086-03）
+next_step: OPS-086-03 构建和部署待审；之后 OPS-086-04（scripts 其余路径），再定步骤 5（登记表分范围）
 acceptance: 步骤 1～4 的验收测试全过、PR 套件无新增失败；步骤 6 电脑上试运行与运行副本同日产物一致；步骤 7 切换后第一次计划任务正常
-notes: production_effect=none；broker_action=none；owner_decision:DATA-023:2026-10-13:state_root_separation；需求文档 docs/requirements/OPS-086_Daily_Release_Bundle.md；步骤 1 的 3 个 C 区文件按 DEVX-029 决定记录（Baker 2026-10-14 08:06 JST 卡片选「批准」）；2026-10-15：OPS-086-02 发布身份实现，待审
+notes: production_effect=none；broker_action=none；owner_decision:DATA-023:2026-10-13:state_root_separation；需求文档 docs/requirements/OPS-086_Daily_Release_Bundle.md；步骤 1 的 3 个 C 区文件按 DEVX-029 决定记录（Baker 2026-10-14 08:06 JST 卡片选「批准」）；2026-10-15：OPS-086-02 发布身份实现，待审；2026-10-15：OPS-086-03 构建、部署、入口实现，待审
