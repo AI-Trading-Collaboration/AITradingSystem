@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2569_JUDGMENT_EVALUATION
+area: 研究 / 人工研究验证模块（判断导入、按市场对账、研究漏斗）
+priority: P2
+status: IN_PROGRESS
+next_owner: Claude（J1 导入器 TRADING-2569-02 由 pi 实现、Baker 按决定记录批准；之后 J2 结算、J3 报告、J4 快筛）
+next_step: 先发布 TRADING-2569-01（需求文档和任务卡，A 区）；再运行 TRADING-2569-02（J1：导入器、检查、方法登记表、数据源登记，C 区配置，按决定记录批准）。TSM 4 条判断（2026-10-15 财报日结算）是第一批真实样本，用来走一遍流程，见需求文档第 9 节。J2 结算、J3 报告、J4 快筛（先做财报前抢跑/拥挤度）随后各写 brief。
+acceptance: 见 docs/requirements/TRADING-2569_Judgment_Evaluation_Module.md 第 7 节。J1：导入检查全部有反向测试（改 prob/createdAt/statement 被拒，createdAt 不早于事件被拒，重复 id 被拒，标签不在登记表被拒，learning 条目不进分母）；导入记录哈希链可验。J2：已知序列手算结算用例，anchor 两种取值，未到期不结算，同一输入同一输出。J3：Wilson、Brier、有效样本合并有固定数值用例，报告每组含 MDE，状态由配置门槛机械得出。J4：快筛规格先固定再跑，每次都入账，抢跑快筛的盘前盘后判定有用例。全套 PR 测试通过
+notes: production_effect=none；broker_action=none。owner_decision:TRADING-2569:2026-10-14:judgment_eval_module：Baker 2026-10-14 提出需求，并回复同意先按需求文档的思路开发、用 TSM 台账走一遍流程。AI 协助的判断不能用训练截止日之前的事件回测，只做事后逐条对账。EODHD 已停，FMP 是唯一付费源；历史财报日期默认用本地 SEC 提交记录里的 8-K Item 2.02。判断文件只放本机数据目录，不入库，不发给外部模型。
