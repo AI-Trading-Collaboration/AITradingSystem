@@ -58,6 +58,14 @@
   - 系统级隔离（aits-agent 账号）照常推进，用于一般的 pi 运行。前瞻记录建好时，再定它的 outcome 路径怎么隔离。
   - TRADING-2566 第 2 项（负结果清单只由人审后更新）照旧。
 
+- `owner_decision:TRADING-2567:2026-10-14:opening_covers_validation_read`
+- 选择（Baker，2026-10-14 13:27 JST，在「减少粘贴和批准步骤」线程的决定卡上选了"合并"；14:51 JST 在研究线程确认"第二题起开题批准一并同意读验证窗口"）：卡片的问题是「开题批准时，一并同意之后读验证窗口吗？」，这个选项的后果是「从第二题起，每题只批开题一次；读验证窗口前会先告诉你，但不等你回复。」另一个选项是"保持两次"。
+- 含义：
+  - 从第二题起，开题的 owner decision 同时同意之后读一次验证窗口；开题的决定写明这一点。
+  - 开发运行跑完、Claude 核对实现没有问题以后，研究线程先告诉 Baker，再单独一次运行读验证窗口，不等回复。实现核对发现问题就停下问 Baker。
+  - 验证窗口每题仍只读一次；开题后预注册或策略模块改了，要新的 owner decision 才能读（不变）。
+  - 第一题的读取 `QQQ-Q1-w0001` 是 Baker 2026-10-14 09:06 JST 在研究线程单独同意的。
+
 ## 背景
 
 - 22 条旧研究线的结论在 `research/ledger.md`。旧的 QQQ 期权线（第 19 行）没测成：约 60 个任务只跑过 1 次策略损益（+4.48%），对照组只算了一股 QQQ，结果无法解释；它用来定方向的 Composer v2（第 21 行）后来被证伪。
@@ -133,3 +141,6 @@ FMP 没有期权数据；现有 FMP Starter 档只有 5 年历史。QQQ 实际 E
 - 2026-10-13：08 发布后（main 4a64b78e）Baker 在主仓库重新 fetch，快照 `qlh-20261013-0b0df53cb1a2`，检查 WARN（5 条都是已知的）。FMP 现有档返回了 1999-03-10 起的 QQQ，不用升档。真实 QQQ 日收益减两条指数日收益的标准差，2003、2004、2005 年对总收益指数是 0.34%、0.26%、0.11%，对价格指数是 0.93%、0.74%、0.36%：2003–2005 年的逐日噪声在 FRED 的价格指数，这几年的信号不能读 `ndx_price`。合成 QQQ 对真实 QQQ：真实 QQQ 每年低 0.14%，相关 0.985；1999–2002 和 2008 年日跟踪误差大（年化 6–16%），1999、2000、2001、2008 年的年跟踪差超过 0.5%（推断是 2004 年 12 月以前 QQQ 在 AMEX 16:15 收盘，未核实）。研究按题选一条序列，写进预注册；第一题用真实 QQQ。production_effect=none；broker_action=none。
 - 2026-10-13：TRADING-2567-09 开第一题（C 区，第四条 owner decision）：`research/QQQ-Q1/` 的预注册和策略模块。两条 QQQ 序列都从 1999-03 开始，带回看的策略在开发窗口第一天没有目标，模拟会拒绝；评估台加输入 `ndx_return`：选定的 QQQ 序列从第一个收益日起，之前用价格指数收益（1986 年起），之后的缺口不补。模板策略改用它。发布后按 `research/_template/brief.md` 跑开发窗口，跑完写工程结构复核。production_effect=none；broker_action=none。
 - 2026-10-13：TRADING-2566-01（C 区，第五条 owner decision）：策略模块 `research/*/*.py` 划进 C 区；pi 守卫不让 pi 打开或写研究数据（命令里提到、或读写工具的路径在 `data/raw/research/`、`data/raw/external_request_cache/` 下都拦）；`AGENTS.md`、research-run skill、`research/README.md` 改成研究运行经评估台、pi 可以按模板跑，预注册模板要求先读负结果清单；TRADING-2566 第 2 项（Baker 审负结果清单）还没做。production_effect=none；broker_action=none。
+- 2026-10-14：TRADING-2567-10 在研究工作区跑第一题的开发窗口：运行 `QQQ-Q1-r0001`..`r0010`，试验 10/20，发布为 main 0db4fe32。Claude 只核对实现，没有发现问题；核对和工程结构复核在项目文件 `knowledge/claude/qqq-options/engineering-review-q1-dev-2026-10-14.md`。production_effect=none；broker_action=none。
+- 2026-10-14：Baker 09:06 JST 同意后，TRADING-2567-11 单独一次运行读验证窗口（读取 `QQQ-Q1-w0001`，运行 `QQQ-Q1-r0011`、`r0012`），记录发布为 main 42140106。Q1a 9 条规则 3 条成立，是证据不足；Q1b 9 条规则 2 条成立、主指标的点估计比固定杠杆差，是拒绝。一致性窗口不读。
+- 2026-10-14：TRADING-2567-12 记下第一题的结论：`research/QQQ-Q1/decision.md`（Baker 审过草稿），`research/ledger.md` 第 23 行，`research/negative_results.md` 加 Q1b；同时记下第六条 owner decision（从第二题起开题批准一并同意读验证窗口），`research/README.md` 第 5 步同步。第二题等信号筛选层（TRADING-2565 S4）发布后开题。production_effect=none；broker_action=none。

@@ -31,6 +31,7 @@
 | 20 | growth action value（2540~2542I） | 未测成 | D | 代码删除 |
 | 21 | Composer v2（2550、2555~2559，9/1–3） | 拒绝 | B | 代码删除；不得做参数救援 |
 | 22 | Composer 与 equal-risk 前瞻（2560、2563） | 证据不足 | 事实 A | 由评估台的前瞻记录接替 |
+| 23 | QQQ-Q1 按已实现波动调敞口和杠杆（TRADING-2567，2026-10-13..14） | Q1a 证据不足；Q1b 拒绝 | A | 关闭；见 `QQQ-Q1/decision.md` |
 
 ## 各线
 
@@ -196,3 +197,9 @@
 - 记录的事实：Composer 观测 0 条；equal-risk 2 条（6/22、6/24）、成熟 0 条。采集全靠逐次手工授权，没接进调度；9/5–10/8 日报停了 23 个交易日，研究侧没有察觉。
 - 证据：`@archive:config/research/first_layer_composer_v2_prospective_oos_preregistration_v1.yaml:27-28,75`；`@archive:docs/requirements/TRADING-2563_Equal_Risk_Catchup_V1.md:87-92`；`@archive:docs/requirements/TRADING-2560_Composer_Known_Snapshot_Prospective_Capture_V1.md`。
 - 去向：由评估台的前瞻记录接替（日常调度里自动写只增记录）。手工采集那套代码删除，可复用部分见 `assets.md`。
+
+### 23. QQQ-Q1 按已实现波动调敞口和杠杆
+
+- 结论：Q1a（不加杠杆）证据不足，Q1b（最高 3 倍）拒绝。这是评估台上第一道预注册、只读一次验证窗口的题。
+- 证据：`QQQ-Q1/decision.md`；运行 `QQQ-Q1-r0001`..`r0012`；读取 `QQQ-Q1-w0001`。
+- 去向：关闭。重开条件见 decision.md。和第 18 行（波动聚集预测左尾，未测成）的关系：Q1a 说明按波动降仓对左尾有信息（随机择时排名 0.995），但幅度不足以胜过同敞口的固定仓位；第 18 行的问题是预测左尾本身，结论不变。
