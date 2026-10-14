@@ -1,0 +1,57 @@
+# Research methods for the judgment ledger (TRADING-2569). The ids are the tags in the ledger and what
+# the evaluation groups by, so they stay fixed; labels and questions may be reworded.
+# mechanizable: full = the method's inputs are in the system, partial = some inputs are typed in by hand,
+# none = needs data the system does not have. screen_template picks the quick-screen template (S3).
+# This file is zone C (config/research/research_*.yaml): the owner reviews it.
+schema_version: 1
+methods:
+  - id: guidance_base_rate
+    label: 指引超额基准率
+    mechanizable: partial
+    screen_template: event_study
+    question: 公司实际结果相对自己指引的历史超额或落空比例，能否预测本季是否超指引？
+  - id: hf_leading
+    label: 高频数据先行
+    mechanizable: none
+    screen_template: leading_indicator
+    question: 财报前的高频数据（月度营收、出货、价格）变化，能否预测财报结果或反应？
+  - id: op_leverage
+    label: 经营杠杆
+    mechanizable: partial
+    screen_template: leading_indicator
+    question: 收入变化加上成本结构，能否预测利润率和利润的变化？
+  - id: capex_cycle
+    label: 资本周期与 capex
+    mechanizable: partial
+    screen_template: leading_indicator
+    question: 客户 capex 指引和设备交期，能否预测供应商的收入和指引？
+  - id: chain_readthrough
+    label: 产业链传导
+    mechanizable: full
+    screen_template: event_study
+    question: 产业链上一家公司的财报结果或股价反应，能否预测同季下一家公司的？
+  - id: expectation_crowding
+    label: 预期差与拥挤度
+    mechanizable: full
+    screen_template: event_study
+    question: 财报前相对基准涨得越多，财报反应是否越差？
+  - id: valuation_implied
+    label: 估值与隐含预期
+    mechanizable: partial
+    screen_template: cross_section
+    question: 估值分位或隐含预期的高低，能否预测之后的相对收益？
+  - id: vol_pricing
+    label: 波动定价
+    mechanizable: partial
+    screen_template: event_study
+    question: 隐含波动（implied move）和事后实际波动的差，是否有可用的规律？
+  - id: accounting_detail
+    label: 会计与报表细节
+    mechanizable: none
+    screen_template: none
+    question: 报表细节（折旧、库存、应收）的变化，能否预测下一期的报表数字？
+  - id: other
+    label: 其他
+    mechanizable: none
+    screen_template: none
+    question: 暂时没有归入上面任何一类，只用来发现需要新增的标签。

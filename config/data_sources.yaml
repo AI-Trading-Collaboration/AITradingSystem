@@ -351,6 +351,51 @@ sources:
       - 手工输入，证据来源质量取决于交易记录纪律。
     owner_notes: 缺失时不能被报告视为高置信度交易假设。
 
+  - source_id: local_judgment_ledger
+    provider: Local JSON export of the owner's training-handbook judgment ledger
+    source_type: manual_input
+    status: active
+    domains:
+      - research_history
+    endpoint: data/external/judgments/exports/judgments_*.json
+    adapter: ai_trading_system.research_judgments.importer.import_export
+    cadence: manual
+    requires_credentials: false
+    cache_paths:
+      - data/external/judgments
+    primary_for:
+      - owner_research_judgments
+    audit_fields:
+      - provider
+      - file_path
+      - exported_at
+      - imported_at
+      - row_count
+      - checksum
+    validation_checks:
+      - schema
+      - duplicate_ids
+      - immutable_judgment_fields
+      - addenda_append_only
+      - judgment_before_event
+      - ticker_in_universe
+      - method_in_registry
+      - hash_chained_import_log
+    limitations:
+      - 手工导出，记录质量取决于记账纪律；事后补标的字段（目的、AI 参与、研究思路）在条目的 metaNote 里说明。
+      - AI 协助的判断不能用模型训练截止日之前的事件回测，只能事后逐条对账。
+      - 个人研究内容：只保存在本机数据目录，不提交，不发给外部模型。
+    llm_permission:
+      license_scope: owner_private_research
+      personal_use_only: true
+      external_llm_allowed: false
+      cache_allowed: true
+      redistribution_allowed: false
+      max_content_sent_level: metadata_only
+      approval_ref: owner_decision:TRADING-2569:2026-10-14:judgment_eval_module
+      reviewed_at: 2026-10-14
+    owner_notes: 台账导出由 owner 在训练手册会话里手动生成；导入器只读，不改台账。
+
   - source_id: local_valuation_snapshots
     provider: Local YAML input
     source_type: manual_input

@@ -207,3 +207,7 @@ Baker 给的量级：20 个交易日相对 SMH 的波动，TSM 5.2%、NVDA 8.8%�
 3. 重新导出并导入：只有 `status`、`review`、`errorType`、`resolvedAt` 和 `addenda` 变化才通过；这一步同时验证不可变检查。
 4. J2、J3 发布后，同样的数据产出第一份报告：4 条里 3 条 research、1 条 learning；3 条 research 属于同一次财报，有效样本是 1 个事件；状态必然是"样本不足"，报告要写出最小可检出效应，让这个结论有数字。
 5. 样本不足是预期结果。这一遍的目的是验证流程，不是评价思路。
+
+## 进展
+
+- 2026-10-14：J1（TRADING-2569-02）判断导入器、检查、方法登记表和数据源登记；production_effect=none；broker_action=none。

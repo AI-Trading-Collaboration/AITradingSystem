@@ -105,6 +105,7 @@ flowchart LR
 - agent 边界：pi 按 `research/_template/brief.md` 跑研究运行，只运行列出的评估台命令、只看屏幕上的汇总，不改预注册和策略
   模块。pi 守卫拦提到或打开、列出、写 `data/raw/research/`、`data/raw/external_request_cache/` 的操作（TRADING-2566）。
   守卫防的是误操作，不是安全边界；窗口由评估台控制。
+- 人工判断评估（TRADING-2569，只读，production_effect=none）：owner 在训练手册里记的判断导出成 `judgments_export.v1`，`python -m ai_trading_system.research_judgments check|import` 检查后原样存进本机 `data/external/judgments/`（不入库、不打印判断内容、不发给外部模型），导入记录 `imports.jsonl` 是哈希链；研究思路标签在 `config/research/research_judgment_methods.yaml`。不进评分、仓位或任何生产路径。
 - 验证 PASS 不代表候选有效、可进入 paper shadow 或获准用于 production/broker。
 
 ## 5. 开发与发布
