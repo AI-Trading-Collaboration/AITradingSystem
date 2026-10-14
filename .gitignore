@@ -70,3 +70,6 @@ Thumbs.db
 
 # Capture protocol v3 runtime state (holds are local, never evidence)
 outputs/runtime/
+
+# Scratch directories of review and agent sessions (a dirty tree stops ship.py --gate).
+/.tmp/

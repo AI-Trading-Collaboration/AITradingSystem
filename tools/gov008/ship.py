@@ -708,6 +708,52 @@ def append_gate_trailer(repo: Path, trailer: str) -> str:
     return git(repo, "rev-parse", "HEAD")
 
 
+# Seconds before the 2nd and 3rd push attempt: a dropped connection is retried (AGENTS.md).
+PUSH_RETRY_DELAYS = (2.0, 5.0)
+
+
+def push_or_restore(repo: Path, base: str, new_head: str, old_base_sha: str) -> None:
+    """Push ``base``; when every attempt fails, put local ``base`` back unless the remote moved.
+
+    Local ``base`` was already moved to ``new_head``. If the remote still has the old base the
+    publish can simply be run again, so local ``base`` goes back with a compare-and-swap; if the
+    push actually arrived (a lost reply) it counts as pushed; anything else is left for a person.
+    """
+    failure = ""
+    attempts = 0
+    for delay in (0.0, *PUSH_RETRY_DELAYS):
+        if delay:
+            time.sleep(delay)
+        attempts += 1
+        try:
+            git(repo, "push", "origin", base)
+            return
+        except ShipError as exc:
+            failure = str(exc)
+    try:
+        git(repo, "fetch", "origin", base)
+        remote = git(repo, "rev-parse", f"origin/{base}")
+    except ShipError as exc:
+        raise ShipError(
+            f"git push origin {base} failed {attempts} times ({failure}) and origin could not be "
+            f"checked ({exc}): local {base} stays at {new_head}; when the network is back run "
+            f"`git fetch origin {base}` and, if origin/{base} is still {old_base_sha}, "
+            f"`git push origin {base}`"
+        ) from exc
+    if remote == new_head:
+        return
+    if remote == old_base_sha:
+        git(repo, "update-ref", f"refs/heads/{base}", old_base_sha, new_head)
+        raise ShipError(
+            f"git push origin {base} failed {attempts} times ({failure}); origin/{base} did not "
+            f"move, so local {base} is back at {old_base_sha}: run the same publish command again"
+        )
+    raise ShipError(
+        f"git push origin {base} failed {attempts} times ({failure}) and origin/{base} moved to "
+        f"{remote}: local {base} stays at {new_head}; stop and report"
+    )
+
+
 def move_base_and_maybe_push(
     repo: Path, base: str, new_head: str, old_base_sha: str, push: bool
 ) -> None:
@@ -722,7 +768,7 @@ def move_base_and_maybe_push(
     # compare-and-swap fast-forward: fails if main moved since the plan was made
     git(repo, "update-ref", f"refs/heads/{base}", new_head, old_base_sha)
     if push:
-        git(repo, "push", "origin", base)
+        push_or_restore(repo, base, new_head, old_base_sha)
         git(repo, "fetch", "origin", base)
         remote = git(repo, "rev-parse", f"origin/{base}")
         if remote != new_head:
