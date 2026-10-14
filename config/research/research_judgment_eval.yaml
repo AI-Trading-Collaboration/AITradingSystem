@@ -1,0 +1,37 @@
+# Evaluation settings for the judgment ledger (TRADING-2569). Zone C (config/research/research_*.yaml):
+# the owner reviews every change. J2 adds the settlement section; J3 adds the report thresholds.
+# Prices are the system's own adj_close series. A window that breaks one of these limits is not settled
+# (state data_gap) and is left for a human, never estimated.
+schema_version: 1
+policy_id: research_judgment_eval_v1
+version: 2026-10-14
+status: pilot_baseline
+owner: baker
+production_effect: none
+rationale: >
+  The settlement of the owner's research judgments needs a few data-sanity limits: which local
+  time a trading day closes, how large a gap between price dates still counts as a normal
+  holiday stretch, and how large a one-day move is more likely an unadjusted split than a
+  return. They are set conservatively so that a doubtful window is left to a human instead of
+  being settled.
+intended_effect: >
+  A window that breaks a limit becomes data_gap and is not scored; it never changes the result
+  of a window that passes. Settlement is read-only evaluation of the owner's own judgments and
+  does not feed scoring, position sizing or any production path.
+validation_evidence: >
+  Acceptance tests in tests/test_research_judgments_settle.py check each limit at its boundary
+  (a gap of exactly the limit is allowed, one day more is not; a move of exactly the limit is
+  allowed, more is not) and that the limits come from this file and nowhere else; the first real
+  settlement (TSM, 2026-10-15) is the first field check.
+review_condition: >
+  Review after the first real settlement that produces a data_gap, after any change to how the
+  price cache is adjusted, and before the J3 report starts to use settled results for group
+  statistics.
+settlement:
+  # A trading day's close is taken at this local time; createdAt after it counts as after that close.
+  market_timezone: America/New_York
+  market_close: "16:00"
+  # Gap between two consecutive price dates inside a window, in calendar days (a long weekend is 4).
+  max_calendar_gap_days: 7
+  # One-day move on either leg inside a window; larger usually means an unadjusted split, not a return.
+  max_abs_daily_move: 0.5

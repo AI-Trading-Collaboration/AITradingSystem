@@ -107,7 +107,7 @@ flowchart LR
 - agent 边界：pi 按 `research/_template/brief.md` 跑研究运行，只运行列出的评估台命令、只看屏幕上的汇总，不改预注册和策略
   模块。pi 守卫拦提到或打开、列出、写 `data/raw/research/`、`data/raw/external_request_cache/` 的操作（TRADING-2566）。
   守卫防的是误操作，不是安全边界；窗口由评估台控制。
-- 人工判断评估（TRADING-2569，只读，production_effect=none）：owner 在训练手册里记的判断导出成 `judgments_export.v1`，`python -m ai_trading_system.research_judgments check|import` 检查后原样存进本机 `data/external/judgments/`（不入库、不打印判断内容、不发给外部模型），导入记录 `imports.jsonl` 是哈希链；研究思路标签在 `config/research/research_judgment_methods.yaml`。不进评分、仓位或任何生产路径。
+- 人工判断评估（TRADING-2569，只读，production_effect=none）：owner 在训练手册里记的判断导出成 `judgments_export.v1`，`python -m ai_trading_system.research_judgments check|import|settle` 检查后原样存进数据目录 `data/external/judgments/`（不入库、不打印判断内容、不发给外部模型），导入记录 `imports.jsonl` 是哈希链；`settle` 用价格缓存 `prices_daily.csv` 的 adj_close 对基准（默认 SMH）结算价格类判断，其余沿用台账的人工结果，状态 settled/pending/void/data_gap，窗口异常只标 data_gap 不估算，已结算的价格结果冻结（再算不一致就整次拒绝），结果写在同目录 `settlements/` 和哈希链 `settlements.jsonl`（只有 id、数字、状态和哈希，不含判断文字），阈值在 `config/research/research_judgment_eval.yaml`；研究思路标签在 `config/research/research_judgment_methods.yaml`。不进评分、仓位或任何生产路径。
 - 展示：研究进展页面（TRADING-2568）由 `python -m ai_trading_system.research_site` 只读上面这些记录（预注册、运行记录、窗口读取、
   `decision.md`、台账、负结果清单、筛选账和研究任务卡）生成一个静态页面，不重算、不另存事实。页面不进门禁，生成失败不挡
   发布。
