@@ -1,0 +1,11 @@
+signal_id: high_distance_252
+mechanism: >-
+  价格离 252 个交易日高点越近，投资者越容易把近期高点当作锚，对好消息反应不足，之后收益偏高；
+  离得越远相反。信号值是对数价格减窗口内最高对数价格（不大于 0）。
+expected_sign: 1
+target: return
+params:
+  window: 252
+sources: []
+markets: all
+literature: George & Hwang 2004, The 52-Week High and Momentum Investing, Journal of Finance 59(5); Li & Yu 2012, Investor attention, psychological anchors, and stock return predictability, Journal of Financial Economics 104(2)

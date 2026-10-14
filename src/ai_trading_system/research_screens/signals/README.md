@@ -11,4 +11,8 @@
 
 命令：`python -m ai_trading_system.research_bench screen <id> --signal-snapshot <ID> [--bench-snapshot <ID>]`；`screen-ledger` 看当前全局 BH 和裁决。所有市场截到配置的 `screen_end`（最晚 2010-12-31），没有读更晚数据的选项。检查失败不记账；重复的数据、配置和模块组合在计算前拒绝。
 
-只有 candidate 才能另开 C 区预注册题；candidate 不是研究正面结论、paper-shadow 准入或 production/broker 批准。和预注册的 `screens`、`screen_family_size` 衔接及通用“信号 → 仓位”策略留到 S4d。本批不加入任何真实信号。
+只有 candidate 才能另开 C 区预注册题；candidate 不是研究正面结论、paper-shadow 准入或 production/broker 批准。
+
+预注册用 `screens`、`screen_family_size` 引用筛选记录；通用“信号 → 仓位”策略是 `research_bench/signal_strategy.py`（S4d）。
+
+第一批真实信号（TRADING-2565-10）：`credit_spread_change_63`、`credit_spread_level`、`term_spread_level`、`high_distance_252`。规格文字在任何筛选之前定好并按哈希钉住，改规格就是新家族成员。信号模块不要用 `@dataclass`：模块加载时不进 `sys.modules`，dataclass 会因此加载失败（报错文字是 `'NoneType' object has no attribute '__dict__'`），用普通函数和元组。

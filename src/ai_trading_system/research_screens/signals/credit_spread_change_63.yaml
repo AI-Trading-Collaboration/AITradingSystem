@@ -1,0 +1,12 @@
+signal_id: credit_spread_change_63
+mechanism: >-
+  信用利差（穆迪 Baa 公司债收益率减 10 年期国债收益率）在 63 个交易日内走阔，说明企业融资条件在恶化、
+  风险溢价在上升，这通常领先经济活动和风险资产收益走弱；走窄相反。信号值是利差现值减 63 个交易日前的值（百分点）。
+expected_sign: -1
+target: return
+params:
+  window: 63
+sources:
+  - baa10y
+markets: all
+literature: Gilchrist & Zakrajšek 2012, Credit Spreads and Business Cycle Fluctuations, American Economic Review 102(4), NBER w17021

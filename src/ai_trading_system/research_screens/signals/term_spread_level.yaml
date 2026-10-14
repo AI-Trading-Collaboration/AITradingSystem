@@ -1,0 +1,11 @@
+signal_id: term_spread_level
+mechanism: >-
+  期限利差（10 年期国债收益率减 3 个月国库券收益率）低或倒挂，说明货币政策偏紧、衰退风险高，
+  之后股票收益偏弱；曲线陡峭时偏强。信号值是利差现值（百分点），不做变换。
+expected_sign: 1
+target: return
+params: {}
+sources:
+  - t10y3m
+markets: all
+literature: Estrella & Mishkin 1998, Predicting U.S. Recessions, Review of Economics and Statistics 80(1); Fama & French 1989, Business Conditions and Expected Returns on Stocks and Bonds, Journal of Financial Economics 25(1)

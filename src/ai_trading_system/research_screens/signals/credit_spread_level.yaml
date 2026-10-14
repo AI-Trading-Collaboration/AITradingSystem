@@ -1,0 +1,11 @@
+signal_id: credit_spread_level
+mechanism: >-
+  信用利差水平高，说明债券市场计入的违约和资产波动风险高（结构模型里利差随企业资产波动上升），
+  之后股票的实际波动更大；水平低相反。信号值是利差现值（百分点），不做变换。
+expected_sign: 1
+target: risk
+params: {}
+sources:
+  - baa10y
+markets: all
+literature: Campbell & Taksler 2003, Equity Volatility and Corporate Bond Yields, Journal of Finance 58(6), NBER w8961

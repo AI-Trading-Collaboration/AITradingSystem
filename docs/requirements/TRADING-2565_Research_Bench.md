@@ -186,3 +186,4 @@
 - 2026-10-14：S4a（TRADING-2565-06）：信号筛选的数据入口、发布滞后对齐、本机内容寻址快照和检查；待按决定记录批准，之后 S4b。production_effect=none；broker_action=none。
 - 2026-10-14：S4b（TRADING-2565-07）：信号筛选、全局筛选账和 BH、screen/screen-ledger 命令；只用合成数据验证，待审阅和按决定记录批准，之后 S4d 和研究记录快车道。production_effect=none；broker_action=none。
 - 2026-10-14：S4d（TRADING-2565-08）：通用的信号到仓位策略、钉住信号及来源快照、预注册与汇总报告接线；292 项合成聚焦检查通过，五项变异被捕获，静态检查和第一题不变检查通过。全仓 main 基线和 PR 检查超时，车道的 AITS_STATE_ROOT 路径断言失败及 secret-scan 测试未结束，尚无全仓绿灯；保留证据，不修范围外测试，不发布。待审阅和按决定记录批准，之后研究记录快车道和第二题开题。production_effect=none；broker_action=none。
+- 2026-10-14：更正：S4d（TRADING-2565-08）已发布到 main 8b2ba7fe（Gate PASS，zone C），上一行里的“尚无全仓绿灯”和“不发布”写于全仓测试还没跑完的时候，已不是事实。S4e（TRADING-2565-10）：第一批真实信号（credit_spread_change_63、credit_spread_level、term_spread_level、high_distance_252），只用合成数据验收，不读真实快照；筛选要另按研究会话的指令跑。production_effect=none；broker_action=none。
