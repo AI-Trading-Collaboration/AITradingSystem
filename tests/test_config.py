@@ -69,6 +69,7 @@ def test_data_quality_config_loads_thresholds() -> None:
     assert [event.ratio for event in config.prices.known_split_events["NVDA"]] == [4, 10]
     assert config.prices.known_split_events["AMZN"][0].ratio == 20
     assert config.prices.known_split_events["GOOG"][0].effective_date.isoformat() == "2022-07-18"
+    assert config.prices.known_split_events["GOOGL"][0].effective_date.isoformat() == "2022-07-18"
     tqqq_effective_dates = [
         event.effective_date.isoformat()
         for event in config.prices.known_split_events["TQQQ"]

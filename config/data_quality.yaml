@@ -69,6 +69,16 @@ prices:
         reviewed_at: 2026-07-25
         review_condition: "Issuer correction, provider adjustment-policy change, or observed ratio/date drift."
         note: "Alphabet executed the split after the 2022-07-15 close and GOOG began split-adjusted trading on 2022-07-18."
+    GOOGL:
+      - effective_date: 2022-07-18
+        ratio: 20
+        source_name: Alphabet Q2 2022 earnings release
+        source_url: https://abc.xyz/assets/investor/static/pdf/2022Q2_alphabet_earnings_release.pdf
+        status: REVIEWED
+        owner: data_platform_owner
+        reviewed_at: 2026-10-14
+        review_condition: "Issuer correction, provider adjustment-policy change, or observed ratio/date drift."
+        note: "The same Alphabet 20-for-1 split as GOOG: Class A (GOOGL) also began split-adjusted trading on 2022-07-18."
     TQQQ:
       - effective_date: 2022-01-13
         ratio: 2

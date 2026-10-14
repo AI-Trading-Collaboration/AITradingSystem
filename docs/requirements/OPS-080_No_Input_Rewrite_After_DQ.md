@@ -41,6 +41,14 @@ Owner 回答（2026-10-12 22:28 JST）："是"
 
 要改 DQ profile 或阈值、`current.yaml`、评分股票池，或者超出上面三点，需要回到 owner。
 
+**补充决定（2026-10-14）**：Baker 于 2026-10-14 12:53 JST 在线程“pi 迁移后怎么用”的卡片
+“给 GOOGL 补登 2022 年的拆股记录，修好日报吗？”上选择“补登记”。选项为：“给 GOOGL 加上
+2022-07-18 的 1 拆 20，来源和已有的 GOOG 那条相同；pi 写、Baker 按 tree 批、发布后更新运行副本”。
+记为 `owner_decision:OPS-080:2026-10-14:googl_known_split`。这是上述需要回到 owner 的补充批准：
+范围仅为这一条拆股登记，以及因此必须更新的三处哈希绑定（重建利率归因复核包、重绑决定文件与
+contract 常量/测试中的复核包 id 和哈希、重绑 regime label 依赖的 DQ 政策哈希）；阈值、profile
+和政策版本不变。
+
 ## 3. 实现
 
 1. **下载带上影子跟踪资产**（`cli_commands/data_cache.py`、`data/download.py`）：`download-data` 读取
@@ -76,6 +84,7 @@ Owner 回答（2026-10-12 22:28 JST）："是"
 - GOOGL、BRK.B 进入每日下载后，和评分股票池的标的一样：FMP 取不到它们时下载失败，当天日报阻断。
 - 每天多 2 个标的、4 次 FMP 请求；第一次运行各取约 1,100 行历史，价格文件多约 2,200 行。
 - DQ 对它们只做行级检查，不检查 2018 年起的覆盖；影子回测需要的 1008 个交易日由补抓步骤的历史检查确认。
+- GOOGL 的历史从截止日往前 1600 个日历日取，会覆盖 2022-07-18 的拆股，所以要和 GOOG 一样登记为已知拆股；以后新加进下载的标的，历史里有拆股的也要先登记。
 
 ## 5. 验收
 
@@ -96,3 +105,6 @@ Owner 回答（2026-10-12 22:28 JST）："是"
 - 2026-10-11：记录整理（`fa0ab59d`）把本任务从 DEFERRED 改为 PROPOSED，重定范围。
 - 2026-10-12 22:28 JST：owner 决定 `owner_decision:OPS-080:2026-10-12:no_input_rewrite_after_dq`（第 2 节）。
 - 2026-10-12：在 main `8ffe97b25` 上实现第 3 节；相关测试通过。状态改为 VALIDATING，等运行副本切换后的第一次日报核对。
+- 2026-10-14 12:00 JST：运行副本切换后的第一次日报（as_of 2026-10-13）失败在 score_daily：DQ 只有一条警告（GOOGL 2022-07-18 复权比例跳变，未登记的拆股），DQ_WARNING_NOT_ALLOWED。下载、补抓顺序和不写价格都符合第 5 节。
+- 2026-10-14：OPS-080-02 补登 GOOGL 拆股（owner_decision:OPS-080:2026-10-14:googl_known_split），重建利率归因复核包并重绑决定文件和 regime label 依赖的哈希。production_effect=none；broker_action=none。
+- 2026-10-14 08:32 JST：owner 自己删除了 worktree D:\Work\AITradingSystem_ops080_input_closure；分支和保全 ref 保留。
