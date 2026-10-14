@@ -90,6 +90,11 @@ the tested tree -> ordinary push, with the remote checked before and after.
   preregistration, and signal files by hash. Their gate is the ledger invariants (`gates.records`).
   Research runs use the research worktree, one run at a time (`research/_template/brief.md`); the
   session publishes them with the patch and message fingerprints its own `--dry-run` prints.
+- **Gate re-check and task cards** (`owner_decision:GOV-008:2026-10-14:review_fixes_v1`): `ship` and
+  `--gate` check the working tree again after the gate commands and refuse to record PASS if it
+  changed meanwhile. A change whose zone B paths are all task cards (`task_records`) runs
+  `gates.tasks` (`tools/tasks.py check` and the task register tests) instead of the product suite.
+  `src/ai_trading_system/research_data/**` and `config/research/qqq_long_history.yaml` are zone C.
 - **Parallel lanes** (`owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes`): pi batches run in lane
   worktrees (`lanes` in `scripts/agent/agent_config.json`) through `scripts/agent/lane.py` only. A
   lane is held by one run from `start` until it publishes or is released; no two lanes hold

@@ -107,7 +107,10 @@ def test_real_policy_zone_c_globs_match_tracked_files() -> None:
         ("src/ai_trading_system/research_bench/signal_strategy.py", "C"),
         ("src/ai_trading_system/research_screens/signals/x.py", "B"),
         ("research/_screens/ledger/0001.json", "A"),
-        ("src/ai_trading_system/research_data/signal_sources.py", "B"),
+        ("src/ai_trading_system/research_data/signal_sources.py", "C"),
+        ("src/ai_trading_system/research_data/qqq_long_history.py", "C"),
+        ("config/research/qqq_long_history.yaml", "C"),
+        ("tasks/DEVX-032.yaml", "B"),
         ("research/QQQ-Q1/prereg.yaml", "C"),
         ("research/QQQ-Q1/strategy.py", "C"),
         ("research/_template/strategy.py", "C"),
@@ -172,6 +175,71 @@ def test_dirty_tree_blocks_but_registered_exclusion_does_not(repo: Path) -> None
     (repo / "docs/b.md").write_text("dirty\n", encoding="utf-8")
     p = ship.plan(repo)
     assert not p["ok"] and "not clean" in p["problems"][0]
+
+
+TASK_POLICY = {
+    **MINI_POLICY,
+    "zones": {"C": ["secret/**"], "A": ["docs/**", "*.md"]},
+    "task_records": ["tasks/*.yaml"],
+    "gates": {
+        "A": [],
+        "B": [["python", "-c", "pass"], ["python", "-c", "pass"]],
+        "C": [],
+        "tasks": [["python", "-c", "pass"]],
+    },
+}
+
+
+def test_task_cards_with_records_run_the_task_gate_and_anything_else_the_full_gate(
+    repo: Path,
+) -> None:
+    _write_policy(repo, TASK_POLICY)
+    run_git(repo, "commit", "-am", "policy")
+    run_git(repo, "switch", "main")
+    run_git(repo, "merge", "--ff-only", "task/x")
+    run_git(repo, "switch", "task/x")
+    commit_file(repo, "tasks/T1.yaml", "id: T1\n", "task card")
+    commit_file(repo, "docs/a.md", "x\n", "docs")
+    p = ship.plan(repo)
+    assert p["ok"] and p["zone"] == "B" and p["gate"] == TASK_POLICY["gates"]["tasks"]
+    commit_file(repo, "app/code.py", "x = 1\n", "code")
+    p = ship.plan(repo)
+    assert p["zone"] == "B" and p["gate"] == TASK_POLICY["gates"]["B"]
+
+
+def test_task_gate_is_off_without_the_policy_keys(repo: Path) -> None:
+    commit_file(repo, "tasks/T1.yaml", "id: T1\n", "task card")
+    p = ship.plan(repo)
+    assert p["zone"] == "B" and p["gate"] == MINI_POLICY["gates"]["B"]
+
+
+def _dirty_during_gate(monkeypatch: pytest.MonkeyPatch) -> None:
+    real_run_gate = ship.run_gate
+
+    def gate_then_edit(repo_: Path, commands: list[list[str]]) -> dict:
+        result = real_run_gate(repo_, commands)
+        (repo_ / "docs/a.md").write_text("edited while the gate ran\n", encoding="utf-8")
+        return result
+
+    monkeypatch.setattr(ship, "run_gate", gate_then_edit)
+
+
+@pytest.mark.parametrize("step", ["ship", "gate"])
+def test_gate_refuses_pass_when_the_tree_changes_while_it_runs(
+    repo: Path, monkeypatch: pytest.MonkeyPatch, step: str
+) -> None:
+    commit_file(repo, "docs/a.md", "x\n", "docs: add a")
+    head = run_git(repo, "rev-parse", "HEAD")
+    main = run_git(repo, "rev-parse", "main")
+    _dirty_during_gate(monkeypatch)
+    with pytest.raises(ship.ShipError, match="changed while the gate ran"):
+        if step == "ship":
+            ship.ship(repo, "main", push=False)
+        else:
+            ship.gate(repo, "main")
+    assert run_git(repo, "rev-parse", "HEAD") == head
+    assert run_git(repo, "rev-parse", "main") == main
+    assert "Gate:" not in run_git(repo, "log", "-1", "--format=%B")
 
 
 def test_refuses_when_main_is_not_an_ancestor(repo: Path) -> None:

@@ -134,6 +134,8 @@ C 区有两种批准：
 - 按 tree：`config/gov008_ship.yaml` 的 `decision_record_excluded` 里的路径（`AGENTS.md`、ship 规则和 `ship.py`、pi 守卫、
   `publish.ps1`、`approve.ps1`、`.github`、生产和券商边界）仍要 owner 对结果 tree 的运行前批准记录。
 
+**门禁修补（DEVX-032，`owner_decision:GOV-008:2026-10-14:review_fixes_v1`）**：`ship.py` 的 `gate()` 和 `ship()` 在测试跑完后再查一次工作区，期间有未提交修改就不写 PASS、不移动 main。B 区路径全是任务卡（`task_records`）的提交跑 `gates.tasks`（`tools/tasks.py check` 加任务登记测试），不跑整个产品测试。研究数据层 `research_data/**` 和 `config/research/qqq_long_history.yaml` 属 C 区，因为快照 id 只钉原始数据，收益序列的推导和检查状态由这部分代码决定。
+
 **研究记录快车道（DEVX-030，`owner_decision:TRADING-2565:2026-10-13:research_throughput`）**：评估台的运行记录、筛选记录和
 验证窗口读取记录（`config/gov008_ship.yaml` 的 `research_records`）单独成一个提交，不和别的文件一起发；`ship.py` 每次规划都机械检查，
 代替 Claude 逐次审补丁：编号记录只新增、接着 main 上最后一条编号并用 `prev_sha256` 连上，JSON 行文件只在末尾追加、逐行连上，

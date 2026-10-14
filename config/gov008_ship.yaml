@@ -1,6 +1,6 @@
 schema_version: gov008_ship_policy.v1
 policy_id: GOV-008-SHIP
-version: 1.3.0
+version: 1.4.0
 # In force from the GOV-008 P3 cutover (owner_decision:GOV-008:2026-10-10:bootstrap_route_b_v1).
 # 1.1.0: decision_record_excluded (owner_decision:DEVX-029:2026-10-13:decision_scoped_signoff).
 # 1.1.1: strategy modules research/*/*.py in zone C (owner_decision:TRADING-2567:2026-10-13:pi_research_runs).
@@ -9,6 +9,8 @@ version: 1.3.0
 # 1.2.2: bench settings by name pattern config/research/research_*.yaml and the bench's cost model
 #        config/research/transaction_cost_model.yaml in zone C (owner_decision:TRADING-2565:2026-10-14:bench_config_zone).
 # 1.3.0: parallel lanes, scripts/agent/lane.py in zone C and decision_record_excluded (owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes).
+# 1.4.0: the research data layer (src/ai_trading_system/research_data/** and config/research/qqq_long_history.yaml)
+#        in zone C, and the task gate for changes that touch only task cards (owner_decision:GOV-008:2026-10-14:review_fixes_v1).
 status: OWNER_APPROVED_ENFORCED
 owner: Project Owner
 rationale: >
@@ -39,6 +41,9 @@ zones:
     - config/research/primary_research_window_policy.yaml
     - config/research/research_window_registry.yaml
     - src/ai_trading_system/research_bench/**
+    # The data layer decides every return series and the check status the bench trusts.
+    - src/ai_trading_system/research_data/**
+    - config/research/qqq_long_history.yaml
     # Bench settings: every new bench config file is named config/research/research_<name>.yaml.
     - config/research/research_*.yaml
     - config/research/transaction_cost_model.yaml
@@ -102,6 +107,12 @@ decision_record_excluded:
   - config/ibkr_paper_*.yaml
   - config/production_boundary_static_scan_allowlist.yaml
 
+# Task cards. A change whose only zone B paths match these (and the rest is zone A) runs gates.tasks instead
+# of the product suite: the card schema and the rendered task views are what such a change can break.
+# (One line on purpose: accept_checks.py reads this file with a line parser that takes every "- " item under
+# zones as a path.)
+task_records: ["tasks/*.yaml"]
+
 # Research records: the bench's own numbered record files and JSON-lines files. A change that touches
 # one touches nothing else, and ship.py checks it mechanically instead of a reviewed tree or patch:
 # numbered files are only added, numbered on from the base's last record and chained to it by
@@ -140,6 +151,10 @@ gates:
     - [python, -m, pytest, tests, -n, "16", --dist, loadfile, -m, "not slow", -q]
   C:
     - [python, -m, pytest, tests, -n, "16", --dist, loadfile, -m, "not slow", -q]
+  # Task cards only: every card validates and the rendered views are current.
+  tasks:
+    - [python, tools/tasks.py, check]
+    - [python, -m, pytest, tests/test_tasks_register.py, -q]
   # A records-only change: the ledger invariants on the records as they are in the tree.
   records:
     - [python, -m, pytest, tests/invariants, -q, -k, repository_ledgers]

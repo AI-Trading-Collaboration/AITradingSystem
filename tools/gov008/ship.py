@@ -427,6 +427,17 @@ def plan(repo: Path, base: str = "main", policy: dict | None = None) -> dict:
             if git(repo, "rev-list", "--count", f"{base}..HEAD") == "1":
                 research["patch"] = patch_fingerprint(repo, base, policy)
                 research["message"] = message_fingerprint(repo)
+    task_globs = policy.get("task_records", [])
+    if (
+        research is None
+        and zone == "B"
+        and task_globs
+        and "tasks" in policy["gates"]
+        and all(any(glob_to_regex(g).match(p) for g in task_globs) for p in by_zone["B"])
+    ):
+        # Task cards only (plus zone A records): the card schema and the rendered views are what a
+        # change can break, and the task gate checks exactly those instead of the product suite.
+        gate_commands = policy["gates"]["tasks"]
     result = {
         "branch": branch,
         "base": base,
@@ -680,6 +691,17 @@ def run_gate(repo: Path, commands: list[list[str]]) -> dict:
     }
 
 
+def require_clean_after_gate(repo: Path) -> None:
+    """The gate tested the working tree: refuse to record PASS if it is no longer the commit."""
+    exclusions = load_policy(repo).get("tree_clean_exclusions", [])
+    dirty = dirty_paths(repo, exclusions)
+    if dirty:
+        raise ShipError(
+            f"working tree changed while the gate ran, so the result is not for the commit: "
+            f"{dirty[:5]}"
+        )
+
+
 def gate_trailer(plan_: dict, result: dict) -> str:
     return (
         f"zone={plan_['zone']} tree={plan_['tree'][:12]} commands={result['commands']} "
@@ -810,6 +832,7 @@ def gate(repo: Path, base: str) -> dict:
         raise ShipError("; ".join(p["problems"]))
     tree = p["tree"]
     result = run_gate(repo, p["gate"])
+    require_clean_after_gate(repo)
     new_head = append_gate_trailer(repo, gate_trailer(p, result))
     if git(repo, "rev-parse", "HEAD^{tree}") != tree:
         raise ShipError("tree changed while amending the Gate trailer: refusing to move main")
@@ -855,6 +878,7 @@ def ship(repo: Path, base: str, push: bool) -> dict:
     if not p["ok"]:
         raise ShipError("; ".join(p["problems"]))
     result = run_gate(repo, p["gate"])
+    require_clean_after_gate(repo)
     new_head = append_gate_trailer(repo, gate_trailer(p, result))
     if git(repo, "rev-parse", "HEAD^{tree}") != p["tree"]:
         raise ShipError("tree changed while amending the Gate trailer: refusing to move main")
