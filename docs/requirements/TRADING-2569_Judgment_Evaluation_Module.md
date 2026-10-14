@@ -1,6 +1,6 @@
 # TRADING-2569：人工研究验证模块（研究漏斗 + 按市场结果对账）
 
-- 状态：开发中（J1）。
+- 状态：开发中（J1 已发布；J2 结算开发中）。
 - 需求提出：Baker，2026-10-14（学习会话里确认了方向和顺序）。
 - 边界：`production_effect=none`，`broker_action=none`。只读评估，不进评分、仓位或任何生产路径。
 
@@ -9,6 +9,8 @@
 - `owner_decision:TRADING-2569:2026-10-14:judgment_eval_module`。
 - 依据：Baker 2026-10-14 16:36 JST（07:36Z）提出需求；16:46 JST 问研究路线和人工介入点；16:48 JST（07:48Z）回复"好的，那就先按照这个思路尝试开发并且走一遍流程，我记得 tsm 有一些台账"。
 - 范围：同意本文的方向和默认值（第 8 节），开始开发并用 TSM 台账走一遍流程。每一批 C 区改动仍按决定记录或结果 tree 批准，批准人是 Baker 本人。
+- J2（结算）的 C 区文件是 `config/research/research_judgment_eval.yaml`（结算阈值），单独一个决定号 `owner_decision:TRADING-2569:2026-10-14:judgment_settlement`：范围只含这一个文件，等 pi 实现完成、Claude 审过后，由 Baker 在 TRADING-2569 线程打一行批准，电脑会话写决定记录。决定号写在这里只是让 pi 的 J2 批次能在 main 的 `docs/requirements` 里找到它，不代表已批准。
+- 记分口径：Baker 2026-10-14 08:19Z 要求记分用补记里的最新概率；10:08Z 决定 `34fl2bjh…` 也按 70% 计分（见 §3.3）。
 
 ## 1. 要解决什么
 
@@ -62,7 +64,7 @@ Baker 给的量级：20 个交易日相对 SMH 的波动，TSM 5.2%、NVDA 8.8%�
 
 1. schema：必填字段、类型、`prob` 在 (0,1)、枚举值合法。
 2. `id` 唯一；跨导入不重复。
-3. **不可变**：对上一次导入里已有的 `id`，`ticker`、`statement`、`prob`、`createdAt`、`deadline`、`kind`、`market`、`methods`、`aiMode`、`purpose`、`aiProb`、`sawSystem` 不得改动；`aiProb`、`sawSystem` 上次为空的，这次也不能补（它们必须在写判断时记，事后补等于事后看过结果）；`addenda` 只能追加；`status`、`review`、`errorType`、`resolvedAt` 和其他字段允许变化。上次有、这次没有的判断也拒绝。改动 = 拒绝并列出差异。`prob` 是写判断时的原始概率，固定不变。后来改了概率，要记在可选字段 `probRevisions`（只能追加的列表，每项 `at`、`prob`，可带 `note`）：记分用最新一项的 `prob`，没有就用 `prob`；原始 `prob` 保留，报告里两个口径的 Brier 都给，用来看修订有没有让判断变好。每项 `at` 必须晚于 `createdAt`、按 UTC 日期早于截止日，并且严格递增。`addenda` 里写的概率只是文字，模块不解析；把文字里的概率变成修订，要由 owner 说明，再由导出方写进 `probRevisions`（现有 `893mhl1q…` 一条：补记写了 55%、35%，owner 2026-10-14 说明记分取最新概率 35%；`34fl2bjh…` 补记里的 70% 写明"只做记录，不计分"，没有改）。
+3. **不可变**：对上一次导入里已有的 `id`，`ticker`、`statement`、`prob`、`createdAt`、`deadline`、`kind`、`market`、`methods`、`aiMode`、`purpose`、`aiProb`、`sawSystem` 不得改动；`aiProb`、`sawSystem` 上次为空的，这次也不能补（它们必须在写判断时记，事后补等于事后看过结果）；`addenda` 只能追加；`status`、`review`、`errorType`、`resolvedAt` 和其他字段允许变化。上次有、这次没有的判断也拒绝。改动 = 拒绝并列出差异。`prob` 是写判断时的原始概率，固定不变。后来改了概率，要记在可选字段 `probRevisions`（只能追加的列表，每项 `at`、`prob`，可带 `note`）：记分用最新一项的 `prob`，没有就用 `prob`；原始 `prob` 保留，报告里两个口径的 Brier 都给，用来看修订有没有让判断变好。每项 `at` 必须晚于 `createdAt`、按 UTC 日期早于截止日，并且严格递增。`addenda` 里写的概率只是文字，模块不解析；把文字里的概率变成修订，要由 owner 说明，再由导出方写进 `probRevisions`（现有 `893mhl1q…` 一条：补记写了 55%、35%，owner 2026-10-14 说明记分取最新概率 35%；`34fl2bjh…` 补记里的 70% 原写"只做记录，不计分"；owner 2026-10-14 10:08Z 改为按 70% 计分，所以导出里它有一项 `probRevisions`，`at` 为 2026-10-01T06:26:24Z，`prob` 为 0.7）。
 4. 时间先后：`createdAt` 早于事件。价格/波动类，事件时间 = 结算锚点日；基本面类，事件时间 = `deadline`。晚于或等于事件的条目拒绝，不降级。
 5. `ticker` 在 `config/universe.yaml` / `watchlist.yaml` 登记过。
 6. `methods` 标签都在方法登记表内（§5.1）。
@@ -77,14 +79,34 @@ Baker 给的量级：20 个交易日相对 SMH 的波动，TSM 5.2%、NVDA 8.8%�
 
 ### 4.1 结算
 
-- 范围：`kind` 为价格、波动的条目，且 `purpose=research`。先通过 `aits validate-data`，不通过不结算。
-- 价格：用系统自己的价格缓存的 `adj_close`（ticker 和 SMH），不用 Yahoo。
-- 结果 = 标的在 `horizon` 个交易日内相对 `benchmark` 的收益。`anchor=event_prev_close` 从事件前一交易日收盘起算；`entry_close` 从 `createdAt` 之后第一个收盘起算（`createdAt` 在收盘后则取下一个交易日）。
-- 判断为真 = 结果的符号与 `direction` 一致。波动类：只用已实现波动（`horizon` 日已实现波动对 `statement` 里写明的阈值/基准）；**没有期权数据就不结算隐含波动类**，保留人工结算。这一条需要和台账 v19 的波动类写法对一下，见待定问题之外的补充点。
-- 缓存没覆盖到结算日的条目保持"未到期"，不估算。
-- 基本面类：沿用台账里的人工结算（`status`/`review`）。TSM 用 `tsm_investor_relations_quarterly_results` 交叉核对：台账结算结果与官方披露数值矛盾时标"冲突"，不自动改。
-- 现有 4 条 TSM 判断里，毛利率两条（高于 66%、高于 66.5%）和折旧摊销一条（大于上季 198.54）是数字门槛，能对 TSM IR 管理报告核对；capex 指引上限那条要看电话会措辞，只能人工结算。要让核对自动，台账 v20 加可选结构化字段 `check: {metric, op, value}`；没有就只做人工结算，不猜。放进 J2。
-- 结算结果写入 `research/_judgments/settlements/<结算日>.json`（A 区、可复算），内含价格缓存的哈希，同一输入必得同一输出。
+命令 `python -m ai_trading_system.research_judgments settle --root <判断数据根> [--asof YYYY-MM-DD] [--prices PATH] [--dry-run]`。判断和结算都在 `--root` 下的 `data/external/judgments/`（真实数据放在仓库外，见 J1 的导入）；价格默认读系统的价格缓存 `state_dir(PROJECT_ROOT, "data", "raw", "prices_daily.csv")`，列 `date`、`ticker`、`adj_close`，不用 Yahoo。
+
+**范围**：只结算 `purpose=research` 的条目，`learning` 不结算。每条得到一个状态：
+
+| 状态 | 含义 |
+|---|---|
+| settled | 有结果：`outcome` 1 = 陈述成真（hit），0 = 没成真（miss） |
+| pending | 还没到：台账里还是 open，或价格窗口还没走完（不估算） |
+| void | 作废：台账 void、或价格上相对收益恰好为 0（平手） |
+| data_gap | 数据不够好，留给人：价格缺失、日历空档、疑似拆股价格、状态未知等，原因写在 `reason`，永远不估算 |
+
+**人工结算**（`kind` 为基本面、其他、波动）：沿用台账的 `status`：hit→settled/1，miss→settled/0，void→void，open→pending（截止日之后仍 open 的标 `overdue`），其他值→data_gap `unknown_status`。波动类在 J2 只走人工结算，已实现波动的自动结算以后再说；隐含波动类一直人工。
+
+**价格结算**（`kind=价格`）：
+
+- 交易日历 = ticker 和基准两条序列都有 `adj_close` 的日期。基准默认 SMH；ticker 等于基准是 data_gap `ticker_is_benchmark`。
+- 锚点：`event_prev_close`：事件日 = 日历里第一个不早于 `deadline` 的日期（截止日不是交易日就取下一个交易日），锚点 = 事件日的前一个交易日（事件日是日历第一天则 data_gap `no_prior_close`）；`entry_close`：锚点 = 第一个收盘（美东 16:00，时区和时间在配置里）严格晚于 `createdAt` 的交易日（`createdAt` 恰好在收盘时刻则取下一个）。
+- 终点 = 锚点后第 `horizon` 个交易日；价格还没走到终点是 pending `window_not_complete`；事件日或入场收盘还没出现是 pending `no_event_day_yet` / `no_entry_close_yet`。
+- 结果 = 窗口内 ticker 收益减基准收益（用 `adj_close` 比值），四舍五入到 10 位小数后再判符号。`outperform`：相对收益 > 0 为 hit；`underperform`：< 0 为 hit。
+- 窗口检查（阈值都在受审配置，代码里不许写死）：相邻两个价格日相隔超过 `max_calendar_gap_days` 个自然日是 data_gap `calendar_gap`；任一价格不大于 0 是 `bad_price`；任一条序列单日涨跌幅绝对值超过 `max_abs_daily_move` 是 `suspect_jump`（多半是没复权的拆股，不是真收益）。
+- 台账状态和价格结果的关系：台账 void 优先（void，原因 `ledger_void`）；台账是 hit/miss 但和价格结果不一致，**记价格结果**，同时标 `conflict=true`（报告里单独列，不自动改台账）；台账 open 时只看价格。
+- 没有 `check` 字段：台账 v20 的结构化核对（TSM IR 数值核对）放在 J2 之后，真实结算（2026-10-15）以后再决定。
+
+**输出**：`settle` 只往同一数据目录写，不进 git：`settlements/settlement_<asof>_<sha前8位>.json`（格式 `judgment_settlements.v1`，只有 id、数字、状态和哈希，没有判断原文）和哈希链日志 `settlements.jsonl`（序号、结算时间、asof、文件名与 sha256、所用导出和价格的 sha256、各状态计数、新结算的 id、台账结果变化的 id、上一行 sha256）。价格哈希只覆盖用到的序列，其他股票价格变化不影响。同一输入再跑不写东西，输出 `unchanged`。
+
+**冻结**：已经 settled 的价格结果不许变。再算时如果状态、outcome、锚点日期、终点日期有变，或相对收益相差超过 1e-9，整次结算被拒（`settlement_changed`），什么都不写，逼人去看是哪条价格被改了。台账来源的结果变化（例如 hit 改 miss）不拒，记进 `changed_ids`。拒绝原因还有 `no_import`、`baseline_tampered`（导入的原样副本被改过）、`chain_broken`、`asof_backwards`、`prices_missing`、`prices_schema`。
+
+**DQ**：J2 不调用 `aits validate-data`；价格异常靠上面的窗口检查兜底（只会变成 data_gap，不会估算）。要不要把"最新 DQ receipt 通过"变成结算的前置条件，等有了第一次真实结算再定。
 
 ### 4.2 报告
 
@@ -176,13 +198,13 @@ Baker 给的量级：20 个交易日相对 SMH 的波动，TSM 5.2%、NVDA 8.8%�
 | 批 | 内容 | 区 |
 |---|---|---|
 | J1 | 导入器 + 检查 + 方法登记表 + `data_sources.yaml` 登记 + 导入记录（代码在 `src/ai_trading_system/research_judgments/`） | 配置 C（`data_sources.yaml`、`research_judgment_methods.yaml`，都可走决定记录）；代码 B |
-| J2 | 结算器 + 受审阈值配置 + 状态判定 | 配置 C；代码 B |
-| J3 | 报告（分组、Wilson、Brier、有效样本、纸面组合） | B |
+| J2 | 结算器（人工结果 + 价格结果）+ 受审阈值配置的结算部分 | 配置 C；代码 B |
+| J3 | 报告（分组、Wilson、Brier、有效样本、纸面组合）+ §4.4 状态判定 + 配置的报告阈值部分 | 配置 C；代码 B |
 | J4 | 方法登记表 + 财报日期表 + 快筛模板 + 快筛账 + 抢跑快筛 | 配置 C；代码 B；账 A |
 
 验收见任务记录。每批都要有带反向对照的测试（改动 `prob` 被拒、`createdAt` 晚于事件被拒、已知序列手算的 Wilson/Brier、单事件多条判断合并）。
 
-研究记录（A 区）走研究记录快车道；配置（C 区）可走决定记录（`data_sources.yaml` 不在决定记录排除清单里）。代码放在 B 区，判定门槛放在 C 区配置里，这样改门槛要 owner 批，改代码要过验收测试；J2 的状态判定如果实现里出现写死的门槛，验收测试要抓住。
+研究记录（A 区）走研究记录快车道；配置（C 区）可走决定记录（`data_sources.yaml` 不在决定记录排除清单里）。代码放在 B 区，判定门槛放在 C 区配置里，这样改门槛要 owner 批，改代码要过验收测试；J2 的结算阈值和 J3 的状态判定如果实现里出现写死的门槛，验收测试要抓住。
 
 ## 8. 待定问题与建议默认值
 
@@ -205,7 +227,7 @@ Baker 给的量级：20 个交易日相对 SMH 的波动，TSM 5.2%、NVDA 8.8%�
 1. J1 发布后，导出这 4 条（已有 `judgments_export.v1` 文件）并导入，得到 `imports.jsonl` 第 1 行。
 2. 10-15 财报公布后，owner 在台账里结算 4 条；毛利率两条和折旧摊销一条用 TSM IR 管理报告核对（TSM IR 源的 `filed_date` 是披露日）。
 3. 重新导出并导入：只有 `status`、`review`、`errorType`、`resolvedAt` 和 `addenda` 变化才通过；这一步同时验证不可变检查。
-4. J2、J3 发布后，同样的数据产出第一份报告：4 条里 3 条 research、1 条 learning；3 条 research 属于同一次财报，有效样本是 1 个事件；状态必然是"样本不足"，报告要写出最小可检出效应，让这个结论有数字。
+4. J2 发布后，`settle` 在重新导入后的数据上算出结果（3 条 research 都是基本面类，走人工结算；没有价格结算）；J3 发布后同样的数据产出第一份报告：4 条里 3 条 research、1 条 learning；3 条 research 属于同一次财报，有效样本是 1 个事件；状态必然是"样本不足"，报告要写出最小可检出效应，让这个结论有数字。
 5. 样本不足是预期结果。这一遍的目的是验证流程，不是评价思路。
 
 ## 进展
