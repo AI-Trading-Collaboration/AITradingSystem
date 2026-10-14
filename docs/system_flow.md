@@ -97,6 +97,7 @@ flowchart LR
   每个参数是否都被读到。基准固定：买入持有 QQQ、现金、固定 2 倍和 3 倍，以及平均敞口相同、调仓方式相同的固定敞口。
 - 记录：每次运行（失败的也算）记 commit、代码是否修改、预注册和设置的哈希、策略模块哈希、快照、试验号和窗口；git 历史
   检查运行记录没有被改写或删除。别处得到的结果只是草稿。
+  运行记录和 `report` 另有减仓事件表（TRADING-2565 S4c，设置在 `config/research/research_screen.yaml`）：事件数、误报和躲开下跌的次数、每个固定下跌段的漏报和退出、回补的延迟。
 - agent 边界：pi 按 `research/_template/brief.md` 跑研究运行，只运行列出的评估台命令、只看屏幕上的汇总，不改预注册和策略
   模块。pi 守卫拦提到或打开、列出、写 `data/raw/research/`、`data/raw/external_request_cache/` 的操作（TRADING-2566）。
   守卫防的是误操作，不是安全边界；窗口由评估台控制。

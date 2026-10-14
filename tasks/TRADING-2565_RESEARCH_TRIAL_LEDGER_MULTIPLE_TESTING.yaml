@@ -3,7 +3,7 @@ id: TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING
 area: 研究方法 / 试验自动登记与多重检验校正（RSI 借鉴）
 priority: P2
 status: IN_PROGRESS
-next_owner: Claude（S3c 打包：等 S3b 发布后的 main 定 tree，请 Baker 批）
-next_step: 作为 TRADING-2567 S3 评估台实现，分三批（docs/requirements/TRADING-2565_Research_Bench.md）。S3a（TRADING-2565-01）已获批，排队发布；S3b（TRADING-2565-02，C 区）：运行登记、试验计数和上限、折算夏普、验证窗口读取登记、预注册格式和模板，待 Baker 批；S3c（TRADING-2565-03，C 区）：标准证伪（成本 4/15/25 bps、推迟 1/2 天、逐年和逐段剔除、同敞口随机择时、平稳块 bootstrap），判定规则可读证伪结果，报告第一屏 report，pi 研究运行 brief 模板 research/_template/brief.md。每批 Baker 按结果 tree 事先批准
+next_owner: Baker（按 tree 批 S4c）
+next_step: S4c（TRADING-2565-05）代码写好待 Baker 按 tree 批；之后 S4a（数据入口）、S4b（筛选和全局账），需求见 TRADING-2565 需求文档 S4
 acceptance: 研究运行默认自动登记，未登记的运行结果不能进入结果准入；报告第一屏显示试验次数和校正后指标；校正实现有固定数值用例；涉及 backtest/** 或阈值的改动走 C 区并带 owner 决定
-notes: production_effect=none；broker_action=none；落实 GOV-008 第 3 节 G3 的试验计数（第 4 节第 2 条的实验台账目前只有最小版）；依据：AQuA（arXiv 2608.12841）和 Huang & Fan（arXiv 2603.14288）的自主因子研究都报了很高的 Sharpe，但没讲清试验次数和多重检验；2026-10-12：随 TRADING-2567 激活（owner_decision:TRADING-2567:2026-10-12:qqq_direction_1999_window）；2026-10-13：开始实现，设计和分批见 docs/requirements/TRADING-2565_Research_Bench.md；第一批顺序和主指标按 owner_decision:TRADING-2567:2026-10-13:risk_first_question_order；2026-10-13：S3a 获 Baker 按 tree 批准（03:50Z）；S3b 写好待打包；2026-10-13：S3b 获 Baker 按 tree d2f4d858 批准（04:42Z）；S3c 写好，打包等 S3b 发布后的 main
+notes: production_effect=none；broker_action=none；落实 GOV-008 第 3 节 G3 的试验计数（第 4 节第 2 条的实验台账目前只有最小版）；依据：AQuA（arXiv 2608.12841）和 Huang & Fan（arXiv 2603.14288）的自主因子研究都报了很高的 Sharpe，但没讲清试验次数和多重检验；2026-10-12：随 TRADING-2567 激活（owner_decision:TRADING-2567:2026-10-12:qqq_direction_1999_window）；2026-10-13：开始实现，设计和分批见 docs/requirements/TRADING-2565_Research_Bench.md；第一批顺序和主指标按 owner_decision:TRADING-2567:2026-10-13:risk_first_question_order；2026-10-13：S3a 获 Baker 按 tree 批准（03:50Z）；S3b 写好待打包；2026-10-13：S3b 获 Baker 按 tree d2f4d858 批准（04:42Z）；S3c 写好，打包等 S3b 发布后的 main；2026-10-14：S4 信号筛选层按 owner_decision:TRADING-2565:2026-10-13:signal_screen_layer 开始，S4c 为 TRADING-2565-05

@@ -5,6 +5,7 @@
 - 依据：`owner_decision:TRADING-2567:2026-10-12:qqq_direction_1999_window`。评估台是 TRADING-2567 的 S3 阶段，本任务随它激活。Baker 定的研究节奏不限同时进行的问题数，靠这里的试验登记和多重检验校正控制假阳性。
 - 第一批题目的顺序和成功标准：`owner_decision:TRADING-2567:2026-10-13:risk_first_question_order`（记在 TRADING-2567 需求文档）。评估台的主指标按它定：同等平均敞口下的回撤、左尾和复利分散在前，超额收益在后。
 - 每一批都是 C 区，Baker 按结果 tree 事先批准。
+- S4（信号筛选层）：owner_decision:TRADING-2565:2026-10-13:signal_screen_layer。Baker 10-13 19:49 JST 在研究线程的卡上选"先建"：第二题开题前先建开发窗口内的信号筛选层（数据入口、筛选和全局账、向量化证伪和减仓事件表三批）；19:55 JST 批准规则默认值：所有市场的筛选数据截止 2010-12-31；候选要 QQQ 方向一致、至少 2/3 的市场方向一致、美股大盘按全部筛过的信号做 BH 修正（q = 0.10）后仍显著、剔除任一个十年方向不变；FRED 日度序列晚 1 个交易日算已知；减仓事件表默认值见 config/research/research_screen.yaml。S4 的 C 区设置放在新文件 config/research/research_screen.yaml，research_bench.yaml 不变。
 
 ## 为什么
 
@@ -123,9 +124,24 @@
 - **和旧代码的关系**：思路来自 Composer v2 的证伪合同（TRADING-2555~2559，已归档）和 `backtest/robustness.py` 的同敞口随机、块 bootstrap。那两处接的是旧回测的结果类型，逐日打乱，只算总收益。评估台按自己的接口重写：按块打乱，保留敞口的短期持续性；bootstrap 成对重抽，覆盖全部风险指标。
 - **不变量**：`tests/invariants/test_research_falsify_invariants.py` 第 18 到 21 条，`test_research_ledger_invariants.py` 第 22 条，每条有反向对照，例如知道下一天收益的策略、只在一年或一段里赚钱的策略、比基准每天多一点固定收益的策略。变异证据在 `tests/invariants/README.md`。
 
+## S4c 的实现（2026-10-13）
+
+- **范围和后续**：本批 TRADING-2565-05 只做向量化随机择时和减仓事件表；之后 S4a 做数据入口，S4b 做筛选和全局账。需求文件不在仓库，按 brief 实现。S4a/S4b 的开放问题和逐批验收待各批需求细化，本批不引入筛选或晋级判定。
+- **向量模拟**：`simulate_many` 接收按完整收益日历对齐的目标矩阵，一行一条路径；只按交易日迭代，路径一起算。开仓目标、可执行日期、范围检查、持仓漂移、调度、无交易带、延迟和乘法成本与未改动的 `simulate` 一致。亏光和不可用目标报错带路径号。随机择时按原来的 `placebo_targets` 顺序分块送入它，再作成对比较；随机数顺序不变，与逐条模拟的差不超过 1e-12。速度用 3,000 个交易日、1,000 条路径、月度调度的合成数据对照，验收要求批模拟少于 5 秒；本机逐条 19.082099 秒、批模拟 0.153203 秒（约 124.55 倍），净收益最大绝对差为 0，完整条件记在运行报告。
+- **事件定义**（`events`，配置 `screen_settings`）：
+  - 参考敞口是窗口里实际持有敞口的均值。持有敞口不大于参考的 `derisk_ratio` 倍（数值容差 1e-12）算减仓日。
+  - 连续减仓日成段；两段之间非减仓日少于 `merge_gap_days` 则合并，事件含中间的全部交易日。
+  - 每个事件记 ISO 起止日期、交易日数（含首尾）、最小持有敞口、段内 QQQ 日收益连乘减 1；收益不大于 `protective_loss` 为 protective，不小于 `false_alarm_gain` 为 false_alarm，否则 neutral。
+  - 汇总参考敞口、阈值、按时序的事件、事件数、每年事件数（按实际收益日数和 `trading_days_per_year`）、短事件数（严格短于 `short_event_days`）。三类各记次数和该类全部事件日上的 QQQ 连乘收益，无事件为 0.0。
+  - 固定下跌段沿用 bench 的月份区间；数据无日期的段省略。每段记录交易日数、减仓日占比、非减仓日的 QQQ 连乘收益（`missed_loss`）、首次减仓相对段首的交易日延迟（无减仓为 None）、从段末当天起首次达到参考敞口的交易日延迟（直到数据结束仍未达到为 None）。合并事件内的非减仓日仍按非减仓日计入这些段内统计。
+  - 默认值：0.75、5 天、-0.05、0.05、21 天；均为 owner 批准的描述性研究规则，不是生产或候选准入标准。设置冻结、拒绝未知字段并校验范围，单独文件计算 sha256，`research_bench.yaml` 保持字节不变。
+- **记录与报告**：每次运行按自己的持有敞口和同日 QQQ 收益生成表。`RunResult.events` 和 ledger 的结果记录保存事件；和 falsification 一样，`events` 不进结果指纹或试验判定键。`report` 每个策略每个窗口的最近成功运行增加“减仓事件”小节，只用已记录汇总；旧记录没有该字段时写“无（S4c 之前的运行）”。
+- **验收**：Claude 提供且不修改的 `tests/invariants/test_research_vector_events_invariants.py` 守住不变量 23（批模拟逐项等价）、24（亏光停止并点名）、25（随机择时结果不变）、26（手算事件及段内延迟）、27（全部设置生效、默认值与指纹隔离）。反向对照和四项变异检查记录在 `tests/invariants/README.md`；合成测试、静态检查、任务检查、全量测试和 zone C dry-run 的结果记在运行报告，Baker 按 tree 批后才发布。
+
 ## 进展
 
 - 2026-10-12：随 TRADING-2567 激活（READY）。production_effect=none；broker_action=none。
 - 2026-10-13：设计和分批定稿（项目文件 `knowledge/claude/qqq-options/s3-bench-and-q1-prereg-draft-2026-10-13.md`，含第一题预注册草稿）。S3a 为 TRADING-2565-01（C 区）。production_effect=none；broker_action=none。
 - 2026-10-13：S3a（TRADING-2565-01）Baker 按结果 tree 1dcf95e3 事先批准，排在 OPS-085-01 之后发布。S3b 写好：运行登记、试验计数、折算夏普、验证窗口读取登记、预注册格式和模板，打包等 S3a 发布后的 main。production_effect=none；broker_action=none。
 - 2026-10-13：S3b（TRADING-2565-02）Baker 按结果 tree d2f4d858 事先批准，排在 S3a 之后发布。S3c 写好：标准证伪、报告第一屏、pi 研究运行的 brief 模板，打包等 S3b 发布后的 main。production_effect=none；broker_action=none。
+- 2026-10-14：S4c（TRADING-2565-05）：向量化随机择时、减仓事件表。production_effect=none；broker_action=none。

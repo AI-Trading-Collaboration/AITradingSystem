@@ -15,6 +15,7 @@ caught, or a recorded mutation of the guarded code that makes the test fail.
 | G2/G3 research bench | Every research result goes through one bench: benchmarks are the series they name, targets never use later data, every declared parameter is read, no metric is a constant, cost and timing are right, runs are reproducible, and the bench agrees with the old simulator (TRADING-2565 S3a) | `test_research_bench_invariants.py` |
 | G3 trial ledger | Every research run is recorded, failed ones too, in a hash chain; trials are counted and capped; the validation window is read once per question and only for a preregistration approved on main; records hold summaries only; the deflated Sharpe ratio matches the paper's worked example; this repository's records were never changed or removed and decisions cite only recorded runs (TRADING-2565 S3b) | `test_research_ledger_invariants.py` |
 | G3 standard falsification | A result counts only after it survives the standard falsification, and each check can fail: the placebo is a same-exposure random timing that a strategy knowing the next return beats every time; the bootstrap interval is zero, positive or around zero as it should be and widens with noise and with lumpy edges; leave-one-out exposes an edge earned in one year or one episode; cost and delay reruns use the bench; validation and consistency runs are always falsified and their rules read it; a rule naming a metric no run has refuses the read (TRADING-2565 S3c) | `test_research_falsify_invariants.py`; invariant 22 in `test_research_ledger_invariants.py` |
+| G2/G3 vectorization and event accounting | Batch simulation preserves scalar results, random timing order and costs; losses stop the batch; descriptive events and episode lags follow hand-checked definitions; S4 settings are separate from the original fingerprint (TRADING-2565 S4c, invariants 23–27) | `test_research_vector_events_invariants.py` |
 
 Existing tests that already guard the same guarantees and stay in the suite (not duplicated here):
 
@@ -96,3 +97,28 @@ and bench tests were run (`tests/invariants/test_research_falsify_invariants.py`
 | Delay reruns ignore the delay | `test_reruns_use_the_bench_cost_and_delay` |
 | The placebo rank drops ties | `test_a_strategy_that_knows_the_next_return_beats_every_placebo`; one unit test |
 | The relative left-tail change has the wrong sign | `test_paired_statistics_agree_with_the_bench_metrics` (unit) |
+
+## S4c 不变量及反向对照（2026-10-14）
+
+以下全部在 `test_research_vector_events_invariants.py`，验收文件由 Claude 提供，原样保留。
+
+| 编号 | 守住的语义 / 测试 | 反向对照 |
+|---|---|---|
+| 23 | 批模拟逐项等于单条模拟：`test_simulate_many_equals_simulate_row_by_row`，含漂移、成本、调度、交易带和延迟；另查目标宽度 | 不扣成本、漂移不除组合总收益的变异；错误宽度及不可执行、越界目标必须拒绝 |
+| 24 | 亏光停止并点名路径与日期：`test_a_path_that_loses_everything_names_the_path_and_the_date` | 合成崩盘中仅第 1 条路径持有归零的 lev3；其余路径不亏光；`test_simulate_many_names_the_path_of_an_unusable_target` 检查上下界和开仓 NaN |
+| 25 | 随机择时结果不变：`test_the_placebo_equals_the_per_path_reference`；`test_the_placebo_is_unchanged_across_chunks` | 原 `placebo_targets` + 原 `simulate` 独立逐路径对照；7 路径块、30 次抽样覆盖末尾不满块，防乱序、重复或漏路径 |
+| 26 | 手算事件与固定下跌段：`test_events_follow_their_definitions`；`test_event_edges_follow_their_definitions` | gap 等于合并阈值不能合并；收益等于分类阈值必须归类；短事件等长不算短；多事件连乘而非相加；段末当天回补延迟为 0；无减仓/无回补为 None；错位收益日期拒绝 |
+| 27 | 设置生效、默认值与指纹隔离：`test_every_event_setting_is_read`；`test_runs_carry_the_event_table_outside_the_fingerprint` 等 | 逐项移动设置，事件表必须变化；配置边界和额外字段拒绝；不同事件设置不能改变指纹；原 bench 配置 sha256 锁定；独立模拟核对 run 自己的事件表，ledger 保存且 report 可读旧记录 |
+
+## S4c 变异证据（2026-10-14）
+
+只在本地短暂变异生产实现，验收测试没有改动；每项以 `-n 16 --dist loadfile` 运行，随后还原。
+
+| 变异 | 失败的验收测试 | 结果 |
+|---|---|---|
+| `simulate_many` 净收益不扣成本（写为 gross） | `test_simulate_many_equals_simulate_row_by_row` 的 `[rebalance0-0-4.0]`、`[rebalance1-1-25.0]`、`[rebalance3-0-15.0]` | 3 failed，零成本反向对照仍通过 |
+| 漂移时不除 `1 + gross` | `test_simulate_many_equals_simulate_row_by_row` 的四个参数用例 | 4 failed |
+| 事件合并条件 `<` 改为 `<=` | `test_events_follow_their_definitions`、`test_event_edges_follow_their_definitions` | 2 failed |
+| 回补只从段末下一天搜索（保持相对段末的 +1 位置换算） | `test_events_follow_their_definitions` | 1 failed，段末当天已经回补时错误报 1 而非 0；另一个边缘用例通过 |
+
+变异及合成计时日志保存在运行目录 `TRADING-2565-05`，没有读取真实快照。合成计时（3,000 个交易日、1,000 条路径、月度调度）：逐条 `simulate` 19.082099 秒，`simulate_many` 0.153203 秒，约 124.55 倍；净收益最大绝对差为 0。这些是执行性能证据，不是投资结论。

@@ -34,7 +34,12 @@ from ai_trading_system.research_bench.run import (
     run_strategy,
 )
 from ai_trading_system.research_bench.settings import load_settings, resolve_window
-from ai_trading_system.research_bench.simulate import Rebalance, simulate
+from ai_trading_system.research_bench.simulate import (
+    Rebalance,
+    SimulationBatch,
+    simulate,
+    simulate_many,
+)
 
 __all__ = [
     "BenchCheckError",
@@ -44,6 +49,7 @@ __all__ = [
     "Rebalance",
     "RunResult",
     "RunSpec",
+    "SimulationBatch",
     "Strategy",
     "TrialCapError",
     "WindowNotOpenError",
@@ -58,4 +64,5 @@ __all__ = [
     "run_and_record",
     "run_strategy",
     "simulate",
+    "simulate_many",
 ]

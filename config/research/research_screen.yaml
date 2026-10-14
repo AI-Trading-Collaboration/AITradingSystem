@@ -1,0 +1,14 @@
+# Settings of the research bench's S4 layer (TRADING-2565 S4). Zone C: kept apart from
+# research_bench.yaml so the settings every question was opened with stay byte for byte the same.
+# Values approved by the owner (owner_decision:TRADING-2565:2026-10-13:signal_screen_layer).
+schema_version: research_screen.v1
+# De-risk events (S4c): a day is de-risked when the exposure held is at most derisk_ratio times the
+# strategy's average exposure in the window (the matched benchmark's constant exposure).
+derisk_events:
+  derisk_ratio: 0.75
+  merge_gap_days: 5          # two runs of de-risked days with fewer than this many other days between them form one event
+  protective_loss: -0.05     # QQQ's compounded return over the event at or below this: protective
+  false_alarm_gain: 0.05     # at or above this: false alarm; otherwise neutral
+  short_event_days: 21       # events shorter than this are counted again as short (whipsaws)
+production_effect: none
+broker_action: none

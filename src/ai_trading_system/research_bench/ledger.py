@@ -470,6 +470,7 @@ def run_and_record(
                     "checks",
                     "fingerprint",
                     "falsification",
+                    "events",
                 )
             },
             "rules": rules,

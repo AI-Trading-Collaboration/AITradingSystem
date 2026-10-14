@@ -30,6 +30,7 @@ import math
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from datetime import date
+from itertools import islice
 from typing import Any
 
 import numpy as np
@@ -47,6 +48,7 @@ from ai_trading_system.research_bench.simulate import (
     constant_targets,
     schedule_mask,
     simulate,
+    simulate_many,
 )
 
 PAIRED_BASE_FIELDS: tuple[str, ...] = (
@@ -239,20 +241,22 @@ def placebo_comparisons(inputs: FalsificationInputs, loaded: LoadedSettings) -> 
 
     benchmark = inputs.benchmark.returns.to_numpy(dtype=float)
     cash = inputs.returns["cash"].reindex(inputs.benchmark.returns.index).to_numpy(dtype=float)
-    rows: list[Array] = []
-    for targets in placebo_targets(inputs, loaded):
-        sim = simulate(
+    collected: dict[str, list[Array]] = {field: [] for field in paired_fields(loaded.settings)}
+    paths = placebo_targets(inputs, loaded)
+    while chunk := list(islice(paths, _CHUNK)):
+        sim = simulate_many(
             inputs.returns,
-            targets,
+            np.vstack([targets.to_numpy(dtype=float) for targets in chunk]),
             start=inputs.start,
             end=inputs.end,
             rebalance=inputs.rebalance,
             cost_bps=inputs.cost_bps,
             delay_days=inputs.delay_days,
         )
-        rows.append(sim.returns.to_numpy(dtype=float))
-    paired = paired_comparison(np.vstack(rows), benchmark, cash, loaded)
-    return {field: np.asarray(value, dtype=float) for field, value in paired.items()}
+        paired = paired_comparison(sim.returns, benchmark, cash, loaded)
+        for field, value in paired.items():
+            collected[field].append(np.asarray(value, dtype=float))
+    return {field: np.concatenate(values) for field, values in collected.items()}
 
 
 def placebo_targets(inputs: FalsificationInputs, loaded: LoadedSettings) -> Iterator[pd.Series]:

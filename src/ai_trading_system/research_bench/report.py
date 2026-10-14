@@ -141,7 +141,35 @@ def _run_section(
             f" {_num(rule['observed'])} {'holds' if rule['holds'] else 'FAILS'}"
             for rule in rules
         )
+    out.extend(_events_section(result.get("events")))
     return out
+
+
+def _events_section(events: dict[str, Any] | None) -> list[str]:
+    if events is None:
+        return ["  减仓事件：无（S4c 之前的运行）"]
+    lines = [
+        "  减仓事件（S4c；规则见 config/research/research_screen.yaml）：",
+        f"    事件数 {events['count']}；每年事件数 {events['per_year']:.2f}；"
+        f"短事件数 {events['short_count']}",
+    ]
+    for name, label in (("protective", "保护性减仓"), ("false_alarm", "误报"), ("neutral", "中性")):
+        outcome = events["outcomes"][name]
+        lines.append(
+            f"    {label}（{name}）：{outcome['count']} 次；QQQ 累计收益"
+            f" {_fmt('qqq_return', outcome['qqq_return'])}"
+        )
+    for name, episode in events["episodes"].items():
+        exit_lag = episode["exit_lag_days"]
+        reentry_lag = episode["reentry_lag_days"]
+        lines.append(
+            f"    {name}：{episode['days']} 个交易日；减仓日占比"
+            f" {episode['derisked_share']:.1%}；漏掉的跌幅"
+            f" {_fmt('qqq_return', episode['missed_loss'])}；"
+            f"退出晚 {'无减仓' if exit_lag is None else str(exit_lag) + ' 天'}；"
+            f"回补晚 {'截至数据结束未回补' if reentry_lag is None else str(reentry_lag) + ' 天'}"
+        )
+    return lines
 
 
 def _reruns(falsification: dict[str, Any], prefix: str, unit: str) -> str:

@@ -20,8 +20,9 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from datetime import date
-from typing import Literal
+from typing import Any, Literal
 
+import numpy as np
 import pandas as pd
 
 from ai_trading_system.research_bench.data import ASSETS, EXPOSURE_FACTORS
@@ -165,6 +166,141 @@ def simulate(
         columns=["return", "gross_return", "exposure", "turnover", "cost"],
     )
     return Simulation(daily=daily, start=index[first])
+
+
+@dataclass(frozen=True)
+class SimulationBatch:
+    """One row per path, one column per return date; the same accounting as Simulation."""
+
+    index: pd.DatetimeIndex
+    start: pd.Timestamp
+    returns: np.ndarray[Any, Any]
+    gross_returns: np.ndarray[Any, Any]
+    exposure: np.ndarray[Any, Any]
+    turnover: np.ndarray[Any, Any]
+    cost: np.ndarray[Any, Any]
+
+
+def simulate_many(
+    returns: pd.DataFrame,
+    targets: np.ndarray[Any, Any],
+    *,
+    start: date,
+    end: date | None,
+    rebalance: Rebalance,
+    cost_bps: float,
+    delay_days: int = 0,
+) -> SimulationBatch:
+    """Simulate aligned target paths together, looping over dates rather than paths."""
+
+    if list(returns.columns) != list(ASSETS):
+        raise ValueError(f"returns columns must be {list(ASSETS)}")
+    values = np.asarray(targets, dtype=float)
+    if values.ndim != 2 or values.shape[1] != len(returns.index):
+        raise ValueError("targets must have shape (paths, len(returns.index))")
+    if delay_days < 0:
+        raise ValueError("delay_days must not be negative")
+    if cost_bps < 0:
+        raise ValueError("cost_bps must not be negative")
+    index = pd.DatetimeIndex(returns.index)
+    first = int(index.searchsorted(pd.Timestamp(start)))
+    last = (
+        len(index) - 1
+        if end is None
+        else int(index.searchsorted(pd.Timestamp(end), side="right")) - 1
+    )
+    if first >= len(index) or last <= first:
+        raise ValueError(f"no return dates between {start} and {end}")
+    window = returns.iloc[first + 1 : last + 1]
+    if window.isna().to_numpy().any():
+        bad = window[window.isna().any(axis=1)]
+        column = bad.columns[bad.isna().iloc[0].to_numpy()][0]
+        raise ValueError(f"{column} has no return on {bad.index[0].date()} inside the window")
+
+    lag = 1 + delay_days
+    scheduled = schedule_mask(index, rebalance.schedule)
+    opening = next((p for p in range(first - lag, -1, -1) if scheduled[p]), None)
+    if opening is None:
+        raise ValueError(
+            f"path 0 no target is executable by {index[first].date()}; extend the lookback"
+        )
+    unusable = np.flatnonzero(~np.isfinite(values[:, opening]))
+    if len(unusable):
+        raise ValueError(
+            f"path {int(unusable[0])} no target is executable by {index[first].date()};"
+            " extend the lookback"
+        )
+    weights = _batch_checked_weights(values[:, opening], index[opening])
+    rate = cost_bps / 10_000.0
+    matrix = returns.to_numpy(dtype=float)
+    shape = (values.shape[0], last - first)
+    net_returns, gross_returns, exposure, turnover, costs = (np.empty(shape) for _ in range(5))
+    for output_day, q in enumerate(range(first + 1, last + 1)):
+        day = matrix[q]
+        held = _batch_exposure(weights)
+        # Preserve the scalar simulator's asset-order additions (including its initial zero).
+        gross = sum(weights[:, a] * day[a] for a in range(len(ASSETS)))
+        lost = np.flatnonzero(1.0 + gross <= 0.0)
+        if len(lost):
+            raise ValueError(f"path {int(lost[0])} lost everything on {index[q].date()}")
+        drifted = weights * (1.0 + day) / (1.0 + gross[:, None])
+        traded = np.zeros(values.shape[0])
+        weights = drifted
+        decided = q - lag
+        if decided >= 0 and scheduled[decided]:
+            target = _batch_checked_weights(values[:, decided], index[decided])
+            target_exposure = _batch_exposure(target)
+            current = _batch_exposure(drifted)
+            needs_trade = (
+                np.ones(values.shape[0], dtype=bool)
+                if rebalance.band == 0.0
+                else np.abs(target_exposure - current)
+                > rebalance.band * np.maximum(target_exposure, _EPSILON)
+            )
+            traded[needs_trade] = (
+                np.abs(target[needs_trade] - drifted[needs_trade]).sum(axis=1) / 2.0
+            )
+            weights = np.where(needs_trade[:, None], target, drifted)
+        cost = traded * rate
+        net_returns[:, output_day] = (1.0 + gross) * (1.0 - cost) - 1.0
+        gross_returns[:, output_day] = gross
+        exposure[:, output_day] = held
+        turnover[:, output_day] = traded
+        costs[:, output_day] = cost
+    return SimulationBatch(
+        index=index[first + 1 : last + 1],
+        start=index[first],
+        returns=net_returns,
+        gross_returns=gross_returns,
+        exposure=exposure,
+        turnover=turnover,
+        cost=costs,
+    )
+
+
+def _batch_exposure(weights: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+    return np.asarray(sum(weights[:, a] * _FACTORS[a] for a in range(len(ASSETS))))
+
+
+def _batch_checked_weights(
+    values: np.ndarray[Any, Any], when: pd.Timestamp
+) -> np.ndarray[Any, Any]:
+    invalid = np.flatnonzero(~np.isfinite(values) | (values < 0.0) | (values > MAX_EXPOSURE))
+    if len(invalid):
+        path = int(invalid[0])
+        try:
+            _checked_weights(float(values[path]), when)
+        except ValueError as exc:
+            raise ValueError(f"path {path} {exc}") from None
+    # The four columns are QQQ, cash, 2x, 3x, exactly as weights_for_exposure.
+    return np.column_stack(
+        (
+            np.where(values <= 1.0, values, np.where(values <= 2.0, 2.0 - values, 0.0)),
+            np.where(values <= 1.0, 1.0 - values, 0.0),
+            np.where(values <= 1.0, 0.0, np.where(values <= 2.0, values - 1.0, 3.0 - values)),
+            np.where(values <= 2.0, 0.0, values - 2.0),
+        )
+    )
 
 
 def constant_targets(index: pd.Index, exposure: float) -> pd.Series:

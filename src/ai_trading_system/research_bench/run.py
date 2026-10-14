@@ -28,8 +28,13 @@ from ai_trading_system.research_bench.checks import (
     strategy_targets,
 )
 from ai_trading_system.research_bench.data import BenchData
+from ai_trading_system.research_bench.events import derisk_events
 from ai_trading_system.research_bench.falsify import FalsificationInputs, falsify
 from ai_trading_system.research_bench.metrics import compare, exposure_gap, summarize
+from ai_trading_system.research_bench.screen_settings import (
+    LoadedScreenSettings,
+    load_screen_settings,
+)
 from ai_trading_system.research_bench.settings import (
     LoadedSettings,
     Window,
@@ -95,6 +100,7 @@ class RunResult:
     exposure_gap: dict[str, float]
     fingerprint: str
     falsification: dict[str, Any] | None = None
+    events: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -124,6 +130,7 @@ def run_strategy(
     *,
     permit: WindowPermit | None = None,
     falsification_confidence: float | None = None,
+    screen: LoadedScreenSettings | None = None,
 ) -> RunResult:
     """Evaluate one strategy; with ``falsification_confidence`` also run the standard
     falsification at that confidence (it is not part of the fingerprint)."""
@@ -170,6 +177,15 @@ def run_strategy(
     benchmarks = {name: summarize(item, cash, loaded) for name, item in benchmark_sims.items()}
     comparison = compare(strategy_summary, benchmarks[PRIMARY_BENCHMARK], loaded)
     gap = exposure_gap(sim, float(sim.exposure.mean()), data.returns["qqq"])
+    screen = screen or load_screen_settings()
+    events = derisk_events(
+        sim.exposure,
+        data.returns["qqq"].reindex(sim.exposure.index),
+        reference_exposure=float(sim.exposure.mean()),
+        settings=screen.settings.derisk_events,
+        episodes=loaded.settings.episodes,
+        trading_days_per_year=loaded.settings.trading_days_per_year,
+    )
     falsification = None
     if falsification_confidence is not None:
         falsification = falsify(
@@ -224,6 +240,7 @@ def run_strategy(
         exposure_gap=gap,
         fingerprint=fingerprint,
         falsification=falsification,
+        events=events,
     )
 
 
