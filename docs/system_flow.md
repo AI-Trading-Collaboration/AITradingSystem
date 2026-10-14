@@ -111,6 +111,7 @@ flowchart LR
 - 展示：研究进展页面（TRADING-2568）由 `python -m ai_trading_system.research_site` 只读上面这些记录（预注册、运行记录、窗口读取、
   `decision.md`、台账、负结果清单、筛选账和研究任务卡）生成一个静态页面，不重算、不另存事实。页面不进门禁，生成失败不挡
   发布。
+  main 上研究记录、任务卡、需求文档或这两个包更新后，`.github/workflows/research-site.yml` 在 GitHub Actions 上重建页面并发布到 GitHub Pages。
 - 验证 PASS 不代表候选有效、可进入 paper shadow 或获准用于 production/broker。
 
 ## 5. 开发与发布

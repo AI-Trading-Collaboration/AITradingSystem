@@ -202,3 +202,4 @@ owner_decision:TRADING-2568:2026-10-14:research_progress_page —— owner（Bak
 - 2026-10-14：登记，owner 选 GitHub Pages（第 2 节）。production_effect=none；broker_action=none。
 - 2026-10-14：第二版版式（owner 要一个读得懂、覆盖当前工作的展示）：研究路线图、先说结论的问题卡、按结论词分组的结论板、负结果分节、手机上表格叠放；`TASK_PREFIXES` 加 `TRADING-2569`；owner 选判断对账公开页只放状态和进度。
 - 2026-10-14：运行 01 之前补上一题多个子问题的结论词（`decision.md` 的结论表、台账一格两个词），因为 QQQ-Q1 的 Q1a、Q1b 是这样写的。
+- 2026-10-15：运行 01（页面生成器）已发布；运行 02 加 GitHub Pages workflow，按 tree 批准。

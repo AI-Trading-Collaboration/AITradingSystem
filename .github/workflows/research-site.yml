@@ -1,0 +1,59 @@
+name: Research site
+
+# TRADING-2568 (owner_decision:TRADING-2568:2026-10-14:research_progress_page): builds the research
+# progress page from main with `python -m ai_trading_system.research_site` and publishes it on
+# GitHub Pages. It only reads the repository. It is not a check on main (the gate is local, GOV-008),
+# so a failure here blocks nothing. Pages must use "GitHub Actions" as its source (repository
+# Settings -> Pages). The generator refuses an output directory inside the repository, so the page
+# is built under runner.temp.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "research/**"
+      - "tasks/**"
+      - "docs/requirements/**"
+      - "src/ai_trading_system/research_bench/**"
+      - "src/ai_trading_system/research_site/**"
+      - ".github/workflows/research-site.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: research-site
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: python -m pip install -e .
+      - name: Build the page
+        env:
+          REPO_URL: https://github.com/${{ github.repository }}
+        run: python -m ai_trading_system.research_site --repo . --out "$RUNNER_TEMP/research-site" --repo-url "$REPO_URL"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/research-site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
