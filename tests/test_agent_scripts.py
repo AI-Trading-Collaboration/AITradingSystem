@@ -322,6 +322,25 @@ def test_agent_run_resolves_real_pi_wrappers_and_empty_stdin(tmp_path: Path, wra
     assert "AITS_PI_OWNER_DECISION" not in cap["env"]
 
 
+@pytest.mark.parametrize("in_run_dir", [True, False])
+def test_run_brief_direct_runs_a_brief_that_already_sits_in_the_run_dir(tmp_path: Path, in_run_dir: bool) -> None:
+    # lane.py start hands run-brief the package's own <run_dir>/brief.md, which is also where the prompt copy goes (DEVX-031-03).
+    if shutil.which("node.exe") is None and shutil.which("node") is None:
+        raise pytest.skip.Exception("node is not installed; the fake pi wrapper needs node")
+    ps = powershell(); runs = tmp_path / "runs"; run_dir = runs / "DEVX-1-01"; run_dir.mkdir(parents=True)
+    brief = (run_dir if in_run_dir else tmp_path) / "brief.md"; config = tmp_path / "config.json"
+    write_brief(brief); write_config(config, runs)
+    bin_dir = tmp_path / "bin"; bin_dir.mkdir(); write_fake_pi_wrappers(bin_dir)
+    env = os.environ.copy(); env["PATH"] = str(bin_dir) + os.pathsep + env["PATH"]
+    before = brief.read_bytes()
+    done = subprocess.run([ps, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ROOT / "scripts/agent/run-brief.ps1"), str(brief), "-Repo", str(ROOT), "-ConfigPath", str(config), "-Direct", "-Now", "2026-10-11T12:00:00+09:00"], text=True, capture_output=True, timeout=120, env=env)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "Cannot overwrite" not in done.stdout + done.stderr
+    assert brief.read_bytes() == before
+    assert (run_dir / "brief.md").read_bytes() == before
+    assert json.loads((run_dir / "attempts/01/exit.json").read_text(encoding="utf-8-sig"))["stopReason"] == "stop"
+
+
 def test_agent_run_resolves_npm_cmd_shim(tmp_path: Path) -> None:
     if shutil.which("node.exe") is None and shutil.which("node") is None:
         raise pytest.skip.Exception("node is not installed; npm cmd shim resolution smoke test needs node")

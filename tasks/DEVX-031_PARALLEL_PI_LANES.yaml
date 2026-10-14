@@ -3,7 +3,7 @@ id: DEVX-031_PARALLEL_PI_LANES
 area: Developer workflow / pi 并行车道
 priority: P1
 status: IN_PROGRESS
-next_owner: Baker（按 tree 批运行 02）
-next_step: 运行 02（ship.py --replay 和改动指纹、publish.ps1 -ExpectedChange、lane.py、daily_window.py、run-brief.ps1、agent_config.json、规则 1.3.0、AGENTS.md）按 tree 批准后发布；之后 owner 在设置里加车道放行规则，用 lane.py setup 建 lane1–lane3，再用两批不相干的 B 区批次试跑
+next_owner: Baker（按 tree 批运行 03）
+next_step: 03 修复车道首次试跑暴露的 run-brief.ps1 自复制错误，并加 shared_paths（按 tree 批准）；之后用两批不相干的批次再试跑车道（例如 TRADING-2565-06 与 TRADING-2568-01）
 acceptance: 见 docs/requirements/DEVX-031_Parallel_Pi_Lanes.md 第 4 节：改动指纹不受附近改动影响；replay 保留改动、提交信息和作者，冲突时拒绝；两条车道先后发布，第二条自动 replay，用真的 publish.ps1；日报窗口按 summary 提前放开；全套 PR 测试通过
-notes: production_effect=none；broker_action=none；requirement=docs/requirements/DEVX-031_Parallel_Pi_Lanes.md；owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes（04:52:53Z 选"推"，05:01:21Z "好的，这样改下吧"）；lane.py、ship.py 和规则在 decision_record_excluded 里，按 tree 批；pi 本身照旧不能推送
+notes: production_effect=none；broker_action=none；requirement=docs/requirements/DEVX-031_Parallel_Pi_Lanes.md；owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes（04:52:53Z 选"推"，05:01:21Z "好的，这样改下吧"）；lane.py、ship.py 和规则在 decision_record_excluded 里，按 tree 批；pi 本身照旧不能推送；2026-10-14 08:41Z 首次 lane.py start 失败：run-brief.ps1 把运行目录里的 brief.md 复制给自己（Copy-Item 拒绝），pi 没启动；03 让 run-brief 在同一文件时跳过复制，并让 lane.py start 在 pi 没启动时释放车道；同日 03 还加了 agent_config.json 的 shared_paths（docs/system_flow.md、research/README.md、tests/invariants/README.md、tests/test_gov008_ship.py）：两批都精确写了这些文件时不算 allowed_paths 重叠，ship.py --replay 能合并就合并，真冲突拒绝并回到人；有通配符覆盖它们时仍算重叠（pi 队列线程 08:5xZ 的两两比较显示几乎所有排队批次都共享这几个文件）

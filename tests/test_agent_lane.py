@@ -63,6 +63,8 @@ if script.name == "run-brief.ps1":
     with (pathlib.Path(rest[0]).parent / "pi-calls.jsonl").open("a", encoding="utf-8") as h:
         h.write(json.dumps(rest) + "\\n")
     pi = brief["pi"]
+    if not pi.get("before_pi"):
+        (pathlib.Path(rest[0]).parent / "attempts" / "01").mkdir(parents=True, exist_ok=True)
     if pi.get("exit"):
         sys.exit(pi["exit"])
     if "-Fix" not in rest:
@@ -337,6 +339,26 @@ def test_start_runs_pi_in_the_lane_and_holds_it(lanes: Setup) -> None:
     assert run_git(lanes.main, "rev-parse", "main") == state["base_at_start"]
 
 
+def test_start_frees_the_lane_when_run_brief_stops_before_pi_starts(lanes: Setup) -> None:
+    # DEVX-031-03: run-brief.ps1 failed on its prompt copy; nothing had run, so nothing to resume.
+    lanes.batch("T-01", {"src/a/x.py": "x\n"}, ["src/a/**"], pi={"exit": 1, "before_pi": True})
+    for _ in range(2):
+        code, out = lanes.lane("start", "--lane", "lane1", "--run", "T-01")
+        assert code == 1 and out["run_brief_exit"] == 1 and "before pi started" in out["error"]
+        assert not (lanes.runs / "lanes/lane1.json").exists()
+        path = lanes.lanes["lane1"]
+        assert run_git(path, "branch", "--show-current") == ""
+        assert run_git(path, "rev-parse", "HEAD") == run_git(lanes.main, "rev-parse", "main")
+
+
+def test_start_keeps_the_lane_when_pi_ran_and_failed(lanes: Setup) -> None:
+    lanes.batch("T-01", {"src/a/x.py": "x\n"}, ["src/a/**"], pi={"exit": 1})
+    code, out = lanes.lane("start", "--lane", "lane1", "--run", "T-01")
+    assert code == 1 and out["run_brief_exit"] == 1 and "did not finish cleanly" in out["error"]
+    state = json.loads((lanes.runs / "lanes/lane1.json").read_text())
+    assert state["run"] == "T-01" and state["phase"] == "stopped"
+
+
 def test_two_lanes_run_side_by_side_unless_their_paths_overlap(lanes: Setup) -> None:
     lanes.batch("T-01", {"src/a/x.py": "x\n"}, ["src/a/**", "docs/task_register.md"])
     lanes.batch("T-02", {"src/b/y.py": "y\n"}, ["src/b/**", "docs/task_register.md"])
@@ -346,6 +368,21 @@ def test_two_lanes_run_side_by_side_unless_their_paths_overlap(lanes: Setup) -> 
     assert code == 2 and out["overlaps"][0]["run"] == "T-01"
     assert not (lanes.runs / "T-03/pi-calls.jsonl").exists()
     assert lanes.lane("start", "--lane", "lane2", "--run", "T-02")[0] == 0
+
+
+def test_shared_paths_do_not_count_as_overlap_unless_a_glob_covers_them(lanes: Setup) -> None:
+    lanes.batch("T-01", {"src/a/x.py": "x\n"}, ["src/a/**", "docs/flow.md"])
+    lanes.batch("T-02", {"src/b/y.py": "y\n"}, ["src/b/**", "docs/flow.md"])
+    lanes.batch("T-03", {"src/c/z.py": "z\n"}, ["src/c/**", "docs/**"])
+    assert lanes.lane("start", "--lane", "lane1", "--run", "T-01")[0] == 0
+    code, out = lanes.lane("start", "--lane", "lane2", "--run", "T-02")
+    assert code == 2 and out["overlaps"][0]["paths"] == [["docs/flow.md", "docs/flow.md"]]
+    lanes.settings["shared_paths"] = ["docs/flow.md"]
+    lanes.save()
+    assert lanes.lane("start", "--lane", "lane2", "--run", "T-02")[0] == 0
+    assert lanes.lane("release", "--lane", "lane2", "--run", "T-02")[0] == 0
+    code, out = lanes.lane("start", "--lane", "lane2", "--run", "T-03")
+    assert code == 2 and out["overlaps"][0]["run"] == "T-01"
 
 
 @pytest.mark.parametrize("case", ["sums", "run_name", "held", "on_branch", "dirty", "window"])

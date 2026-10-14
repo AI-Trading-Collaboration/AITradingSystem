@@ -33,5 +33,11 @@
     "lane2": "D:\\Work\\AITradingSystem_lane2",
     "lane3": "D:\\Work\\AITradingSystem_lane3"
   },
-  "lane_remote": "origin"
+  "lane_remote": "origin",
+  "shared_paths": [
+    "docs/system_flow.md",
+    "research/README.md",
+    "tests/invariants/README.md",
+    "tests/test_gov008_ship.py"
+  ]
 }

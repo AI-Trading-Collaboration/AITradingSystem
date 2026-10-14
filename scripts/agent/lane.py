@@ -436,6 +436,9 @@ class Lanes:
 
     def overlaps(self, lane: str, allowed: list[str]) -> list[dict[str, Any]]:
         found = []
+        # shared_paths: files every batch adds a line to (docs/system_flow.md ...). Two batches may
+        # both name such a file exactly; ship.py --replay merges them or refuses a real conflict.
+        shared = {str(p) for p in self.config.get("shared_paths") or []}
         for other in self.config["lanes"]:
             state = self.read_state(other) if other != lane else None
             if state is None:
@@ -444,7 +447,7 @@ class Lanes:
                 [mine, theirs]
                 for mine in allowed
                 for theirs in state.get("allowed_paths", [])
-                if globs_overlap(mine, theirs)
+                if globs_overlap(mine, theirs) and not (mine == theirs and mine in shared)
             ]
             if pairs:
                 found.append({"lane": other, "run": state.get("run"), "paths": pairs[:5]})
@@ -527,6 +530,17 @@ class Lanes:
         if fix is not None:
             argv += ["-Fix", str(fix)]
         done = run(argv, check=False, log=run_dir / "lane.log")
+        if done.returncode != 0 and not (run_dir / "attempts").is_dir() and fix is None:
+            # run-brief.ps1 stopped before pi started (no attempt to resume): free the lane so the
+            # same start line can be run again once the cause is fixed.
+            if not self.dirty(path):
+                git(path, "switch", "--detach", BASE)
+            self.state_path(lane).unlink(missing_ok=True)
+            raise LaneError(
+                "run-brief.ps1 stopped before pi started; the lane is free again",
+                run_brief_exit=done.returncode,
+                tail=(done.stdout + done.stderr).strip().splitlines()[-6:],
+            )
         branch = git(path, "branch", "--show-current")
         state.update(
             {

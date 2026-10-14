@@ -142,7 +142,10 @@ if ($Fix) {
     New-Item -ItemType Directory -Force -Path (Split-Path -Parent $promptTarget) | Out-Null
     Copy-Item -LiteralPath (Resolve-Path -LiteralPath $Fix).Path -Destination $promptTarget -Force
 } else {
-    Copy-Item -LiteralPath $briefFull -Destination $promptTarget -Force
+    # A brief that already is <run_dir>/brief.md (lane.py start, DEVX-031) is its own prompt: Copy-Item refuses a self-copy.
+    $sameFile = Test-Path -LiteralPath $promptTarget -PathType Leaf
+    if ($sameFile) { $sameFile = [string]::Equals((Resolve-Path -LiteralPath $promptTarget).Path, $briefFull, [StringComparison]::OrdinalIgnoreCase) }
+    if (-not $sameFile) { Copy-Item -LiteralPath $briefFull -Destination $promptTarget -Force }
     Write-JsonNoBom (Join-Path $runDir "queue.json") ([ordered]@{ queued_at=[DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"); brief=$briefFull })
 }
 
