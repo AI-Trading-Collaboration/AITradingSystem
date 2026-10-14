@@ -2,8 +2,8 @@ schema_version: task.v1
 id: DEVX-032_REVIEW_FIXES
 area: Developer workflow / 发布门禁修补
 priority: P1
-status: IN_PROGRESS
-next_owner: pi 队列（按 tree 批）
-next_step: 包 DEVX-032-01：ship 门禁后复检、research_data 进 C 区、任务卡门禁；Baker 按结果 tree 批准后发布
+status: DONE
+next_owner: 无
+next_step: 无；三处修补已发布
 acceptance: 见 docs/requirements/DEVX-032_Review_Fixes.md 第 4 节
-notes: production_effect=none；broker_action=none；requirement=docs/requirements/DEVX-032_Review_Fixes.md；owner_decision:GOV-008:2026-10-14:review_fixes_v1；ship.py 和 gov008_ship.yaml 在 decision_record_excluded 里，按 tree 批
+notes: production_effect=none；broker_action=none；requirement=docs/requirements/DEVX-032_Review_Fixes.md；owner_decision:GOV-008:2026-10-14:review_fixes_v1；ship.py 和 gov008_ship.yaml 在 decision_record_excluded 里，按 tree 批；2026-10-14 已发布：DEVX-032-00 为 main 3a2762e5（需求文档和任务卡），DEVX-032-01 为 main 8acad7ed（tree d7797d16，Baker 按 tree 批准 16:44Z）。大文件拆分（reader_brief.py、daily_task_dashboard.py）按改动频率另议，未做。
