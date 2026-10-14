@@ -90,6 +90,11 @@ def test_real_policy_zone_c_globs_match_tracked_files() -> None:
         ("src/ai_trading_system/research_bench/simulate.py", "C"),
         ("config/research/research_bench.yaml", "C"),
         ("config/research/research_screen.yaml", "C"),
+        ("config/research/research_signals.yaml", "C"),
+        ("config/research/research_governance_policy.yaml", "C"),
+        ("config/research/transaction_cost_model.yaml", "C"),
+        ("config/research/experiments/x.yaml", "B"),
+        ("config/research/other_registry.yaml", "B"),
         ("src/ai_trading_system/research_bench/events.py", "C"),
         ("research/QQQ-Q1/prereg.yaml", "C"),
         ("research/QQQ-Q1/strategy.py", "C"),
@@ -108,6 +113,21 @@ def test_real_policy_zone_c_globs_match_tracked_files() -> None:
 def test_real_policy_classification(path: str, zone: str) -> None:
     policy = yaml.safe_load((REPO / ship.POLICY_PATH).read_text(encoding="utf-8"))
     assert [z for z, v in ship.classify([path], policy).items() if v] == [zone]
+
+
+def test_bench_settings_and_the_files_they_name_are_zone_c() -> None:
+    """The bench reads research_bench.yaml and every config file it names: all are zone C."""
+    policy = yaml.safe_load((REPO / ship.POLICY_PATH).read_text(encoding="utf-8"))
+    settings_path = "config/research/research_bench.yaml"
+    settings = yaml.safe_load((REPO / settings_path).read_text(encoding="utf-8"))
+    named = [
+        value
+        for value in settings.values()
+        if isinstance(value, str) and value.startswith("config/") and value.endswith(".yaml")
+    ]
+    assert {"config/research/transaction_cost_model.yaml"} <= set(named)
+    paths = [settings_path, *named]
+    assert ship.classify(paths, policy)["C"] == paths
 
 
 def test_plan_ok_for_zone_a_change(repo: Path) -> None:

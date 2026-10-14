@@ -6,6 +6,7 @@
 - 第一批题目的顺序和成功标准：`owner_decision:TRADING-2567:2026-10-13:risk_first_question_order`（记在 TRADING-2567 需求文档）。评估台的主指标按它定：同等平均敞口下的回撤、左尾和复利分散在前，超额收益在后。
 - 每一批都是 C 区，Baker 按结果 tree 事先批准。
 - S4（信号筛选层）：owner_decision:TRADING-2565:2026-10-13:signal_screen_layer。Baker 10-13 19:49 JST 在研究线程的卡上选"先建"：第二题开题前先建开发窗口内的信号筛选层（数据入口、筛选和全局账、向量化证伪和减仓事件表三批）；19:55 JST 批准规则默认值：所有市场的筛选数据截止 2010-12-31；候选要 QQQ 方向一致、至少 2/3 的市场方向一致、美股大盘按全部筛过的信号做 BH 修正（q = 0.10）后仍显著、剔除任一个十年方向不变；FRED 日度序列晚 1 个交易日算已知；减仓事件表默认值见 config/research/research_screen.yaml。S4 的 C 区设置放在新文件 config/research/research_screen.yaml，research_bench.yaml 不变。
+- 评估台配置的 C 区登记：owner_decision:TRADING-2565:2026-10-14:bench_config_zone。Baker 10-14 13:22 JST 在「减少粘贴和批准步骤」线程的卡上选"全部照做"，其中第 4 条是评估台配置的 C 区登记一次做完，按 tree 批最后一次。`config/gov008_ship.yaml` 1.2.2 把 `config/research/research_*.yaml` 按通配划进 C 区，评估台读的成本模型 `config/research/transaction_cost_model.yaml` 也划进 C 区（以前在 B 区）。以后评估台的新配置文件命名为 `config/research/research_<名>.yaml`，落在通配下，不用再改 `config/gov008_ship.yaml`，可以走决定记录。旧的研究治理政策 `config/research/research_governance_policy.yaml` 随通配从 B 区进 C 区。`config/research/qqq_long_history.yaml` 和 `research_data` 的代码仍在 B 区，数据由快照 id 和检查钉住。
 
 ## 为什么
 
@@ -145,3 +146,4 @@
 - 2026-10-13：S3a（TRADING-2565-01）Baker 按结果 tree 1dcf95e3 事先批准，排在 OPS-085-01 之后发布。S3b 写好：运行登记、试验计数、折算夏普、验证窗口读取登记、预注册格式和模板，打包等 S3a 发布后的 main。production_effect=none；broker_action=none。
 - 2026-10-13：S3b（TRADING-2565-02）Baker 按结果 tree d2f4d858 事先批准，排在 S3a 之后发布。S3c 写好：标准证伪、报告第一屏、pi 研究运行的 brief 模板，打包等 S3b 发布后的 main。production_effect=none；broker_action=none。
 - 2026-10-14：S4c（TRADING-2565-05）：向量化随机择时、减仓事件表。production_effect=none；broker_action=none。
+- 2026-10-14：TRADING-2565-09：ship 规则 1.2.2，评估台配置按 `config/research/research_*.yaml` 通配进 C 区，成本模型 `transaction_cost_model.yaml` 进 C 区；`tests/test_gov008_ship.py` 守住评估台设置和它点名的配置文件都在 C 区。production_effect=none；broker_action=none。
