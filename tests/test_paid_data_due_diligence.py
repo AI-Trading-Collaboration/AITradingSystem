@@ -15,8 +15,8 @@ FINAL_MATRIX = PROJECT_ROOT / "inputs" / "research_reviews" / (
 )
 SCORING_MATRIX = (
     PROJECT_ROOT
-    / "outputs"
-    / "research_trends"
+    / "research"
+    / "_results"
     / "paid_data_due_diligence"
     / "vendor_scoring_matrix.csv"
 )

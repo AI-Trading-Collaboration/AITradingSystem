@@ -237,6 +237,7 @@ from ai_trading_system.scoring.daily import (
     write_scores_csv,
 )
 from ai_trading_system.thesis import (
+    DEFAULT_TRADE_THESES_DIR,
     ThesisReviewReport,
     build_thesis_review_report,
     load_trade_thesis_store,
@@ -642,9 +643,7 @@ def score_daily(
     thesis_path: Annotated[
         Path,
         typer.Option(help="交易 thesis YAML 文件或目录路径，用于写入日报复核摘要。"),
-    ] = state_dir(PROJECT_ROOT, "data")
-    / "external"
-    / "trade_theses",
+    ] = DEFAULT_TRADE_THESES_DIR,
     risk_events_path: Annotated[
         Path,
         typer.Option(help="风险事件配置路径，用于写入日报复核摘要。"),

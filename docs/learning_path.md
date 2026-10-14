@@ -44,7 +44,7 @@
 - `data/raw/download_manifest.csv`
 - `data/external/valuation_snapshots/*.yaml`
 - `data/external/risk_event_occurrences/*.yaml`
-- `data/external/trade_theses/*.yaml`
+- `inputs/trade_theses/*.yaml`
 
 输出文件：
 
@@ -123,7 +123,7 @@
 - `data/processed/sec_edgar/sec_pit_feature_panel.csv`
 - `data/external/valuation_snapshots/*.yaml`
 - `data/external/risk_event_occurrences/*.yaml`
-- `data/external/trade_theses/*.yaml`
+- `inputs/trade_theses/*.yaml`
 - `config/scoring_rules.yaml`
 - `docs/calculation_logic.md`
 
@@ -236,7 +236,7 @@
 - `config/portfolio.yaml`
 - `data/external/valuation_snapshots/*.yaml`
 - `data/external/risk_event_occurrences/*.yaml`
-- `data/external/trade_theses/*.yaml`
+- `inputs/trade_theses/*.yaml`
 - `data/external/portfolio_positions/current_positions.csv`
 
 输出文件：

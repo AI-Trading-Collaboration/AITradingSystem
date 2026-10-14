@@ -1242,7 +1242,7 @@ def render_daily_data_lineage_card(
         ("评分与 gate 配置", "`config/scoring_rules.yaml` + `config/portfolio.yaml`"),
         ("估值快照", "`data/external/valuation_snapshots/*.yaml`"),
         ("风险事件发生记录", "`data/external/risk_event_occurrences/*.yaml`"),
-        ("交易 thesis", "`data/external/trade_theses/*.yaml`"),
+        ("交易 thesis", "`inputs/trade_theses/*.yaml`"),
     ]
     if sec_metrics_validation_report_path is not None:
         input_rows.append(("SEC 指标校验报告", _path_cell(sec_metrics_validation_report_path)))

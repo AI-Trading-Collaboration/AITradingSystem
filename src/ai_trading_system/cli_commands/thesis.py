@@ -17,6 +17,7 @@ from ai_trading_system.config import (
 )
 from ai_trading_system.paths import state_dir
 from ai_trading_system.thesis import (
+    DEFAULT_TRADE_THESES_DIR,
     build_thesis_review_report,
     default_thesis_review_report_path,
     default_thesis_validation_report_path,
@@ -35,9 +36,7 @@ def list_theses(
     input_path: Annotated[
         Path,
         typer.Option(help="交易 thesis YAML 文件或目录路径。"),
-    ] = state_dir(PROJECT_ROOT, "data")
-    / "external"
-    / "trade_theses",
+    ] = DEFAULT_TRADE_THESES_DIR,
 ) -> None:
     """列出本地交易 thesis。"""
     store = load_trade_thesis_store(input_path)
@@ -77,9 +76,7 @@ def validate_theses(
     input_path: Annotated[
         Path,
         typer.Option(help="交易 thesis YAML 文件或目录路径。"),
-    ] = state_dir(PROJECT_ROOT, "data")
-    / "external"
-    / "trade_theses",
+    ] = DEFAULT_TRADE_THESES_DIR,
     watchlist_path: Annotated[
         Path,
         typer.Option(help="观察池配置文件路径。"),
@@ -127,9 +124,7 @@ def review_theses(
     input_path: Annotated[
         Path,
         typer.Option(help="交易 thesis YAML 文件或目录路径。"),
-    ] = state_dir(PROJECT_ROOT, "data")
-    / "external"
-    / "trade_theses",
+    ] = DEFAULT_TRADE_THESES_DIR,
     watchlist_path: Annotated[
         Path,
         typer.Option(help="观察池配置文件路径。"),

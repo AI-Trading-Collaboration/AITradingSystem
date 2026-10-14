@@ -16,7 +16,7 @@ summary:
   paid_data_due_diligence_complete: true
   true_breadth_contract_status: TRUE_BREADTH_CONTRACT_ACTIVE
   vendor_registry_status: PAID_BREADTH_VENDOR_REGISTRY_READY
-  vendor_scoring_matrix: outputs/research_trends/paid_data_due_diligence/vendor_scoring_matrix.csv
+  vendor_scoring_matrix: research/_results/paid_data_due_diligence/vendor_scoring_matrix.csv
   trial_decision: NORGATE_TRIAL_RECOMMENDED
   owner_manual_approval_required_before_trial: true
   owner_manual_approval_required_before_purchase: true
@@ -62,6 +62,6 @@ artifact_paths:
   true_breadth_contract: config/research/true_breadth_data_contract.yaml
   vendor_registry: config/data/paid_breadth_data_vendor_registry.yaml
   trial_gate_policy: config/research/paid_data_trial_gate_policy.yaml
-  vendor_scoring_matrix: outputs/research_trends/paid_data_due_diligence/vendor_scoring_matrix.csv
+  vendor_scoring_matrix: research/_results/paid_data_due_diligence/vendor_scoring_matrix.csv
   final_matrix_yaml: inputs/research_reviews/paid_data_due_diligence_final_matrix.yaml
   closeout_doc: docs/research/paid_data_due_diligence_closeout.md

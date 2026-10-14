@@ -10,8 +10,16 @@ from typing import Any, Literal, Self
 import yaml
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
-from ai_trading_system.config import IndustryChainConfig, WatchlistConfig, WatchlistItem
+from ai_trading_system.config import (
+    PROJECT_ROOT,
+    IndustryChainConfig,
+    WatchlistConfig,
+    WatchlistItem,
+)
 from ai_trading_system.yaml_loader import safe_load_yaml_path
+
+# OPS-086: thesis 是随代码审阅提交的手写输入，始终从代码根读取。
+DEFAULT_TRADE_THESES_DIR = PROJECT_ROOT / "inputs" / "trade_theses"
 
 ThesisDirection = Literal["long", "short", "hedge", "watch"]
 ThesisTimeHorizon = Literal["short", "medium", "long"]

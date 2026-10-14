@@ -96,3 +96,4 @@
   - 8 个 C 区文件按同一套规则改写，`PENDING_ZONE_C` 清空，棘轮测试覆盖 src 全部文件。
   - `quality_execution.py` 行号变化：DQ 归因就绪清单（`dq_issue_attribution_inventory_2663185b691512ca889bd6c0`）和利率归因复核包（`dq_rate_issue_attribution_review_c78d68488a89e31ca1882641`）用脚本重新生成；复核包 id 和 sha256 在 `config/data_quality/rate_row_issue_attribution_decision_v1.yaml`、`contracts/rate_data_quality_attribution.py` 和测试里重新绑定，批准的站点不变。价格归因复核包不受影响。
   - production_effect=none；broker_action=none。
+- **2026-10-14：** 步骤 3 的发布包和跟踪文件搬家立为 OPS-086（docs/requirements/OPS-086_Daily_Release_Bundle.md）。

@@ -326,12 +326,12 @@ sources:
     status: active
     domains:
       - trade_thesis
-    endpoint: data/external/trade_theses/*.yaml
+    endpoint: inputs/trade_theses/*.yaml
     adapter: load_trade_thesis_store
     cadence: manual
     requires_credentials: false
     cache_paths:
-      - data/external/trade_theses
+      - inputs/trade_theses
     primary_for:
       - trade_hypothesis
       - falsification_conditions

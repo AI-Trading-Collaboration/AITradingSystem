@@ -349,7 +349,7 @@ def _thesis_gate(
     return _gate(
         gate_id="thesis",
         label="交易 thesis",
-        source="data/external/trade_theses",
+        source="inputs/trade_theses",
         max_position=max_position,
         score_band=score_band,
         reason=reason,

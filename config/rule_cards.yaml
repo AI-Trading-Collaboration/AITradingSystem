@@ -176,7 +176,7 @@ cards:
       - score-daily
       - position_gate
     source_config_paths:
-      - data/external/trade_theses
+      - inputs/trade_theses
     description: >
       使用 draft、active、warning、challenged、invalidated 和 closed 区分
       thesis 生命周期，并把 warning/challenged/invalidated 进入报告和仓位约束。

@@ -1035,7 +1035,7 @@ def _prepare_replay_inputs(
     )
     records.append(
         _filter_trade_theses(
-            source_path=state_dir(project_root, "data") / "external" / "trade_theses",
+            source_path=project_root / "inputs" / "trade_theses",
             replay_dir=state_dir(paths.input_root, "data") / "external" / "trade_theses",
             as_of=as_of,
             errors=errors,

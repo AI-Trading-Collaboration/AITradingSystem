@@ -673,7 +673,7 @@ def _write_replay_fixture(project_root: Path) -> None:
         encoding="utf-8",
     )
 
-    thesis_dir = project_root / "data" / "external" / "trade_theses"
+    thesis_dir = project_root / "inputs" / "trade_theses"
     thesis_dir.mkdir(parents=True)
     _write_trade_thesis(
         thesis_dir / "visible_amd_thesis.yaml",
