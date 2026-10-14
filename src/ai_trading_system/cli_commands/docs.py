@@ -32,7 +32,10 @@ from ai_trading_system.heuristic_governance import (
     write_heuristic_governance_report,
 )
 from ai_trading_system.paths import state_dir
-from ai_trading_system.reports.report_index import DEFAULT_REPORT_REGISTRY_PATH
+from ai_trading_system.reports.report_index import (
+    DEFAULT_REPORT_REGISTRY_PATH,
+    parse_registry_scope,
+)
 
 console = Console()
 docs_app = typer.Typer(help="项目文档治理和新鲜度检查。", no_args_is_help=True)
@@ -102,6 +105,12 @@ def documentation_contract_command(
         bool,
         typer.Option(help="存在 warning 时也以非零退出。"),
     ] = False,
+    scope: Annotated[
+        str,
+        typer.Option(
+            "--scope", help="登记表范围：all（默认，全部）、daily（日报范围）或 research。"
+        ),
+    ] = "all",
 ) -> None:
     """校验 report registry 是否被 artifact catalog 覆盖并生成只读文档契约。"""
     if latest and as_of:
@@ -125,6 +134,7 @@ def documentation_contract_command(
             as_of=report_date,
             registry_path=registry_path,
             artifact_catalog_path=artifact_catalog_path,
+            registry_scope=parse_registry_scope(scope),
         )
     except FileNotFoundError as exc:
         raise typer.BadParameter(str(exc)) from exc

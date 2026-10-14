@@ -157,6 +157,7 @@ def build_artifact_lineage_payload(
     report_index_path: Path | None = None,
     registry_path: Path = DEFAULT_REPORT_REGISTRY_PATH,
     waiver_path: Path | None = DEFAULT_REPORT_INDEX_WAIVER_PATH,
+    registry_scope: str | None = None,
 ) -> dict[str, Any]:
     """Build a read-only lineage graph from existing artifact/report metadata."""
     resolved_index = (
@@ -167,6 +168,7 @@ def build_artifact_lineage_payload(
             project_root=project_root,
             registry_path=registry_path,
             waiver_path=waiver_path,
+            registry_scope=registry_scope,
         )
     )
     nodes = _lineage_nodes(
@@ -187,6 +189,7 @@ def build_artifact_lineage_payload(
         "input_artifacts": {
             "report_index": "" if report_index_path is None else str(report_index_path),
             "report_registry": str(registry_path),
+            "report_registry_scope": registry_scope or "all",
             "report_index_status": _text(resolved_index.get("status"), "UNKNOWN"),
         },
         "safety_boundary": _safety_boundary(),

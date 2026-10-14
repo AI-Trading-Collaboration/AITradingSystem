@@ -407,11 +407,13 @@ cadences:
           - market_panel
           - market_data_recover_freshness
         title: Build artifact lineage graph
-        command: aits reports artifact-lineage --latest
+        command: aits reports artifact-lineage --latest --scope daily
         command_contains:
           - reports
           - artifact-lineage
           - --latest
+          - --scope
+          - daily
         closed_market_behavior: skip_score_artifacts
         production_effect: none
         production_weight_write: false
@@ -437,11 +439,13 @@ cadences:
         dependencies:
           - validate_artifact_lineage
         title: Build report index
-        command: aits reports index --latest
+        command: aits reports index --latest --scope daily
         command_contains:
           - reports
           - index
           - --latest
+          - --scope
+          - daily
         closed_market_behavior: skip_score_artifacts
         production_effect: none
         production_weight_write: false
@@ -452,11 +456,13 @@ cadences:
         dependencies:
           - report_index
         title: Build documentation contract
-        command: aits docs report-contract --latest
+        command: aits docs report-contract --latest --scope daily
         command_contains:
           - docs
           - report-contract
           - --latest
+          - --scope
+          - daily
         closed_market_behavior: skip_score_artifacts
         production_effect: none
         production_weight_write: false

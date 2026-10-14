@@ -57,8 +57,9 @@ def build_documentation_contract_payload(
     as_of: date,
     registry_path: Path = DEFAULT_REPORT_REGISTRY_PATH,
     artifact_catalog_path: Path = DEFAULT_ARTIFACT_CATALOG_PATH,
+    registry_scope: str | None = None,
 ) -> dict[str, Any]:
-    registry = load_report_registry(registry_path)
+    registry = load_report_registry(registry_path, scope=registry_scope)
     defaults = _mapping(registry.get("defaults"))
     catalog_rows = load_artifact_catalog_rows(artifact_catalog_path)
     report_records = [
@@ -84,6 +85,7 @@ def build_documentation_contract_payload(
         "production_effect": PRODUCTION_EFFECT,
         "inputs": {
             "registry_path": str(registry_path),
+            "registry_scope": registry_scope or "all",
             "registry_policy_version": _string(registry.get("policy_version")),
             "artifact_catalog_path": str(artifact_catalog_path),
         },

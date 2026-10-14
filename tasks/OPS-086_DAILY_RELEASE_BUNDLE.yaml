@@ -3,7 +3,7 @@ id: OPS-086_DAILY_RELEASE_BUNDLE
 area: Operations / 日报从不带 git 的发布包运行
 priority: P1
 status: IN_PROGRESS
-next_owner: Claude（审 OPS-086-04，再写步骤 5 的需求）
-next_step: OPS-086-04 scripts 路径待审；之后步骤 5（登记表分范围），Claude 写需求
-acceptance: 步骤 1～4 的验收测试全过、PR 套件无新增失败；步骤 6 电脑上试运行与运行副本同日产物一致；步骤 7 切换后第一次计划任务正常
-notes: production_effect=none；broker_action=none；owner_decision:DATA-023:2026-10-13:state_root_separation；需求文档 docs/requirements/OPS-086_Daily_Release_Bundle.md；步骤 1 的 3 个 C 区文件按 DEVX-029 决定记录（Baker 2026-10-14 08:06 JST 卡片选「批准」）；2026-10-15：OPS-086-02 发布身份实现，待审；2026-10-15：OPS-086-03 构建、部署、入口实现，待审；2026-10-15：OPS-086-04 scripts 其余路径改走 paths 模块，待审
+next_owner: Claude（审 OPS-086-05，再按 Baker 对研究治理摘要的答复定步骤 5b，之后步骤 6 电脑试运行）
+next_step: OPS-086-05 登记表分范围待审；之后步骤 5b（等 Baker 答复）、步骤 6 电脑试运行、步骤 7 切换
+acceptance: 步骤 1～5a 的验收测试全过、PR 套件无新增失败；步骤 6 电脑上试运行与运行副本同日产物一致；步骤 7 切换后第一次计划任务正常
+notes: production_effect=none；broker_action=none；owner_decision:DATA-023:2026-10-13:state_root_separation；需求文档 docs/requirements/OPS-086_Daily_Release_Bundle.md；步骤 1 的 3 个 C 区文件按 DEVX-029 决定记录（Baker 2026-10-14 08:06 JST 卡片选「批准」）；2026-10-15：OPS-086-02 发布身份实现，待审；2026-10-15：OPS-086-03 构建、部署、入口实现，待审；2026-10-15：OPS-086-04 scripts 其余路径改走 paths 模块，待审；2026-10-15：OPS-086-05 登记表分范围，待审

@@ -1382,7 +1382,9 @@ def build_daily_ops_plan(
                 step_id="artifact_lineage",
                 title="生成 artifact lineage graph",
                 command=(
-                    ("aits", "reports", "artifact-lineage", "--latest") if dashboard_enabled else ()
+                    ("aits", "reports", "artifact-lineage", "--latest", "--scope", "daily")
+                    if dashboard_enabled
+                    else ()
                 ),
                 required_env_vars=(),
                 produced_paths=(artifact_lineage_json, artifact_lineage_report),
@@ -1420,7 +1422,11 @@ def build_daily_ops_plan(
             DailyOpsStep(
                 step_id="report_index",
                 title="生成 report registry index",
-                command=("aits", "reports", "index", "--latest") if dashboard_enabled else (),
+                command=(
+                    ("aits", "reports", "index", "--latest", "--scope", "daily")
+                    if dashboard_enabled
+                    else ()
+                ),
                 required_env_vars=(),
                 produced_paths=(report_index_html, report_index_json),
                 quality_gate=(
@@ -1435,7 +1441,9 @@ def build_daily_ops_plan(
                 step_id="documentation_contract",
                 title="生成 documentation contract",
                 command=(
-                    ("aits", "docs", "report-contract", "--latest") if dashboard_enabled else ()
+                    ("aits", "docs", "report-contract", "--latest", "--scope", "daily")
+                    if dashboard_enabled
+                    else ()
                 ),
                 required_env_vars=(),
                 produced_paths=(documentation_contract_report, documentation_contract_json),

@@ -73,8 +73,8 @@ def test_daily_ops_plan_defers_provider_env_failures_until_capture() -> None:
     assert "`aits sec-pit shadow-monitor --latest --as-of 2026-05-06`" in markdown
     assert "`aits reports score-change-attribution --latest`" in markdown
     assert "`aits reports market-panel --latest`" in markdown
-    assert "`aits reports index --latest`" in markdown
-    assert "`aits docs report-contract --latest`" in markdown
+    assert "`aits reports index --latest --scope daily`" in markdown
+    assert "`aits docs report-contract --latest --scope daily`" in markdown
     assert "`aits reports research-governance-summary --latest`" in markdown
     assert "`aits reports reader-brief --latest`" in markdown
     assert "`aits reports validate-reader-brief --latest`" in markdown
@@ -531,6 +531,8 @@ def test_daily_ops_plan_includes_forward_evidence_after_score_daily() -> None:
         "reports",
         "artifact-lineage",
         "--latest",
+        "--scope",
+        "daily",
     )
     assert next(
         step for step in plan.steps if step.step_id == "validate_artifact_lineage"
@@ -545,6 +547,8 @@ def test_daily_ops_plan_includes_forward_evidence_after_score_daily() -> None:
         "reports",
         "index",
         "--latest",
+        "--scope",
+        "daily",
     )
     assert next(
         step for step in plan.steps if step.step_id == "documentation_contract"
@@ -553,6 +557,8 @@ def test_daily_ops_plan_includes_forward_evidence_after_score_daily() -> None:
         "docs",
         "report-contract",
         "--latest",
+        "--scope",
+        "daily",
     )
     assert next(step for step in plan.steps if step.step_id == "reader_brief").command == (
         "aits",

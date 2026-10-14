@@ -181,6 +181,12 @@ flowchart LR
 `scripts\ops\daily_scheduler_run.ps1 -Window <窗口>`。发布包只读，状态只写在状态根里，没有 `.git`。切换到发布包（OPS-086 步骤 7）
 由 owner 决定，在此之前日报仍按本节上面的运行副本运行。
 
+**日报收尾的登记表范围（OPS-086-05，`owner_decision:DATA-023:2026-10-13:state_root_separation`）**：`config/report_registry.yaml` 每个登记项有 `scope`：
+`daily`（日报计划的步骤或 score-daily 写出的产物，加收尾各步自己的报告，目前 21 项）或 `research`（只在开发仓检查）。`aits reports index`、
+`aits reports artifact-lineage`、`aits docs report-contract` 有 `--scope all|daily|research`，默认 `all`，行为不变；日报计划给这三步传 `--scope daily`，
+所以报告索引、lineage 和文档契约只处理日报范围的登记项，新的生产状态里本来没有的研究产物不再各出一条缺失警告。`reports quality-gate` 和 Reader Brief 读这份索引。
+日报发布包的清单也只取 `scope: daily` 的登记项。`scope` 不改任何报告的内容、评分或门禁。
+
 ## 6. 已退役、不再运行
 
 | 部分 | 退役时间 | 去向 |

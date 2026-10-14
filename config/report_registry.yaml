@@ -31,8 +31,12 @@ defaults:
 # shows them as ARCHIVED_* only. GOV-009 W4 (2026-10-12) removed such entries that no remaining file
 # names; the rest are named by code or tests that still read them. Removed entries are under tag
 # research-archive-2026-10-12.
+# OPS-086-05: every entry has `scope`. `daily` entries are produced by the daily plan or read by its
+# closeout (aits reports index / artifact-lineage / docs report-contract take `--scope daily`);
+# `research` entries are checked in the development checkout only.
 reports:
   - report_id: daily_score
+    scope: daily
     title: Daily Score Report
     group: daily
     cadence: daily
@@ -48,6 +52,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: true
   - report_id: data_quality
+    scope: daily
     title: Data Quality Report
     group: daily
     cadence: daily
@@ -63,6 +68,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: true
   - report_id: pit_source_manifest
+    scope: research
     title: Point-in-Time Source Manifest
     group: governance
     cadence: monthly
@@ -83,6 +89,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: data_refresh_audit
+    scope: research
     title: Data Refresh Audit
     group: governance
     cadence: daily
@@ -103,6 +110,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: data_source_fallback_policy
+    scope: research
     title: Data Source Fallback Policy
     group: governance
     cadence: daily
@@ -123,6 +131,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: cache_catalog
+    scope: research
     title: Checksum and Cache Catalog
     group: governance
     cadence: daily
@@ -143,6 +152,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: backtest_input_diagnostics
+    scope: daily
     title: Backtest Input Diagnostics
     group: shadow
     cadence: ad_hoc
@@ -160,6 +170,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: data_registry_consistency
+    scope: research
     title: Data Registry Consistency
     group: shadow
     cadence: ad_hoc
@@ -177,6 +188,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: price_cache_reconcile
+    scope: research
     title: Price Cache Reconcile
     group: shadow
     cadence: ad_hoc
@@ -195,6 +207,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: evidence_dashboard
+    scope: daily
     title: Evidence Dashboard
     group: daily
     cadence: daily
@@ -211,6 +224,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: daily_task_dashboard
+    scope: research
     title: Daily Task Dashboard
     group: daily
     cadence: daily
@@ -227,6 +241,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: daily_decision_summary
+    scope: research
     title: Daily Decision Summary
     group: daily
     cadence: daily
@@ -240,8 +255,9 @@ reports:
     owner_action: regenerate_daily_tasks_if_missing
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
-    required_for_daily_reading: true
+    required_for_daily_reading: false
   - report_id: calculation_explainers
+    scope: daily
     title: Calculation Explainers
     group: daily
     cadence: daily
@@ -257,6 +273,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: score_change_attribution
+    scope: daily
     title: Score Change Attribution
     group: daily
     cadence: daily
@@ -273,6 +290,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: market_panel
+    scope: daily
     title: Market Price Panel
     group: daily
     cadence: daily
@@ -289,6 +307,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: etf_portfolio_brief
+    scope: research
     title: ETF Portfolio Brief
     group: daily
     cadence: daily
@@ -305,6 +324,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: etf_credibility_gate
+    scope: research
     visibility_policy: archived_optional
     title: ETF Credibility Gate
     group: governance
@@ -322,6 +342,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: etf_data_quality
+    scope: research
     title: ETF Data Quality Report
     group: data_quality
     cadence: daily
@@ -338,6 +359,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: etf_backtest_summary
+    scope: research
     visibility_policy: archived_optional
     title: ETF Portfolio Backtest Summary & Standardized Metrics
     group: backtest
@@ -355,6 +377,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: etf_experiment_run_manifest
+    scope: research
     title: ETF Experiment Run Manifest
     group: research
     cadence: ad_hoc
@@ -371,6 +394,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: etf_experiment_comparison
+    scope: research
     title: ETF Experiment Comparison
     group: research
     cadence: ad_hoc
@@ -388,6 +412,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: etf_experiment_candidate_selection
+    scope: research
     title: ETF Experiment Candidate Selection
     group: research
     cadence: ad_hoc
@@ -405,6 +430,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: etf_shadow_candidates
+    scope: research
     visibility_policy: archived_optional
     title: ETF Shadow Candidate Registry
     group: research
@@ -421,6 +447,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: etf_experiment_weekly_review
+    scope: research
     title: ETF Experiment Weekly Review
     group: research
     cadence: weekly
@@ -438,6 +465,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: etf_experiment_validation
+    scope: research
     visibility_policy: archived_optional
     title: ETF Experiment Validation Gate
     group: research
@@ -455,6 +483,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: etf_forward_dashboard
+    scope: research
     visibility_policy: archived_optional
     title: ETF Forward Simulation Dashboard
     group: research
@@ -472,6 +501,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_forward_watchlist
+    scope: research
     visibility_policy: archived_optional
     title: ETF Forward Simulation Watchlist
     group: research
@@ -489,6 +519,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_forward_validation
+    scope: research
     visibility_policy: archived_optional
     title: ETF Forward Simulation Validation Gate
     group: governance
@@ -506,6 +537,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: etf_ai_confirmation_report
+    scope: research
     title: ETF AI Confirmation Report
     group: research
     cadence: daily
@@ -523,6 +555,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_ai_confirmation_overlay
+    scope: research
     title: ETF AI Confirmation Shadow Overlay
     group: research
     cadence: ad_hoc
@@ -540,6 +573,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_ai_confirmation_validation
+    scope: research
     visibility_policy: archived_optional
     title: ETF AI Confirmation Validation Gate
     group: governance
@@ -557,6 +591,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_ai_attribution_report
+    scope: research
     visibility_policy: archived_optional
     title: ETF AI Confirmation Forward Attribution Review
     group: research
@@ -574,6 +609,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_ai_attribution_validation
+    scope: research
     visibility_policy: archived_optional
     title: ETF AI Attribution Validation Gate
     group: governance
@@ -591,6 +627,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_satellite_replacement_report
+    scope: research
     title: ETF Satellite Replacement Report
     group: research
     cadence: daily
@@ -608,6 +645,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_satellite_validation
+    scope: research
     visibility_policy: archived_optional
     title: ETF Satellite Policy Validation Gate
     group: governance
@@ -625,6 +663,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_satellite_attribution_report
+    scope: research
     visibility_policy: archived_optional
     title: ETF Satellite Replacement Forward Attribution Review
     group: research
@@ -642,6 +681,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_satellite_attribution_validation
+    scope: research
     visibility_policy: archived_optional
     title: ETF Satellite Attribution Validation Gate
     group: governance
@@ -659,6 +699,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_weekly_review
+    scope: research
     visibility_policy: archived_optional
     title: ETF Weekly Portfolio Review
     group: research
@@ -676,6 +717,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_weekly_review_validation
+    scope: research
     visibility_policy: archived_optional
     title: ETF Weekly Review Validation Gate
     group: governance
@@ -693,6 +735,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_decision_journal_report
+    scope: research
     visibility_policy: archived_optional
     title: ETF Portfolio Decision Journal
     group: research
@@ -711,6 +754,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_decision_journal_validation
+    scope: research
     visibility_policy: archived_optional
     title: ETF Decision Journal Validation Gate
     group: governance
@@ -728,6 +772,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_parameter_review_report
+    scope: research
     visibility_policy: archived_optional
     title: ETF Allocation Parameter Review
     group: governance
@@ -745,6 +790,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_parameter_review_validation
+    scope: research
     visibility_policy: archived_optional
     title: ETF Allocation Parameter Review Validation
     group: governance
@@ -762,6 +808,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_report
+    scope: research
     visibility_policy: archived_optional
     title: ETF Weight Dual-Track Calibration Report
     group: governance
@@ -779,6 +826,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_initial_weight_recommendation_report
+    scope: research
     visibility_policy: archived_optional
     title: ETF Initial Weight Recommendation Report
     group: governance
@@ -799,6 +847,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_robustness_report
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic Robustness Review
     group: research
@@ -819,6 +868,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_robustness_validation
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic Robustness Validation Gate
     group: governance
@@ -839,6 +889,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_shadow_review_package
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic Shadow Review Package
     group: research
@@ -859,6 +910,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_shadow_weekly_review
+    scope: research
     title: ETF Dynamic Shadow Weekly Review
     group: shadow
     cadence: weekly
@@ -878,6 +930,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_shadow_validation
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic Shadow Validation Gate
     group: governance
@@ -898,6 +951,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_real_evaluation_report
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v0.3 Rescue Real Evaluation and Promotion Gate
     group: research
@@ -921,6 +975,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_parameter_sweep_leaderboard
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Parameter Sweep Leaderboard
     group: research
@@ -943,6 +998,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_shadow_monitor_report
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Shadow Monitor Report
     group: shadow
@@ -963,6 +1019,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_promotion_pack
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Promotion Review Pack
     group: governance
@@ -988,6 +1045,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_evidence_summary
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Candidate Evidence Summary
     group: research
@@ -1009,6 +1067,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_observe_pool
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Observe-only Candidate Pool
     group: shadow
@@ -1029,6 +1088,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_overnight_readiness
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Overnight Real Readiness
     group: governance
@@ -1048,6 +1108,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_research_decision
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Research Decision
     group: governance
@@ -1070,6 +1131,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_evidence_diagnosis
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Evidence Gate Diagnosis
     group: governance
@@ -1092,6 +1154,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_gate_impact
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Gate Impact Matrix
     group: governance
@@ -1114,6 +1177,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_gate_policy
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Evidence Gate Policy
     group: governance
@@ -1136,6 +1200,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_candidate_recovery
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Candidate Usability Recovery
     group: shadow
@@ -1158,6 +1223,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_research_decision_update
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Research Decision Update
     group: governance
@@ -1181,6 +1247,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Paper Shadow Account
     group: governance
@@ -1203,6 +1270,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_primary_research_candidate_gate
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Primary Research Candidate Gate
     group: governance
@@ -1225,6 +1293,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_filtered_candidate_evidence
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Filtered Candidate Evidence
     group: research
@@ -1246,6 +1315,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_filtered_candidate_stress_backfill
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Filtered Candidate Stress Backfill
     group: research
@@ -1266,6 +1336,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_drawdown_mismatch_reduction
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Drawdown Mismatch Reduction
     group: research
@@ -1285,6 +1356,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_flip_rotation_reduction
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Flip Rotation Reduction
     group: research
@@ -1304,6 +1376,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_filtered_candidate_ab_review
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Filtered Candidate A/B Review
     group: research
@@ -1324,6 +1397,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_signal_gate_confirmation
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Signal Gate Confirmation
     group: governance
@@ -1343,6 +1417,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_filtered_formalization_readiness
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Filtered Formalization Readiness
     group: governance
@@ -1363,6 +1438,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_owner_filtered_candidate_review
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Owner Filtered Candidate Review
     group: governance
@@ -1383,6 +1459,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_signal_input_completeness
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Signal Input Completeness
     group: governance
@@ -1409,6 +1486,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_signal_input_recovery
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Signal Input Recovery Root Cause
     group: governance
@@ -1434,6 +1512,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_signal_input_completeness_recovery
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Signal Input Completeness Recovery
     group: governance
@@ -1458,6 +1537,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow_daily
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Paper Shadow Daily Observation
     group: governance
@@ -1485,6 +1565,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow_drift_monitor
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Paper Shadow Drift Monitor
     group: governance
@@ -1514,6 +1595,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow_weekly_review
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Paper Shadow Weekly Review
     group: governance
@@ -1545,6 +1627,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_candidate_decision_ledger
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Candidate Decision Ledger
     group: governance
@@ -1572,6 +1655,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_evidence_staleness_monitor
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Evidence Staleness Monitor
     group: governance
@@ -1604,6 +1688,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_shadow_continuation_readiness
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Shadow Continuation Readiness
     group: governance
@@ -1633,6 +1718,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_paper_shadow_health
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Canonical Paper Shadow Health
     group: governance
@@ -1661,6 +1747,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_readiness_health_recovery
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Readiness and Health Recovery
     group: governance
@@ -1686,6 +1773,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_normal_paper_shadow_resumption_gate
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Normal Paper Shadow Resumption Gate
     group: governance
@@ -1712,6 +1800,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_cost_sensitivity_review
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Cost Sensitivity Review
     group: governance
@@ -1737,6 +1826,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_cost_metrics_materialization
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Cost Metrics Materialization
     group: governance
@@ -1763,6 +1853,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_benchmark_baseline_metrics_materialization
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Benchmark Baseline Metrics Materialization
     group: governance
@@ -1792,6 +1883,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_benchmark_baseline_control
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Benchmark Baseline Control Pack
     group: governance
@@ -1818,6 +1910,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: test_runtime_summary
+    scope: research
     title: Test Runtime Summary
     group: governance
     cadence: ad_hoc
@@ -1838,6 +1931,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: research_protocol_validation
+    scope: research
     title: Research Protocol Validation
     group: research
     cadence: ad_hoc
@@ -1858,6 +1952,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: research_evidence_audit
+    scope: research
     title: Research Evidence Audit
     group: research
     cadence: ad_hoc
@@ -1878,6 +1973,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: research_promotion_readiness
+    scope: research
     title: Research Promotion Readiness
     group: research
     cadence: ad_hoc
@@ -1897,6 +1993,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: research_governance_rollup
+    scope: research
     title: Research Governance Rollup
     group: research
     cadence: ad_hoc
@@ -1917,6 +2014,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: research_watchlist
+    scope: research
     title: Research Watchlist
     group: research
     cadence: ad_hoc
@@ -1936,6 +2034,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: portfolio_decision_contract_validation
+    scope: research
     title: Portfolio Decision Contract Validation
     group: research
     cadence: ad_hoc
@@ -1956,6 +2055,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: pit_action_outcome_dataset
+    scope: research
     title: PIT Action Outcome Dataset
     group: research
     cadence: ad_hoc
@@ -1976,6 +2076,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: portfolio_value_surface_report
+    scope: research
     title: Portfolio Value Surface Report
     group: research
     cadence: ad_hoc
@@ -1995,6 +2096,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: research_strategy_evaluation
+    scope: research
     title: Research Strategy Evaluation
     group: research
     cadence: ad_hoc
@@ -2014,6 +2116,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: research_ops_dashboard
+    scope: research
     title: Research Ops Dashboard
     group: research
     cadence: ad_hoc
@@ -2034,6 +2137,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: paper_shadow_cohort_prepare
+    scope: research
     title: Paper Shadow Cohort Prepare
     group: research
     cadence: ad_hoc
@@ -2053,6 +2157,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: pit_feature_store_snapshot
+    scope: research
     title: PIT Feature Store Snapshot
     group: data_quality
     cadence: ad_hoc
@@ -2074,6 +2179,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: asset_master_tradability
+    scope: research
     title: Asset Master And Tradability
     group: data_quality
     cadence: ad_hoc
@@ -2095,6 +2201,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: cost_liquidity_audit
+    scope: research
     title: Cost Liquidity Audit
     group: data_quality
     cadence: ad_hoc
@@ -2115,6 +2222,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: research_label_store_audit
+    scope: research
     title: Research Label Store Audit
     group: research
     cadence: ad_hoc
@@ -2137,6 +2245,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: research_run_registry_audit
+    scope: research
     title: Research Run Registry Audit
     group: research
     cadence: ad_hoc
@@ -2158,6 +2267,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: research_execution_cache_audit
+    scope: research
     title: Research Execution Cache Audit
     group: research
     cadence: ad_hoc
@@ -2180,6 +2290,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: forward_evidence_archive
+    scope: daily
     title: Forward Evidence Archive
     group: research
     cadence: daily
@@ -2202,6 +2313,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: research_case_library_audit
+    scope: research
     title: Research Case Library Audit
     group: research
     cadence: ad_hoc
@@ -2223,6 +2335,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: data_foundation_acceptance
+    scope: research
     title: Data Foundation Acceptance Report
     group: data_quality
     cadence: ad_hoc
@@ -2245,6 +2358,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: data_source_qualification_remediation
+    scope: research
     title: Data Source Qualification Remediation
     group: data_quality
     cadence: ad_hoc
@@ -2272,6 +2386,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: data_source_remediation_execution
+    scope: research
     title: Data Source Remediation Execution
     group: data_quality
     cadence: ad_hoc
@@ -2296,6 +2411,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: data_source_requirement_matrix
+    scope: research
     title: Data Source Requirement Matrix
     group: data_quality
     cadence: ad_hoc
@@ -2317,6 +2433,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: current_subscription_data_coverage_matrix
+    scope: research
     title: Current Subscription Data Coverage Matrix
     group: data_quality
     cadence: ad_hoc
@@ -2338,6 +2455,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_owner_review
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Owner Review Journal
     group: governance
@@ -2361,6 +2479,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_owner_attribution
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Rescue Owner Attribution
     group: governance
@@ -2387,6 +2506,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_rule_owner_decision
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Rule Owner Decision
     group: governance
@@ -2413,6 +2533,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_dynamic_v3_defensive_owner_pack
+    scope: research
     visibility_policy: archived_optional
     title: ETF Dynamic v3 Defensive Owner Pack
     group: governance
@@ -2436,6 +2557,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
+    scope: research
     visibility_policy: archived_optional
     title: ETF Weight Dual-Track Calibration Validation
     group: governance
@@ -2453,6 +2575,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_operations_health_report
+    scope: research
     title: ETF Operations Health Report
     group: governance
     cadence: daily
@@ -2469,6 +2592,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_operations_validation
+    scope: research
     visibility_policy: archived_optional
     title: ETF Operations Validation Gate
     group: governance
@@ -2486,6 +2610,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_data_quality_governance_report
+    scope: research
     title: ETF Data Quality Governance Report
     group: data_quality
     cadence: daily
@@ -2503,6 +2628,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_data_quality_validation
+    scope: research
     visibility_policy: archived_optional
     title: ETF Data Quality Validation Gate
     group: governance
@@ -2520,6 +2646,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_strategy_evidence_dashboard
+    scope: research
     title: ETF Strategy Evidence Dashboard
     group: governance
     cadence: daily
@@ -2537,6 +2664,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: etf_strategy_evidence_dashboard_validation
+    scope: research
     visibility_policy: archived_optional
     title: ETF Strategy Evidence Dashboard Validation Gate
     group: governance
@@ -2554,6 +2682,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: research_governance_summary
+    scope: daily
     title: Research Governance Summary
     group: governance
     cadence: daily
@@ -2570,6 +2699,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: canonical_system_status
+    scope: research
     title: Canonical System Status
     group: governance
     cadence: daily
@@ -2586,6 +2716,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: canonical_system_doctor
+    scope: research
     title: Canonical System Doctor
     group: governance
     cadence: daily
@@ -2602,6 +2733,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: engineering_surface_inventory
+    scope: research
     title: Engineering Surface Inventory
     group: governance
     cadence: ad_hoc
@@ -2618,6 +2750,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: engineering_surface_inventory_validation
+    scope: research
     title: Engineering Surface Inventory Validation
     group: governance
     cadence: ad_hoc
@@ -2634,6 +2767,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: artifact_lifecycle_inventory
+    scope: research
     title: Artifact Lifecycle Inventory
     group: governance
     cadence: ad_hoc
@@ -2650,6 +2784,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: artifact_lifecycle_inventory_validation
+    scope: research
     title: Artifact Lifecycle Inventory Validation
     group: governance
     cadence: ad_hoc
@@ -2666,6 +2801,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: engineering_stage_b_readiness
+    scope: research
     title: Engineering Stage B Readiness
     group: governance
     cadence: ad_hoc
@@ -2682,6 +2818,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: engineering_stage_b_readiness_validation
+    scope: research
     title: Engineering Stage B Readiness Validation
     group: governance
     cadence: ad_hoc
@@ -2698,6 +2835,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: clean_clone_release_acceptance
+    scope: research
     title: Clean Clone Release Acceptance
     group: governance
     cadence: ad_hoc
@@ -2713,6 +2851,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: engineering_closeout_release_candidate
+    scope: research
     title: Engineering Closeout Release Candidate
     group: governance
     cadence: ad_hoc
@@ -2728,6 +2867,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: engineering_closeout_release_candidate_validation
+    scope: research
     title: Engineering Closeout Release Candidate Validation
     group: governance
     cadence: ad_hoc
@@ -2743,6 +2883,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: task_register_consistency
+    scope: research
     title: Task Register Consistency
     group: governance
     cadence: daily
@@ -2759,6 +2900,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: task_register_consistency_validation
+    scope: research
     title: Task Register Consistency Validation
     group: governance
     cadence: daily
@@ -2775,6 +2917,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: report_index_waiver_inventory
+    scope: research
     title: Report Index Waiver Inventory
     group: governance
     cadence: daily
@@ -2791,6 +2934,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: report_index_waiver_inventory_validation
+    scope: research
     title: Report Index Waiver Inventory Validation
     group: governance
     cadence: daily
@@ -2807,6 +2951,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: reader_brief
+    scope: daily
     title: Reader Brief
     group: daily
     cadence: daily
@@ -2823,6 +2968,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: artifact_lineage_graph
+    scope: daily
     title: Artifact Lineage Graph
     group: governance
     cadence: daily
@@ -2839,6 +2985,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: artifact_lineage_validation
+    scope: daily
     title: Artifact Lineage Validation
     group: governance
     cadence: daily
@@ -2855,6 +3002,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: reader_brief_quality
+    scope: daily
     title: Reader Brief Quality
     group: governance
     cadence: daily
@@ -2871,6 +3019,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: reader_brief_consistency_pack
+    scope: research
     title: Reader Brief Consistency Pack
     group: governance
     cadence: daily
@@ -2887,6 +3036,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: reader_brief_consistency_validation
+    scope: research
     title: Reader Brief Consistency Validation
     group: governance
     cadence: daily
@@ -2903,6 +3053,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: production_boundary_static_scan
+    scope: research
     title: Production Boundary Static Scan
     group: governance
     cadence: daily
@@ -2919,6 +3070,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: production_boundary_static_scan_validation
+    scope: research
     title: Production Boundary Static Scan Validation
     group: governance
     cadence: daily
@@ -2935,6 +3087,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: owner_review_template_v2
+    scope: research
     title: Owner Review Template V2
     group: governance
     cadence: daily
@@ -2951,6 +3104,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: owner_review_template_v2_validation
+    scope: research
     title: Owner Review Template V2 Validation
     group: governance
     cadence: daily
@@ -2967,6 +3121,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: owner_decision_audit_log
+    scope: research
     title: Owner Decision Audit Log
     group: governance
     cadence: daily
@@ -2983,6 +3138,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: owner_decision_audit_log_validation
+    scope: research
     title: Owner Decision Audit Log Validation
     group: governance
     cadence: daily
@@ -2999,6 +3155,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: research_monthly_review_pack
+    scope: research
     title: Research Monthly Review Pack
     group: governance
     cadence: monthly
@@ -3015,6 +3172,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: research_monthly_review_pack_validation
+    scope: research
     title: Research Monthly Review Pack Validation
     group: governance
     cadence: monthly
@@ -3031,6 +3189,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: paper_shadow_promotion_board
+    scope: research
     title: Paper Shadow Promotion Board
     group: governance
     cadence: monthly
@@ -3047,6 +3206,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: paper_shadow_promotion_board_validation
+    scope: research
     title: Paper Shadow Promotion Board Validation
     group: governance
     cadence: monthly
@@ -3063,6 +3223,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: recovery_evidence_pack
+    scope: research
     title: Recovery Evidence Pack
     group: governance
     cadence: manual
@@ -3083,6 +3244,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: recovery_evidence_pack_validation
+    scope: research
     title: Recovery Evidence Pack Validation
     group: governance
     cadence: manual
@@ -3102,6 +3264,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_rejection_postmortem_template
+    scope: research
     title: Candidate Rejection Postmortem Template
     group: governance
     cadence: monthly
@@ -3118,6 +3281,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_rejection_postmortem_template_validation
+    scope: research
     title: Candidate Rejection Postmortem Template Validation
     group: governance
     cadence: monthly
@@ -3134,6 +3298,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: decision_snapshot_lifecycle_policy
+    scope: research
     title: Decision Snapshot Lifecycle Policy
     group: governance
     cadence: daily
@@ -3150,6 +3315,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: decision_snapshot_lifecycle_policy_validation
+    scope: research
     title: Decision Snapshot Lifecycle Policy Validation
     group: governance
     cadence: daily
@@ -3166,6 +3332,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: extended_shadow_observation_clock
+    scope: research
     title: Extended Shadow Observation Clock
     group: governance
     cadence: monthly
@@ -3182,6 +3349,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: extended_shadow_observation_clock_validation
+    scope: research
     title: Extended Shadow Observation Clock Validation
     group: governance
     cadence: monthly
@@ -3198,6 +3366,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: extended_shadow_protocol
+    scope: research
     title: Extended Shadow Protocol
     group: governance
     cadence: monthly
@@ -3214,6 +3383,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: extended_shadow_protocol_validation
+    scope: research
     title: Extended Shadow Protocol Validation
     group: governance
     cadence: monthly
@@ -3230,6 +3400,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: research_roadmap_dashboard
+    scope: research
     title: Research Roadmap Dashboard
     group: governance
     cadence: monthly
@@ -3246,6 +3417,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: research_roadmap_dashboard_validation
+    scope: research
     title: Research Roadmap Dashboard Validation
     group: governance
     cadence: monthly
@@ -3262,6 +3434,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: research_governance_end_to_end_pack
+    scope: research
     title: Research Governance End-to-End Pack
     group: governance
     cadence: monthly
@@ -3278,6 +3451,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: research_governance_end_to_end_pack_validation
+    scope: research
     title: Research Governance End-to-End Pack Validation
     group: governance
     cadence: monthly
@@ -3294,6 +3468,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: research_governance_recovery_pack
+    scope: research
     title: Research Governance Recovery Pack
     group: governance
     cadence: manual
@@ -3315,6 +3490,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: research_governance_recovery_pack_validation
+    scope: research
     title: Research Governance Recovery Pack Validation
     group: governance
     cadence: manual
@@ -3334,6 +3510,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: recovery_blocker_triage
+    scope: research
     title: Recovery Blocker Triage
     group: governance
     cadence: manual
@@ -3353,6 +3530,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: recovery_blocker_triage_validation
+    scope: research
     title: Recovery Blocker Triage Validation
     group: governance
     cadence: manual
@@ -3369,6 +3547,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: report_index_warning_triage
+    scope: research
     title: Report Index Warning Triage
     group: governance
     cadence: manual
@@ -3387,6 +3566,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: report_index_warning_triage_validation
+    scope: research
     title: Report Index Warning Triage Validation
     group: governance
     cadence: manual
@@ -3403,6 +3583,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: recovery_pack_source_depth_audit
+    scope: research
     title: Recovery Pack Source Depth Audit
     group: governance
     cadence: manual
@@ -3421,6 +3602,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: recovery_pack_source_depth_audit_validation
+    scope: research
     title: Recovery Pack Source Depth Audit Validation
     group: governance
     cadence: manual
@@ -3437,6 +3619,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: recovery_owner_action_map
+    scope: research
     title: Recovery Owner Action Map
     group: governance
     cadence: manual
@@ -3456,6 +3639,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: recovery_owner_action_map_validation
+    scope: research
     title: Recovery Owner Action Map Validation
     group: governance
     cadence: manual
@@ -3472,6 +3656,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: exact_blocker_warning_inventory
+    scope: research
     title: Exact Blocker and Warning Inventory
     group: governance
     cadence: manual
@@ -3492,6 +3677,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: exact_blocker_warning_inventory_validation
+    scope: research
     title: Exact Blocker and Warning Inventory Validation
     group: governance
     cadence: manual
@@ -3511,6 +3697,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: remaining_blocker_resolution_ledger
+    scope: research
     title: Remaining Blocker Resolution Ledger
     group: governance
     cadence: manual
@@ -3531,6 +3718,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: remaining_blocker_resolution_ledger_validation
+    scope: research
     title: Remaining Blocker Resolution Ledger Validation
     group: governance
     cadence: manual
@@ -3550,6 +3738,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: report_index_warning_cleanup
+    scope: research
     title: Report Index Warning Cleanup
     group: governance
     cadence: manual
@@ -3569,6 +3758,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: report_index_warning_cleanup_validation
+    scope: research
     title: Report Index Warning Cleanup Validation
     group: governance
     cadence: manual
@@ -3588,6 +3778,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: normal_paper_shadow_observation_clock
+    scope: research
     title: Normal Paper Shadow Observation Clock
     group: governance
     cadence: manual
@@ -3608,6 +3799,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: normal_paper_shadow_observation_clock_validation
+    scope: research
     title: Normal Paper Shadow Observation Clock Validation
     group: governance
     cadence: manual
@@ -3627,6 +3819,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: post_recovery_governance_pack
+    scope: research
     title: Post-Recovery Governance Pack
     group: governance
     cadence: manual
@@ -3647,6 +3840,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: post_recovery_governance_pack_validation
+    scope: research
     title: Post-Recovery Governance Pack Validation
     group: governance
     cadence: manual
@@ -3666,6 +3860,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: eight_blocker_decision_review
+    scope: research
     title: Eight Blocker Decision Review
     group: governance
     cadence: manual
@@ -3686,6 +3881,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: eight_blocker_decision_review_validation
+    scope: research
     title: Eight Blocker Decision Review Validation
     group: governance
     cadence: manual
@@ -3705,6 +3901,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: normal_shadow_gate_gap_analysis
+    scope: research
     title: Normal Shadow Gate Gap Analysis
     group: governance
     cadence: manual
@@ -3724,6 +3921,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: promotion_blocker_after_metrics_review
+    scope: research
     title: Promotion Blocker After Metrics Review
     group: governance
     cadence: manual
@@ -3743,6 +3941,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_research_return_assessment
+    scope: research
     title: Candidate Research Return Assessment
     group: governance
     cadence: manual
@@ -3762,6 +3961,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: owner_decision_options_packet
+    scope: research
     title: Owner Decision Options Packet
     group: governance
     cadence: manual
@@ -3781,6 +3981,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: owner_decision_dry_run
+    scope: research
     title: Owner Decision Dry-Run
     group: governance
     cadence: manual
@@ -3800,6 +4001,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: observation_clock_readiness_plan
+    scope: research
     title: Observation Clock Readiness Plan
     group: governance
     cadence: manual
@@ -3819,6 +4021,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: post_decision_rerun_plan
+    scope: research
     title: Post-Decision Rerun Plan
     group: governance
     cadence: manual
@@ -3838,6 +4041,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: report_quality_warning_drilldown
+    scope: research
     title: Report Quality Warning Drilldown
     group: governance
     cadence: manual
@@ -3856,6 +4060,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: governance_status_snapshot_after_decision_review
+    scope: research
     title: Governance Status Snapshot After Decision Review
     group: governance
     cadence: manual
@@ -3876,6 +4081,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: owner_return_to_research_decision_record
+    scope: research
     visibility_policy: archived_optional
     title: Owner Return-To-Research Decision Record
     group: governance
@@ -3895,6 +4101,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_return_to_research_transition_pack
+    scope: research
     visibility_policy: archived_optional
     title: Candidate Return-To-Research Transition Pack
     group: governance
@@ -3915,6 +4122,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_failure_mode_attribution
+    scope: research
     visibility_policy: archived_optional
     title: Candidate Failure Mode Attribution
     group: research
@@ -3934,6 +4142,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: reusable_evidence_extraction
+    scope: research
     visibility_policy: archived_optional
     title: Reusable Evidence Extraction
     group: research
@@ -3953,6 +4162,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: return_to_research_hypothesis_backlog
+    scope: research
     visibility_policy: archived_optional
     title: Return-To-Research Hypothesis Backlog
     group: research
@@ -3972,6 +4182,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_spec_draft
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Spec Draft
     group: research
@@ -3991,6 +4202,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: research_backfill_plan_for_next_candidate
+    scope: research
     visibility_policy: archived_optional
     title: Research Backfill Plan For Next Candidate
     group: research
@@ -4010,6 +4222,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: archived_candidate_status_update
+    scope: research
     visibility_policy: archived_optional
     title: Archived Candidate Status Update
     group: governance
@@ -4029,6 +4242,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: research_cycle_reset_pack
+    scope: research
     visibility_policy: archived_optional
     title: Research Cycle Reset Pack
     group: governance
@@ -4048,6 +4262,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: return_to_research_governance_snapshot
+    scope: research
     visibility_policy: archived_optional
     title: Return-To-Research Governance Snapshot
     group: governance
@@ -4068,6 +4283,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: return_to_research_governance_snapshot_validation
+    scope: research
     visibility_policy: archived_optional
     title: Return-To-Research Governance Snapshot Validation
     group: governance
@@ -4088,6 +4304,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_research_cycle_intake
+    scope: research
     visibility_policy: archived_optional
     title: Next Research Cycle Intake
     group: research
@@ -4108,6 +4325,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_spec_frozen
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Spec Frozen
     group: research
@@ -4127,6 +4345,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_backfill
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Backfill
     group: research
@@ -4148,6 +4367,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_backfill_validation
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Backfill Validation
     group: governance
@@ -4168,6 +4388,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_stress_review
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Stress Review
     group: research
@@ -4189,6 +4410,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_stress_review_validation
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Stress Review Validation
     group: governance
@@ -4209,6 +4431,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_cost_benchmark_review
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Cost Benchmark Review
     group: research
@@ -4229,6 +4452,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_cost_benchmark_review_validation
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Cost Benchmark Review Validation
     group: governance
@@ -4249,6 +4473,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_vs_returned_candidate_comparison
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Vs Returned Candidate Comparison
     group: research
@@ -4268,6 +4493,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_vs_returned_candidate_comparison_validation
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Vs Returned Candidate Comparison Validation
     group: governance
@@ -4289,6 +4515,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_signal_robustness_review
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Signal Robustness Review
     group: research
@@ -4309,6 +4536,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_signal_robustness_review_validation
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Signal Robustness Review Validation
     group: governance
@@ -4329,6 +4557,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_overfit_window_sensitivity
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Overfit Window Sensitivity
     group: research
@@ -4349,6 +4578,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_overfit_window_sensitivity_validation
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Overfit Window Sensitivity Validation
     group: governance
@@ -4369,6 +4599,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_research_gate
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Research Gate
     group: governance
@@ -4390,6 +4621,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_research_gate_validation
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Research Gate Validation
     group: governance
@@ -4411,6 +4643,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_owner_research_review_packet
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Owner Research Review Packet
     group: governance
@@ -4431,6 +4664,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_owner_research_review_packet_validation
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Owner Research Review Packet Validation
     group: governance
@@ -4452,6 +4686,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_research_cycle_snapshot
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Research Cycle Snapshot
     group: governance
@@ -4472,6 +4707,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_research_cycle_snapshot_validation
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Research Cycle Snapshot Validation
     group: governance
@@ -4493,6 +4729,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: executable_research_evidence_gap_ledger
+    scope: research
     visibility_policy: archived_optional
     title: Executable Research Evidence Gap Ledger
     group: governance
@@ -4514,6 +4751,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: executable_research_evidence_gap_ledger_validation
+    scope: research
     visibility_policy: archived_optional
     title: Executable Research Evidence Gap Ledger Validation
     group: governance
@@ -4534,6 +4772,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: backfill_partial_root_cause_repair_plan
+    scope: research
     visibility_policy: archived_optional
     title: Backfill Partial Root Cause Repair Plan
     group: governance
@@ -4555,6 +4794,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: backfill_partial_root_cause_repair_plan_validation
+    scope: research
     visibility_policy: archived_optional
     title: Backfill Partial Root Cause Repair Plan Validation
     group: governance
@@ -4576,6 +4816,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: signal_robustness_blocker_drilldown
+    scope: research
     visibility_policy: archived_optional
     title: Signal Robustness Blocker Drilldown
     group: governance
@@ -4597,6 +4838,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: signal_robustness_blocker_drilldown_validation
+    scope: research
     visibility_policy: archived_optional
     title: Signal Robustness Blocker Drilldown Validation
     group: governance
@@ -4618,6 +4860,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: window_fragility_attribution
+    scope: research
     visibility_policy: archived_optional
     title: Window Fragility Attribution
     group: governance
@@ -4640,6 +4883,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: window_fragility_attribution_validation
+    scope: research
     visibility_policy: archived_optional
     title: Window Fragility Attribution Validation
     group: governance
@@ -4660,6 +4904,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: stress_weakness_attribution
+    scope: research
     visibility_policy: archived_optional
     title: Stress Weakness Attribution
     group: governance
@@ -4682,6 +4927,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: stress_weakness_attribution_validation
+    scope: research
     visibility_policy: archived_optional
     title: Stress Weakness Attribution Validation
     group: governance
@@ -4703,6 +4949,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: cost_benchmark_weakness_attribution
+    scope: research
     visibility_policy: archived_optional
     title: Cost Benchmark Weakness Attribution
     group: governance
@@ -4725,6 +4972,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: cost_benchmark_weakness_attribution_validation
+    scope: research
     visibility_policy: archived_optional
     title: Cost Benchmark Weakness Attribution Validation
     group: governance
@@ -4746,6 +4994,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_redesign_hypothesis_v2
+    scope: research
     visibility_policy: archived_optional
     title: Candidate Redesign Hypothesis V2
     group: governance
@@ -4767,6 +5016,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_redesign_hypothesis_v2_validation
+    scope: research
     visibility_policy: archived_optional
     title: Candidate Redesign Hypothesis V2 Validation
     group: governance
@@ -4787,6 +5037,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_spec_freeze
+    scope: research
     visibility_policy: archived_optional
     title: Candidate V2 Spec Freeze
     group: governance
@@ -4809,6 +5060,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_spec_freeze_validation
+    scope: research
     visibility_policy: archived_optional
     title: Candidate V2 Spec Freeze Validation
     group: governance
@@ -4829,6 +5081,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_executable_binding_update
+    scope: research
     visibility_policy: archived_optional
     title: Candidate V2 Executable Binding Update
     group: research
@@ -4850,6 +5103,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_executable_binding_update_validation
+    scope: research
     visibility_policy: archived_optional
     title: Candidate V2 Executable Binding Update Validation
     group: research
@@ -4871,6 +5125,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_mini_backfill
+    scope: research
     visibility_policy: archived_optional
     title: Candidate V2 Mini Backfill
     group: research
@@ -4892,6 +5147,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_mini_backfill_validation
+    scope: research
     visibility_policy: archived_optional
     title: Candidate V2 Mini Backfill Validation
     group: research
@@ -4913,6 +5169,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_mini_gate
+    scope: research
     visibility_policy: archived_optional
     title: Candidate V2 Mini Gate
     group: research
@@ -4933,6 +5190,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_mini_gate_validation
+    scope: research
     visibility_policy: archived_optional
     title: Candidate V2 Mini Gate Validation
     group: research
@@ -4954,6 +5212,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_full_backfill_if_approved
+    scope: research
     visibility_policy: archived_optional
     title: Candidate V2 Full Backfill If Approved
     group: research
@@ -4974,6 +5233,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_full_backfill_if_approved_validation
+    scope: research
     visibility_policy: archived_optional
     title: Candidate V2 Full Backfill If Approved Validation
     group: research
@@ -4995,6 +5255,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_research_gate
+    scope: research
     visibility_policy: archived_optional
     title: Candidate V2 Research Gate
     group: research
@@ -5016,6 +5277,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_research_gate_validation
+    scope: research
     visibility_policy: archived_optional
     title: Candidate V2 Research Gate Validation
     group: research
@@ -5037,6 +5299,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_owner_research_review_packet
+    scope: research
     visibility_policy: archived_optional
     title: Candidate V2 Owner Research Review Packet
     group: research
@@ -5058,6 +5321,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_owner_research_review_packet_validation
+    scope: research
     visibility_policy: archived_optional
     title: Candidate V2 Owner Research Review Packet Validation
     group: research
@@ -5078,6 +5342,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_research_cycle_snapshot
+    scope: research
     visibility_policy: archived_optional
     title: Candidate V2 Research Cycle Snapshot
     group: research
@@ -5098,6 +5363,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: candidate_v2_research_cycle_snapshot_validation
+    scope: research
     visibility_policy: archived_optional
     title: Candidate V2 Research Cycle Snapshot Validation
     group: research
@@ -5119,6 +5385,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_executable_binding_contract
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Executable Binding Contract
     group: research
@@ -5139,6 +5406,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_executable_binding_contract_validation
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Executable Binding Contract Validation
     group: governance
@@ -5159,6 +5427,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_signal_binding
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Signal Binding
     group: research
@@ -5180,6 +5449,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_signal_binding_validation
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Signal Binding Validation
     group: governance
@@ -5200,6 +5470,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_research_weight_binding
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Research Weight Binding
     group: research
@@ -5221,6 +5492,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: next_candidate_research_weight_binding_validation
+    scope: research
     visibility_policy: archived_optional
     title: Next Candidate Research Weight Binding Validation
     group: governance
@@ -5241,6 +5513,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: executable_binding_safety_audit
+    scope: research
     visibility_policy: archived_optional
     title: Executable Binding Safety Audit
     group: governance
@@ -5262,6 +5535,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: executable_binding_safety_audit_validation
+    scope: research
     visibility_policy: archived_optional
     title: Executable Binding Safety Audit Validation
     group: governance
@@ -5282,6 +5556,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: research_safety_boundary_audit
+    scope: research
     title: Research Safety Boundary Audit
     group: governance
     cadence: daily
@@ -5298,6 +5573,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: research_safety_boundary_validation
+    scope: research
     title: Research Safety Boundary Validation
     group: governance
     cadence: daily
@@ -5314,6 +5590,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: report_quality_gate
+    scope: daily
     title: Report Quality Gate
     group: governance
     cadence: daily
@@ -5330,6 +5607,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: documentation_contract
+    scope: daily
     title: Documentation Contract
     group: docs
     cadence: ad_hoc
@@ -5346,6 +5624,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: parameter_governance
+    scope: research
     title: Parameter Governance
     group: governance
     cadence: daily
@@ -5363,6 +5642,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: sec_pit_shadow_monitor
+    scope: daily
     title: SEC PIT Shadow Monitor
     group: research
     cadence: daily
@@ -5379,6 +5659,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: sec_pit_shadow_observe
+    scope: daily
     title: SEC PIT Shadow Observe
     group: research
     cadence: daily
@@ -5395,6 +5676,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: weight_candidate_evaluation
+    scope: research
     title: Weight Candidate Evaluation
     group: research
     cadence: daily
@@ -5412,6 +5694,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: weight_promotion_gate
+    scope: research
     title: Weight Promotion Gate
     group: governance
     cadence: daily
@@ -5429,6 +5712,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: shadow_parameter_backtest
+    scope: research
     title: Shadow Parameter Backtest
     group: research
     cadence: ad_hoc
@@ -5447,6 +5731,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: signal_ablation
+    scope: research
     title: Signal Ablation Summary
     group: research
     cadence: ad_hoc
@@ -5465,6 +5750,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: signal_calibration
+    scope: research
     title: Signal Calibration Summary
     group: research
     cadence: ad_hoc
@@ -5486,6 +5772,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: portfolio_sensitivity
+    scope: research
     title: Portfolio Sensitivity Summary
     group: research
     cadence: ad_hoc
@@ -5505,6 +5792,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: portfolio_candidates
+    scope: research
     title: Portfolio Candidate Profiles
     group: research
     cadence: ad_hoc
@@ -5524,6 +5812,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: portfolio_candidate_review
+    scope: research
     title: Portfolio Candidate Review
     group: research
     cadence: ad_hoc
@@ -5544,6 +5833,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: portfolio_candidate_tracking
+    scope: daily
     title: Portfolio Candidate Tracking
     group: research
     cadence: daily
@@ -5564,6 +5854,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: portfolio_tracking_review
+    scope: research
     title: Portfolio Tracking Review
     group: research
     cadence: daily
@@ -5582,6 +5873,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: weight_tuning
+    scope: research
     title: Restricted Weight Tuning
     group: research
     cadence: ad_hoc
@@ -5602,6 +5894,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: weight_tuning_failure
+    scope: research
     title: Weight Tuning Failure Attribution
     group: research
     cadence: ad_hoc
@@ -5621,6 +5914,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: weight_stability
+    scope: research
     title: Weight Search Stability
     group: research
     cadence: ad_hoc
@@ -5641,6 +5935,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: weight_stability_readiness
+    scope: research
     title: Weight Search Stability Input Readiness
     group: data_quality
     cadence: ad_hoc
@@ -5659,6 +5954,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: portfolio_turnover_attribution
+    scope: research
     title: Portfolio Turnover Attribution
     group: research
     cadence: ad_hoc
@@ -5678,6 +5974,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: market_data_freshness
+    scope: daily
     title: Market Data Freshness
     group: data_quality
     cadence: daily
@@ -5696,6 +5993,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: market_data_refresh
+    scope: daily
     title: Market Data Refresh
     group: data_quality
     cadence: ad_hoc
@@ -5715,6 +6013,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: parameter_promotion_decision
+    scope: research
     title: Parameter Promotion Decision
     group: governance
     cadence: ad_hoc
@@ -5733,6 +6032,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: backtest_daily
+    scope: research
     title: Daily Score Backtest
     group: backtest
     cadence: ad_hoc
@@ -5748,6 +6048,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: backtest_robustness
+    scope: research
     title: Backtest Robustness
     group: backtest
     cadence: ad_hoc
@@ -5764,6 +6065,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: data_source_usage_policy_audit
+    scope: research
     title: Data Source Usage Policy Audit
     group: data_quality
     cadence: ad_hoc
@@ -5781,6 +6083,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: fmp_price_corporate_action_qualification_report
+    scope: research
     title: FMP Price Corporate Action Qualification Report
     group: data_quality
     cadence: ad_hoc
@@ -5799,6 +6102,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: marketstack_reconciliation_qualification_report
+    scope: research
     title: Marketstack Reconciliation Qualification Report
     group: data_quality
     cadence: ad_hoc
@@ -5818,6 +6122,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: asset_master_qualification_report
+    scope: research
     title: Asset Master Qualification Report
     group: data_quality
     cadence: ad_hoc
@@ -5835,6 +6140,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: forward_evidence_requirement_reclassification
+    scope: research
     title: Forward Evidence Requirement Reclassification
     group: data_quality
     cadence: ad_hoc
@@ -5853,6 +6159,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: sec_fundamental_pit_qualification_report
+    scope: research
     title: SEC Fundamental PIT Qualification Report
     group: data_quality
     cadence: ad_hoc
@@ -5871,6 +6178,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: macro_risk_source_qualification_report
+    scope: research
     title: Macro Risk Source Qualification Report
     group: data_quality
     cadence: ad_hoc
@@ -5888,6 +6196,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: label_boundary_qualification_report
+    scope: research
     title: Label Boundary Qualification Report
     group: research
     cadence: ad_hoc
@@ -5905,6 +6214,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: cost_liquidity_qualification_report
+    scope: research
     title: Cost Liquidity Qualification Report
     group: data_quality
     cadence: ad_hoc
@@ -5923,6 +6233,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: data_foundation_acceptance_report_v2
+    scope: research
     title: Data Foundation Acceptance Report V2
     group: data_quality
     cadence: ad_hoc
@@ -5942,6 +6253,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: current_subscription_source_qualification_batch_review
+    scope: research
     title: Current Subscription Source Qualification Batch Review
     group: data_quality
     cadence: ad_hoc
@@ -5959,6 +6271,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: strategy_research_readiness_board
+    scope: research
     title: Strategy Research Readiness Board
     group: research
     cadence: ad_hoc
@@ -5976,6 +6289,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: benchmark_controls_real_data_batch
+    scope: research
     title: Benchmark Controls Real Data Batch
     group: research
     cadence: ad_hoc
@@ -5993,6 +6307,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: strategy_pair_reverse_diagnostics_pilot
+    scope: research
     title: Strategy Pair Reverse Diagnostics Pilot
     group: research
     cadence: ad_hoc
@@ -6010,6 +6325,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: regret_casebook_failure_taxonomy_pilot
+    scope: research
     title: Regret Casebook Failure Taxonomy Pilot
     group: research
     cadence: ad_hoc
@@ -6027,6 +6343,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: horizon_conditioned_value_surface_prototype
+    scope: research
     title: Horizon Conditioned Value Surface Prototype
     group: research
     cadence: ad_hoc
@@ -6044,6 +6361,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: regret_driven_state_machine_prototype
+    scope: research
     title: Regret Driven State Machine Prototype
     group: research
     cadence: ad_hoc
@@ -6061,6 +6379,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: simple_strategy_ensemble_selector_prototype
+    scope: research
     title: Simple Strategy Ensemble Selector Prototype
     group: research
     cadence: ad_hoc
@@ -6078,6 +6397,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: gbdt_action_utility_baseline
+    scope: research
     title: GBDT Action Utility Baseline
     group: research
     cadence: ad_hoc
@@ -6095,6 +6415,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: pilot_batch_review
+    scope: research
     title: Pilot Batch Review
     group: research
     cadence: ad_hoc
@@ -6112,6 +6433,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: data_vendor_decision_gate
+    scope: research
     title: Data Vendor Decision Gate
     group: data_quality
     cadence: ad_hoc
@@ -6129,6 +6451,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: controlled_benchmark_batch_report
+    scope: research
     title: Controlled Benchmark Batch Report
     group: research
     cadence: ad_hoc
@@ -6148,6 +6471,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: forward_evidence_dry_run_archive
+    scope: research
     title: Forward Evidence Dry Run Archive
     group: research
     cadence: ad_hoc
@@ -6164,6 +6488,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: controlled_benchmark_execution_expansion_report
+    scope: research
     title: Controlled Benchmark Execution Expansion Report
     group: research
     cadence: ad_hoc
@@ -6181,6 +6506,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: forward_evidence_daily_dry_run_archive
+    scope: daily
     title: Forward Evidence Daily Dry Run Archive
     group: research
     cadence: daily
@@ -6199,6 +6525,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: marketstack_coverage_expansion_report
+    scope: research
     title: Marketstack Coverage Expansion Report
     group: data_quality
     cadence: ad_hoc
@@ -6217,6 +6544,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: marketstack_data_required_closure_report
+    scope: research
     title: Marketstack DATA_REQUIRED Closure Report
     group: data_quality
     cadence: ad_hoc
@@ -6234,6 +6562,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: fmp_pit_owner_review_package
+    scope: research
     title: FMP PIT Owner Review Package
     group: data_quality
     cadence: ad_hoc
@@ -6253,6 +6582,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: fmp_watchlist_closure_report
+    scope: research
     title: FMP WATCHLIST Closure Report
     group: data_quality
     cadence: ad_hoc
@@ -6270,6 +6600,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: reverse_diagnostics_controlled_pilot
+    scope: research
     title: Reverse Diagnostics Controlled Pilot
     group: research
     cadence: ad_hoc
@@ -6287,6 +6618,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: reverse_diagnostics_activation_gate
+    scope: research
     title: Reverse Diagnostics Activation Gate
     group: research
     cadence: ad_hoc
@@ -6304,6 +6636,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: regret_casebook_controlled_pilot
+    scope: research
     title: Regret Casebook Controlled Pilot
     group: research
     cadence: ad_hoc
@@ -6321,6 +6654,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: controlled_research_batch_review
+    scope: research
     title: Controlled Research Batch Review
     group: research
     cadence: ad_hoc
@@ -6338,6 +6672,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: tail_risk_daily_reading_safety_summary
+    scope: research
     title: Tail-Risk Daily Reading Safety Summary
     group: research
     cadence: daily
@@ -6355,6 +6690,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: simple_baseline_strategy_registry_review
+    scope: research
     title: Simple Baseline Strategy Registry Review
     group: research
     cadence: ad_hoc
@@ -6372,6 +6708,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: qqq_sgov_baseline_backtest
+    scope: research
     title: QQQ / SGOV Baseline Backtest
     group: research
     cadence: ad_hoc
@@ -6389,6 +6726,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: tqqq_sgov_risk_controlled_baseline
+    scope: research
     title: TQQQ / SGOV Risk-Controlled Baseline
     group: research
     cadence: ad_hoc
@@ -6406,6 +6744,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: trend_vol_allocation_policy_search
+    scope: research
     title: Trend / Volatility Allocation Policy Search
     group: research
     cadence: ad_hoc
@@ -6423,6 +6762,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: simple_baseline_dominance_ranking
+    scope: research
     title: Simple Baseline Dominance Ranking
     group: research
     cadence: ad_hoc
@@ -6440,6 +6780,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: simple_baseline_pit_boundary_audit
+    scope: research
     title: Simple Baseline PIT Boundary Audit
     group: research
     cadence: ad_hoc
@@ -6457,6 +6798,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: simple_baseline_cost_sensitivity
+    scope: research
     title: Simple Baseline Cost Sensitivity
     group: research
     cadence: ad_hoc
@@ -6474,6 +6816,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: simple_baseline_regime_review
+    scope: research
     title: Simple Baseline Regime Review
     group: research
     cadence: ad_hoc
@@ -6491,6 +6834,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: simple_baseline_forward_aging_tracker
+    scope: research
     title: Simple Baseline Forward Aging Tracker
     group: research
     cadence: ad_hoc
@@ -6508,6 +6852,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: simple_baseline_paper_shadow_readiness
+    scope: research
     title: Simple Baseline Paper-Shadow Readiness
     group: research
     cadence: ad_hoc
@@ -6525,6 +6870,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: daily_reader_portfolio_control_safety_summary
+    scope: research
     title: Daily Reader Portfolio Control Safety Summary
     group: research
     cadence: ad_hoc
@@ -6542,6 +6888,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: simple_baseline_portfolio_dry_run_mapper
+    scope: research
     title: Simple Baseline Portfolio Dry-Run Mapper
     group: research
     cadence: ad_hoc
@@ -6559,6 +6906,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: simple_baseline_master_review
+    scope: research
     title: Simple Baseline Portfolio Control Master Review
     group: research
     cadence: ad_hoc
@@ -6577,6 +6925,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: options_next_stage_gate
+    scope: research
     title: Options Next-Stage Gate for LEAPS / Wheel
     group: research
     cadence: ad_hoc
@@ -6594,6 +6943,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: daily_reader_forward_aging_summary
+    scope: research
     title: Daily Reader Forward Aging Summary
     group: research
     cadence: ad_hoc
@@ -6613,6 +6963,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: growth_tilt_owner_diagnosis_pack
+    scope: research
     title: Growth Tilt Owner Diagnosis Pack
     group: research
     cadence: ad_hoc
@@ -6633,6 +6984,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: growth_tilt_focused_diagnosis_master_review
+    scope: research
     title: Growth Tilt Focused Diagnosis Master Review
     group: research
     cadence: ad_hoc
@@ -6653,6 +7005,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: dynamic_strategy_calibrated_gate_owner_review_decision
+    scope: research
     title: Dynamic Strategy Calibrated Gate Owner Review Decision
     group: research
     cadence: ad_hoc
@@ -6678,6 +7031,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: growth_tilt_owner_decision_resolution
+    scope: research
     title: Growth Tilt Owner Decision Resolution
     group: research
     cadence: ad_hoc
@@ -6700,6 +7054,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: growth_tilt_baseline_contract_adapters_readiness
+    scope: research
     title: Growth Tilt Baseline Contract Adapters Readiness
     group: research
     cadence: ad_hoc
@@ -6723,6 +7078,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: growth_tilt_replacement_candidate_contract
+    scope: research
     title: Growth Tilt Replacement Candidate Contract
     group: research
     cadence: ad_hoc
@@ -6744,6 +7100,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: growth_tilt_candidate_family_closure
+    scope: research
     title: Growth Tilt Candidate Family Closure
     group: research
     cadence: ad_hoc
@@ -6764,6 +7121,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: leveraged_exposure_instrument_evaluation
+    scope: research
     title: QLD Incremental Instrument Value Evaluation and Role Disposition
     group: research
     cadence: ad_hoc
@@ -6802,6 +7160,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: dq_issue_attribution_readiness_inventory
+    scope: research
     title: DQ Issue Attribution Readiness Inventory
     group: governance
     cadence: ad_hoc
@@ -6828,6 +7187,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: rate_issue_attribution_source_owner_review_pack
+    scope: research
     title: Rate Issue Attribution Review Pack and C3 Decision Authority
     group: governance
     cadence: ad_hoc
@@ -6859,6 +7219,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: price_non_market_session_attribution_source_owner_review_pack
+    scope: research
     title: Price Non-Market-Session Attribution Source-Owner Review Pack
     group: governance
     cadence: ad_hoc
@@ -6886,6 +7247,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: decision_target_capability_audit_label_foundation
+    scope: research
     title: Decision Target Capability Audit Batch 1 Label Foundation
     group: research
     cadence: ad_hoc
@@ -6931,6 +7293,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: decision_target_capability_audit_model_ladder
+    scope: research
     title: Decision Target Capability Audit Batch 2 Model Ladder
     group: research
     cadence: ad_hoc
@@ -6973,6 +7336,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: decision_target_tail_risk_robustness_audit
+    scope: research
     title: Decision Target Tail-Risk Robustness / Falsification Audit
     group: research
     cadence: ad_hoc
@@ -7008,6 +7372,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: research_window_registry
+    scope: research
     title: Research Window Registry
     group: research
     cadence: ad_hoc
@@ -7027,6 +7392,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: dynamic_second_layer_probe_registry_v2
+    scope: research
     title: Dynamic Second-Layer Probe Registry V2
     group: research
     cadence: ad_hoc
@@ -7046,6 +7412,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: first_layer_v2_effective_coverage_audit
+    scope: research
     title: First-Layer V2 Effective Coverage Audit
     group: research
     cadence: ad_hoc
@@ -7065,6 +7432,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: indicator_family_ablation
+    scope: research
     visibility_policy: archived_optional
     title: Indicator Family Ablation Evidence Pack
     group: research
@@ -7093,6 +7461,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: free_data_source_registry
+    scope: research
     title: Free Data Source Registry Review
     group: research
     cadence: ad_hoc
@@ -7114,6 +7483,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: fred_series_ingestion_review
+    scope: research
     title: FRED Series Ingestion Review
     group: research
     cadence: ad_hoc
@@ -7134,6 +7504,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: vix_free_source_crosscheck_review
+    scope: research
     title: VIX Free Source Crosscheck Review
     group: research
     cadence: ad_hoc
@@ -7153,6 +7524,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: official_macro_calendar_ingestion_review
+    scope: research
     title: Official Macro Calendar Ingestion Review
     group: research
     cadence: ad_hoc
@@ -7172,6 +7544,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: calendar_event_pit_contract
+    scope: research
     title: Calendar Event PIT Contract
     group: research
     cadence: ad_hoc
@@ -7191,6 +7564,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: free_feature_pit_audit
+    scope: research
     title: Free Feature PIT Audit
     group: research
     cadence: ad_hoc
@@ -7210,6 +7584,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: free_feature_family_reopen_readiness
+    scope: research
     title: Free Feature Family Reopen Readiness
     group: research
     cadence: ad_hoc
@@ -7231,6 +7606,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: free_feature_family_reablation
+    scope: research
     visibility_policy: archived_optional
     title: Free Feature Family Re-Ablation
     group: research
@@ -7261,6 +7637,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: true_breadth_data_contract
+    scope: research
     title: True Breadth Data Contract
     group: research
     cadence: ad_hoc
@@ -7280,6 +7657,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: paid_breadth_data_vendor_registry
+    scope: research
     title: Paid Breadth Data Vendor Registry
     group: research
     cadence: ad_hoc
@@ -7299,6 +7677,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: norgate_trial_integration_scope
+    scope: research
     title: Norgate Trial Integration Scope
     group: research
     cadence: ad_hoc
@@ -7318,6 +7697,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: norgate_trial_environment_contract
+    scope: research
     title: Norgate Trial Environment Contract
     group: research
     cadence: ad_hoc
@@ -7338,6 +7718,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: norgate_trial_smoke_test_review
+    scope: research
     title: Norgate Trial Smoke Test Review
     group: research
     cadence: ad_hoc
@@ -7357,6 +7738,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: norgate_source_contract
+    scope: research
     title: Norgate Source Contract
     group: research
     cadence: ad_hoc
@@ -7376,6 +7758,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: norgate_membership_query_probe_review
+    scope: research
     title: Norgate Membership Query Probe Review
     group: research
     cadence: ad_hoc
@@ -7397,6 +7780,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: norgate_delisted_visibility_probe_review
+    scope: research
     title: Norgate Delisted Visibility Probe Review
     group: research
     cadence: ad_hoc
@@ -7416,6 +7800,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: norgate_trial_price_coverage_review
+    scope: research
     title: Norgate Trial Price Coverage Review
     group: research
     cadence: ad_hoc
@@ -7436,6 +7821,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: norgate_breadth_prototype_2y_review
+    scope: research
     title: Norgate Breadth Prototype 2Y Review
     group: research
     cadence: ad_hoc
@@ -7457,6 +7843,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: norgate_trial_pit_leakage_audit
+    scope: research
     title: Norgate Trial PIT Leakage Audit
     group: research
     cadence: ad_hoc
@@ -7476,6 +7863,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: norgate_trial_cache_artifact_governance
+    scope: research
     title: Norgate Trial Cache Artifact Governance
     group: research
     cadence: ad_hoc
@@ -7495,6 +7883,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: norgate_trial_value_of_information_review
+    scope: research
     title: Norgate Trial Value Of Information Review
     group: research
     cadence: ad_hoc
@@ -7514,6 +7903,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: norgate_paid_platinum_decision_gate
+    scope: research
     title: Norgate Paid Platinum Decision Gate
     group: research
     cadence: ad_hoc
@@ -7534,6 +7924,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: norgate_trial_owner_brief
+    scope: research
     title: Norgate Trial Owner Brief
     group: research
     cadence: ad_hoc
@@ -7554,6 +7945,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: norgate_trial_partial_effectiveness_policy
+    scope: research
     title: Norgate Trial Partial Effectiveness Policy
     group: research
     cadence: ad_hoc
@@ -7573,6 +7965,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: norgate_trial_partial_effectiveness_coverage_report
+    scope: research
     title: Norgate Trial Partial Effectiveness Coverage Report
     group: research
     cadence: ad_hoc
@@ -7594,6 +7987,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: norgate_trial_breadth_feature_report_2y
+    scope: research
     title: Norgate Trial Breadth Feature Report 2Y
     group: research
     cadence: ad_hoc
@@ -7615,6 +8009,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: norgate_trial_local_signal_report_2y
+    scope: research
     title: Norgate Trial Local Signal Report 2Y
     group: research
     cadence: ad_hoc
@@ -7637,6 +8032,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: norgate_trial_partial_effectiveness_conclusion_matrix
+    scope: research
     title: Norgate Trial Partial Effectiveness Conclusion Matrix
     group: research
     cadence: ad_hoc
@@ -7657,6 +8053,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: norgate_2y_partial_evidence_review_policy
+    scope: research
     title: Norgate 2Y Partial Evidence Review Policy
     group: research
     cadence: ad_hoc
@@ -7676,6 +8073,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: norgate_2y_partial_evidence_review
+    scope: research
     title: Norgate 2Y Partial Evidence Review
     group: research
     cadence: ad_hoc
@@ -7697,6 +8095,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: norgate_platinum_decision_memo
+    scope: research
     title: Norgate Platinum Decision Memo
     group: research
     cadence: ad_hoc
@@ -7716,6 +8115,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: norgate_2y_partial_evidence_conclusion_matrix
+    scope: research
     title: Norgate 2Y Partial Evidence Conclusion Matrix
     group: research
     cadence: ad_hoc
@@ -7735,6 +8135,7 @@ reports:
     production_effect: none
     broker_action: none
   - report_id: candidate_signal_binding_schema_poc
+    scope: research
     title: Candidate Signal Binding Schema + Baseline Rewrap POC
     group: research
     cadence: ad_hoc

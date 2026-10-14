@@ -828,6 +828,7 @@ def _dispatch(args: list[str]) -> None:
         reports_cli.artifact_lineage_command(
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             latest=_flag(args, "--latest"),
+            **_scope_kwargs(args),
         )
         return
     if args[:2] == ["reports", "validate-artifact-lineage"]:
@@ -865,12 +866,14 @@ def _dispatch(args: list[str]) -> None:
         reports_cli.report_index_command(
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             latest=_flag(args, "--latest"),
+            **_scope_kwargs(args),
         )
         return
     if args[:2] == ["docs", "report-contract"]:
         docs_cli.documentation_contract_command(
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             latest=_flag(args, "--latest"),
+            **_scope_kwargs(args),
         )
         return
     if args[:2] == ["docs", "heuristic-audit"]:
@@ -919,6 +922,11 @@ def _option(args: Sequence[str], name: str, default: str | None = None) -> str |
     if index + 1 >= len(args):
         raise typer.BadParameter(f"缺少 {name} 的参数值")
     return args[index + 1]
+
+
+def _scope_kwargs(args: Sequence[str]) -> dict[str, str]:
+    scope = _option(args, "--scope")
+    return {} if scope is None else {"scope": scope}
 
 
 def _flag(args: Sequence[str], name: str) -> bool:

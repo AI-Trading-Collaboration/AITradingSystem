@@ -17,6 +17,7 @@ from ai_trading_system.reports.report_index import (
     build_report_index_payload,
     default_report_index_html_path,
     default_report_index_json_path,
+    parse_registry_scope,
     write_report_index_html,
     write_report_index_json,
 )
@@ -72,6 +73,12 @@ def report_index_command(
         Path | None,
         typer.Option(help="Report index JSON 输出路径。"),
     ] = None,
+    scope: Annotated[
+        str,
+        typer.Option(
+            "--scope", help="登记表范围：all（默认，全部）、daily（日报范围）或 research。"
+        ),
+    ] = "all",
 ) -> None:
     """生成只读报告 registry / cadence index。"""
     if latest and as_of:
@@ -91,6 +98,7 @@ def report_index_command(
             project_root=project_root,
             registry_path=registry_path,
             waiver_path=waiver_path,
+            registry_scope=parse_registry_scope(scope),
         )
     except (FileNotFoundError, ValueError) as exc:
         raise typer.BadParameter(str(exc)) from exc

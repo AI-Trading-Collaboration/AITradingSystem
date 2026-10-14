@@ -45,10 +45,18 @@ STAMP = "20261014T030000Z"
 REGISTRY = b"""schema_version: 1
 reports:
   - report_id: note
+    scope: daily
     artifact_globs:
       - docs/research/*.md
       - outputs/x/*.json
+  - report_id: lab
+    scope: research
+    artifact_globs:
       - research/_results/r/*.csv
+      - docs/research/sub/*.md
+  - report_id: unscoped
+    artifact_globs:
+      - docs/other.md
 """
 TREE = {
     ".gitattributes": b"* text=auto eol=lf\n*.ps1 text eol=crlf\n",
@@ -88,7 +96,6 @@ EXPECTED = [
     "docs/schema/historical_gap_recovery.v1.schema.json",
     "inputs/trade_theses/a.yaml",
     "pyproject.toml",
-    "research/_results/r/a.csv",
     "scripts/ops/run_daily.ps1",
     "src/ai_trading_system/__init__.py",
     "src/ai_trading_system/mod.py",
@@ -269,25 +276,40 @@ def test_the_real_release_holds_the_daily_code_and_nothing_from_development() ->
     assert "AGENTS.md" not in selected
 
 
-def test_the_real_release_holds_every_tracked_file_the_registry_names() -> None:
+def test_the_real_release_holds_the_tracked_files_of_daily_registry_entries_only() -> None:
     import yaml
 
     registry = yaml.safe_load((CODE_ROOT / "config" / "report_registry.yaml").read_text("utf-8"))
     tracked = set(_tracked())
-    named = set()
-    for entry in registry["reports"]:
-        for pattern in entry.get("artifact_globs", []):
-            for match in glob.glob(str(CODE_ROOT / pattern)):
-                rel = Path(match).relative_to(CODE_ROOT).as_posix()
-                if rel in tracked and rel.split("/", 1)[0] not in {
-                    "data",
-                    "outputs",
-                    "artifacts",
-                }:
-                    named.add(rel)
+    rules = yaml.safe_load((CODE_ROOT / RULES).read_text("utf-8"))
+    included = [build._glob_regex(pattern) for pattern in rules["include"]]
 
-    assert len(named) >= 27
-    assert named <= set(build.release_file_list(CODE_ROOT, "HEAD"))
+    def named(scope: str) -> set[str]:
+        found = set()
+        for entry in registry["reports"]:
+            if entry.get("scope") != scope:
+                continue
+            for pattern in entry.get("artifact_globs", []):
+                for match in glob.glob(str(CODE_ROOT / pattern)):
+                    rel = Path(match).relative_to(CODE_ROOT).as_posix()
+                    if rel in tracked and rel.split("/", 1)[0] not in {
+                        "data",
+                        "outputs",
+                        "artifacts",
+                    }:
+                        found.add(rel)
+        return found
+
+    release = set(build.release_file_list(CODE_ROOT, "HEAD"))
+    only_research = {
+        path
+        for path in named("research") - named("daily")
+        if not any(pattern.fullmatch(path) for pattern in included)
+    }
+
+    assert named("daily") <= release
+    assert len(only_research) >= 20
+    assert not only_research & release
 
 
 # --- deploy with a fake command runner ------------------------------------------------------------

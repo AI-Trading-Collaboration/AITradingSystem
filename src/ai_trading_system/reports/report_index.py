@@ -18,6 +18,7 @@ SCHEMA_VERSION = 1
 REPORT_TYPE = "report_index"
 PRODUCTION_EFFECT = "none"
 DEFAULT_REPORT_REGISTRY_PATH = PROJECT_ROOT / "config" / "report_registry.yaml"
+REGISTRY_SCOPES = frozenset({"daily", "research"})
 DEFAULT_REPORT_INDEX_WAIVER_PATH = PROJECT_ROOT / "config" / "report_index_visibility_waivers.yaml"
 DEFAULT_ARTIFACT_SELECTION_POLICY = "as_of_or_unknown"
 ARTIFACT_SELECTION_POLICIES = frozenset(
@@ -75,7 +76,19 @@ def default_report_index_html_path(output_dir: Path, as_of: date) -> Path:
     return output_dir / f"report_index_{as_of.isoformat()}.html"
 
 
-def load_report_registry(path: Path = DEFAULT_REPORT_REGISTRY_PATH) -> dict[str, Any]:
+def parse_registry_scope(value: str) -> str | None:
+    if value == "all":
+        return None
+    if value in REGISTRY_SCOPES:
+        return value
+    raise ValueError(f"--scope must be one of {['all', *sorted(REGISTRY_SCOPES)]}")
+
+
+def load_report_registry(
+    path: Path = DEFAULT_REPORT_REGISTRY_PATH, *, scope: str | None = None
+) -> dict[str, Any]:
+    if scope is not None and scope not in REGISTRY_SCOPES:
+        raise ValueError(f"report registry scope must be one of {sorted(REGISTRY_SCOPES)}")
     if not path.exists():
         raise FileNotFoundError(f"report registry not found: {path}")
     raw = safe_load_yaml_path(path)
@@ -96,6 +109,14 @@ def load_report_registry(path: Path = DEFAULT_REPORT_REGISTRY_PATH) -> dict[str,
         if report_id in seen:
             raise ValueError(f"duplicate report_id in report registry: {report_id}")
         seen.add(report_id)
+        if "scope" in entry and entry["scope"] not in REGISTRY_SCOPES:
+            raise ValueError(
+                f"report registry {report_id} scope must be one of {sorted(REGISTRY_SCOPES)}"
+            )
+        if entry.get("scope") == "research" and entry.get("required_for_daily_reading"):
+            raise ValueError(
+                f"report registry {report_id} scope=research cannot be required_for_daily_reading"
+            )
         for field in (
             "title",
             "group",
@@ -161,7 +182,12 @@ def load_report_registry(path: Path = DEFAULT_REPORT_REGISTRY_PATH) -> dict[str,
                 f"report registry defaults freshness_basis_by_cadence[{cadence}] must be one "
                 f"of {sorted(FRESHNESS_BASIS_VALUES)}"
             )
-    return raw
+    if scope is None:
+        return raw
+    scoped_reports = [entry for entry in reports if entry.get("scope") == scope]
+    if not scoped_reports:
+        raise ValueError(f"report registry has no entries in scope {scope}")
+    return {**raw, "reports": scoped_reports}
 
 
 def load_report_index_visibility_waivers(
@@ -248,8 +274,9 @@ def build_report_index_payload(
     project_root: Path = PROJECT_ROOT,
     registry_path: Path = DEFAULT_REPORT_REGISTRY_PATH,
     waiver_path: Path | None = DEFAULT_REPORT_INDEX_WAIVER_PATH,
+    registry_scope: str | None = None,
 ) -> dict[str, Any]:
-    registry = load_report_registry(registry_path)
+    registry = load_report_registry(registry_path, scope=registry_scope)
     defaults = _mapping(registry.get("defaults"))
     reports = [
         _report_record(
@@ -307,6 +334,7 @@ def build_report_index_payload(
         "production_effect": PRODUCTION_EFFECT,
         "registry": {
             "path": str(registry_path),
+            "scope": registry_scope or "all",
             "policy_version": _string(registry.get("policy_version")),
             "policy_metadata": _mapping(registry.get("policy_metadata")),
         },

@@ -71,7 +71,10 @@ def release_file_list(repo: Path, commit: str) -> list[str]:
     includes = [_glob_regex(pattern) for pattern in rules["include"]]
     excludes = [_glob_regex(pattern) for pattern in rules["exclude"]]
     registry_globs = [
-        pattern for entry in registry["reports"] for pattern in entry.get("artifact_globs", [])
+        pattern
+        for entry in registry["reports"]
+        if entry.get("scope") == "daily"
+        for pattern in entry.get("artifact_globs", [])
     ]
     tracked = _git(repo, "ls-tree", "-r", "-z", "--name-only", commit).decode("utf-8").split("\0")
     return sorted(

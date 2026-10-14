@@ -197,8 +197,8 @@ production_effect: none
 broker_action: none
 ```
 
-清单由脚本生成，不手写（2026-10-13 手写的第一版漏了 7 个登记项点名的文件）。步骤 5 给登记表分范围后，`include_registry_globs`
-只取日报范围的登记项。
+清单由脚本生成，不手写（2026-10-13 手写的第一版漏了 7 个登记项点名的文件）。登记表分范围（步骤 5a）后，`include_registry_globs`
+只取 `scope: daily` 的登记项；这些项的产物都在状态目录里，所以目前清单实际只剩 `include` 规则选出的文件。
 
 ### 5.2 构建 `tools/release/build_daily_release.py`
 
@@ -306,9 +306,24 @@ python tools/release/deploy_daily_release.py --activate <release_id> --daily-roo
 
 ## 7. 之后（另定）
 
-- 步骤 5：登记表分范围。日报收尾（artifact-lineage、reports index、docs report-contract、quality-gate）只处理日报范围；
-  研究登记项改在开发仓按需检查。届时请 Baker 定 reader brief 是否保留"研究治理摘要"一节（默认不保留）。要在步骤 6 之前做，
-  否则新的生产状态里没有研究遗留产物，研究登记项会多出缺失警告。
+- 步骤 5a（OPS-086-05，B 区）：登记表分范围。
+  - 为什么：日报收尾读登记表全部项，而日报计划只产出其中约 20 项。运行副本 2026-10-09 的 report index（2026-10-11 那次日报，27 步全 PASS）里
+    当天新鲜的登记项是 16 个，加上收尾各步自己的报告共 21 个；`cadence=daily` 的 58 项里有 42 项不是日报产物（`reports daily-tasks`、旧的 etf_*
+    报告、owner_review_template_v2 等），所以不能按 cadence 划。新的生产状态里没有研究遗留产物，全量登记表会让每个缺失的
+    `visibility_policy=current` 登记项各出一条警告（空状态下 186 条，运行副本 10-09 那天 145 条）。
+  - 字段：`config/report_registry.yaml` 每项有 `scope: daily|research`。`daily` 共 21 项：artifact_lineage_graph、artifact_lineage_validation、
+    backtest_input_diagnostics、calculation_explainers、daily_score、data_quality、documentation_contract、evidence_dashboard、forward_evidence_archive、
+    forward_evidence_daily_dry_run_archive、market_data_freshness、market_data_refresh、market_panel、portfolio_candidate_tracking、reader_brief、
+    reader_brief_quality、report_quality_gate、research_governance_summary、score_change_attribution、sec_pit_shadow_monitor、sec_pit_shadow_observe；
+    其余都是 `research`。`required_for_daily_reading` 的项必须是 `daily`；`daily_decision_summary` 的写入命令 `reports daily-tasks` 不在日报计划里，
+    改为 `required_for_daily_reading: false`。
+  - 命令：`aits reports index`、`aits reports artifact-lineage`、`aits docs report-contract` 加 `--scope all|daily|research`，默认 `all`（行为不变）。
+    日报计划给这三步传 `--scope daily`（`cli_direct` 的手写分发也要透传）；`reports quality-gate`、Reader Brief 读这份索引，不另加参数。
+    `tools/release/build_daily_release.py` 只取 `scope: daily` 的登记项的 globs。
+  - 不改：任何报告的内容、评分、门禁；不带 `--scope` 时的输出。
+  - 验收：`tests/test_ops086_registry_scope.py`。`daily` 清单在测试里固定，日报计划加报告或步骤时同一提交改清单。
+- 步骤 5b（等 Baker 答复）：Reader Brief 是否保留“研究治理摘要”一节（默认不保留）。不保留时：日报计划去掉 `research_governance_summary` 一步，
+  Reader Brief 和 daily_task_dashboard 去掉对应一节，`research_governance_summary` 改 `scope: research`。
 - 步骤 6：电脑上试运行（计划 P5），只写新目录。
 - 步骤 7：Baker 切换计划任务（计划 P6）。之后再单独问旧运行副本和研究数据搬进 archive。
 
@@ -324,3 +339,4 @@ python tools/release/deploy_daily_release.py --activate <release_id> --daily-roo
 - 2026-10-15：步骤 2（OPS-086-02）：release_identity 模块、7 处发布身份、包装脚本和摘要接受状态根。production_effect=none；broker_action=none。
 - 2026-10-15：步骤 3（OPS-086-03）：清单规则、构建和部署脚本、run_daily.ps1、注册脚本 -DailyRoot、运维手册 9.3。production_effect=none；broker_action=none。
 - 2026-10-15：步骤 4（OPS-086-04）：scripts/ 的 27 个脚本 48 处改走 paths 模块，棘轮扩到 scripts/。production_effect=none；broker_action=none。
+- 2026-10-15：步骤 5a（OPS-086-05）：登记表加 scope，日报收尾三步只处理日报范围，发布包清单只取日报登记项。production_effect=none；broker_action=none。

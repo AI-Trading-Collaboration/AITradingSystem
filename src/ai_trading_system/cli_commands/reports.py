@@ -299,6 +299,7 @@ from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_INDEX_WAIVER_PATH,
     DEFAULT_REPORT_REGISTRY_PATH,
     default_report_index_json_path,
+    parse_registry_scope,
 )
 from ai_trading_system.reports.report_quality_gate import (
     build_report_quality_gate_payload,
@@ -7104,6 +7105,12 @@ def artifact_lineage_command(
         Path | None,
         typer.Option(help="Artifact lineage Markdown 输出路径。"),
     ] = None,
+    scope: Annotated[
+        str,
+        typer.Option(
+            "--scope", help="登记表范围：all（默认，全部）、daily（日报范围）或 research。"
+        ),
+    ] = "all",
 ) -> None:
     """生成 candidate research chain artifact lineage graph；只读扫描既有 artifact。"""
     if latest and as_of:
@@ -7134,6 +7141,7 @@ def artifact_lineage_command(
             report_index_path=report_index_path,
             registry_path=registry_path,
             waiver_path=waiver_path,
+            registry_scope=parse_registry_scope(scope),
         )
     except FileNotFoundError as exc:
         raise typer.BadParameter(str(exc)) from exc
