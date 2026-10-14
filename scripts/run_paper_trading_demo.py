@@ -11,6 +11,8 @@ SRC_ROOT = REPO_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
+from ai_trading_system.paths import state_dir  # noqa: E402
+
 
 def run_demo(
     *,
@@ -177,7 +179,7 @@ def main() -> None:
     parser.add_argument("--date", required=True, help="Trading date in YYYY-MM-DD format.")
     parser.add_argument(
         "--audit-root",
-        default=str(REPO_ROOT / "data" / "trading_engine" / "audit"),
+        default=str(state_dir(REPO_ROOT, "data", "trading_engine", "audit")),
         help="Audit JSONL root directory.",
     )
     parser.add_argument(

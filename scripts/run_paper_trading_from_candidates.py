@@ -12,6 +12,8 @@ SRC_ROOT = REPO_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
+from ai_trading_system.paths import state_dir  # noqa: E402
+
 if TYPE_CHECKING:
     from ai_trading_system.trading_engine.market_snapshot_provider import (
         MarketSnapshotProvider,
@@ -69,7 +71,7 @@ def run_from_candidates(
     candidate_record_by_id = {str(record["candidate_id"]): record for record in candidate_records}
     config = load_trading_engine_config()
     snapshot_provider = market_snapshot_provider or HistoricalPriceMarketSnapshotProvider(
-        prices_path=prices_path or project_root / "data" / "raw" / "prices_daily.csv",
+        prices_path=prices_path or state_dir(project_root, "data", "raw", "prices_daily.csv"),
     )
     portfolio = PaperPortfolio(config.execution.default_initial_cash_usd)
     broker = PaperBroker(portfolio=portfolio, execution_settings=config.execution)
@@ -147,7 +149,8 @@ def run_from_candidates(
     report_path = write_trading_daily_report(report, report_dir / f"{as_of.isoformat()}.md")
     if summary_output_path is None:
         summary_output_path = (
-            project_root / "outputs" / "reports" / f"paper_trading_summary_{as_of.isoformat()}.json"
+            state_dir(project_root, "outputs", "reports")
+            / f"paper_trading_summary_{as_of.isoformat()}.json"
         )
     candidate_count = len(candidates)
     blocked_candidates = len(candidates) - len(intents)
@@ -284,10 +287,7 @@ def _limited_daily_decision_summary_payload(
             artifact_id="decision_snapshot",
             label="score decision snapshot",
             path=(
-                project_root
-                / "data"
-                / "processed"
-                / "decision_snapshots"
+                state_dir(project_root, "data", "processed", "decision_snapshots")
                 / f"decision_snapshot_{as_of.isoformat()}.json"
             ),
             base_dir=reports_dir,
@@ -556,7 +556,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--audit-root",
-        default=str(REPO_ROOT / "data" / "trading_engine" / "audit"),
+        default=str(state_dir(REPO_ROOT, "data", "trading_engine", "audit")),
         help="Audit JSONL root directory.",
     )
     parser.add_argument(
@@ -577,7 +577,8 @@ def main() -> None:
     candidates_path = (
         Path(args.candidates_path)
         if args.candidates_path
-        else REPO_ROOT / "outputs" / "reports" / f"order_intent_candidates_{args.date}.json"
+        else state_dir(REPO_ROOT, "outputs", "reports")
+        / f"order_intent_candidates_{args.date}.json"
     )
     summary_output_path = Path(args.summary_output_path) if args.summary_output_path else None
     summary = run_from_candidates(

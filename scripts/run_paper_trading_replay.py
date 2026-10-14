@@ -16,6 +16,8 @@ if str(SRC_ROOT) not in sys.path:
 if str(SCRIPTS_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_ROOT))
 
+from ai_trading_system.paths import state_dir  # noqa: E402
+
 PAPER_TRADING_REPLAY_SCHEMA_VERSION = 1
 REPLAY_MODE_DAILY_INDEPENDENT = "daily_independent"
 REPLAY_MODE_CONTINUOUS_PORTFOLIO = "continuous_portfolio"
@@ -58,8 +60,8 @@ def run_paper_trading_replay(
     *,
     start: date,
     end: date,
-    reports_dir: Path = REPO_ROOT / "outputs" / "reports",
-    audit_root: Path = REPO_ROOT / "data" / "trading_engine" / "audit",
+    reports_dir: Path = state_dir(REPO_ROOT, "outputs", "reports"),
+    audit_root: Path = state_dir(REPO_ROOT, "data", "trading_engine", "audit"),
     trading_daily_report_dir: Path = REPO_ROOT / "reports" / "trading_daily",
     project_root: Path = REPO_ROOT,
     output_json_path: Path | None = None,
@@ -264,7 +266,7 @@ def _run_continuous_portfolio_replay(
         config=config,
     )
     snapshot_provider = HistoricalPriceMarketSnapshotProvider(
-        prices_path=prices_path or project_root / "data" / "raw" / "prices_daily.csv",
+        prices_path=prices_path or state_dir(project_root, "data", "raw", "prices_daily.csv"),
     )
     run_id = f"continuous_portfolio_replay:{start.isoformat()}:{end.isoformat()}"
 
@@ -1450,12 +1452,12 @@ def main() -> None:
     )
     parser.add_argument(
         "--reports-dir",
-        default=str(REPO_ROOT / "outputs" / "reports"),
+        default=str(state_dir(REPO_ROOT, "outputs", "reports")),
         help="Directory containing candidate and paper summary reports.",
     )
     parser.add_argument(
         "--audit-root",
-        default=str(REPO_ROOT / "data" / "trading_engine" / "audit"),
+        default=str(state_dir(REPO_ROOT, "data", "trading_engine", "audit")),
         help="Audit JSONL root directory.",
     )
     parser.add_argument(

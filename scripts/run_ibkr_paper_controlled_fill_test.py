@@ -10,6 +10,7 @@ SRC_ROOT = REPO_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
+from ai_trading_system.paths import state_dir  # noqa: E402
 from ai_trading_system.trading_engine.brokers.ibkr_paper_controlled_fill import (  # noqa: E402
     DEFAULT_IBKR_PAPER_CONTROLLED_FILL_CONFIG_PATH,
     run_ibkr_paper_controlled_fill_test,
@@ -32,7 +33,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--output-dir",
-        default=str(REPO_ROOT / "outputs" / "reports"),
+        default=str(state_dir(REPO_ROOT, "outputs", "reports")),
         help="Directory for controlled fill JSON and Markdown outputs.",
     )
     parser.add_argument("--symbol", default="NVDA", help="Whitelisted stock symbol.")

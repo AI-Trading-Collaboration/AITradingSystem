@@ -27,10 +27,11 @@ from ai_trading_system.data.access_control import (  # noqa: E402
 from ai_trading_system.data.immutable_publish import (  # noqa: E402
     write_contained_artifact_bytes,
 )
+from ai_trading_system.paths import join_root, state_dir  # noqa: E402
 from ai_trading_system.platform.artifacts import canonical_json_bytes  # noqa: E402
 
-DEFAULT_POLICY_PATH = PROJECT_ROOT / "config" / "data" / "data_foundation_acl.yaml"
-DEFAULT_OUTPUT_PARENT = PROJECT_ROOT / "outputs" / "validation_runtime"
+DEFAULT_POLICY_PATH = join_root(PROJECT_ROOT, "config/data/data_foundation_acl.yaml")
+DEFAULT_OUTPUT_PARENT = state_dir(PROJECT_ROOT, "outputs", "validation_runtime")
 
 
 def run_acl_rehearsal(

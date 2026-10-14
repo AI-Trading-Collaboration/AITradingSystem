@@ -10,6 +10,7 @@ SRC_ROOT = REPO_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
+from ai_trading_system.paths import state_dir  # noqa: E402
 from ai_trading_system.trading_engine.reports.daily_shadow_vs_production_multi_day_review import (  # noqa: E402
     write_shadow_vs_production_multi_day_review_report,
 )
@@ -28,7 +29,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--data-root",
-        default=str(REPO_ROOT / "data"),
+        default=str(state_dir(REPO_ROOT, "data")),
         help="Data root containing weight iteration comparison artifacts.",
     )
     parser.add_argument("--output-json-path", help="Output review JSON path.")

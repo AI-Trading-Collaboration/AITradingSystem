@@ -10,6 +10,7 @@ SRC_ROOT = REPO_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
+from ai_trading_system.paths import state_dir  # noqa: E402
 from ai_trading_system.trading_engine.reports.paper_signal_quality import (  # noqa: E402
     DEFAULT_PAPER_SIGNAL_QUALITY_POLICY_PATH,
     write_paper_signal_quality_report,
@@ -23,7 +24,7 @@ def main() -> None:
     parser.add_argument("--date", required=True, help="Evaluation date in YYYY-MM-DD format.")
     parser.add_argument(
         "--reports-dir",
-        default=str(REPO_ROOT / "outputs" / "reports"),
+        default=str(state_dir(REPO_ROOT, "outputs", "reports")),
         help="Directory containing paper summary and order intent candidate JSON files.",
     )
     parser.add_argument(

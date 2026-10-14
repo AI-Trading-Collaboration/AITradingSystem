@@ -23,6 +23,7 @@ from ai_trading_system.paths import (
 )
 
 SRC_ROOT = CODE_ROOT / "src" / "ai_trading_system"
+SCRIPTS_ROOT = CODE_ROOT / "scripts"
 STATE_DIRS = ("data", "outputs", "artifacts")
 ROOT_NAMES = {
     "PROJECT_ROOT",
@@ -216,6 +217,14 @@ def _hand_built_state_paths(path: Path) -> list[str]:
         elif (
             isinstance(node, ast.Call)
             and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "joinpath"
+            and node.args
+            and _state_literal(node.args[0])
+        ):
+            found.append(f"{node.lineno}: <path>.joinpath({node.args[0].value!r}, ...)")
+        elif (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
             and len(node.args) == 1
         ):
             if node.func.attr == "relative_to" and _root_like(node.args[0]):
@@ -225,18 +234,46 @@ def _hand_built_state_paths(path: Path) -> list[str]:
     return found
 
 
-# Zone C files still to convert (DATA-023 step 2). The list only shrinks.
-PENDING_ZONE_C: frozenset[str] = frozenset()
+def _imports_the_package(path: Path) -> bool:
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            if any(alias.name.split(".")[0] == "ai_trading_system" for alias in node.names):
+                return True
+        elif isinstance(node, ast.ImportFrom) and node.level == 0:
+            if (node.module or "").split(".")[0] == "ai_trading_system":
+                return True
+    return False
 
 
-def test_no_state_path_is_built_from_a_root_outside_the_paths_module() -> None:
+def _offenders(directory: Path) -> dict[str, list[str]]:
     offenders = {}
-    for path in sorted(SRC_ROOT.rglob("*.py")):
+    for path in sorted(directory.rglob("*.py")):
         if path == Path(paths.__file__).resolve():
             continue
         found = _hand_built_state_paths(path)
         if found:
             offenders[path.relative_to(CODE_ROOT).as_posix()] = found
+    return offenders
+
+
+# Zone C files still to convert (DATA-023 step 2). The list only shrinks.
+PENDING_ZONE_C: frozenset[str] = frozenset()
+
+# Scripts that cannot import ai_trading_system and take their roots from their arguments (OPS-086
+# step 4): daily_scheduler_summary.py is standard library only and reads --state-root;
+# run_clean_clone_release_acceptance.py runs before the package is installed and builds its sample
+# project in a temporary directory.
+STANDALONE_SCRIPTS: frozenset[str] = frozenset(
+    {
+        "scripts/ops/daily_scheduler_summary.py",
+        "scripts/run_clean_clone_release_acceptance.py",
+    }
+)
+
+
+def test_no_state_path_is_built_from_a_root_outside_the_paths_module() -> None:
+    offenders = _offenders(SRC_ROOT)
 
     unexpected = {rel: found for rel, found in offenders.items() if rel not in PENDING_ZONE_C}
     assert unexpected == {}, (
@@ -247,3 +284,20 @@ def test_no_state_path_is_built_from_a_root_outside_the_paths_module() -> None:
         "Remove converted files from PENDING_ZONE_C: "
         f"{sorted(set(PENDING_ZONE_C) - set(offenders))}"
     )
+
+
+def test_no_state_path_is_built_by_hand_in_scripts() -> None:
+    offenders = _offenders(SCRIPTS_ROOT)
+
+    unexpected = {rel: found for rel, found in offenders.items() if rel not in STANDALONE_SCRIPTS}
+    assert unexpected == {}, (
+        "Build state paths in scripts/ with ai_trading_system.paths (state_dir, join_root, "
+        f"relative_to_root, glob_root, rglob_root): {unexpected}"
+    )
+
+
+def test_standalone_scripts_do_not_import_the_package() -> None:
+    for rel in sorted(STANDALONE_SCRIPTS):
+        path = CODE_ROOT / rel
+        assert path.is_file(), rel
+        assert not _imports_the_package(path), rel

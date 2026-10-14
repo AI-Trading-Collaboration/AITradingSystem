@@ -10,6 +10,7 @@ SRC_ROOT = REPO_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
+from ai_trading_system.paths import state_dir  # noqa: E402
 from ai_trading_system.trading_engine.shadow_promotion_apply_preflight import (  # noqa: E402
     DEFAULT_PRODUCTION_PROFILE_PATH,
     DEFAULT_TARGET_PROFILE_NAME,
@@ -24,7 +25,7 @@ def main() -> None:
     parser.add_argument("--date", required=True, help="Preflight date in YYYY-MM-DD format.")
     parser.add_argument(
         "--data-root",
-        default=str(REPO_ROOT / "data"),
+        default=str(state_dir(REPO_ROOT, "data")),
         help="Data root containing promotion and shadow artifacts.",
     )
     parser.add_argument("--approval-file", help="Manual approval artifact JSON path.")

@@ -10,6 +10,7 @@ SRC_ROOT = REPO_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
+from ai_trading_system.paths import state_dir  # noqa: E402
 from ai_trading_system.trading_engine.reports.daily_shadow_vs_production_comparison import (  # noqa: E402
     DEFAULT_PRODUCTION_PROFILE_PATH,
     DEFAULT_SCORING_RULES_PATH,
@@ -24,12 +25,12 @@ def main() -> None:
     parser.add_argument("--date", required=True, help="Comparison date in YYYY-MM-DD format.")
     parser.add_argument(
         "--data-root",
-        default=str(REPO_ROOT / "data"),
+        default=str(state_dir(REPO_ROOT, "data")),
         help="Data root for decision snapshots and shadow state artifacts.",
     )
     parser.add_argument(
         "--reports-dir",
-        default=str(REPO_ROOT / "outputs" / "reports"),
+        default=str(state_dir(REPO_ROOT, "outputs", "reports")),
         help="Directory containing existing daily scoring / feedback artifacts.",
     )
     parser.add_argument(

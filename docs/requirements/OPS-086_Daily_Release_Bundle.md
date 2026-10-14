@@ -298,9 +298,11 @@ python tools/release/deploy_daily_release.py --activate <release_id> --daily-roo
 
 ## 6. 步骤 4：`scripts/` 其余手拼路径（OPS-086-04，B 区，机械改写）
 
-`scripts/` 下另有 22 个旧脚本（paper trading、IBKR paper、shadow promotion 等，不在日报路径上）共 41 处自己拼 `data/`、`outputs/`。
-改用 `ai_trading_system.paths`；`tests/test_paths.py` 的棘轮扩到 `scripts/`，`scripts/ops/daily_scheduler_summary.py` 因只用标准库
-列为例外（它从参数拿状态根）。
+`scripts/` 下另有 27 个旧脚本（paper trading、IBKR paper、shadow promotion、数据基础演练、DQ 审查包，不在日报路径上）共 48 处自己拼路径
+（`<路径> / "data"`、`<路径> / "outputs"`、`<根> / <变量>`）。改用 `ai_trading_system.paths` 的 `state_dir`、`join_root`；不设状态根时每处的值不变。
+`tests/test_paths.py` 的棘轮扩到 `scripts/`，同时也查 `<路径>.joinpath("data", ...)`。两个脚本不能导入本包、根目录从参数来，列为例外：
+`scripts/ops/daily_scheduler_summary.py`（只用标准库，从 `--state-root` 拿状态根）和 `scripts/run_clean_clone_release_acceptance.py`
+（在装本包之前运行，样例项目建在临时目录里）。验收测试 `tests/test_ops086_scripts_state_root.py` 在设了状态根时逐个核对默认路径。
 
 ## 7. 之后（另定）
 
@@ -321,3 +323,4 @@ python tools/release/deploy_daily_release.py --activate <release_id> --daily-roo
 - 2026-10-14：步骤 1（OPS-086-01）：35 个文件搬到 inputs/ 和 research/_results/，读取方、登记表和 3 个 C 区文件的路径文字（决定记录）一并改。production_effect=none；broker_action=none。
 - 2026-10-15：步骤 2（OPS-086-02）：release_identity 模块、7 处发布身份、包装脚本和摘要接受状态根。production_effect=none；broker_action=none。
 - 2026-10-15：步骤 3（OPS-086-03）：清单规则、构建和部署脚本、run_daily.ps1、注册脚本 -DailyRoot、运维手册 9.3。production_effect=none；broker_action=none。
+- 2026-10-15：步骤 4（OPS-086-04）：scripts/ 的 27 个脚本 48 处改走 paths 模块，棘轮扩到 scripts/。production_effect=none；broker_action=none。

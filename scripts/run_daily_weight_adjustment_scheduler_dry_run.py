@@ -14,6 +14,7 @@ SRC_ROOT = REPO_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
+from ai_trading_system.paths import state_dir  # noqa: E402
 from ai_trading_system.trading_engine.reports.daily_weight_adjustment import (  # noqa: E402
     FORBIDDEN_DAILY_WEIGHT_ADJUSTMENT_TERMS,
     PRODUCTION_EFFECT_NONE,
@@ -37,7 +38,7 @@ def default_scheduler_dry_run_json_path(reports_dir: Path, as_of: date) -> Path:
 def write_daily_weight_adjustment_scheduler_dry_run_report(
     *,
     as_of: date,
-    reports_dir: Path = REPO_ROOT / "outputs" / "reports",
+    reports_dir: Path = state_dir(REPO_ROOT, "outputs", "reports"),
     weight_adjustment_candidates_path: Path | None = None,
     weight_adjustment_candidates_md_path: Path | None = None,
     weight_candidate_evaluation_path: Path | None = None,
@@ -483,7 +484,7 @@ def main() -> None:
     parser.add_argument("--date", required=True, help="Dry-run date in YYYY-MM-DD format.")
     parser.add_argument(
         "--reports-dir",
-        default=str(REPO_ROOT / "outputs" / "reports"),
+        default=str(state_dir(REPO_ROOT, "outputs", "reports")),
         help="Directory containing existing weight adjustment artifacts.",
     )
     parser.add_argument(

@@ -36,6 +36,7 @@ from ai_trading_system.data.immutable_publish import (
     validate_current_snapshot,
     write_contained_artifact_bytes,
 )
+from ai_trading_system.paths import join_root
 from ai_trading_system.platform.artifacts import (
     canonical_json_bytes,
     sha256_bytes,
@@ -43,7 +44,7 @@ from ai_trading_system.platform.artifacts import (
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_POLICY_PATH = PROJECT_ROOT / "config" / "data" / "data_foundation_durability.yaml"
+DEFAULT_POLICY_PATH = join_root(PROJECT_ROOT, "config/data/data_foundation_durability.yaml")
 DATASET_ID = "validated_prices"
 PAYLOAD_TYPE = "csv"
 PAYLOAD_SCHEMA = "validated_prices.v1"
@@ -377,7 +378,7 @@ def _run_backup_restore_rehearsal(
 
     def validate_fixture_restore(root: Path) -> None:
         for relative_path, expected in fixtures.items():
-            actual = (root / relative_path).read_bytes()
+            actual = join_root(root, relative_path).read_bytes()
             if actual != expected:
                 raise RuntimeError(f"RESTORE_SEMANTIC_MISMATCH: {relative_path}")
 
