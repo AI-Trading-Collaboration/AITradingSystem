@@ -280,6 +280,22 @@ def approval_problems(question: Question, ref: str) -> list[str]:
     if toplevel is None:
         return [*problems, f"{question.directory} is not inside a git repository"]
     top = Path(toplevel).resolve()
+    if question.prereg.screens:
+        # Local import: the screening ledger shares this module's chain primitives.
+        from ai_trading_system.research_bench.screen_ledger import (
+            ScreenLedgerError,
+            screen_records,
+        )
+
+        try:
+            ids = {record["screen_id"] for record in screen_records(top)}
+            problems.extend(
+                f"screen {screen_id} is not in the screening ledger"
+                for screen_id in question.prereg.screens
+                if screen_id not in ids
+            )
+        except (OSError, ScreenLedgerError) as exc:
+            problems.append(f"screening ledger is broken: {exc}")
     for path in (question.prereg_path, question.strategy_path):
         rel = path.resolve().relative_to(top).as_posix()
         on_ref = git_output(top, "rev-parse", "--verify", "--quiet", f"{ref}:{rel}")
@@ -582,6 +598,14 @@ def _check_data(question: Question, data: BenchData) -> None:
             f"{question.question_id} is preregistered on snapshot {wanted.snapshot_id}, "
             f"not {source.get('snapshot_id')}"
         )
+    if wanted.signal_snapshot_id is not None:
+        if source.get("signal_snapshot_id") != wanted.signal_snapshot_id:
+            raise LedgerError(
+                f"{question.question_id} is preregistered on signal snapshot "
+                f"{wanted.signal_snapshot_id}, not {source.get('signal_snapshot_id')}"
+            )
+    elif "signal_snapshot_id" in source:
+        raise LedgerError(f"{question.question_id} has no preregistered signal snapshot")
     if source.get("qqq_series") != wanted.qqq_series:
         raise LedgerError(
             f"{question.question_id} is preregistered on the {wanted.qqq_series} QQQ series"

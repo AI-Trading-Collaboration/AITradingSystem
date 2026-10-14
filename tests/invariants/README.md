@@ -180,3 +180,31 @@ and bench tests were run (`tests/invariants/test_research_falsify_invariants.py`
 | 在所有市场做 bootstrap | `test_results_hold_summaries_only` | 1 failed，7.23s |
 
 日志在运行目录 `TRADING-2565-07/mutation-*.log`。51 市场（US 和 49 行业 1926-07..2010、QQQ 1986..2010）、63 日动量、21/63/126 日持有期、默认 2,000 次自助法的 `screen_signal` 合成计时为 **15.655203 秒**（小于 180 秒）；不读真实快照、不打印逐日值，临时合成模块目录在计时后自动删除。这些是工程证据，不是候选或投资结论。
+
+## S4d 不变量及反向对照（2026-10-14）
+
+以下全部在 `test_research_signal_strategy_invariants.py`，Claude 提供的验收文件按 SHA256SUMS 原样复制（`ceaaec51f671350e6e1903416f4e4064218ed0668da1c48ad1300c0951734d77`），没有修改；只用合成数据。
+
+| 编号 | 守住的语义 / 测试 | 反向对照 |
+|---|---|---|
+| 41 | `test_the_expanding_percentile_is_the_screen_one` | 手算 ties、NaN、扩张热身；改变未来值不影响早期分位 |
+| 42 | `test_percentile_scores_and_mappings`、`test_orientation_follows_expected_sign_and_target`、`test_sign_scores_need_no_warm_up_and_average_across_signals`、边界及参数规格测试 | 三种映射、默认参数、step 等边取上一级、零点 0.5、任一信号 NaN 传播、首个有效值前 NaN、之后保持；规格里的 scale=-2 独立验证不允许预注册覆盖；非法参数拒绝 |
+| 43 | `test_the_preregistration_pins_each_signal` | 改模块、改规格、缺文件必须拒绝；CRLF 当 LF 时目标不变 |
+| 44 | `test_the_bench_check_catches_a_signal_that_looks_ahead`、`test_every_numeric_mapping_parameter_is_read` | 诚实动量通过，未来收益信号被原 bench 前视检查抓到；每个数值映射参数扰动能改变目标，signals/mapping 记 unchecked |
+| 45 | `test_sources_enter_the_inputs_as_known_at_each_close` | 与独立 known_at(lag=1) 逐值对照，原输入和收益不变；缺来源拒绝，来源前视信号被抓到 |
+| 46 | `test_the_signal_snapshot_is_fixed`、`test_screens_are_cited_by_number`、`test_qqq_q1_reads_as_before`、原配置哈希测试 | LATEST、错误 sig 格式、短筛选号、家族大小 0 拒绝；QQQ-Q1 读旧预注册取新增字段默认值，未指定信号快照的来源元数据不变 |
+| 47 | `test_the_generic_strategy_equals_the_rule_written_by_hand` | 与独立手写 210 日均线规则逐日目标、完整运行 strategy/comparison 和参数检查一致 |
+
+## S4d 变异证据（2026-10-14）
+
+每项只在本地临时变异实现，以 `pytest -n 16 --dist loadfile tests/invariants/test_research_signal_strategy_invariants.py -q -k ...` 运行对应验收用例，随后还原；验收文件未改。
+
+| 变异 | 失败的验收测试 | 结果 |
+|---|---|---|
+| 去掉目标的 ffill（不保持上一仓位） | `test_percentile_scores_and_mappings` 全部五种映射用例 | 5 failed，4.43s |
+| favourable 只看 expected_sign，不看 target | `test_orientation_follows_expected_sign_and_target[spec1-expected1]` 和 `[spec2-expected2]` | 2 failed，1 passed，4.93s |
+| 比较模块哈希时使用原始字节，不把 CRLF 当 LF | `test_the_preregistration_pins_each_signal` | 1 failed，4.39s |
+| `with_signal_sources` 把来源 lag 当 0 | `test_sources_enter_the_inputs_as_known_at_each_close` | 1 failed，4.45s |
+| sign 在零点给 1 而不是 0.5 | `test_sign_scores_need_no_warm_up_and_average_across_signals` | 1 failed，4.38s |
+
+日志在运行目录 `TRADING-2565-08/mutation-*.log`。这是工程正确性证据，不是候选、paper-shadow 或生产批准；production_effect=none；broker_action=none。

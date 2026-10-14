@@ -14,7 +14,7 @@ from __future__ import annotations
 import keyword
 import re
 from pathlib import Path
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -49,6 +49,7 @@ class _Strict(BaseModel):
 class DataSpec(_Strict):
     snapshot_id: str = Field(min_length=1)
     qqq_series: Literal["proxy", "actual"]
+    signal_snapshot_id: str | None = Field(default=None, pattern=r"^sig-[0-9a-f]{12}$")
 
     @field_validator("snapshot_id")
     @classmethod
@@ -133,6 +134,8 @@ class Prereg(_Strict):
     strategy_module: str = "strategy.py"
     strategies: tuple[StrategyEntry, ...] = Field(min_length=1)
     validation: ValidationSpec
+    screens: tuple[Annotated[str, Field(pattern=r"^S[0-9]{4,}$")], ...] = ()
+    screen_family_size: int | None = Field(default=None, ge=1)
     sensitivity: tuple[str, ...] = ()
     prior_expectation: PriorExpectation
     sample_floor: SampleFloor

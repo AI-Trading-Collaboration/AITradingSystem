@@ -17,6 +17,7 @@ from typing import Any
 from ai_trading_system.research_bench.ledger import ledger_summary, run_records
 from ai_trading_system.research_bench.metrics import cvar_field
 from ai_trading_system.research_bench.prereg import PREREG_FILE, load_prereg
+from ai_trading_system.research_bench.screen_ledger import screen_records
 from ai_trading_system.research_bench.settings import BenchSettings
 
 # Shown as numbers, not percentages.
@@ -72,13 +73,39 @@ def question_report(
         f"trials {item['trials']}/{item['trial_cap']} here, {summary['global_trials']} over all"
         f" questions; reads {reads}; chain {'ok' if not item['problems'] else 'BROKEN'}",
     ]
+    family_size = prereg.screen_family_size if prereg.screen_family_size is not None else "无"
+    lines.append(
+        f"筛选：screens {', '.join(prereg.screens) or '无'}；screen_family_size {family_size}"
+    )
+    generic = [entry for entry in prereg.strategies if entry.function == "signal_exposure"]
+    if generic:
+        screens = screen_records(root_dir.parent)
+        for entry in generic:
+            for signal in entry.params["signals"]:
+                matched = [
+                    record
+                    for record in screens
+                    if record["module_sha256"] == signal["module_sha256"]
+                    and record["spec_sha256"] == signal["spec_sha256"]
+                ]
+                screened = (
+                    "；".join(
+                        f"{record['screen_id']} 记录时裁决 {record['verdict']}"
+                        for record in matched
+                    )
+                    or "未筛"
+                )
+                lines.append(
+                    f"  策略 {entry.id}：信号 {signal['id']}；分数 {signal['score']}；{screened}"
+                )
     if item["problems"]:
         return [*lines, *(f"  problem: {problem}" for problem in item["problems"])]
     lines_by_run = {run["run_id"]: run for run in item["runs"]}
     records = run_records(directory)
-    for record in chosen_runs(records, run_ids or []):
+    chosen = chosen_runs(records, run_ids or [])
+    for record in chosen:
         lines.extend(_run_section(record, lines_by_run[record["run_id"]], summary, settings))
-    if len(lines) == 3:
+    if not chosen:
         lines.append("no successful run yet")
     return lines
 

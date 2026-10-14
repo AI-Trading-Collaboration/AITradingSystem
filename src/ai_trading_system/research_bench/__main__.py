@@ -28,7 +28,12 @@ import typer
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.core.provenance import git_provenance
 from ai_trading_system.research_bench import ledger as lg
-from ai_trading_system.research_bench.data import BenchData, QqqSeries, from_snapshot
+from ai_trading_system.research_bench.data import (
+    BenchData,
+    QqqSeries,
+    from_snapshot,
+    with_signal_sources,
+)
 from ai_trading_system.research_bench.metrics import cvar_field
 from ai_trading_system.research_bench.report import question_report
 from ai_trading_system.research_bench.run import BenchCheckError, WindowPermit, benchmark_summaries
@@ -430,9 +435,14 @@ def _question(loaded: LoadedSettings, question: str) -> lg.Question:
 
 def _data(item: lg.Question, root: Path) -> BenchData:
     wanted = item.prereg.data
-    return from_snapshot(
+    data = from_snapshot(
         qlh.resolve_snapshot_dir(root, wanted.snapshot_id), qqq_series=wanted.qqq_series
     )
+    if wanted.signal_snapshot_id is None:
+        return data
+    snapshot = signal_sources.load_snapshot(PROJECT_ROOT, wanted.signal_snapshot_id)
+    lags = {spec.source_id: spec.known_lag_trading_days for spec in snapshot.specs}
+    return with_signal_sources(data, snapshot.frames, lags, snapshot_id=wanted.signal_snapshot_id)
 
 
 def _parse_setting(text: str) -> tuple[str, Any]:

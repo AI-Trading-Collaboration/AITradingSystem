@@ -163,6 +163,18 @@
 - **和前面设计的两处不同**：前面“策略接口”是 `(inputs, params)` 给敞口，本批信号是 `(returns, sources, params)` 给信号值，仅在检查时包装成策略接口；前面的运行账按预注册题计试验，本批筛选在开题之前进入全局筛选家族、按最新成员主 p 做 BH，不使用 prereg 的 screens/screen_family_size。通用“信号 → 仓位”及预注册衔接留到 S4d，不在本批。
 - **验收范围**：Claude 提供的不变量 34–40 原样保留，合成数据覆盖手算、截止日污染、检查拒绝、基准复制、链和 BH、裁决边界、汇总无逐日值和原 bench 配置哈希。七项本地变异、51 市场计时、静态检查和全量结果记在 TRADING-2565-07 运行报告及 `tests/invariants/README.md`；本批不读真实快照、不开展新研究试验。
 
+## S4d 的实现
+
+- **范围及批准**：TRADING-2565-08 实现通用“信号 → 仓位”策略，沿用 `owner_decision:TRADING-2565:2026-10-13:signal_screen_layer`，不引入候选或生产晋级规则。只用合成数据验收，不读真实快照。
+- **参数**：`signals` 是非空、id 唯一的列表，每项正好含 id、模块/规格 SHA-256 和 score；映射及其字段严格校验，拒绝缺失和额外参数。数值要求有限但不限定分数或仓位范围，避免评估台乘 1.5 的参数消费检查误拒合法预注册；可执行仓位上下界仍由模拟器拒绝。
+- **分数及映射**：方向是 expected_sign 乘 return/risk 的正负方向；percentile 复用筛选层的扩张 midrank 和 warmup_days，sign 对正、负、零给 1、0、0.5，不热身。多信号算术平均且任何 NaN 都传播。threshold 在 cut 上取 high，linear 在 p_low/p_high 间线性裁剪，steps 在边界取上一级。
+- **保持**：首个有效目标之前保留 NaN，由评估台提示 extend the lookback；之后遇 NaN 只向前填充，保持上一目标，不偷读未来。
+- **钉住信号**：每次调用读取 `SIGNALS_DIR`，用 `screen.load_signal` 核对模块和规格的 LF 规范化哈希。规格变动拒绝；信号参数只读规格，预注册不能覆盖。仅把声明来源的 `source:<来源>:` 列去前缀后传入；缺来源、非同索引 Series 拒绝。不打印、不写文件。
+- **来源列**：`with_signal_sources` 按快照规格的 known_lag_trading_days 逐列 `known_at` 对齐交易日历，追加在原输入后，重复列拒绝；收益和原列顺序不变，source 增加 signal_snapshot_id。CLI 只有预注册指定信号快照才加载它，仍经过 S4a 质量门禁；ledger 拒绝快照不符及未声明的信号快照。
+- **预注册及报告**：新增可选 data.signal_snapshot_id（固定 sig-12 位小写十六进制）、screens（S0001 等）、screen_family_size（>=1），默认 None/空。验证批准检查 screens 引用存在且链完整，不要求 candidate；报告第一屏显示引用和家族大小，通用策略逐信号显示 id、score 和同模块/规格哈希的筛选记录及记录时裁决，无匹配写“未筛”，只读汇总。
+- **模板与验收**：新增 `_template/signal_strategy.py` 一行导入实现，prereg 模板只增注释示例；不变量 41–47、接线单测及五项变异守住语义，证据见 `tests/invariants/README.md` 和运行目录。任务保持 IN_PROGRESS，待决定记录批准；没有临时投资阈值或开放参数规则。
+- **第一题不变**：`research/QQQ-Q1/` 的输入、运行、窗口读取与指纹以及三份指定配置保持原样；QQQ-Q1 的新字段取默认值，report 除新增“筛选”行外逐字相同。production_effect=none；broker_action=none。
+
 ## 进展
 
 - 2026-10-12：随 TRADING-2567 激活（READY）。production_effect=none；broker_action=none。
@@ -173,3 +185,4 @@
 - 2026-10-14：TRADING-2565-09：ship 规则 1.2.2，评估台配置按 `config/research/research_*.yaml` 通配进 C 区，成本模型 `transaction_cost_model.yaml` 进 C 区；`tests/test_gov008_ship.py` 守住评估台设置和它点名的配置文件都在 C 区。production_effect=none；broker_action=none。
 - 2026-10-14：S4a（TRADING-2565-06）：信号筛选的数据入口、发布滞后对齐、本机内容寻址快照和检查；待按决定记录批准，之后 S4b。production_effect=none；broker_action=none。
 - 2026-10-14：S4b（TRADING-2565-07）：信号筛选、全局筛选账和 BH、screen/screen-ledger 命令；只用合成数据验证，待审阅和按决定记录批准，之后 S4d 和研究记录快车道。production_effect=none；broker_action=none。
+- 2026-10-14：S4d（TRADING-2565-08）：通用的信号到仓位策略、钉住信号及来源快照、预注册与汇总报告接线；292 项合成聚焦检查通过，五项变异被捕获，静态检查和第一题不变检查通过。全仓 main 基线和 PR 检查超时，车道的 AITS_STATE_ROOT 路径断言失败及 secret-scan 测试未结束，尚无全仓绿灯；保留证据，不修范围外测试，不发布。待审阅和按决定记录批准，之后研究记录快车道和第二题开题。production_effect=none；broker_action=none。

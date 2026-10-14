@@ -6,6 +6,21 @@
 # be written in docs/requirements. After that, editing either file closes the validation window again.
 # Zone C: every change to research/*/prereg.yaml or a strategy module (research/*/*.py) needs an
 # owner decision.
+# 通用策略示例：复制 signal_strategy.py 为 strategy.py，条目可写成：
+# - id: fixed_signals
+#   function: signal_exposure
+#   params:
+#     signals:
+#       - {id: ma_gap, module_sha256: FILL_MODULE_SHA256, spec_sha256: FILL_SPEC_SHA256, score: sign}
+#     mapping: threshold
+#     low: 0.0
+#     high: 1.0
+#     cut: 0.5
+# score 可选 percentile/sign；mapping 可选 threshold、linear（low/high、p_low/p_high）
+# 或 steps（严格递增 edges 和多一个元素的 levels）。信号参数只从信号规格读取。
+# 使用外部来源时，在 data 下写 signal_snapshot_id: sig-0123456789ab（固定且已检查，不能 LATEST）。
+# 顶层 screens: [S0001] 引用全局筛选账记录；经典基准信号可以不筛。
+# 顶层 screen_family_size: 7 记下预注册时的筛选家族大小（>=1）；未写时为无。
 schema_version: research_prereg.v1
 question_id: QQQ-Q0                 # equals the directory name
 question: >-
