@@ -7,26 +7,52 @@ python -m ai_trading_system.research_bench validate QUESTION
 python -m ai_trading_system.research_bench consistency QUESTION
 python -m ai_trading_system.research_bench ledger [QUESTION]
 python -m ai_trading_system.research_bench report QUESTION [--run RUN_ID ...]
+python -m ai_trading_system.research_bench screen SIGNAL_ID --signal-snapshot ID
+    [--bench-snapshot ID] [--root PATH]
+python -m ai_trading_system.research_bench screen-ledger
 
+Screens are recorded in research/_screens/ledger/; only development data is evaluated.
 Every run is recorded under research/<QUESTION>/ (see ``research_bench.ledger``).
 """
 
 from __future__ import annotations
 
 import json
+import re
 import time
 from pathlib import Path
 from typing import Annotated, Any
 
 import typer
 
+from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.core.provenance import git_provenance
 from ai_trading_system.research_bench import ledger as lg
 from ai_trading_system.research_bench.data import BenchData, QqqSeries, from_snapshot
 from ai_trading_system.research_bench.metrics import cvar_field
 from ai_trading_system.research_bench.report import question_report
 from ai_trading_system.research_bench.run import BenchCheckError, WindowPermit, benchmark_summaries
+from ai_trading_system.research_bench.screen import (
+    ScreenCheckError,
+    ScreenMarket,
+    bh_adjust,
+    load_signal,
+    screen_signal,
+    screen_verdict,
+)
+from ai_trading_system.research_bench.screen_ledger import (
+    ScreenLedgerError,
+    append_screen_record,
+    check_screen_repeat,
+    family_key,
+    screen_ledger_summary,
+    screen_records,
+    verify_screen_ledger,
+)
+from ai_trading_system.research_bench.screen_settings import load_screen_settings
 from ai_trading_system.research_bench.settings import LoadedSettings, WindowRole, load_settings
 from ai_trading_system.research_data import qqq_long_history as qlh
+from ai_trading_system.research_data import signal_sources
 
 app = typer.Typer(
     help="研究评估台（TRADING-2565、TRADING-2567 S3）：输出只有汇总。", no_args_is_help=True
@@ -176,6 +202,136 @@ def report_command(
         raise typer.Exit(code=1) from None
     for line in lines:
         typer.echo(line)
+
+
+@app.command("screen")
+def screen_command(
+    signal_id: Annotated[str, typer.Argument(help="信号模块 id。")],
+    signal_snapshot: Annotated[str, typer.Option(help="已检查的信号来源快照 ID。")],
+    bench_snapshot: Annotated[str, typer.Option(help="长历史快照 ID，默认 LATEST。")] = "",
+    root: SnapshotRootOption = qlh.DEFAULT_SNAPSHOT_ROOT,
+) -> None:
+    """只在开发窗口筛一个信号，检查通过才加入全局家族；不构成投资批准。"""
+    try:
+        loaded_settings = load_screen_settings()
+        settings = loaded_settings.settings.screen
+        loaded = load_signal(signal_id)
+        records = screen_records(PROJECT_ROOT)
+        bench_directory = qlh.resolve_snapshot_dir(root, bench_snapshot or None)
+        body: dict[str, Any] = {
+            "signal_id": signal_id,
+            "module_sha256": loaded.module_sha256,
+            "spec_sha256": loaded.spec_sha256,
+            "params": loaded.spec.params,
+            "data": {
+                "signal_snapshot_id": signal_snapshot,
+                "bench_snapshot_id": bench_directory.name,
+            },
+            "settings_sha256": loaded_settings.sha256,
+        }
+        check_screen_repeat(records, body)
+        snapshot = signal_sources.load_snapshot(PROJECT_ROOT, signal_snapshot)
+        bench = from_snapshot(bench_directory, qqq_series=settings.qqq_series)
+        markets = {"qqq": ScreenMarket("qqq", bench.inputs["ndx_return"], settings.qqq_eval_start)}
+        factors = snapshot.frames["ff_factors_daily"]
+        markets["us_market"] = ScreenMarket(
+            "us_market", factors["Mkt-RF"] + factors["RF"], settings.long_eval_start
+        )
+        industries = snapshot.frames["ff_49_industries_daily"]
+        for name in industries.columns:
+            market_id = "industry_" + re.sub(r"[^a-z0-9]", "_", str(name).lower())
+            if market_id in markets:
+                raise ScreenCheckError([f"duplicate industry id {market_id}"])
+            markets[market_id] = ScreenMarket(market_id, industries[name], settings.long_eval_start)
+        lags = {spec.source_id: spec.known_lag_trading_days for spec in snapshot.specs}
+        results = screen_signal(loaded, markets, snapshot.frames, lags, settings)
+        latest = {family_key(record): record for record in records}
+        # Reruns on different data replace this member's latest result, not its family identity.
+        latest[family_key(body)] = {"primary_p_value": results["primary_p_value"]}
+        tested = {
+            key: value["primary_p_value"]
+            for key, value in latest.items()
+            if value["primary_p_value"] is not None
+        }
+        adjusted = dict(zip(tested, bh_adjust(list(tested.values())), strict=True)).get(
+            family_key(body)
+        )
+        verdict = screen_verdict(
+            **results["verdict_inputs"], primary_adjusted_p=adjusted, settings=settings
+        )
+        provenance = git_provenance(PROJECT_ROOT)
+        record = append_screen_record(
+            PROJECT_ROOT,
+            {
+                **body,
+                "markets": sorted(results["markets"]),
+                "results": results,
+                "code": {"commit": provenance["commit"], "modified": provenance["code_modified"]},
+                "primary_p_value": results["primary_p_value"],
+                "verdict": verdict,
+                "family_size": len(latest),
+            },
+        )
+    except ScreenCheckError as exc:
+        typer.echo("筛选检查未通过，不记账：" + "; ".join(exc.problems))
+        raise typer.Exit(code=1) from None
+    except (OSError, ValueError, KeyError) as exc:
+        typer.echo(f"筛选拒绝，不记账：{exc}")
+        raise typer.Exit(code=1) from None
+    typer.echo(
+        f"记录 {record['screen_id']}；信号 {signal_id}；"
+        f"数据 {signal_snapshot} / {bench_directory.name}"
+    )
+    for market_id in dict.fromkeys(("qqq", settings.primary_market)):
+        if market_id not in results["markets"]:
+            continue
+        row = results["markets"][market_id]["horizons"][str(settings.primary_horizon)]
+        typer.echo(
+            f"  {market_id} h={settings.primary_horizon}：天数 {row['days']}；"
+            f"n_eff {_num(row['n_eff'])}；mde {_num(row['mde'])}；ic {_num(row['ic'])}；"
+            f"区间 [{_num(row['ic_low'])}, {_num(row['ic_high'])}]；"
+            f"p_value {_num(row['p_value'])}"
+        )
+    typer.echo(
+        f"复现广度 {_num(results['breadth'])}；方向一致 "
+        f"{results['direction_matches']}/{results['direction_tested']}；"
+        f"基准最大相关 {_num(results['baseline_max_abs_corr'])}；"
+        f"十年剔除稳定 {results['verdict_inputs']['leave_out_stable']}"
+    )
+    typer.echo(
+        f"家族大小 {len(latest)}；调整后 p {_num(adjusted)}；"
+        f"裁决 {_verdict_text(verdict)} ({verdict})"
+    )
+
+
+@app.command("screen-ledger")
+def screen_ledger_command() -> None:
+    """只读全局筛选账，以当前家族重算 BH 和裁决；不读数据快照。"""
+    problems = verify_screen_ledger(PROJECT_ROOT)
+    typer.echo("筛选账链状态：" + ("BROKEN" if problems else "PASS"))
+    if problems:
+        for problem in problems:
+            typer.echo(f"  问题：{problem}")
+        raise typer.Exit(code=1)
+    try:
+        summary = screen_ledger_summary(PROJECT_ROOT, load_screen_settings().settings.screen)
+    except ScreenLedgerError as exc:
+        typer.echo(f"筛选账拒绝：{exc}")
+        raise typer.Exit(code=1) from None
+    typer.echo(f"家族大小 {summary['family_size']}；参与 BH {summary['tested']}")
+    for member in summary["members"]:
+        typer.echo(
+            f"  {member['signal_id']} #{member['number']}；"
+            f"p {_num(member['primary_p_value'])}；调整后 p {_num(member['adjusted_p'])}；"
+            f"记录时 {_verdict_text(member['verdict_at_record'])}；"
+            f"当前 {_verdict_text(member['verdict'])}"
+        )
+
+
+def _verdict_text(verdict: str | None) -> str:
+    return {"candidate": "候选", "eliminated": "淘汰", "inconclusive": "证据不足"}.get(
+        verdict or "", "无裁决输入"
+    )
 
 
 def _read_window(question: str, role: WindowRole, root: Path) -> None:

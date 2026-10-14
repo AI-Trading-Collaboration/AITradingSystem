@@ -150,3 +150,33 @@ and bench tests were run (`tests/invariants/test_research_falsify_invariants.py`
 | 清单放进抓取时间 | `test_snapshots_are_content_addressed`、`test_the_id_is_twelve_hex_digits_and_the_manifest_has_no_fetch_time` | 2 failed，30 passed |
 
 日志保存在运行目录 `TRADING-2565-06` 的 `mutation-*.log`，不包含真实快照。这些是数据入口正确性证据，不是投资结论。
+
+## S4b 不变量及反向对照（2026-10-14）
+
+以下全部在 `test_research_screen_invariants.py`，Claude 提供的验收文件按 SHA256SUMS 原样复制（`c5612c3d90c6f3717a2f56582bfb887c017695c54696f4f265dbe1b06e27bb20`），没有修改；只用合成数据。
+
+| 编号 | 守住的语义 / 测试 | 反向对照 |
+|---|---|---|
+| 34 | `test_the_screen_never_reads_past_the_screen_end`、`test_market_statistics_cut_at_the_screen_end`、`test_a_source_enters_at_its_known_time` | 每个市场和来源在 2010-12-31 后污染或截短，JSON 必须完全一致；lag=1 与手算移一天再 lag=0 一致，缺来源拒绝 |
+| 35 | `test_a_signal_equal_to_the_coming_return_is_found`、risk oracle、`test_the_expanding_percentile_by_hand`、`test_the_group_table_by_hand`、`test_leave_out_and_partial_correlation_by_hand`、独立噪声和样本不足测试 | oracle IC=1、最小 p；独立噪声在 MDE 内；手算 ties、NaN、分组、前向回撤、逐年/十年剔除和 OLS 残差；行业不得做 bootstrap |
+| 36 | `test_a_signal_that_looks_ahead_is_refused`、`test_baselines_do_not_look_ahead`、`test_the_baselines_follow_their_formulas` | 未来收益信号拒绝；未来污染不能改早期基准值，回看窗口用独立数组公式核对 |
+| 37 | `test_a_copy_of_a_baseline_is_seen_as_one` | 动量基准复制相关为 1，partial_ic=None，裁决的复制阈值另测 |
+| 38 | `test_the_ledger_shows_edits_deletions_and_reordering`、Windows 换行、重复组合拒绝、`test_benjamini_hochberg_runs_over_the_whole_family` | 中间记录改、删、换序要报坏链；CRLF 保持哈希；换规格是新成员，换数据仅增加记录；BH 用全家族固定数值核对 |
+| 39 | `test_the_verdict_follows_the_approved_rules`（17 个用例）、QQQ-only、批准默认值 | 淘汰优先；广度 2/3 的舍入容差、p=q、区间上端=0、corr=0.9 边界；剔除不稳不能候选；QQQ-only 永不候选 |
+| 40 | `test_the_minimum_detectable_effect_is_the_closed_form`、`test_results_hold_summaries_only`、`test_the_bench_settings_file_is_unchanged` | MDE 固定数值；JSON 无逐日列表，行业区间 None；原 research_bench.yaml SHA-256 锁定 |
+
+## S4b 变异证据（2026-10-14）
+
+每项只在本地临时变异实现，以 `pytest -n 16 --dist loadfile tests/invariants/test_research_screen_invariants.py -q -k ...` 运行对应验收用例，随后还原；验收文件未改。
+
+| 变异 | 失败的验收测试 | 结果 |
+|---|---|---|
+| 前向收益从 t 起算（shift 从 −h 改成 −(h−1)） | `test_a_signal_equal_to_the_coming_return_is_found`、`test_the_group_table_by_hand` | 2 failed，4.41s |
+| 收益不先截到 screen_end | `test_the_screen_never_reads_past_the_screen_end`、`test_market_statistics_cut_at_the_screen_end` | 2 failed，7.40s |
+| 跳过 check_no_lookahead | `test_a_signal_that_looks_ahead_is_refused` | 1 failed，6.60s |
+| BH 不取从大到小累积最小 | `test_benjamini_hochberg_runs_over_the_whole_family` | 1 failed，4.43s |
+| candidate 不要求 leave_out_stable=True | `test_the_verdict_follows_the_approved_rules[change5-inconclusive]` | 1 failed、16 passed，4.35s |
+| 不校验 prev_sha256 | `test_the_ledger_shows_edits_deletions_and_reordering` | 1 failed，4.35s |
+| 在所有市场做 bootstrap | `test_results_hold_summaries_only` | 1 failed，7.23s |
+
+日志在运行目录 `TRADING-2565-07/mutation-*.log`。51 市场（US 和 49 行业 1926-07..2010、QQQ 1986..2010）、63 日动量、21/63/126 日持有期、默认 2,000 次自助法的 `screen_signal` 合成计时为 **15.655203 秒**（小于 180 秒）；不读真实快照、不打印逐日值，临时合成模块目录在计时后自动删除。这些是工程证据，不是候选或投资结论。

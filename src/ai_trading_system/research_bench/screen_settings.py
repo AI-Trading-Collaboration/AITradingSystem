@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from typing import Literal, Self
 
@@ -28,9 +29,48 @@ class EventSettings(_Strict):
     short_event_days: int = Field(ge=1)
 
 
+class ScreenRules(_Strict):
+    screen_end: date
+    qqq_series: Literal["proxy", "actual"]
+    qqq_eval_start: date
+    long_eval_start: date
+    horizons: tuple[int, ...] = Field(min_length=1)
+    groups: int = Field(gt=0)
+    warmup_days: int = Field(gt=0)
+    min_days: int = Field(gt=0)
+    drawdown_threshold: float = Field(lt=0)
+    bootstrap_markets: tuple[str, ...]
+    bootstrap_draws: int = Field(gt=0)
+    confidence: float = Field(gt=0, lt=1)
+    seed: int = Field(gt=0)
+    lookahead_cut_dates: int = Field(gt=0)
+    bh_q: float = Field(gt=0, lt=1)
+    primary_market: str
+    primary_horizon: int = Field(gt=0)
+    candidate_breadth: float = Field(gt=0, le=1)
+    eliminate_breadth: float = Field(gt=0, le=1)
+    copy_corr: float = Field(gt=0, le=1)
+
+    @model_validator(mode="after")
+    def valid_screen(self) -> Self:
+        # The validation window starts on 2011-01-03; screening must never enter it.
+        if self.screen_end > date(2010, 12, 31):
+            raise ValueError("screen_end must be no later than 2010-12-31")
+        if any(h <= 0 for h in self.horizons) or len(set(self.horizons)) != len(self.horizons):
+            raise ValueError("horizons must be positive and unique")
+        if self.primary_horizon not in self.horizons:
+            raise ValueError("primary_horizon must be in horizons")
+        if self.primary_market not in self.bootstrap_markets or "qqq" not in self.bootstrap_markets:
+            raise ValueError("bootstrap_markets must include qqq and primary_market")
+        if self.eliminate_breadth > self.candidate_breadth:
+            raise ValueError("eliminate_breadth must not exceed candidate_breadth")
+        return self
+
+
 class ScreenSettings(_Strict):
     schema_version: Literal["research_screen.v1"]
     derisk_events: EventSettings
+    screen: ScreenRules
     sources: tuple[SourceSpec, ...] = Field(min_length=1)
     production_effect: Literal["none"]
     broker_action: Literal["none"]

@@ -724,6 +724,19 @@ def history_problems(toplevel: Path, research_dir: str = "research") -> list[str
         f"git history changes or removes the run record {name}"
         for name in sorted(set((changed or "").split()))
     ]
+    screens_changed = git_output(
+        toplevel,
+        "log",
+        "--diff-filter=DMR",
+        "--name-only",
+        "--format=",
+        "--",
+        f"{research_dir}/_screens/ledger/*.json",
+    )
+    problems.extend(
+        f"git history changes or removes the screen record {name}"
+        for name in sorted(set((screens_changed or "").split()))
+    )
     deleted = git_output(
         toplevel,
         "log",

@@ -73,6 +73,8 @@ ad hoc 的 SEC PIT 回填/评估与缓存回放。
 
 信号筛选的数据入口（TRADING-2565 S4a）：`research_data.signal_sources` 下载 FRED 日度序列和 Ken French 数据成本机快照，`research_bench.sources.known_at` 按发布滞后对齐；来源列在 `config/research/research_screen.yaml`。
 
+信号筛选（TRADING-2565 S4b）：`research_bench screen` 在截至 2010-12-31 的 QQQ、美股大盘和 49 个行业上筛一个信号，记进 `research/_screens/ledger/` 的全局账，按全部筛过的信号做 BH 修正后给出淘汰、候选或证据不足；信号模块在 `src/ai_trading_system/research_screens/signals/`。
+
 ```mermaid
 flowchart LR
     Q["Owner 定问题（TRADING-2567）"] --> PRE["research/&lt;题号&gt;/prereg.yaml + strategy.py<br/>C 区：随 Owner-Decision ship 进 main"]

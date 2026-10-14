@@ -57,9 +57,10 @@ git checkout research-archive-2026-10-12 -- <路径>     # 取回到工作区
 评估台建好后启用，细节以 TRADING-2565 的需求文档为准。命令都是 `python -m ai_trading_system.research_bench ...`，输出只有汇总。
 
 1. Owner 定问题。同时进行的问题数不设上限（TRADING-2567）；假阳性靠评估台跨问题累计试验次数、抬高门槛来控制。
-2. 把 `_template/` 复制成 `research/<问题ID>/`，写 `prereg.yaml` 和 `strategy.py`（都在 C 区）：问题、问题类型（决定窗口角色）、固定的数据快照、策略和参数、要验证的策略和判定规则、已有研究的预期、样本地板、试验上限、停止条件。基准和成本由评估台固定，不在这里写。
-3. 开发窗口：`run <问题ID> --strategy <id> [--set 参数=值] [--falsify]`。策略代码只给出每日目标敞口；执行滞后、成本、指标、基准都由评估台负责。每次运行登记在 `research/<问题ID>/runs/`，失败的也算；不同的配置算新试验，超过上限就拒绝。`--falsify` 同时跑标准证伪，不算新试验；要验证的策略都要先这样跑一次。`ledger` 看试验数和折算夏普，`report <问题ID>` 看第一屏。
-4. Owner 确认预注册，记为一个 `Owner-Decision`；`prereg.yaml` 和 `strategy.py` 随一次 ship 进 main，决定写进 `docs/requirements`。
-5. 验证窗口：`validate <问题ID>`，每题一次，pi 在单独一次运行里做（`_template/brief.md`）。预注册或策略模块和 main 上的不一致、或判定规则写了不存在的指标，就拒绝。验证和一致性窗口的运行总是跑标准证伪，判定规则可以读证伪结果（如 `ci_low.max_drawdown`）。之后才能 `consistency <问题ID>`。从第二题起，开题批准同时同意读验证窗口（`owner_decision:TRADING-2567:2026-10-14:opening_covers_validation_read`）：开发运行和实现核对都没有问题时，研究线程先告诉 owner，再读，不等回复。
-6. 核验：`report <问题ID>` 的第一屏；没碰评估台和基准；试验数没超上限；结论符合预注册规则。
-7. 写 `research/<问题ID>/decision.md`，结论用上面四个词，引用登记过的运行号（`<问题ID>-r0001`）和读取号（`<问题ID>-w0001`）。保留的进前瞻记录；拒绝的进 `negative_results.md`（人审后更新）。
+2. 新信号先写进 `src/ai_trading_system/research_screens/signals/`（模块和规格），用 `screen <id> --signal-snapshot <ID> [--bench-snapshot <ID>]` 筛选并进全局账，只有候选才开题；经典信号（均线、动量、实际波动）是基准，不筛。`screen-ledger` 看全家族 BH 修正后的当前裁决。
+3. 把 `_template/` 复制成 `research/<问题ID>/`，写 `prereg.yaml` 和 `strategy.py`（都在 C 区）：问题、问题类型（决定窗口角色）、固定的数据快照、策略和参数、要验证的策略和判定规则、已有研究的预期、样本地板、试验上限、停止条件。基准和成本由评估台固定，不在这里写。
+4. 开发窗口：`run <问题ID> --strategy <id> [--set 参数=值] [--falsify]`。策略代码只给出每日目标敞口；执行滞后、成本、指标、基准都由评估台负责。每次运行登记在 `research/<问题ID>/runs/`，失败的也算；不同的配置算新试验，超过上限就拒绝。`--falsify` 同时跑标准证伪，不算新试验；要验证的策略都要先这样跑一次。`ledger` 看试验数和折算夏普，`report <问题ID>` 看第一屏。
+5. Owner 确认预注册，记为一个 `Owner-Decision`；`prereg.yaml` 和 `strategy.py` 随一次 ship 进 main，决定写进 `docs/requirements`。
+6. 验证窗口：`validate <问题ID>`，每题一次，pi 在单独一次运行里做（`_template/brief.md`）。预注册或策略模块和 main 上的不一致、或判定规则写了不存在的指标，就拒绝。验证和一致性窗口的运行总是跑标准证伪，判定规则可以读证伪结果（如 `ci_low.max_drawdown`）。之后才能 `consistency <问题ID>`。从第二题起，开题批准同时同意读验证窗口（`owner_decision:TRADING-2567:2026-10-14:opening_covers_validation_read`）：开发运行和实现核对都没有问题时，研究线程先告诉 owner，再读，不等回复。
+7. 核验：`report <问题ID>` 的第一屏；没碰评估台和基准；试验数没超上限；结论符合预注册规则。
+8. 写 `research/<问题ID>/decision.md`，结论用上面四个词，引用登记过的运行号（`<问题ID>-r0001`）和读取号（`<问题ID>-w0001`）。保留的进前瞻记录；拒绝的进 `negative_results.md`（人审后更新）。

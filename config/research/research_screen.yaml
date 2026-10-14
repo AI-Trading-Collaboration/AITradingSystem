@@ -38,5 +38,30 @@ sources:
     frequency: daily
     known_lag_trading_days: 0
     description: Ken French 49 industry portfolios, value weighted, daily from 1926-07
+# Signal screening (S4b). Every market is cut at screen_end: the US market and the industries move
+# with QQQ after 2010, so reading them later would read QQQ's validation window. The screen has no
+# option to read past screen_end; moving it needs a change to this zone C file.
+screen:
+  screen_end: "2010-12-31"
+  qqq_series: actual               # QQQ market: the bench's ndx_return over the actual QQQ series
+  qqq_eval_start: "1999-03-10"      # QQQ development window
+  long_eval_start: "1927-07-01"     # Ken French markets: one year after the data starts, for lookbacks
+  horizons: [21, 63, 126]           # forward horizons in trading days
+  groups: 5                         # expanding-quantile groups
+  warmup_days: 252                  # first valid signal values that are not grouped
+  min_days: 252                     # fewer evaluation days than this: no statistics for the horizon
+  drawdown_threshold: -0.10         # group table: share of days whose next h days draw down this far
+  bootstrap_markets: [qqq, us_market]
+  bootstrap_draws: 2000             # stationary block bootstrap, mean block = horizon
+  confidence: 0.95
+  seed: 20261013
+  lookahead_cut_dates: 20
+  # Verdict rules, approved before any screen ran.
+  bh_q: 0.10                        # Benjamini-Hochberg over the whole screened family
+  primary_market: us_market
+  primary_horizon: 21
+  candidate_breadth: 0.666667       # compared with a 1e-6 tolerance, so 2 of 3 markets counts
+  eliminate_breadth: 0.5
+  copy_corr: 0.9                    # |rank correlation| with a baseline signal at or above this
 production_effect: none
 broker_action: none

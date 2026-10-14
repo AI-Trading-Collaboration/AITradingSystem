@@ -8,6 +8,8 @@
 - S4（信号筛选层）：owner_decision:TRADING-2565:2026-10-13:signal_screen_layer。Baker 10-13 19:49 JST 在研究线程的卡上选"先建"：第二题开题前先建开发窗口内的信号筛选层（数据入口、筛选和全局账、向量化证伪和减仓事件表三批）；19:55 JST 批准规则默认值：所有市场的筛选数据截止 2010-12-31；候选要 QQQ 方向一致、至少 2/3 的市场方向一致、美股大盘按全部筛过的信号做 BH 修正（q = 0.10）后仍显著、剔除任一个十年方向不变；FRED 日度序列晚 1 个交易日算已知；减仓事件表默认值见 config/research/research_screen.yaml。S4 的 C 区设置放在新文件 config/research/research_screen.yaml，research_bench.yaml 不变。
 - 评估台配置的 C 区登记：owner_decision:TRADING-2565:2026-10-14:bench_config_zone。Baker 10-14 13:22 JST 在「减少粘贴和批准步骤」线程的卡上选"全部照做"，其中第 4 条是评估台配置的 C 区登记一次做完，按 tree 批最后一次。`config/gov008_ship.yaml` 1.2.2 把 `config/research/research_*.yaml` 按通配划进 C 区，评估台读的成本模型 `config/research/transaction_cost_model.yaml` 也划进 C 区（以前在 B 区）。以后评估台的新配置文件命名为 `config/research/research_<名>.yaml`，落在通配下，不用再改 `config/gov008_ship.yaml`，可以走决定记录。旧的研究治理政策 `config/research/research_governance_policy.yaml` 随通配从 B 区进 C 区。`config/research/qqq_long_history.yaml` 和 `research_data` 的代码仍在 B 区，数据由快照 id 和检查钉住。
 
+- 研究吞吐（S4d 和研究记录快车道）：owner_decision:TRADING-2565:2026-10-13:research_throughput。Baker 10-13 20:12 JST 在研究线程的卡上选"两项都做"：评估台内置通用的"信号 → 仓位"策略，一道题的策略只是预注册里的配置（S4d）；研究记录走快车道，由第二个 pi 会话在单独的工作区跑研究命令、按天提交只追加的记录。两项都排在 S4 之后、第二题开题之前。
+
 ## 为什么
 
 2026-05 到 09 的约 860 个研究任务里，没有一条正面结论达到 A 或 B 级（`research/ledger.md`）。原因里和评估有关的有：
@@ -147,6 +149,20 @@
 - **质量门禁**：检查文件哈希、日期递增且唯一非空、列非空比例；全空、文件不匹配、重复和乱序为 FAIL，相邻日期间缺失工作日严格超过 5 为 WARN，否则 PASS。`check.json` 和 `check.md` 只含 id、状态、计数、日期、比例。`load_snapshot` 拒绝未检查、FAIL 或校验和漂移，只返回按日期索引的原抓取值。快照清单内容地址也复核，WARN 可读但不是候选通过。
 - **数据规则**：数据只在本机、不提交、不打印数据行、不发给外部模型。本批只用 Claude 原样提供的合成验收数据，不联网下载；真实 fetch 留待发布后单独执行。验收不变量 28–33 与五项变异证据见 `tests/invariants/README.md`。本批仅实现数据入口，不实现 S4b 的筛选和全局账，不改变 production/broker 边界。
 
+## S4b 的实现
+
+- **模块和规格**：`research_screens/signals/<id>.py` 和 `<id>.yaml`，函数参数为 `(returns, sources, params)`，返回同索引实数 Series（NaN 可留，无穷拒绝）。规格冻结、拒绝额外字段；id 等于文件名，机制和文献说明非空，参数和预期方向都写进规格。模块名包含模块哈希，不放进 `sys.modules`；模块和规格各按 LF 规范后的 SHA-256 钉住。模块在 B 区，本批不放真实信号。模块只能用传入的数据，不可自行读文件、联网或用外部状态；检查不是沙箱。
+- **截止和检查**：设置在 `research_screen.yaml.screen`（C 区），最晚截止 2010-12-31，QQQ 评估从 1999-03-10 开始，长市场从 1927-07-01 开始。每个市场收益和声明的来源先截到截止日，再逐列 `known_at` 对齐，仅传声明来源。在配置的自助法市场上按 20 个切点跑 `check_no_lookahead`，在主市场跑参数消费检查；QQQ-only 用 QQQ 做参数检查。未知类型参数列为 unchecked；任一检查失败不记账、不进家族。市场日历须递增唯一，收益可 NaN、不得无穷或 ≤ -1；输出形状和数值类型也检查。
+- **统计**：持有期默认 21、63、126 个交易日，t 的前向收益是 t+1..t+h 的对数收益和，风险是同段样本标准差乘 sqrt(252)，尾部不足 h 天为 NaN；任何缺失收益都会使该段前向值缺失。评估日要求起点以后且信号/目标有效。IC 是平均秩 Pearson，n_eff=days/h；MDE=(z_0.975+z_0.80)/sqrt(n_eff)，只是检测能力提示，不额外加入裁决门槛。少于 min_days 不给 IC、MDE、区间、p 或单调性。
+- **扩张分组**：只计 t 为止有效值（含评估前回看），前 warmup_days 个值不分组；midrank 分位按 brief 的公式，组数来自设置。`expanding_percentile` 公开，使用坐标压缩和只加入过去值的 Fenwick tree（O(n log n)），S4d 可以复用。组表的收益年化按 252/h，风险为前向波动均值，回撤从 t 收盘的初始净值到后 h 天路径、按滚动峰值算最大回撤。空组数值为 None，有空组不给单调性。warmup 内有效评估日计入 days，但不计入任一组。
+- **自助法**：只在 QQQ 和美股大盘上做，行业不做。评估日的成对秩用 `stationary_bootstrap_indices` 重抽，平均块长 h，不重新排秩，2,000 次，分批最多 100 次；种子为 `[seed, h]`。按 confidence 给分位区间，中心化双侧 p 按 brief 的加一公式。常量信号 IC=None；有退化抽样时区间/p=None，不静默删除抽样。结果仅有 JSON 汇总，非有限值为 None，日期仅起止，没有逐日值、运行时间或路径。
+- **稳健性和基准**：QQQ 按年、其他市场按十年逐个剔除后重排秩算 IC；stable 要每次都严格同预期方向，零或退化 IC 不算稳定。小样本的 leave_out 为未评估（count=0、stable=None）。固定基准为 mom_12_1、ma_10m_distance、rv_21，严格按 brief 的窗口公式。基准相关用主持有期评估日上的有效配对值；partial_ic 仅在自助法市场做，在信号、前向值和三个基准同时有效的交集上排秩、带常数 OLS 取残差，残差标准差小于 1e-9 视为数值退化。
+- **裁决**：先淘汰（区间完全错向、breadth < 0.5、或基准最大绝对相关 ≥ 0.9），再候选（非 QQQ-only、QQQ IC 严格同向、breadth ≥ 0.666667−1e-6、主市场全家族 BH 调整 p ≤ 0.10、主市场十年剔除 stable=True），其余 inconclusive。QQQ-only 的主市场区间、广度、剔除稳定和主 p 都 None，永不 candidate；淘汰区间看 QQQ。所有解释阈值来自 owner 批准配置，容差为配置舍入的不变量。
+- **全局账和 BH**：`research/_screens/ledger/NNNN.json`，research_screen_record.v1，S0001 起，每条带前一条 LF 规范哈希；独占新增写入，重复 module/spec 哈希、data 和 settings 哈希组合先拒绝。家族成员为 module_sha256:spec_sha256，规格变更（含参数、方向）是新成员；每成员取最新记录（包括最新主 p=None），只对主 p 非 None 的成员做 BH。记录时的裁决保留，screen-ledger 用当前全家族 BH 和当前规则重算裁决；旧记录无 verdict_inputs 时当前裁决为 None。链验证检查文件名、连续编号、schema、number、screen_id 和 prev_sha256；git 历史不许筛选记录改、删、改名。链不能证明未提交的尾记录没有被删除，git 历史是已提交记录的补充控制。一次只许一个研究运行，独占写入防并发覆盖，不是多进程事务锁。
+- **命令**：`screen SIGNAL_ID --signal-snapshot ID [--bench-snapshot ID] [--root ...]`，root 沿用评估台的长历史快照根，省略 bench id 用 LATEST 并在记录里写解析后的实际 id；信号来源经 `signal_sources.load_snapshot(PROJECT_ROOT, ID)` 的质量门禁，QQQ 经 `from_snapshot` 的长历史门禁。先查链/重复，再加载快照和计算。QQQ 用 ndx_return、actual；US 用 Mkt-RF+RF，行业名小写且非字母数字换 `_`，重名拒绝；行业收益已由 S4a 转为小数。记录包含快照 id、设置原字节哈希、commit/modified、规格与模块哈希。两个快照 id 可定位其本机质量检查；PASS/WARN 仅允许读数据，不是候选结论。屏幕只给规定汇总和中文裁决；screen-ledger 只读记录，不读真实快照。
+- **和前面设计的两处不同**：前面“策略接口”是 `(inputs, params)` 给敞口，本批信号是 `(returns, sources, params)` 给信号值，仅在检查时包装成策略接口；前面的运行账按预注册题计试验，本批筛选在开题之前进入全局筛选家族、按最新成员主 p 做 BH，不使用 prereg 的 screens/screen_family_size。通用“信号 → 仓位”及预注册衔接留到 S4d，不在本批。
+- **验收范围**：Claude 提供的不变量 34–40 原样保留，合成数据覆盖手算、截止日污染、检查拒绝、基准复制、链和 BH、裁决边界、汇总无逐日值和原 bench 配置哈希。七项本地变异、51 市场计时、静态检查和全量结果记在 TRADING-2565-07 运行报告及 `tests/invariants/README.md`；本批不读真实快照、不开展新研究试验。
+
 ## 进展
 
 - 2026-10-12：随 TRADING-2567 激活（READY）。production_effect=none；broker_action=none。
@@ -156,3 +172,4 @@
 - 2026-10-14：S4c（TRADING-2565-05）：向量化随机择时、减仓事件表。production_effect=none；broker_action=none。
 - 2026-10-14：TRADING-2565-09：ship 规则 1.2.2，评估台配置按 `config/research/research_*.yaml` 通配进 C 区，成本模型 `transaction_cost_model.yaml` 进 C 区；`tests/test_gov008_ship.py` 守住评估台设置和它点名的配置文件都在 C 区。production_effect=none；broker_action=none。
 - 2026-10-14：S4a（TRADING-2565-06）：信号筛选的数据入口、发布滞后对齐、本机内容寻址快照和检查；待按决定记录批准，之后 S4b。production_effect=none；broker_action=none。
+- 2026-10-14：S4b（TRADING-2565-07）：信号筛选、全局筛选账和 BH、screen/screen-ledger 命令；只用合成数据验证，待审阅和按决定记录批准，之后 S4d 和研究记录快车道。production_effect=none；broker_action=none。
