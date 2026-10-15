@@ -139,7 +139,7 @@ C 区有两种批准：
 
 **门禁修补（DEVX-032，`owner_decision:GOV-008:2026-10-14:review_fixes_v1`）**：`ship.py` 的 `gate()` 和 `ship()` 在测试跑完后再查一次工作区，期间有未提交修改就不写 PASS、不移动 main。B 区路径全是任务卡（`task_records`）的提交跑 `gates.tasks`（`tools/tasks.py check` 加任务登记测试），不跑整个产品测试。研究数据层 `research_data/**` 和 `config/research/qqq_long_history.yaml` 属 C 区，因为快照 id 只钉原始数据，收益序列的推导和检查状态由这部分代码决定。
 
-**门禁提速（DEVX-033，`owner_decision:DEVX-033:2026-10-15:gate_speedup`）**：门禁命令不变。`tests/conftest.py` 只在 pytest-xdist 下生效：`--dist loadfile` 时按文件耗时从长到短排队，不再按测试个数（耗时取这个工作区 `.pytest_cache` 的 `aits/file_durations`，由 1000 个以上测试的运行按文件更新，没有就用 `tests/file_durations.json`，再没有按每个测试 0.3 秒估）；测试全过时每个 xdist 进程删掉自己的临时目录，有失败就保留；主进程在 pytest 最后一行之前打印 `gate timing:` 耗时摘要，同样内容写进 `.pytest_cache` 的 `aits/last_gate_timing`。影子参数回测的测试夹具用 4 个候选（原来 32 个）；四个 ship 测试文件的临时 git 仓库每个进程只建一次，每个测试复制一份。
+**门禁提速（DEVX-033，`owner_decision:DEVX-033:2026-10-15:gate_speedup`）**：门禁命令不变。`tests/conftest.py` 只在 pytest-xdist 下生效：`--dist loadfile` 时按文件耗时从长到短排队，不再按测试个数（耗时取这个工作区 `.pytest_cache` 的 `aits/file_durations`，由 1000 个以上测试的运行按文件更新，没有就用 `tests/file_durations.json`，再没有按每个测试 0.3 秒估）；预计耗时超过一个进程平均份额一半的文件拆成几段连续的测试，分给多个进程（DEVX-033-02）；测试全过时每个 xdist 进程删掉自己的临时目录，有失败就保留；主进程在 pytest 最后一行之前打印 `gate timing:` 耗时摘要，同样内容写进 `.pytest_cache` 的 `aits/last_gate_timing`。影子参数回测的测试夹具用 4 个候选（原来 32 个）；四个 ship 测试文件的临时 git 仓库每个进程只建一次，每个测试复制一份。
 
 **研究记录快车道（DEVX-030，`owner_decision:TRADING-2565:2026-10-13:research_throughput`）**：评估台的运行记录、筛选记录和
 验证窗口读取记录（`config/gov008_ship.yaml` 的 `research_records`）单独成一个提交，不和别的文件一起发；`ship.py` 每次规划都机械检查，

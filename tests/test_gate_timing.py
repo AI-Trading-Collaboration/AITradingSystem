@@ -63,6 +63,53 @@ def test_equal_durations_keep_collection_order_and_files_together() -> None:
     ]
 
 
+def test_long_files_are_split_into_parts_of_consecutive_tests() -> None:
+    gate = load_conftest()
+    nodeids = (
+        [f"tests/big.py::t{i}" for i in range(7)]
+        + [f"tests/wide.py::t{i}" for i in range(5)]
+        + ["tests/mid.py::t1", "tests/mid.py::t2", "tests/one.py::t1"]
+        + [f"tests/new.py::t{i}" for i in range(40)]
+    )
+    durations = {
+        "tests/big.py": 80.0,
+        "tests/wide.py": 25.0,
+        "tests/mid.py": 15.0,
+        "tests/one.py": 30.0,
+    }
+    # 162 s (new.py unknown: 40 x 0.3 s) over 4 workers: files above 20.25 s are split.
+    # big.py: 3.95 -> 4 parts; wide.py: 1.23 -> 2; one.py has a single test.
+    plan = gate.split_plan(nodeids, durations, 4)
+    assert plan == {"tests/big.py": 4, "tests/wide.py": 2}
+    assert gate.split_plan(list(reversed(nodeids)), durations, 4) == plan
+    assert gate.split_plan(nodeids, durations, 1) == {}
+    # 16 workers, 5.06 s: big.py capped at its 7 tests, wide.py at 5; mid.py 3 -> 2 tests.
+    assert gate.split_plan(nodeids, durations, 16) == {
+        "tests/big.py": 7,
+        "tests/wide.py": 5,
+        "tests/mid.py": 2,
+        "tests/new.py": 3,
+    }
+
+    scopes = gate.part_scopes(nodeids, plan)
+    assert [scopes[f"tests/big.py::t{i}"][-1] for i in range(7)] == list("1122334")
+    assert [scopes[f"tests/wide.py::t{i}"][-1] for i in range(5)] == list("11122")
+    assert scopes["tests/big.py::t0"] == "tests/big.py::aits-part-1"
+    assert set(scopes) == {n for n in nodeids if n.startswith(("tests/big.py", "tests/wide.py"))}
+
+    # Queued by part: one.py 30 s, big.py 20, mid.py 15, wide.py 12.5, new.py 12; also in a worker.
+    ordered = [i.nodeid for i in gate.order_by_duration(items(*nodeids), durations, plan)]
+    files = [f.removeprefix("tests/") for f in dict.fromkeys(gate.file_of(n) for n in ordered)]
+    assert files == ["one.py", "big.py", "mid.py", "wide.py", "new.py"]
+    assert ordered[1:8] == [f"tests/big.py::t{i}" for i in range(7)]
+    workerinput = {gate.DURATIONS_KEY: durations, "workercount": 4}
+    collected = items(*nodeids)
+    gate.WorkerTiming(SimpleNamespace(workerinput=workerinput)).pytest_collection_modifyitems(
+        collected
+    )
+    assert [i.nodeid for i in collected] == ordered
+
+
 def test_recorded_durations_override_the_seed(tmp_path: Path) -> None:
     gate = load_conftest()
     assert gate.merge_durations({"a": 1.0, "b": 2.0}, {"b": 5, "c": 0.5, "bad": "x"}) == {
@@ -126,13 +173,15 @@ def test_many(i):
 """
 
 
-def run_pytest(project: Path, temproot: Path, *args: str, fail_in: str = "") -> str:
+def run_pytest(
+    project: Path, temproot: Path, *args: str, fail_in: str = "", workers: int = 1
+) -> str:
     env = {k: v for k, v in os.environ.items() if not k.startswith(("PYTEST_", "AITS_PI_"))}
     env["PYTEST_DEBUG_TEMPROOT"] = str(temproot)
     env["ORDER_LOG"] = str(project / "order.log")
     env["FAIL_IN"] = fail_in
     done = subprocess.run(
-        [sys.executable, "-m", "pytest", "-n", "1", "--dist", "loadfile", "-q", *args],
+        [sys.executable, "-m", "pytest", "-n", str(workers), "--dist", "loadfile", "-q", *args],
         cwd=project,
         env=env,
         capture_output=True,
@@ -167,6 +216,7 @@ def test_xdist_run_orders_files_cleans_up_and_records_timing(tmp_path: Path) -> 
     lines = [line for line in out.splitlines() if line.strip()]
     assert any(line.startswith("gate timing: 1 workers, 1007 tests;") for line in lines), out
     assert "passed" in lines[-1] and "gate timing" not in lines[-1]
+    assert "split files" not in out
     cache = project / ".pytest_cache" / "v" / "aits"
     recorded = json.loads((cache / "file_durations").read_text(encoding="utf-8"))
     assert set(recorded) == {"test_a.py", "test_b.py", "test_c.py", "test_many.py"}
@@ -193,3 +243,42 @@ def test_xdist_run_orders_files_cleans_up_and_records_timing(tmp_path: Path) -> 
     assert "gate timing" not in out
     # A run below 1000 tests leaves the recorded durations alone.
     assert json.loads((cache / "file_durations").read_text(encoding="utf-8")) == recorded
+
+
+# One file per test: on Windows, appends to one file from two processes can overwrite each other.
+BIG_FILE = """import os
+from pathlib import Path
+
+import pytest
+
+
+@pytest.mark.parametrize("i", range(6))
+def test_big(i):
+    out = Path(os.environ["ORDER_LOG"]).with_name(f"big-{i}.log")
+    out.write_text(os.environ["PYTEST_XDIST_WORKER"], encoding="utf-8")
+"""
+
+
+def test_xdist_run_splits_a_long_file_between_workers(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    temproot = tmp_path / "temproot"
+    project.mkdir()
+    temproot.mkdir()
+    (project / "pytest.ini").write_text("[pytest]\n", encoding="utf-8")
+    (project / "conftest.py").write_bytes(CONFTEST.read_bytes())
+    seed = {"files": {"test_big.py": 100.0, "test_many.py": 1.0}}
+    (project / "file_durations.json").write_text(json.dumps(seed), encoding="utf-8")
+    (project / "test_big.py").write_text(BIG_FILE, encoding="utf-8")
+    (project / "test_many.py").write_text(MANY_FILE, encoding="utf-8")
+
+    out = run_pytest(project, temproot, workers=2)
+    assert out.startswith("exit=0"), out
+    # 101 s over 2 workers: test_big.py (100 s) is cut in two, one part per worker.
+    logs = sorted(project.glob("big-*.log"))
+    ran = {f.stem.removeprefix("big-"): f.read_text(encoding="utf-8") for f in logs}
+    assert sorted(ran) == ["0", "1", "2", "3", "4", "5"]
+    assert ran["0"] == ran["1"] == ran["2"] != ran["3"] == ran["4"] == ran["5"], ran
+    assert "  split files (parts): test_big.py 2" in out.splitlines(), out
+    cache = project / ".pytest_cache" / "v" / "aits"
+    timing = json.loads((cache / "last_gate_timing").read_text(encoding="utf-8"))
+    assert timing["split_files"] == {"test_big.py": 2} and timing["tests"] == 1006

@@ -7,6 +7,10 @@ Active only under pytest-xdist (``-n``); a plain ``pytest`` run is unchanged.
   Durations come from runs of 1000 or more tests in this checkout (pytest cache
   ``aits/file_durations``, updated per file), then ``tests/file_durations.json``, then 0.3 s
   per test.
+- A file expected to run longer than half of one worker's share of the run is cut into parts
+  of consecutive tests, each its own work unit, so several workers share it. Otherwise one
+  long file sets the length of the run (Windows, 2026-10-15: tests/test_agent_lane.py 194 s
+  while 9 of 16 workers were done at 120 s).
 - Each worker deletes its own temporary directory when its tests passed. Otherwise pytest's main
   process deletes the run from three runs ago at exit, one file at a time, outside the reported
   test time (tens of thousands of files from throw-away git repositories).
@@ -17,13 +21,14 @@ Active only under pytest-xdist (``-n``); a plain ``pytest`` run is unchanged.
 from __future__ import annotations
 
 import json
+import math
 import os
 import shutil
 import stat
 import sys
 import time
-from collections import defaultdict
-from collections.abc import Callable
+from collections import Counter, defaultdict
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -33,6 +38,8 @@ SEED_PATH = Path(__file__).with_name("file_durations.json")
 CACHE_DURATIONS = "aits/file_durations"
 CACHE_TIMING = "aits/last_gate_timing"
 SECONDS_PER_TEST = 0.3
+# Files expected to take longer than this share of one worker's part of the run are split.
+SPLIT_SHARE = 0.5
 # Smaller runs (targeted test runs) do not replace the recorded durations.
 MIN_TESTS_TO_RECORD = 1000
 MIN_TESTS_TO_SUMMARIZE = 200
@@ -65,20 +72,78 @@ def merge_durations(seed: dict[str, float], recorded: object) -> dict[str, float
     return durations
 
 
-def order_by_duration(items: list[Any], durations: dict[str, float]) -> list[Any]:
-    """Items grouped by file, longest file first; tests keep their order within a file."""
+def split_plan(nodeids: Sequence[str], durations: dict[str, float], workers: int) -> dict[str, int]:
+    """``{file: parts}`` for the files to split; the same answer in every process of a run."""
+    counts = Counter(file_of(n) for n in nodeids)
+    sizes = {f: durations.get(f, c * SECONDS_PER_TEST) for f, c in counts.items()}
+    # fsum does not depend on the order of the files, which differs between processes.
+    target = SPLIT_SHARE * math.fsum(sizes.values()) / max(workers, 1)
+    plan: dict[str, int] = {}
+    if workers < 2 or target <= 0:
+        return plan
+    for name, size in sizes.items():
+        parts = min(math.ceil(size / target), counts[name], workers)
+        if parts > 1:
+            plan[name] = parts
+    return plan
+
+
+def part_scopes(nodeids: Sequence[str], plan: dict[str, int]) -> dict[str, str]:
+    """Work unit of each test of a split file: near-equal runs of consecutive tests."""
+    tests: dict[str, list[str]] = defaultdict(list)
+    for nodeid in nodeids:
+        if file_of(nodeid) in plan:
+            tests[file_of(nodeid)].append(nodeid)
+    scopes: dict[str, str] = {}
+    for name, ids in tests.items():
+        for index, nodeid in enumerate(ids):
+            scopes[nodeid] = f"{name}::aits-part-{index * plan[name] // len(ids) + 1}"
+    return scopes
+
+
+def order_by_duration(
+    items: list[Any], durations: dict[str, float], plan: dict[str, int] | None = None
+) -> list[Any]:
+    """Items grouped by file, longest file (or part) first; tests keep their order in a file."""
     first: dict[str, int] = {}
     count: dict[str, int] = defaultdict(int)
     for index, item in enumerate(items):
         name = file_of(item.nodeid)
         first.setdefault(name, index)
         count[name] += 1
+    parts = plan or {}
 
     def key(item: Any) -> tuple[float, int]:
         name = file_of(item.nodeid)
-        return (-durations.get(name, count[name] * SECONDS_PER_TEST), first[name])
+        size = durations.get(name, count[name] * SECONDS_PER_TEST)
+        return (-size / parts.get(name, 1), first[name])
 
     return sorted(items, key=key)
+
+
+def split_scheduler(config: pytest.Config, log: Any, durations: dict[str, float]) -> Any:
+    """xdist's ``loadfile`` scheduler, with the files of ``split_plan`` cut into parts."""
+    from xdist.scheduler import LoadFileScheduling
+
+    class SplitFileScheduling(LoadFileScheduling):  # type: ignore[misc]
+        def __init__(self, config: pytest.Config, log: Any) -> None:
+            super().__init__(config, log)
+            self.plan: dict[str, int] | None = None
+            self.scopes: dict[str, str] = {}
+
+        def schedule(self) -> None:
+            if self.plan is None:
+                # Called once every worker has collected; the collections are identical.
+                collection = next(iter(self.registered_collections.values()))
+                self.plan = split_plan(collection, durations, self.numnodes)
+                self.scopes = part_scopes(collection, self.plan)
+            super().schedule()
+
+        def _split_scope(self, nodeid: str) -> str:
+            scope = self.scopes.get(nodeid)
+            return scope if scope is not None else str(super()._split_scope(nodeid))
+
+    return SplitFileScheduling(config, log)
 
 
 def remove_tree(path: Path) -> None:
@@ -110,12 +175,19 @@ class ControllerTiming:
         self.file_seconds: dict[str, float] = defaultdict(float)
         self.file_tests: dict[str, int] = defaultdict(int)
         self.durations: dict[str, float] | None = None
+        self.scheduler: Any = None
         if config.getoption("dist") == "loadfile":
             cache = getattr(config, "cache", None)
             recorded = cache.get(CACHE_DURATIONS, None) if cache is not None else None
             self.durations = merge_durations(load_seed(), recorded)
             # Keep the order the workers collected (longest file first) instead of test count.
             config.option.loadscopereorder = False
+
+    def pytest_xdist_make_scheduler(self, config: pytest.Config, log: Any) -> Any:
+        if self.durations is None:
+            return None
+        self.scheduler = split_scheduler(config, log, self.durations)
+        return self.scheduler
 
     def pytest_configure_node(self, node: Any) -> None:
         if self.durations is not None:
@@ -145,6 +217,7 @@ class ControllerTiming:
         collected = self.collected if self.collected is not None else self.started
         last = max(self.last_report.values(), default=collected)
         slowest = sorted(self.file_seconds.items(), key=lambda kv: -kv[1])[:10]
+        plan = getattr(self.scheduler, "plan", None) or {}
         return {
             "recorded_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
             "workers": len(self.last_report),
@@ -170,6 +243,7 @@ class ControllerTiming:
             "slowest_files": [
                 {"file": f, "seconds": round(s, 1), "tests": self.file_tests[f]} for f, s in slowest
             ],
+            "split_files": dict(sorted(plan.items())),
         }
 
     @pytest.hookimpl(trylast=True)
@@ -203,6 +277,11 @@ class ControllerTiming:
             "  slowest files (s): "
             + "; ".join(f"{f['file']} {f['seconds']}" for f in s["slowest_files"][:5])
         )
+        if s["split_files"]:
+            write(
+                "  split files (parts): "
+                + "; ".join(f"{f} {n}" for f, n in s["split_files"].items())
+            )
 
 
 class WorkerTiming:
@@ -213,9 +292,12 @@ class WorkerTiming:
 
     @pytest.hookimpl(trylast=True)
     def pytest_collection_modifyitems(self, items: list[pytest.Item]) -> None:
-        durations = getattr(self.config, "workerinput", {}).get(DURATIONS_KEY)
+        workerinput = getattr(self.config, "workerinput", {})
+        durations = workerinput.get(DURATIONS_KEY)
         if durations is not None:
-            items[:] = order_by_duration(items, durations)
+            workers = int(workerinput.get("workercount", 1))
+            plan = split_plan([i.nodeid for i in items], durations, workers)
+            items[:] = order_by_duration(items, durations, plan)
 
     @pytest.hookimpl(trylast=True)
     def pytest_sessionfinish(self, exitstatus: int) -> None:
