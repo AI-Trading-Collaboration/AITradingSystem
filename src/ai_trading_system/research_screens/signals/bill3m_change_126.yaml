@@ -1,0 +1,12 @@
+signal_id: bill3m_change_126
+mechanism: >-
+  短端利率持续上升代表货币收紧，之后股票收益偏低；下降相反。信号值是 3 个月国库券利率现值减 126 个交易日前的值
+  （百分点）。
+expected_sign: -1
+target: return
+params:
+  window: 126
+sources:
+  - dtb3
+markets: all
+literature: Jensen, Mercer & Johnson 1996, Business Conditions, Monetary Policy, and Expected Security Returns, Journal of Financial Economics 40(2)

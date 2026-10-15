@@ -38,6 +38,32 @@ sources:
     frequency: daily
     known_lag_trading_days: 0
     description: Ken French 49 industry portfolios, value weighted, daily from 1926-07
+  # Research loop period 1 whitelist (owner_decision:TRADING-2565:2026-10-15:research_loop_p1): free
+  # FRED daily market series, known one trading day later like the FRED series above.
+  - source_id: vixcls
+    provider: fred
+    dataset: VIXCLS
+    frequency: daily
+    known_lag_trading_days: 1
+    description: CBOE S&P 500 implied volatility index VIX, daily close
+  - source_id: vxncls
+    provider: fred
+    dataset: VXNCLS
+    frequency: daily
+    known_lag_trading_days: 1
+    description: CBOE Nasdaq-100 implied volatility index VXN, daily close
+  - source_id: dgs10
+    provider: fred
+    dataset: DGS10
+    frequency: daily
+    known_lag_trading_days: 1
+    description: 10-year Treasury constant maturity yield
+  - source_id: dtb3
+    provider: fred
+    dataset: DTB3
+    frequency: daily
+    known_lag_trading_days: 1
+    description: 3-month Treasury bill secondary market rate
 # Signal screening (S4b). Every market is cut at screen_end: the US market and the industries move
 # with QQQ after 2010, so reading them later would read QQQ's validation window. The screen has no
 # option to read past screen_end; moving it needs a change to this zone C file.

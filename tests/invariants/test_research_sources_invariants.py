@@ -179,7 +179,13 @@ def _fred_series(seed: int = 0) -> dict[str, pd.Series]:
     baa = pd.Series(np.round(rng.normal(2.0, 0.1, len(dates)), 2), index=dates)
     baa.iloc[10] = MARK
     t10y3m = pd.Series(np.round(rng.normal(1.0, 0.2, len(dates)), 2), index=dates)
-    return {"BAA10Y": baa, "T10Y3M": t10y3m}
+    # The research loop period 1 whitelist (TRADING-2565-13): drawn after the two above, so their
+    # values do not change.
+    loop = {
+        name: pd.Series(np.round(rng.normal(centre, 0.2, len(dates)), 2), index=dates)
+        for name, centre in (("VIXCLS", 20.0), ("VXNCLS", 25.0), ("DGS10", 7.5), ("DTB3", 6.0))
+    }
+    return {"BAA10Y": baa, "T10Y3M": t10y3m, **loop}
 
 
 def _ken_french() -> Callable[[str], bytes]:
@@ -288,7 +294,16 @@ def test_source_specs_are_strict(bad: dict[str, Any]) -> None:
 
 def test_the_approved_sources_are_in_the_settings_file() -> None:
     sources = {s.source_id: s for s in load_screen_settings().settings.sources}
-    assert set(sources) == {"baa10y", "t10y3m", "ff_factors_daily", "ff_49_industries_daily"}
+    assert set(sources) == {
+        "baa10y",
+        "t10y3m",
+        "ff_factors_daily",
+        "ff_49_industries_daily",
+        "vixcls",
+        "vxncls",
+        "dgs10",
+        "dtb3",
+    }
     assert (sources["baa10y"].provider, sources["baa10y"].dataset) == ("fred", "BAA10Y")
     assert (sources["t10y3m"].provider, sources["t10y3m"].dataset) == ("fred", "T10Y3M")
     assert sources["ff_factors_daily"].dataset == "F-F_Research_Data_Factors_daily"
@@ -297,6 +312,15 @@ def test_the_approved_sources_are_in_the_settings_file() -> None:
     assert sources["t10y3m"].known_lag_trading_days == 1
     assert sources["ff_factors_daily"].known_lag_trading_days == 0
     assert sources["ff_49_industries_daily"].known_lag_trading_days == 0
+    # Research loop period 1 whitelist (owner_decision:TRADING-2565:2026-10-15:research_loop_p1).
+    for source_id, dataset in (
+        ("vixcls", "VIXCLS"),
+        ("vxncls", "VXNCLS"),
+        ("dgs10", "DGS10"),
+        ("dtb3", "DTB3"),
+    ):
+        assert (sources[source_id].provider, sources[source_id].dataset) == ("fred", dataset)
+        assert sources[source_id].known_lag_trading_days == 1
 
 
 def test_the_bench_settings_file_is_unchanged() -> None:

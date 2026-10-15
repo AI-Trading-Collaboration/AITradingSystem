@@ -1,0 +1,12 @@
+signal_id: rate10_change_126
+mechanism: >-
+  纳斯达克 100 是久期长的股票，长端收益率快速上升时估值受压，之后收益偏低；下降相反。信号值是 10 年期美国国债收益率
+  现值减 126 个交易日前的值（百分点）。
+expected_sign: -1
+target: return
+params:
+  window: 126
+sources:
+  - dgs10
+markets: all
+literature: Dechow, Sloan & Soliman 2004, Implied Equity Duration, Review of Accounting Studies 9(2-3)（机制依据；直接用利率变化给指数择时的证据弱）

@@ -20,3 +20,5 @@
 经典趋势信号（TRADING-2565-11）：`tsmom_21`、`tsmom_63`、`tsmom_126`、`tsmom_252`（过去 21、63、126、252 个交易日的复利收益）和 `ma_distance_210`（价格相对 210 日均线的距离）。它们是第二题（QQQ-Q2）预注册里按哈希钉住的固定基准，不进筛选账；`ma_distance_210` 和 `research_bench/screen.py` 里的基准信号 `ma_10m_distance` 是同一个量。四个 `tsmom` 模块是同一份文件的四个名字，内容逐字节相同。
 
 研究自动循环第一批不用新数据的信号（TRADING-2565-12）：`industry_breadth_210`（49 个行业里低于自己 210 日均线的比例，目标是风险）、`industry_corr_63`（49 个行业过去 63 日两两相关系数的平均值）、`dip_in_uptrend_10`（过去 252 日收益为正时的过去 10 日收益，否则没有值）。两个行业信号只读来源 `ff_49_industries_daily`，不用 `returns`；筛选时 49 个行业本身也是被筛的市场，读复现广度时要知道信号是由它们算出来的。`dip_in_uptrend_10` 的想法来自第一、二题验证窗口的结果，验证窗口对它不是干净的检验。
+
+研究自动循环第一批用白名单 FRED 序列的信号（TRADING-2565-13）：`vrp_21`（VIX 减美股大盘过去 21 日的实际波动，所有市场共用一个值）、`rate10_change_126`（10 年期国债收益率 126 日的变化）、`bill3m_change_126`（3 个月国库券利率 126 日的变化）。来源 `vixcls`、`vxncls`、`dgs10`、`dtb3` 按 `owner_decision:TRADING-2565:2026-10-15:research_loop_p1` 加进 `config/research/research_screen.yaml`；用到它们的筛选要用包含它们的新信号快照，旧快照照样能读。这一批没有信号用 `vxncls`，它留给试跑阶段的 VXN 对照。

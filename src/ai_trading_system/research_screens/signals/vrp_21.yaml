@@ -1,0 +1,14 @@
+signal_id: vrp_21
+mechanism: >-
+  波动率风险溢价：隐含波动明显高于随后的实际波动时，市场在为保险付费，之后收益偏高；溢价收窄甚至为负（实际波动超过隐含）
+  时，风险还在延续。信号值是 VIX（年化百分点，按发布滞后对齐）减美股大盘过去 21 个交易日的实际波动（日收益平方的均值
+  乘以 252 再开方，换成百分点；美股大盘日收益取 Ken French 三因子的 Mkt-RF 加 RF），所有市场共用同一个值。
+expected_sign: 1
+target: return
+params:
+  window: 21
+sources:
+  - vixcls
+  - ff_factors_daily
+markets: all
+literature: Bollerslev, Tauchen & Zhou 2009, Expected Stock Returns and Variance Risk Premia, Review of Financial Studies 22(11)
