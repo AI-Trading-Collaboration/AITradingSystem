@@ -77,6 +77,8 @@ ad hoc 的 SEC PIT 回填/评估与缓存回放。
 
 通用的“信号 → 仓位”策略（TRADING-2565 S4d）：`research_bench.signal_strategy.signal_exposure` 把预注册里钉住的信号模块按固定映射变成目标仓位，题目目录的 `strategy.py` 只是一行导入；用到外部来源时预注册写 `data.signal_snapshot_id`。
 
+期权代理测量（TRADING-2567-20）：`python -m ai_trading_system.research_probes.option_proxy run --out <目录>` 读长历史快照（只取开发窗口 2001-02-02 到 2010-12-31），用 VXN 按 Black-Scholes 给月度平值现金担保卖 put 定价，和同平均敞口的固定仓位、同日敞口的标的加现金对照比较（covered call 只作一致性核对），把汇总写成 `probe_result.json` 和 `probe_result.md`；不进评估台账，不是结论。
+
 ```mermaid
 flowchart LR
     Q["Owner 定问题（TRADING-2567）"] --> PRE["research/&lt;题号&gt;/prereg.yaml + strategy.py<br/>C 区：随 Owner-Decision ship 进 main"]
