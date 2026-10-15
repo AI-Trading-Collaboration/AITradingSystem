@@ -205,6 +205,39 @@ windows:
       - index_total_return_proxy_not_qqq_etf_price
       - synthetic_2x_3x_track_real_funds_with_cost_assumptions
       - cash_proxy_dtb3_not_sgov
+  # Trial mode of the research loop (TRADING-2565, owner_decision:TRADING-2565:2026-10-15:trial_mode):
+  # a screened candidate is tried on the US market before any question is opened. Development only:
+  # this type has no validation or consistency window. It ends where the QQQ development window ends,
+  # because after 2010 the US market moves with QQQ and reading it would read QQQ's validation window.
+  # It starts in 1929 so that a signal scored by its expanding percentile (252 values of warm-up after
+  # its own lookback) has a value on the first day; the Ken French data start on 1926-07-01.
+  us_market_1929_2010:
+    start: 1929-01-02
+    end: 2010-12-31
+    requested_start: 1929-01-02
+    actual_start: 1929-01-02
+    actual_portfolio_start: 1929-01-02
+    role: development
+    question_types: [us_market_trial]
+    assets: [US_MARKET_KEN_FRENCH, CASH_KEN_FRENCH_RF]
+    exact_or_proxy: proxy
+    data_quality_contract: signal_snapshot_check
+    data_source: ken_french_ff_factors_daily
+    data_spec: config/research/research_screen.yaml
+    lookback_history_from: 1926-07-01
+    allowed_usage:
+      - candidate_trial
+      - falsification_tests
+    blocked_usage:
+      - validation_read
+      - promotion_evidence
+      - production
+      - paper_shadow
+      - broker_order
+    caveats:
+      - ken_french_value_weighted_us_market_not_qqq
+      - synthetic_2x_3x_without_fees_never_held_by_a_trial
+      - ken_french_daily_data_revised_between_snapshots
 safety_boundary:
   research_only: true
   actual_path_required: true

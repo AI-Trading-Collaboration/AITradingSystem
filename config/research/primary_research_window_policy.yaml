@@ -61,6 +61,20 @@ question_windows:
       consistency_window_result_cannot_rescue_failed_validation: true
       proxy_caveats_required_in_reports: true
       option_layer_backtest_platform: quantconnect_after_direction_signal_holds
+  # Trial runs of a screened candidate on the US market (TRADING-2565 trial mode, research/_trials/).
+  # Development only: no validation, consistency or forward window, so a trial can never read QQQ's
+  # validation window or rescue a question.
+  us_market_trial:
+    owner_decision: owner_decision:TRADING-2565:2026-10-15:trial_mode
+    requirement: docs/requirements/TRADING-2565_Research_Bench.md
+    scope: >
+      A screened candidate's fixed configurations on the Ken French US market (market return and
+      risk-free rate), judged by the frozen trial gate in research/_trials/prereg.yaml before any
+      question is opened.
+    development: us_market_1929_2010
+    rules:
+      development_only: true
+      window_ends_with_qqq_development_window: true
 windows:
   exact_three_asset_validated:
     role: primary_validated

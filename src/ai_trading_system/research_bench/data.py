@@ -153,3 +153,62 @@ def from_snapshot(snapshot_dir: Path, *, qqq_series: QqqSeries) -> BenchData:
         "check_warnings": warnings,
     }
     return from_daily_frame(daily, qqq_series=qqq_series, source=source)
+
+
+US_MARKET_SOURCE = "ff_factors_daily"
+# Unit checks, not investment thresholds: no US market day moves by half its value, nor does RF
+# earn half a percentage point daily; larger values suggest Ken French percent, not daily decimals.
+US_MARKET_MAX_ABS_RETURN = 0.5
+US_MARKET_MAX_ABS_RF = 0.005
+
+
+def from_us_market(frames: Mapping[str, pd.DataFrame], *, snapshot_id: str) -> BenchData:
+    """Build bench data from a checked signal snapshot's daily decimal Ken French factors.
+
+    Read only Mkt-RF (market excess return) and RF (risk-free return) from ff_factors_daily.
+    Returns contain qqq (Mkt-RF + RF), cash (RF), and synthetic lev2/lev3 financed at RF without
+    fees; the leveraged columns only complete the simulator's schema and are not held in trials.
+    Inputs use the market for qqq_return/ndx_return and its compounded level, starting at one,
+    for ndx_price/ndx_tr. vix/vxn/vxo are NaN; cash_rate_known is the previous date's RF times 252.
+    """
+
+    if US_MARKET_SOURCE not in frames:
+        raise ValueError(f"missing {US_MARKET_SOURCE} frame")
+    frame = frames[US_MARKET_SOURCE]
+    for column in ("Mkt-RF", "RF"):
+        if column not in frame.columns:
+            raise ValueError(f"missing {column} column")
+    index = pd.DatetimeIndex(frame.index, name="date")
+    if index.hasnans or not index.is_monotonic_increasing or index.has_duplicates:
+        raise ValueError("US market dates must be unique and increasing")
+    excess = frame["Mkt-RF"].astype(float).to_numpy()
+    rf = frame["RF"].astype(float).to_numpy()
+    if not np.isfinite(excess).all() or not np.isfinite(rf).all():
+        raise ValueError("US market returns have missing or non-finite values")
+    if (
+        np.max(np.abs(excess)) > US_MARKET_MAX_ABS_RETURN
+        or np.max(np.abs(rf)) > US_MARKET_MAX_ABS_RF
+    ):
+        raise ValueError("US market returns appear to be percent rather than daily decimals")
+
+    market = excess + rf
+    returns = pd.DataFrame(
+        {"qqq": market, "cash": rf, "lev2": 2 * market - rf, "lev3": 3 * market - 2 * rf},
+        index=index,
+    )
+    level = np.cumprod(1 + market) / (1 + market[0])
+    inputs = pd.DataFrame(
+        {
+            "qqq_return": market,
+            "ndx_return": market,
+            "ndx_price": level,
+            "ndx_tr": level,
+            "vix": np.nan,
+            "vxn": np.nan,
+            "vxo": np.nan,
+            "cash_rate_known": pd.Series(rf, index=index).shift(1).to_numpy() * 252,
+        },
+        index=index,
+    )
+    source = {"market": "us_market", "snapshot_id": snapshot_id, "returns_source": US_MARKET_SOURCE}
+    return BenchData(returns=returns, inputs=inputs, source=source)

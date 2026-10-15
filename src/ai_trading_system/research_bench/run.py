@@ -14,7 +14,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
@@ -36,6 +36,7 @@ from ai_trading_system.research_bench.screen_settings import (
     load_screen_settings,
 )
 from ai_trading_system.research_bench.settings import (
+    EpisodeSpec,
     LoadedSettings,
     Window,
     WindowRole,
@@ -131,9 +132,12 @@ def run_strategy(
     permit: WindowPermit | None = None,
     falsification_confidence: float | None = None,
     screen: LoadedScreenSettings | None = None,
+    episodes: Sequence[EpisodeSpec] | None = None,
 ) -> RunResult:
     """Evaluate one strategy; with ``falsification_confidence`` also run the standard
-    falsification at that confidence (it is not part of the fingerprint)."""
+    falsification at that confidence (it is not part of the fingerprint).
+    ``episodes`` 是减仓事件表的固定下跌段，不给时用评估台设置里的。
+    """
 
     loaded = loaded or load_settings()
     window = open_window(loaded, spec.question_type, spec.window_role, permit)
@@ -183,7 +187,7 @@ def run_strategy(
         data.returns["qqq"].reindex(sim.exposure.index),
         reference_exposure=float(sim.exposure.mean()),
         settings=screen.settings.derisk_events,
-        episodes=loaded.settings.episodes,
+        episodes=loaded.settings.episodes if episodes is None else tuple(episodes),
         trading_days_per_year=loaded.settings.trading_days_per_year,
     )
     falsification = None
