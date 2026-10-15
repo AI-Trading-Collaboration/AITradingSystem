@@ -178,6 +178,7 @@
 - 证据：`@archive:docs/requirements/TRADING-2552_QQQ_Options_Conditional_Paired_Comparison_Owner_Review_V1.md:64-86`；`@archive:docs/requirements/TRADING-2542I_QQQ_Options_Exact_Signal_And_Implementation_Policy_Draft_V1.md:286-304,425-434`；`@archive:docs/requirements/TRADING-2480_QC_QQQ_Options_Capability_License_Evidence_Spike_V1.md`。
 - 重开条件：某个方向信号先在前瞻上站住，且有带 bid/ask 的期权数据。
 - 2026-10-12 重开（TRADING-2567，`owner_decision:TRADING-2567:2026-10-12:qqq_direction_1999_window`）：方向信号先在 1999 年起的历史上通过预注册检验，再用 QuantConnect 分钟报价（带 bid/ask，2012 年起）回测期权表达；对照组和估计量在运行前冻结。
+- 2026-10-15 期权代理测量（TRADING-2567-20 加代码，TRADING-2567-21 在开发窗口运行；不是预注册的题，没有读验证窗口，没有用真实期权价格）：卖 put 的几何年化比同平均敞口的固定仓位高，但回撤和左尾更差，定价越保守越差（读法落在事先写下的“溢价在、尾部也在，交 Baker 判断”）。Baker 在决定卡上选“收掉，不花钱”：不买 ORATS，不为卖波动起草预注册。登记在 `negative_results.md`（评级 C）。本节的结论和评级不变。
 
 ### 20. growth action value
 
