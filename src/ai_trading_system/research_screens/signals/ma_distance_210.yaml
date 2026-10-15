@@ -1,0 +1,12 @@
+signal_id: ma_distance_210
+mechanism: >-
+  价格在自己的 10 个月（210 个交易日）简单均线之上，说明处在上升趋势，之后风险资产的回撤倾向于更浅、收益更稳；
+  在均线之下相反。信号值是价格除以 210 日均线再减 1，价格由日收益连乘得到。它和时间序列动量是同一族趋势规则，
+  预注册里和 tsmom 信号合起来只算一个假设。
+expected_sign: 1
+target: return
+params:
+  window: 210
+sources: []
+markets: all
+literature: Faber 2007, A Quantitative Approach to Tactical Asset Allocation, Journal of Wealth Management 9(4); Levine & Pedersen 2016, Which Trend Is Your Friend?, Financial Analysts Journal 72(3); Zakamulin 2016, A Comprehensive Look at the Empirical Performance of Moving Average Trading Strategies (SSRN 2677212)

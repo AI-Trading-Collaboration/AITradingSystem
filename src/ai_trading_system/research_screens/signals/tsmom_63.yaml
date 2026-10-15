@@ -1,0 +1,11 @@
+signal_id: tsmom_63
+mechanism: >-
+  时间序列动量：资产自己过去一段时间的收益为正，之后一段时间的收益也倾向为正，为负相反（投资者对信息反应不足，
+  趋势跟随资金的买卖又会加强这个方向）。信号值是最近 63 个交易日（约 3 个月）的复利收益。
+expected_sign: 1
+target: return
+params:
+  window: 63
+sources: []
+markets: all
+literature: Moskowitz, Ooi & Pedersen 2012, Time Series Momentum, Journal of Financial Economics 104(2); Hurst, Ooi & Pedersen 2017, A Century of Evidence on Trend-Following Investing, Journal of Portfolio Management 44(1)

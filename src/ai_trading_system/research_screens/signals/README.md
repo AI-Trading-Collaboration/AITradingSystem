@@ -16,3 +16,5 @@
 预注册用 `screens`、`screen_family_size` 引用筛选记录；通用“信号 → 仓位”策略是 `research_bench/signal_strategy.py`（S4d）。
 
 第一批真实信号（TRADING-2565-10）：`credit_spread_change_63`、`credit_spread_level`、`term_spread_level`、`high_distance_252`。规格文字在任何筛选之前定好并按哈希钉住，改规格就是新家族成员。信号模块不要用 `@dataclass`：模块加载时不进 `sys.modules`，dataclass 会因此加载失败（报错文字是 `'NoneType' object has no attribute '__dict__'`），用普通函数和元组。
+
+经典趋势信号（TRADING-2565-11）：`tsmom_21`、`tsmom_63`、`tsmom_126`、`tsmom_252`（过去 21、63、126、252 个交易日的复利收益）和 `ma_distance_210`（价格相对 210 日均线的距离）。它们是第二题（QQQ-Q2）预注册里按哈希钉住的固定基准，不进筛选账；`ma_distance_210` 和 `research_bench/screen.py` 里的基准信号 `ma_10m_distance` 是同一个量。四个 `tsmom` 模块是同一份文件的四个名字，内容逐字节相同。

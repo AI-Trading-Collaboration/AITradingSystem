@@ -97,18 +97,18 @@ def test_credit_spread_change_is_the_difference_to_the_value_a_window_earlier() 
     returns = pd.Series(0.0, index=index)
     loaded = _load("credit_spread_change_63")
     function: Signal = loaded.function
-    spread = _frame(index, [1.0, 1.5, 1.2, 2.0, 1.8])
+    spread = _frame(index, [1.0, 1.5, 0.7, 2.0, 1.2])
     got = function(returns, {"baa10y": spread}, {"window": 2})
     pd.testing.assert_series_equal(
         got,
-        pd.Series([np.nan, np.nan, 0.2, 0.5, 0.6], index=index),
+        pd.Series([np.nan, np.nan, -0.3, 0.5, 0.5], index=index),
         check_names=False,
         check_exact=False,
     )
-    gap = function(returns, {"baa10y": _frame(index, [1.0, np.nan, 1.2, 2.0, 1.8])}, {"window": 2})
+    gap = function(returns, {"baa10y": _frame(index, [1.0, np.nan, 0.8, 2.0, 1.8])}, {"window": 2})
     pd.testing.assert_series_equal(
         gap,
-        pd.Series([np.nan, np.nan, 0.2, np.nan, 0.6], index=index),
+        pd.Series([np.nan, np.nan, -0.2, np.nan, 1.0], index=index),
         check_names=False,
         check_exact=False,
     )
@@ -261,22 +261,23 @@ NOTES_TAIL = (
     "；2026-10-14：更正：S4d（TRADING-2565-08）已发布到 main 8b2ba7fe（Gate PASS），"
     "上面“全仓基线和 PR 检查超时……发布阻塞待核验”已不是事实；S4e（TRADING-2565-10）第一批真实信号"
 )
-NEXT_OWNER = "Claude（审 S4e；之后第一次真实筛选和第二题开题草稿）"
-NEXT_STEP = "S4e（第一批真实信号）待审阅和发布；之后研究会话跑第一次真实筛选，然后第二题开题草稿"
 
 
-def test_the_requirement_progress_gets_exactly_one_new_last_line() -> None:
+def test_the_requirement_progress_has_the_s4e_line_once_after_the_s4d_line() -> None:
     lines = DOC.read_text(encoding="utf-8").rstrip("\n").splitlines()
-    assert lines[-1] == DOC_LINE
-    assert "尚无全仓绿灯；保留证据，不修范围外测试，不发布。" in lines[-2]
     assert lines.count(DOC_LINE) == 1
+    position = lines.index(DOC_LINE)
+    assert lines.index("## 进展") < position
+    assert lines[position - 1].startswith("- 2026-10-14：S4d（TRADING-2565-08）")
+    assert "尚无全仓绿灯；保留证据，不修范围外测试，不发布。" in lines[position - 1]
 
 
 def test_the_task_card_notes_are_only_appended() -> None:
     card = yaml.safe_load(CARD.read_text(encoding="utf-8"))
-    assert card["notes"].endswith(NOTES_TAIL)
-    assert "发布阻塞待核验" in card["notes"] and card["notes"].count(NOTES_TAIL) == 1
-    assert (card["next_owner"], card["next_step"]) == (NEXT_OWNER, NEXT_STEP)
+    notes = card["notes"]
+    before, _, after = notes.partition(NOTES_TAIL)
+    assert notes.count(NOTES_TAIL) == 1
+    assert "发布阻塞待核验" in before
+    assert after == "" or after.startswith("；")
     assert card["status"] == "IN_PROGRESS"
-    register = REGISTER.read_text(encoding="utf-8")
-    assert NOTES_TAIL in register and NEXT_STEP in register
+    assert NOTES_TAIL in REGISTER.read_text(encoding="utf-8")
