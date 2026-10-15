@@ -1,0 +1,13 @@
+signal_id: industry_breadth_210
+mechanism: >-
+  行业广度：大盘还在涨、越来越多的行业已经掉到自己的长期均线下面，说明上涨在变窄，之后波动和回撤更可能变大。
+  信号值是 Ken French 49 个行业里，累计收益指数低于自己 210 日均线的行业，占当天有均线值的行业的比例（0 到 1，
+  高代表风险高）。来自研究自动循环第一批假设卡 H04，写在任何筛选之前。
+expected_sign: 1
+target: risk
+params:
+  window: 210
+sources:
+  - ff_49_industries_daily
+markets: all
+literature: 无可靠的学术检验；实务里常用的广度类指标（见研究自动循环第一批假设卡 H04）

@@ -18,3 +18,5 @@
 第一批真实信号（TRADING-2565-10）：`credit_spread_change_63`、`credit_spread_level`、`term_spread_level`、`high_distance_252`。规格文字在任何筛选之前定好并按哈希钉住，改规格就是新家族成员。信号模块不要用 `@dataclass`：模块加载时不进 `sys.modules`，dataclass 会因此加载失败（报错文字是 `'NoneType' object has no attribute '__dict__'`），用普通函数和元组。
 
 经典趋势信号（TRADING-2565-11）：`tsmom_21`、`tsmom_63`、`tsmom_126`、`tsmom_252`（过去 21、63、126、252 个交易日的复利收益）和 `ma_distance_210`（价格相对 210 日均线的距离）。它们是第二题（QQQ-Q2）预注册里按哈希钉住的固定基准，不进筛选账；`ma_distance_210` 和 `research_bench/screen.py` 里的基准信号 `ma_10m_distance` 是同一个量。四个 `tsmom` 模块是同一份文件的四个名字，内容逐字节相同。
+
+研究自动循环第一批不用新数据的信号（TRADING-2565-12）：`industry_breadth_210`（49 个行业里低于自己 210 日均线的比例，目标是风险）、`industry_corr_63`（49 个行业过去 63 日两两相关系数的平均值）、`dip_in_uptrend_10`（过去 252 日收益为正时的过去 10 日收益，否则没有值）。两个行业信号只读来源 `ff_49_industries_daily`，不用 `returns`；筛选时 49 个行业本身也是被筛的市场，读复现广度时要知道信号是由它们算出来的。`dip_in_uptrend_10` 的想法来自第一、二题验证窗口的结果，验证窗口对它不是干净的检验。

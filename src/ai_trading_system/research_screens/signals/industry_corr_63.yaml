@@ -1,0 +1,13 @@
+signal_id: industry_corr_63
+mechanism: >-
+  行业平均相关：行业之间的平均相关升高，说明分散失效、系统性风险上升；承担这种风险要有补偿，所以之后市场收益偏高，
+  和"相关高就减仓"的直觉相反。信号值是 Ken French 49 个行业过去 63 个交易日日收益两两相关系数的平均值，只用窗口内
+  没有缺失、波动不为 0 的行业。来自研究自动循环第一批假设卡 H05，写在任何筛选之前。
+expected_sign: 1
+target: return
+params:
+  window: 63
+sources:
+  - ff_49_industries_daily
+markets: all
+literature: Pollet & Wilson 2010, Average Correlation and Stock Market Returns, Journal of Financial Economics 96(3)

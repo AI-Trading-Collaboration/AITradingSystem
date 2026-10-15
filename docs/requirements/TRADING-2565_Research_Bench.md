@@ -9,6 +9,7 @@
 - 评估台配置的 C 区登记：owner_decision:TRADING-2565:2026-10-14:bench_config_zone。Baker 10-14 13:22 JST 在「减少粘贴和批准步骤」线程的卡上选"全部照做"，其中第 4 条是评估台配置的 C 区登记一次做完，按 tree 批最后一次。`config/gov008_ship.yaml` 1.2.2 把 `config/research/research_*.yaml` 按通配划进 C 区，评估台读的成本模型 `config/research/transaction_cost_model.yaml` 也划进 C 区（以前在 B 区）。以后评估台的新配置文件命名为 `config/research/research_<名>.yaml`，落在通配下，不用再改 `config/gov008_ship.yaml`，可以走决定记录。旧的研究治理政策 `config/research/research_governance_policy.yaml` 随通配从 B 区进 C 区。`config/research/qqq_long_history.yaml` 和 `research_data` 的代码仍在 B 区，数据由快照 id 和检查钉住。
 
 - 研究吞吐（S4d 和研究记录快车道）：owner_decision:TRADING-2565:2026-10-13:research_throughput。Baker 10-13 20:12 JST 在研究线程的卡上选"两项都做"：评估台内置通用的"信号 → 仓位"策略，一道题的策略只是预注册里的配置（S4d）；研究记录走快车道，由第二个 pi 会话在单独的工作区跑研究命令、按天提交只追加的记录。两项都排在 S4 之后、第二题开题之前。
+- 研究自动循环第 1 期章程：owner_decision:TRADING-2565:2026-10-15:research_loop_p1。Baker 2026-10-15 20:56 JST 在「研究自动生成和初筛」线程对章程草稿回复「同意」。章程原文是 `research/_loop/charter_p1.md`：期限两周；问题是 QQQ 的仓位规则和同平均敞口的固定仓位比回撤、左尾和几何年化；白名单是 4 个 FRED 日度序列（VIXCLS、VXNCLS、DGS10、DTB3，晚 1 个交易日算已知）；每期新筛信号不超过 10 个，每个候选的试跑配置不超过 8 个，验证窗口每期最多读 1 次，同一窗口第 k 次读按 0.05/k；试跑的门在试跑模式做好以后才用；筛选和试跑淘汰的想法只进筛选账和试跑账，不进负结果清单。这条决定在 C 区只批准一件事：在 `config/research/research_screen.yaml` 的 `sources` 加入这 4 个来源，连同钉住来源清单的不变量测试 `tests/invariants/test_research_sources_invariants.py`；由一条决定记录批准，有效 14 天。评估台、筛选规则、门槛和别的 C 区文件不在范围内。
 
 ## 为什么
 
@@ -188,3 +189,4 @@
 - 2026-10-14：S4d（TRADING-2565-08）：通用的信号到仓位策略、钉住信号及来源快照、预注册与汇总报告接线；292 项合成聚焦检查通过，五项变异被捕获，静态检查和第一题不变检查通过。全仓 main 基线和 PR 检查超时，车道的 AITS_STATE_ROOT 路径断言失败及 secret-scan 测试未结束，尚无全仓绿灯；保留证据，不修范围外测试，不发布。待审阅和按决定记录批准，之后研究记录快车道和第二题开题。production_effect=none；broker_action=none。
 - 2026-10-14：更正：S4d（TRADING-2565-08）已发布到 main 8b2ba7fe（Gate PASS，zone C），上一行里的“尚无全仓绿灯”和“不发布”写于全仓测试还没跑完的时候，已不是事实。S4e（TRADING-2565-10）：第一批真实信号（credit_spread_change_63、credit_spread_level、term_spread_level、high_distance_252），只用合成数据验收，不读真实快照；筛选要另按研究会话的指令跑。production_effect=none；broker_action=none。
 - 2026-10-15：S4e 的第一批真实筛选已跑完，四条记录 S0001 到 S0004 已发布到 main 71f00bc1：credit_spread_level 是候选，credit_spread_change_63 淘汰，term_spread_level 和 high_distance_252 证据不足。S4f（TRADING-2565-11）：经典趋势信号 tsmom_21、tsmom_63、tsmom_126、tsmom_252 和 ma_distance_210 的模块与规格，供第二题（QQQ-Q2）的预注册按哈希钉住；它们是固定基准，不进筛选账。只用合成数据验收，不读真实快照。production_effect=none；broker_action=none。
+- 2026-10-15：S4g（TRADING-2565-12）：研究自动循环第一批不用新数据的筛选信号 industry_breadth_210、industry_corr_63、dip_in_uptrend_10 的模块与规格（规格写在任何筛选之前，按哈希钉住）。只用合成数据验收，不读真实快照；筛选另按研究会话的指令跑。production_effect=none；broker_action=none。
