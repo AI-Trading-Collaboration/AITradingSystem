@@ -1,12 +1,12 @@
 # OPS-080 日报 DQ 之后不再改写输入
 
-最后更新：2026-10-12
+最后更新：2026-10-15
 
 稳定任务 ID：`OPS-080_DAILY_IMMUTABLE_INPUT_CLOSURE`
 
 Owner 决定：`owner_decision:OPS-080:2026-10-12:no_input_rewrite_after_dq`
 
-状态：`VALIDATING`
+状态：`DONE`（2026-10-15；第 5 节第 3 条的删除仍要 owner 打字确认）
 
 旧 v2 需求文档 `docs/requirements/OPS-080_Daily_Immutable_Input_Closure.md` 只在保全 ref
 `refs/aits/source-preservation/ops080-v2-source-20260921-v1` 里；本次只参考了它的第 1、3 节，没有恢复旧源码。
@@ -108,3 +108,15 @@ contract 常量/测试中的复核包 id 和哈希、重绑 regime label 依赖�
 - 2026-10-14 12:00 JST：运行副本切换后的第一次日报（as_of 2026-10-13）失败在 score_daily：DQ 只有一条警告（GOOGL 2022-07-18 复权比例跳变，未登记的拆股），DQ_WARNING_NOT_ALLOWED。下载、补抓顺序和不写价格都符合第 5 节。
 - 2026-10-14：OPS-080-02 补登 GOOGL 拆股（owner_decision:OPS-080:2026-10-14:googl_known_split），重建利率归因复核包并重绑决定文件和 regime label 依赖的哈希。production_effect=none；broker_action=none。
 - 2026-10-14 08:32 JST：owner 自己删除了 worktree D:\Work\AITradingSystem_ops080_input_closure；分支和保全 ref 保留。
+- 运维手册 9.1 第 7 步：运行副本 2026-10-14 05:09Z 从 `34ab84b0b` 更新到 `556dba09`（OPS-080-02），pyproject 未变，`daily-plan` READY（27 步）。
+- 2026-10-13（as_of）无成功日报：GOOGL 拆股未登记触发 DQ 警告，score_daily 被授权拒绝，运行 FAILED 终态；OPS-080-02（main 556dba09）登记后，
+  2026-10-14 as_of 于 2026-10-15 12:00 JST 正常通过。按 OPS-073 disposition，该 as_of 保留为已知缺口，不做事后补算（owner 2026-10-15 12:35 JST 在决定卡选“记为缺口”）。
+- 2026-10-15 12:00 JST：日报（as_of 2026-10-14，run_id `daily_ops_run:2026-10-14:20261015T030004Z`，runtime_head `556dba09`）27 步全 PASS，按第 5 节第 2 条核对：
+  - `market_data_recover_freshness`（`--no-price-writes`，03:02:24–03:02:32Z）在 `validate_data`（03:02:32–03:02:40Z）之前；DQ 之后能碰价格的只有只读的 `aits data freshness --latest`；
+  - `artifacts\data_refresh\2026-10-14\market_data_refresh_summary.json`：`actions.price_writes_allowed=false`、`updated_price_cache=false`，8 个资产 ALREADY_CURRENT，
+    价格缓存前后 sha256 都是 `1d438e86…b33c`；
+  - DQ 回执 `dq_execution_ee1027f7…` PASS，错误 0、警告 0、信息 3；它的 prices 输入 `data/raw/prices_daily.csv` sha256 `1d438e86…b33c`、58,311 行，
+    匹配下载发布 `composite_prices_publication`；GOOGL、BRK.B 各 1,099 行（2022-05-27..2026-10-14）；
+  - 价格文件 03:01:29Z 写入（下载发布 03:01:26Z 之后、DQ 之前），核对时 sha256 仍是 `1d438e86…b33c`。
+  第 5 节第 2 条满足，状态改为 `DONE`。下载发布快照里 prices 那一项没有直接读（电脑会话的只读命令被自动模式拦下），一致性依据是 DQ 回执的输入匹配。
+  依据全文：项目文件 `knowledge/claude/ops/ops080-done-evidence-2026-10-15.md`。第 5 节第 3 条的删除仍要 owner 在线程里打字确认。

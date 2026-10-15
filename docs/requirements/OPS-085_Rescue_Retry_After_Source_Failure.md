@@ -1,10 +1,10 @@
 # OPS-085：主跑只因数据源临时故障失败时，17:30 从采集步骤自动重试一次
 
-最后更新：2026-10-13
+最后更新：2026-10-15
 
 稳定任务 ID：`OPS-085_RESCUE_RETRY_AFTER_SOURCE_FAILURE`
 
-状态：`VALIDATING`（发布并更新运行副本后，第一次真实的 17:30 自动重试按第 5 节核对后转 `DONE`）
+状态：`VALIDATING`（运行副本已含本改动；第一次真实的 17:30 自动重试按第 6 节第 3 条核对后转 `DONE`）
 
 关联：OPS-082（计划任务与 17:30 触发）、OPS-084（主触发 12:00）、OPS-073（终态处置）、OPS-071（报告尾链恢复）、
 OPS-072（官方政策源传输重试）、OPS-070（fail-closed）；任务记录 `tasks/OPS-085_RESCUE_RETRY_AFTER_SOURCE_FAILURE.yaml`。
@@ -104,3 +104,8 @@ production_effect=none；broker_action=none。
 
 - 2026-10-13：在 main `25b11cf9d`（叠加 DATA-023-01 与 OPS-084-01 的本地提交）上完成实现与测试；交给 pi 线程按补丁包发布，
   建议排在 OPS-084-01 之后，同一次运行副本更新。
+- 2026-10-13 14:01Z：运行副本按运维手册 9.1 从 `cc548db19` 更新到 `34ab84b0b`（含 OPS-084-01、OPS-085-01），
+  `daily-plan` READY（27 步，as_of 2026-10-12）；2026-10-14 05:09Z 再更新到 `556dba09`（OPS-080-02）。第 6 节第 1 条满足。
+- 2026-10-14 17:30 JST（as_of 2026-10-13，12:00 主跑在 score_daily 失败，原因是 GOOGL 拆股未登记）：摘要
+  `source_failure_retry` 为 `NOT_ELIGIBLE:OTHER_STEP_FAILED:score_daily`，CLI 为 `RUN_CONTROL_BLOCKED_TERMINAL_RECOVERY_REQUIRED`，
+  运行状态仍是第 1 次尝试的 FAILED，没有开始第 2 次尝试，符合第 3 节第 3 条。仍等第一次真实的数据源临时故障（第 6 节第 3 条）。

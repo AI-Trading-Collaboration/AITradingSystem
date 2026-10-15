@@ -1,10 +1,10 @@
 # OPS-084：日报主触发改到 12:00，避开 Cboe VIX 发布延迟
 
-最后更新：2026-10-13
+最后更新：2026-10-15
 
 稳定任务 ID：`OPS-084_DAILY_PRIMARY_TRIGGER_AFTER_SOURCE_PUBLICATION`
 
-状态：`VALIDATING`（发布后在电脑上重新注册计划任务；第一次 12:00 运行取到当天 VIX 后转 `DONE`）
+状态：`DONE`（2026-10-15；验收见第 5 节）
 
 关联：`docs/requirements/OPS-082_Deterministic_Windows_Scheduler.md`（调度）、OPS-070（fail-closed）、
 OPS-073（终态处置）；任务记录 `tasks/OPS-084_DAILY_PRIMARY_TRIGGER_AFTER_SOURCE_PUBLICATION.yaml`。
@@ -58,5 +58,10 @@ OPS-073（终态处置）；任务记录 `tasks/OPS-084_DAILY_PRIMARY_TRIGGER_AF
 
 - 2026-10-13：在 main `25b11cf9d` 的云端 clone 上完成改动；`tests/test_ops082_daily_scheduler.py` 22 passed，
   新测试在任一处未改时失败（注册脚本、摘要标签、pi 避让窗口）；交给 pi 线程按补丁包发布。
+- 2026-10-13 14:01Z：运行副本按运维手册 9.1 从 `cc548db19` 更新到 `34ab84b0b`（含 OPS-084-01、OPS-085-01），
+  `daily-plan` READY（27 步，as_of 2026-10-12）；14:06Z 在运行副本根目录重新注册计划任务，触发为每日 12:00 与 17:30（第 4 节第 1、2 条）。
+- 2026-10-14 12:00 JST（as_of 2026-10-13）：第一次 12:00 运行，摘要窗口 PRIMARY，`market_macro` 第 1 次尝试 PASS，
+  Cboe VIX 最后日期 2026-10-13（第 4 节第 3 条）。那天日报在 score_daily 失败是 GOOGL 拆股未登记（OPS-080-02），与触发时间无关。
+  2026-10-15 12:00 JST（as_of 2026-10-14）`market_macro` 同样 PASS，日报 27 步全 PASS。状态改为 `DONE`。
 
 production_effect=none；broker_action=none。

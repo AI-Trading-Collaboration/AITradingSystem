@@ -2,8 +2,8 @@ schema_version: task.v1
 id: OPS-084_DAILY_PRIMARY_TRIGGER_AFTER_SOURCE_PUBLICATION
 area: Operations / daily primary trigger after source publication
 priority: P1
-status: VALIDATING
-next_owner: operations owner（发布后在电脑上重新注册计划任务）
-next_step: 发布后：运行副本按运维手册 9.1 更新；在运行副本根目录重跑 scripts\ops\register_daily_scheduler_task.ps1 并用 schtasks 确认 12:00 与 17:30；第一次 12:00 运行 market_macro PASS 后转 DONE；见需求文档第 4 节
+status: DONE
+next_owner: operations owner（日常按运维手册第 9 节读调度摘要）
+next_step: DONE（2026-10-15）：运行副本 2026-10-13 14:01Z 更新到 34ab84b0b、daily-plan READY，计划任务 14:06Z 重新注册为 12:00 与 17:30；第一次 12:00 运行（2026-10-14，as_of 2026-10-13，PRIMARY）market_macro 第 1 次尝试 PASS；那天日报在 score_daily 失败是 GOOGL 拆股未登记（OPS-080-02），与触发时间无关；见需求文档第 5 节
 acceptance: 计划任务每日触发为 12:00 与 17:30；第一次 12:00 运行 capture 组件 market_macro PASS（含 as_of 当天 VIX）且摘要标为 12:00 主窗口
-notes: production_effect=none；broker_action=none；owner_decision:OPS-084:2026-10-13:primary_trigger_1200；需求文档 docs/requirements/OPS-084_Daily_Primary_Trigger_After_Source_Publication.md；起因：2026-10-13 09:30 JST 运行（as_of 2026-10-12）时 Cboe 尚未发布当天 VIX，FAILED DATA_SOURCE_UNAVAILABLE，17:30 按 OPS-073 不补跑
+notes: production_effect=none；broker_action=none；owner_decision:OPS-084:2026-10-13:primary_trigger_1200；需求文档 docs/requirements/OPS-084_Daily_Primary_Trigger_After_Source_Publication.md；起因：2026-10-13 09:30 JST 运行（as_of 2026-10-12）时 Cboe 尚未发布当天 VIX，FAILED DATA_SOURCE_UNAVAILABLE，17:30 按 OPS-073 不补跑；2026-10-15：VALIDATING -> DONE。运维手册 9.1 第 7 步：运行副本 cc548db19 -> 34ab84b0b 于 2026-10-13 14:01Z（含 OPS-084-01、OPS-085-01），daily-plan READY（27 步，as_of 2026-10-12），14:06Z 在运行副本根目录重新注册计划任务（12:00、17:30）；2026-10-14 05:09Z 再更新到 556dba09（OPS-080-02）。验收第 3 条：2026-10-14 12:00 JST 摘要 window PRIMARY、capture_status CAPTURED，market_macro PASS（attempt_count 1，Cboe VIX 最后日期 2026-10-13）；2026-10-15 12:00 JST（as_of 2026-10-14）market_macro 同样 PASS，日报 27 步全 PASS
