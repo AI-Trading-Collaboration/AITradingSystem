@@ -235,18 +235,15 @@ README_Q2_ROW = (
     "记录在 `window_reads.jsonl` |"
 )
 README_BULLET = (
-    "- 第三题 `QQQ-Q3/` 已开题（2026-10-15，`owner_decision:TRADING-2567:2026-1"
-    "0-15:qqq_q3_prereg`）：快（21 日）慢（252 日）两个趋势信号分歧时减半，参照"
-    "只看慢信号，各自对平均敞口相同的固定仓位比较回撤和左尾；它是 Q2 `trend4` "
-    "的子集，结果不是独立于 Q2a 的证据。预注册和策略模块在 `QQQ-Q3/`，信号模块"
-    "在 `src/ai_trading_system/research_screens/signals/`。下一步是开发窗口运行"
-    "；核对实现没有问题后，研究线程先告诉 owner，再读一次验证窗口（开题批准已一"
-    "并同意）。"
+    "- 第三题 `QQQ-Q3/` 已结束（2026-10-15）：Q3（21 日和 252 日趋势信号，分歧时减半）证"
+    "据不足，参照只看十二个月信号拒绝，见 `QQQ-Q3/decision.md`。它是 Q2 `trend4` 的子集，"
+    "结果不是独立于 Q2a 的证据；七条降风险规则在 2011–2021 年都没有胜过同平均敞口的固定仓"
+    "位。"
 )
 README_ROW = (
-    "| `QQQ-Q3/` | 第三题（已开题）：预注册 `prereg.yaml` 和策略模块 `strategy."
-    "py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.j"
-    "sonl`（读取之后才有） |"
+    "| `QQQ-Q3/` | 第三题（已结束）：结论 `decision.md`；预注册 `prereg.yaml` 和策略模块 "
+    "`strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.j"
+    "sonl` |"
 )
 NOTES_TAIL = (
     "；2026-10-15：TRADING-2567-24 开第三题 QQQ-Q3：`research/QQQ-Q3/prereg.yam"
