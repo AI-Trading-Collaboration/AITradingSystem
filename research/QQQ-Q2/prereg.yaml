@@ -1,0 +1,232 @@
+# QQQ-Q2 preregistration (TRADING-2567; format in src/ai_trading_system/research_bench/prereg.py).
+#
+# Written before any result of this question exists. Approved by Baker with the owner decision below,
+# recorded in docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md. The signals are pinned
+# by the SHA-256 of their module and specification (TRADING-2565-11 and TRADING-2565-10); the four
+# time-series momentum modules are one file under four names. Any change to this file, to strategy.py or
+# to a pinned signal closes the validation window until a new owner decision approves it.
+schema_version: research_prereg.v1
+question_id: QQQ-Q2
+question: >-
+  Does a fixed classic trend rule give a shallower drawdown and a milder left tail than a constant
+  exposure with the same average, at a similar geometric return? Q2a: exposure equals the share of the
+  1-, 3-, 6- and 12-month trailing returns that are positive (no leverage, set at month end); the 10-month
+  moving-average rule (in or out) is the reference rule of the same family. Q2b: halve exposure while the
+  Baa-minus-10-year credit spread is in the top fifth of its own history to date (the one candidate from
+  the first four screens).
+question_type: qqq_direction
+owner_decision: owner_decision:TRADING-2567:2026-10-15:qqq_q2_prereg
+data:
+  snapshot_id: qlh-20261013-0b0df53cb1a2
+  qqq_series: actual                # the real QQQ (FMP adjusted close) from 1999-03-10
+  signal_snapshot_id: sig-1e9873757a84   # FRED BAA10Y for Q2b; the trend signals need no outside source
+screens: [S0002]                    # credit_spread_level: candidate (eliminated S0001, inconclusive S0003/S0004 are not used)
+screen_family_size: 4               # screened signals in the global ledger when this was written
+strategy_module: strategy.py        # imports the bench's signal_exposure; the signals are pinned by hash below
+# Score "sign": 1 when the oriented signal is positive, 0 when negative. Score "percentile": the signal's
+# expanding percentile (only past values), oriented so 1 is the favourable end. Equal weights: the mean
+# of the scores. Mapping "linear" low 0, high 1: exposure = mean score (0, 0.25, 0.5, 0.75 or 1).
+# Mapping "threshold": high at or above cut, low below it (cut is left out for a pure sign signal).
+strategies:
+  - id: trend4
+    function: signal_exposure
+    params:
+      signals:
+        - {id: tsmom_21, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: b3a7d3e36f3a418f614ce08ace10d8e7cbf800ebad026ea9d40249289e757934, score: sign}
+        - {id: tsmom_63, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: 23ac5e338bb5265af00d78c633c1a4ae32f861e4963dff58f82ea5a281f70992, score: sign}
+        - {id: tsmom_126, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: 0309640809301bd11d6e38e107085501aa0acc14f7577847b9e05be97db20938, score: sign}
+        - {id: tsmom_252, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: e1e85a47a3cf93dd72ba8d27232d3d8cc5c0fb53545b667cd577a3751cf4e62a, score: sign}
+      mapping: linear
+      low: 0
+      high: 1
+    rebalance: {schedule: month_end, band: 0.0}
+    delay_days: 0
+  - id: ma10
+    function: signal_exposure
+    params:
+      signals:
+        - {id: ma_distance_210, module_sha256: 9d805220b2c9daf79f9765593e0231417d089708b7d3c601cbb94ff400c589f4, spec_sha256: f8213b4edf41cd51ac13d548e08c5e277ca6cf94eacebe4ce07cbf6e2e0b917a, score: sign}
+      mapping: threshold
+      low: 0
+      high: 1
+    rebalance: {schedule: month_end, band: 0.0}
+    delay_days: 0
+  - id: credit_gate
+    function: signal_exposure
+    params:
+      signals:
+        - {id: credit_spread_level, module_sha256: 36a33e6a8cfd07b7a338fca5cb5fd701d63ea4378a58173ab5fff07f9ac7da34, spec_sha256: 0e86cfd8d4265d723f237abea6caa2e2d8614a3914002271a06551dc53d56418, score: percentile}
+      mapping: threshold
+      low: 0.5
+      high: 1.0
+      cut: 0.2                      # the score is 1 minus the spread's percentile, so below 0.2 is the top fifth
+    rebalance: {schedule: month_end, band: 0.0}
+    delay_days: 0
+  # Sensitivity variants, development window only (each is its own trial).
+  - id: trend4_weekly
+    function: signal_exposure
+    params:
+      signals:
+        - {id: tsmom_21, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: b3a7d3e36f3a418f614ce08ace10d8e7cbf800ebad026ea9d40249289e757934, score: sign}
+        - {id: tsmom_63, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: 23ac5e338bb5265af00d78c633c1a4ae32f861e4963dff58f82ea5a281f70992, score: sign}
+        - {id: tsmom_126, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: 0309640809301bd11d6e38e107085501aa0acc14f7577847b9e05be97db20938, score: sign}
+        - {id: tsmom_252, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: e1e85a47a3cf93dd72ba8d27232d3d8cc5c0fb53545b667cd577a3751cf4e62a, score: sign}
+      mapping: linear
+      low: 0
+      high: 1
+    rebalance: {schedule: week_end, band: 0.0}
+  - id: trend3_long
+    function: signal_exposure
+    params:
+      signals:
+        - {id: tsmom_63, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: 23ac5e338bb5265af00d78c633c1a4ae32f861e4963dff58f82ea5a281f70992, score: sign}
+        - {id: tsmom_126, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: 0309640809301bd11d6e38e107085501aa0acc14f7577847b9e05be97db20938, score: sign}
+        - {id: tsmom_252, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: e1e85a47a3cf93dd72ba8d27232d3d8cc5c0fb53545b667cd577a3751cf4e62a, score: sign}
+      mapping: linear
+      low: 0
+      high: 1
+    rebalance: {schedule: month_end, band: 0.0}
+  - id: ma10_weekly
+    function: signal_exposure
+    params:
+      signals:
+        - {id: ma_distance_210, module_sha256: 9d805220b2c9daf79f9765593e0231417d089708b7d3c601cbb94ff400c589f4, spec_sha256: f8213b4edf41cd51ac13d548e08c5e277ca6cf94eacebe4ce07cbf6e2e0b917a, score: sign}
+      mapping: threshold
+      low: 0
+      high: 1
+    rebalance: {schedule: week_end, band: 0.0}
+  - id: credit_gate_top10
+    function: signal_exposure
+    params:
+      signals:
+        - {id: credit_spread_level, module_sha256: 36a33e6a8cfd07b7a338fca5cb5fd701d63ea4378a58173ab5fff07f9ac7da34, spec_sha256: 0e86cfd8d4265d723f237abea6caa2e2d8614a3914002271a06551dc53d56418, score: percentile}
+      mapping: threshold
+      low: 0.5
+      high: 1.0
+      cut: 0.1
+    rebalance: {schedule: month_end, band: 0.0}
+  - id: credit_gate_top30
+    function: signal_exposure
+    params:
+      signals:
+        - {id: credit_spread_level, module_sha256: 36a33e6a8cfd07b7a338fca5cb5fd701d63ea4378a58173ab5fff07f9ac7da34, spec_sha256: 0e86cfd8d4265d723f237abea6caa2e2d8614a3914002271a06551dc53d56418, score: percentile}
+      mapping: threshold
+      low: 0.5
+      high: 1.0
+      cut: 0.3
+    rebalance: {schedule: month_end, band: 0.0}
+  - id: credit_gate_low25
+    function: signal_exposure
+    params:
+      signals:
+        - {id: credit_spread_level, module_sha256: 36a33e6a8cfd07b7a338fca5cb5fd701d63ea4378a58173ab5fff07f9ac7da34, spec_sha256: 0e86cfd8d4265d723f237abea6caa2e2d8614a3914002271a06551dc53d56418, score: percentile}
+      mapping: threshold
+      low: 0.25
+      high: 1.0
+      cut: 0.2
+    rebalance: {schedule: month_end, band: 0.0}
+  - id: credit_gate_weekly
+    function: signal_exposure
+    params:
+      signals:
+        - {id: credit_spread_level, module_sha256: 36a33e6a8cfd07b7a338fca5cb5fd701d63ea4378a58173ab5fff07f9ac7da34, spec_sha256: 0e86cfd8d4265d723f237abea6caa2e2d8614a3914002271a06551dc53d56418, score: percentile}
+      mapping: threshold
+      low: 0.5
+      high: 1.0
+      cut: 0.2
+    rebalance: {schedule: week_end, band: 0.0}
+validation:
+  # trend4 decides Q2a. ma10 is run in the same read as the reference rule of the same family
+  # (Levine and Pedersen 2016: moving average and time-series momentum are one family, so together
+  # they are one hypothesis); its result is shown beside trend4 and never changes trend4's verdict.
+  # credit_gate decides Q2b. Each against the constant exposure with the same average, rebalanced the same
+  # way. Kept when every rule holds; rejected when the point estimate of the left tail
+  # (comparison.cvar_5pct_relative_improvement) or of the drawdown (comparison.max_drawdown) is worse than
+  # the constant exposure (this construction only); otherwise evidence insufficient. Development results
+  # only check the implementation; no parameter changes after reading them except recorded bug fixes.
+  # Thresholds are the ones Q1a used, so the two questions read the same way. The de-risk event table
+  # (false alarms, protective events, whipsaws per year, exit and re-entry lags on the fixed episodes)
+  # is printed with every run and is read, not ruled on.
+  strategies: [trend4, ma10, credit_gate]
+  rules:
+    trend4:
+      - {metric: comparison.cvar_5pct_relative_improvement, op: ">=", value: 0.10, note: left tail at least 10% milder}
+      - {metric: ci_low.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: the interval excludes no improvement}
+      - {metric: comparison.max_drawdown, op: ">=", value: 0.05, note: drawdown at least 5 points shallower}
+      - {metric: comparison.geometric_annual_return, op: ">=", value: -0.010, note: gives up at most 1.0 point a year}
+      - {metric: cost_25.geometric_annual_return, op: ">=", value: -0.010, note: the cost condition holds at 25 bps}
+      - {metric: delay_2.cvar_5pct_relative_improvement, op: ">=", value: 0.10, note: the tail condition holds two days late}
+      - {metric: leave_year_min.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: no single year carries the tail result}
+      - {metric: leave_year_min.max_drawdown, op: ">", value: 0.0, note: no single year carries the drawdown result}
+      - {metric: leave_episode_min.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: no single fixed episode carries the tail result}
+      - {metric: leave_episode_min.max_drawdown, op: ">", value: 0.0, note: no single fixed episode carries the drawdown result}
+      - {metric: placebo_rank.cvar_5pct_relative_improvement, op: ">=", value: 0.95, note: beats 95% of same-exposure random timings}
+    ma10:
+      - {metric: comparison.cvar_5pct_relative_improvement, op: ">=", value: 0.10, note: left tail at least 10% milder}
+      - {metric: ci_low.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: the interval excludes no improvement}
+      - {metric: comparison.max_drawdown, op: ">=", value: 0.05, note: drawdown at least 5 points shallower}
+      - {metric: comparison.geometric_annual_return, op: ">=", value: -0.010, note: gives up at most 1.0 point a year}
+      - {metric: cost_25.geometric_annual_return, op: ">=", value: -0.010, note: the cost condition holds at 25 bps}
+      - {metric: delay_2.cvar_5pct_relative_improvement, op: ">=", value: 0.10, note: the tail condition holds two days late}
+      - {metric: leave_year_min.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: no single year carries the tail result}
+      - {metric: leave_year_min.max_drawdown, op: ">", value: 0.0, note: no single year carries the drawdown result}
+      - {metric: leave_episode_min.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: no single fixed episode carries the tail result}
+      - {metric: leave_episode_min.max_drawdown, op: ">", value: 0.0, note: no single fixed episode carries the drawdown result}
+      - {metric: placebo_rank.cvar_5pct_relative_improvement, op: ">=", value: 0.95, note: beats 95% of same-exposure random timings}
+    credit_gate:
+      - {metric: comparison.cvar_5pct_relative_improvement, op: ">=", value: 0.10, note: left tail at least 10% milder}
+      - {metric: ci_low.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: the interval excludes no improvement}
+      - {metric: comparison.max_drawdown, op: ">=", value: 0.05, note: drawdown at least 5 points shallower}
+      - {metric: comparison.geometric_annual_return, op: ">=", value: -0.010, note: gives up at most 1.0 point a year}
+      - {metric: cost_25.geometric_annual_return, op: ">=", value: -0.010, note: the cost condition holds at 25 bps}
+      - {metric: delay_2.cvar_5pct_relative_improvement, op: ">=", value: 0.10, note: the tail condition holds two days late}
+      - {metric: leave_year_min.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: no single year carries the tail result}
+      - {metric: leave_year_min.max_drawdown, op: ">", value: 0.0, note: no single year carries the drawdown result}
+      - {metric: leave_episode_min.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: no single fixed episode carries the tail result}
+      - {metric: leave_episode_min.max_drawdown, op: ">", value: 0.0, note: no single fixed episode carries the drawdown result}
+      - {metric: placebo_rank.cvar_5pct_relative_improvement, op: ">=", value: 0.95, note: beats 95% of same-exposure random timings}
+  confidence: 0.975                 # two hypotheses (trend family, credit gate): Bonferroni on 95%
+sensitivity:                        # development only, each a trial, none decides anything
+  - weekly rebalance (trend4_weekly, ma10_weekly, credit_gate_weekly)
+  - without the 1-month lookback, 3/6/12 months only (trend3_long)
+  - credit gate at the top tenth and the top 30% of history (credit_gate_top10, credit_gate_top30)
+  - credit gate cuts exposure to 25% instead of 50% (credit_gate_low25)
+prior_expectation:
+  effect: >-
+    Q2a (and the moving-average reference): exposure comes down in slow declines, so the drawdown
+    is shallower and the left tail milder; the price is return given up in fast reversals and an
+    exit that comes late. On 2011-2021 (one long rise with short sharp breaks) a small net effect
+    is expected, and evidence insufficient is the most likely verdict. Q2b: the credit spread
+    predicts forward volatility (the screen: rank IC about 0.5 against forward 21-day volatility, 51 of 51
+    markets with the same sign), so a milder left tail at a similar return; its edge over the trailing
+    realized volatility is modest (partial rank IC 0.24 on the US market, 0.10 on QQQ).
+  fails_when: >-
+    Q2a: a V-shaped fall and recovery (2015-08, 2018-12, 2020-02/03): the signals turn after the fall
+    and turn back after the rebound; a long smooth rise, where every exit costs return. The development
+    window's two slow bear markets (2000-2002, 2008) favour trend rules, so the validation window
+    decides. Q2b: the spread widens after equities have fallen (2020-03) and stays wide while they
+    recover (2009, 2016, 2020 H2); the screen found a volatility signal, not a return signal, and the
+    spread leans on few episodes (2001-03, 2008-09). Both sub-questions differ from the falsified
+    scope in research/negative_results.md: the monthly 21-day realized-volatility leverage rule
+    (line 23, Q1b) used another risk signal and up to 3x leverage; these rules never exceed 1x.
+    From Q1 (Q1a evidence insufficient, Q1b rejected on 2011-2021): de-risking rules carried
+    information, but a rule that looked good in the development bear markets did not beat constant
+    exposure by enough on the validation window.
+  sources:
+    - Faber (2007), A Quantitative Approach to Tactical Asset Allocation
+    - Moskowitz, Ooi and Pedersen (2012), Time Series Momentum
+    - Hurst, Ooi and Pedersen (2017), A Century of Evidence on Trend-Following Investing
+    - Levine and Pedersen (2016), Which Trend Is Your Friend?
+    - Huang, Li, Wang and Zhou (2020), Time series momentum - is it there?
+    - Zakamulin (2016), A Comprehensive Look at the Empirical Performance of Moving Average Trading Strategies
+    - Sullivan, Timmermann and White (1999), Data-Snooping, Technical Trading Rule Performance, and the Bootstrap
+    - Campbell and Taksler (2003), Equity Volatility and Corporate Bond Yields
+sample_floor:
+  min_return_days: 2000             # the validation window has about 2,550; CVaR 5% uses about 128
+trial_cap: 20                       # 10 configurations, and each once more after a recorded bug fix
+stop_conditions:
+  - the bench's invariant tests fail
+  - the snapshot check is FAIL
+  - after reading development results, no parameter changes except recorded bug fixes; each rerun counts as a trial
+production_effect: none
+broker_action: none
