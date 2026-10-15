@@ -248,20 +248,17 @@ README_Q1_BULLET = (
     "按波动降仓有信息，但在 2011–2021 年不足以胜过同平均敞口的固定仓位。"
 )
 README_BULLET = (
-    "- 第二题 `QQQ-Q2/` 已开题（2026-10-15，"
-    "`owner_decision:TRADING-2567:2026-10-15:qqq_q2_prereg`，依据筛选 S0002）："
-    "一条固定的经典趋势规则（1、3、6、12 个月四个回看期等权，参照 10 个月均线）"
-    "和信用利差门，各自对平均敞口相同的固定仓位比较回撤和左尾。预注册和策略模块在 `QQQ-Q2/`，"
-    "信号模块在 `src/ai_trading_system/research_screens/signals/`。下一步是开发窗口运行；核对实现"
-    "没有问题后，研究线程先告诉 owner，再读一次验证窗口（开题批准已一并同意）。"
+    "- 第二题 `QQQ-Q2/` 已结束（2026-10-15）：Q2a（四个回看期趋势）证据不足，参照 10 个月均线和 Q2b"
+    "（信用利差门）拒绝，见 `QQQ-Q2/decision.md`。三条降风险规则在 2011–2021 年都没有胜过"
+    "同平均敞口的固定仓位；加上第一题，五条降风险规则在开发窗口都有效，在验证窗口都不成立。"
 )
 README_Q1_ROW = (
     "| `QQQ-Q1/` | 第一题（已结束）：结论 `decision.md`；预注册 `prereg.yaml` 和策略模块 "
     "`strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |"
 )
 README_ROW = (
-    "| `QQQ-Q2/` | 第二题（已开题）：预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；"
-    "运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl`（读取之后才有） |"
+    "| `QQQ-Q2/` | 第二题（已结束）：结论 `decision.md`；预注册 `prereg.yaml` 和策略模块 "
+    "`strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |"
 )
 NOTES_TAIL = (
     "；2026-10-15：TRADING-2567-14 开第二题 QQQ-Q2：`research/QQQ-Q2/prereg.yaml` 和 `strategy.py`"
