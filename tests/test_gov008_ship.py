@@ -6,6 +6,7 @@ import datetime as dt
 import json
 import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -36,18 +37,21 @@ def run_git(repo: Path, *args: str) -> str:
     return done.stdout.strip()
 
 
+def build_repo(path: Path) -> None:
+    run_git(path, "init", "-b", "main")
+    run_git(path, "config", "user.email", "t@example.invalid")
+    run_git(path, "config", "user.name", "t")
+    (path / "config").mkdir()
+    (path / "config/gov008_ship.yaml").write_text(yaml.safe_dump(MINI_POLICY), encoding="utf-8")
+    (path / "README.md").write_text("start\n", encoding="utf-8")
+    run_git(path, "add", "-A")
+    run_git(path, "commit", "-m", "init")
+    run_git(path, "switch", "-c", "task/x")
+
+
 @pytest.fixture()
-def repo(tmp_path: Path) -> Path:
-    run_git(tmp_path, "init", "-b", "main")
-    run_git(tmp_path, "config", "user.email", "t@example.invalid")
-    run_git(tmp_path, "config", "user.name", "t")
-    (tmp_path / "config").mkdir()
-    (tmp_path / "config/gov008_ship.yaml").write_text(yaml.safe_dump(MINI_POLICY), encoding="utf-8")
-    (tmp_path / "README.md").write_text("start\n", encoding="utf-8")
-    run_git(tmp_path, "add", "-A")
-    run_git(tmp_path, "commit", "-m", "init")
-    run_git(tmp_path, "switch", "-c", "task/x")
-    return tmp_path
+def repo(tmp_path: Path, git_repo_template: Callable[..., Path]) -> Path:
+    return git_repo_template(tmp_path, __file__, build_repo)
 
 
 def commit_file(repo: Path, rel: str, text: str, message: str) -> None:

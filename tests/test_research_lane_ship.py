@@ -10,6 +10,7 @@ import hashlib
 import json
 import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -71,21 +72,24 @@ def sha(repo: Path, rel: str) -> str:
     return hashlib.sha256((repo / rel).read_bytes()).hexdigest()
 
 
+def build_repo(path: Path) -> None:
+    run_git(path, "init", "-q", "-b", "main")
+    run_git(path, "config", "user.email", "t@example.invalid")
+    run_git(path, "config", "user.name", "t")
+    run_git(path, "config", "core.autocrlf", "false")
+    write(path, ship.POLICY_PATH, yaml.safe_dump(LANE_POLICY).encode())
+    write(path, "README.md", b"start\n")
+    write(path, f"{QUESTION}/prereg.yaml", b"question_id: Q1\n")
+    write(path, f"{QUESTION}/strategy.py", b"def s1():\n    return 1\n")
+    write(path, f"{SIGNALS}/mom.py", b"def signal():\n    return 0\n")
+    write(path, f"{SIGNALS}/mom.yaml", b"signal_id: mom\n")
+    commit_all(path, "init")
+    run_git(path, "switch", "-q", "-c", "lane/q1")
+
+
 @pytest.fixture()
-def repo(tmp_path: Path) -> Path:
-    run_git(tmp_path, "init", "-q", "-b", "main")
-    run_git(tmp_path, "config", "user.email", "t@example.invalid")
-    run_git(tmp_path, "config", "user.name", "t")
-    run_git(tmp_path, "config", "core.autocrlf", "false")
-    write(tmp_path, ship.POLICY_PATH, yaml.safe_dump(LANE_POLICY).encode())
-    write(tmp_path, "README.md", b"start\n")
-    write(tmp_path, f"{QUESTION}/prereg.yaml", b"question_id: Q1\n")
-    write(tmp_path, f"{QUESTION}/strategy.py", b"def s1():\n    return 1\n")
-    write(tmp_path, f"{SIGNALS}/mom.py", b"def signal():\n    return 0\n")
-    write(tmp_path, f"{SIGNALS}/mom.yaml", b"signal_id: mom\n")
-    commit_all(tmp_path, "init")
-    run_git(tmp_path, "switch", "-q", "-c", "lane/q1")
-    return tmp_path
+def repo(tmp_path: Path, git_repo_template: Callable[..., Path]) -> Path:
+    return git_repo_template(tmp_path, __file__, build_repo)
 
 
 def run_record(repo: Path, number: int, prev: bytes | None, **overrides: object) -> bytes:

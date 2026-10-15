@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -66,20 +67,23 @@ def render(repo: Path) -> str:
     return (repo / "docs/task_register.md").read_text(encoding="utf-8")
 
 
+def build_repo(path: Path) -> None:
+    run_git(path, "init", "-q", "-b", "main")
+    run_git(path, "config", "user.email", "t@example.invalid")
+    run_git(path, "config", "user.name", "t")
+    run_git(path, "config", "core.autocrlf", "false")
+    write(path, ship.POLICY_PATH, yaml.safe_dump(POLICY))
+    write(path, "tools/tasks.py", RENDER)
+    write(path, "src/app.py", LINES)
+    write(path, "tasks/A0.yaml", "id: A0\n")
+    render(path)
+    run_git(path, "add", "-A")
+    run_git(path, "commit", "-q", "-m", "init")
+
+
 @pytest.fixture()
-def repo(tmp_path: Path) -> Path:
-    run_git(tmp_path, "init", "-q", "-b", "main")
-    run_git(tmp_path, "config", "user.email", "t@example.invalid")
-    run_git(tmp_path, "config", "user.name", "t")
-    run_git(tmp_path, "config", "core.autocrlf", "false")
-    write(tmp_path, ship.POLICY_PATH, yaml.safe_dump(POLICY))
-    write(tmp_path, "tools/tasks.py", RENDER)
-    write(tmp_path, "src/app.py", LINES)
-    write(tmp_path, "tasks/A0.yaml", "id: A0\n")
-    render(tmp_path)
-    run_git(tmp_path, "add", "-A")
-    run_git(tmp_path, "commit", "-q", "-m", "init")
-    return tmp_path
+def repo(tmp_path: Path, git_repo_template: Callable[..., Path]) -> Path:
+    return git_repo_template(tmp_path, __file__, build_repo)
 
 
 def branch_change(repo: Path, files: dict[str, str], message: str = "code: lane change") -> str:

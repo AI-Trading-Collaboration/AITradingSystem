@@ -313,7 +313,7 @@ def _shadow_config_payload(
         },
         "search": {
             "algorithm": "bounded_grid",
-            "max_candidates": 32,
+            "max_candidates": 4,
             "hard_gate_tuning": {
                 "enabled": False,
                 "reason": "avoid overfitting in v0.1",

@@ -10,6 +10,7 @@ its old base so the same publish command can be run again. Throw-away git reposi
 from __future__ import annotations
 
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -44,16 +45,19 @@ def commit_file(repo: Path, rel: str, text: str, message: str) -> None:
     run_git(repo, "commit", "-q", "-m", message)
 
 
+def build_repo(path: Path) -> None:
+    run_git(path, "init", "-q", "-b", "main")
+    run_git(path, "config", "user.email", "t@example.invalid")
+    run_git(path, "config", "user.name", "t")
+    run_git(path, "config", "core.autocrlf", "false")
+    commit_file(path, ship.POLICY_PATH, yaml.safe_dump(POLICY), "policy")
+    commit_file(path, "README.md", "start\n", "init")
+    run_git(path, "switch", "-c", "task/x")
+
+
 @pytest.fixture()
-def repo(tmp_path: Path) -> Path:
-    run_git(tmp_path, "init", "-q", "-b", "main")
-    run_git(tmp_path, "config", "user.email", "t@example.invalid")
-    run_git(tmp_path, "config", "user.name", "t")
-    run_git(tmp_path, "config", "core.autocrlf", "false")
-    commit_file(tmp_path, ship.POLICY_PATH, yaml.safe_dump(POLICY), "policy")
-    commit_file(tmp_path, "README.md", "start\n", "init")
-    run_git(tmp_path, "switch", "-c", "task/x")
-    return tmp_path
+def repo(tmp_path: Path, git_repo_template: Callable[..., Path]) -> Path:
+    return git_repo_template(tmp_path, __file__, build_repo)
 
 
 def _with_origin(repo: Path, tmp_path_factory: pytest.TempPathFactory) -> Path:

@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DEVX-033_GATE_SPEEDUP
+area: Developer workflow / 门禁提速
+priority: P1
+status: IN_PROGRESS
+next_owner: Claude（发布后在电脑上量门禁）
+next_step: DEVX-033-01 发布后看电脑上门禁的总秒数、pytest 秒数和 gate timing 摘要，和 2026-10-15 的数字比，找新的瓶颈
+acceptance: 见 docs/requirements/DEVX-033_Gate_Speedup.md 第 4 节：排序、缓存、临时目录清理有测试；改动的测试文件和全套 PR 测试通过；发布后电脑上门禁停顿消失、各进程跑完时间接近
+notes: production_effect=none；broker_action=none；requirement=docs/requirements/DEVX-033_Gate_Speedup.md；owner_decision:DEVX-033:2026-10-15:gate_speedup（Baker 11:14Z "都改下吧"）；门禁命令和 config/gov008_ship.yaml 不变，改动在 tests/ 和文档；分析见项目文件 knowledge/claude/ops/gate-bottleneck-2026-10-15.md
