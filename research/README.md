@@ -11,19 +11,19 @@
 - 第一批题目的顺序（2026-10-13，`owner_decision:TRADING-2567:2026-10-13:risk_first_question_order`）：先管风险、再组合信号。依次是按波动调敞口和杠杆、3–5 个固定符号的经典信号等权组合、期权层卖波动、FOMC 和隔夜。主指标是同等平均敞口下的回撤、左尾和复利分散，超额收益在后。
 - 共享评估台（TRADING-2565）分三批建。S3a：模块 `src/ai_trading_system/research_bench/`（C 区）；`python -m ai_trading_system.research_bench benchmarks` 在开发窗口上跑固定基准核对数据。S3b：运行登记、试验计数、折算夏普、验证窗口读取登记和预注册格式（下面第 2–5 步）。S3c：标准证伪（成本、推迟、逐年和逐段剔除、同敞口随机择时、块 bootstrap）、报告第一屏和 pi 研究运行的 brief 模板。pi 可以按 `_template/brief.md` 跑研究运行：评估台读数据、控制窗口，pi 只看屏幕上的汇总，守卫不让 pi 打开研究数据；预注册和策略模块都在 C 区（TRADING-2566）。
 - 第一题 `QQQ-Q1/` 已结束（2026-10-14）：Q1a 证据不足，Q1b 拒绝，见 `QQQ-Q1/decision.md`。按波动降仓有信息，但在 2011–2021 年不足以胜过同平均敞口的固定仓位。
-- 第二题 `QQQ-Q2/` 已开题（2026-10-15，`owner_decision:TRADING-2567:2026-10-15:qqq_q2_prereg`，依据筛选 S0002）：一条固定的经典趋势规则（1、3、6、12 个月四个回看期等权，参照 10 个月均线）和信用利差门，各自对平均敞口相同的固定仓位比较回撤和左尾。预注册和策略模块在 `QQQ-Q2/`，信号模块在 `src/ai_trading_system/research_screens/signals/`。下一步是开发窗口运行；核对实现没有问题后，研究线程先告诉 owner，再读一次验证窗口（开题批准已一并同意）。
+- 第二题 `QQQ-Q2/` 已结束（2026-10-15）：Q2a（四个回看期趋势）证据不足，参照 10 个月均线和 Q2b（信用利差门）拒绝，见 `QQQ-Q2/decision.md`。三条降风险规则在 2011–2021 年都没有胜过同平均敞口的固定仓位；加上第一题，五条降风险规则在开发窗口都有效，在验证窗口都不成立。
 - 旧的研究代码、文档、配置和测试按 GOV-009（`owner_decision:GOV-009:2026-10-12:research_cleanup`）分批删除。删除前的完整内容保存在 tag `research-archive-2026-10-12`。
 
 ## 文件
 
 | 文件 | 内容 |
 |---|---|
-| `ledger.md` | 23 条研究线的台账：结论、评级、证据、去向、重开条件 |
+| `ledger.md` | 24 条研究线的台账：结论、评级、证据、去向、重开条件 |
 | `negative_results.md` | 负结果清单：已证伪、未测成、工程上不可执行。研究 brief 必读 |
 | `assets.md` | 可以复用的代码、检验和记录，以及它们在哪里 |
 | `_template/` | 一个研究问题的样例：`prereg.yaml`（逐项说明）和 `strategy.py`（策略接口）；`brief.md` 是 pi 研究运行的 brief 模板 |
 | `QQQ-Q1/` | 第一题（已结束）：结论 `decision.md`；预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |
-| `QQQ-Q2/` | 第二题（已开题）：预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl`（读取之后才有） |
+| `QQQ-Q2/` | 第二题（已结束）：结论 `decision.md`；预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |
 
 研究进展页面（TRADING-2568）由 `python -m ai_trading_system.research_site --out <目录>` 从这里的记录生成：只读，不另存事实。
 
