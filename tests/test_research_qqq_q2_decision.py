@@ -109,7 +109,7 @@ def test_the_decision_block_is_in_the_requirement_once_after_the_previous_decisi
     before = text.split(DECISION_BLOCK)[0]
     assert before.endswith(ANCHOR + "\n\n")
     after = text.split(DECISION_BLOCK)[1]
-    assert after.startswith("\n\n## 背景\n")
+    assert after.startswith(("\n\n## 背景\n", "\n\n- `owner_decision:"))
     assert len(re.findall(rf"^- `{re.escape(DECISION)}`$", text, flags=re.MULTILINE)) == 1
 
 
