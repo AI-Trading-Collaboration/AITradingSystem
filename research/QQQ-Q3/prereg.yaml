@@ -1,0 +1,174 @@
+# QQQ-Q3 preregistration (TRADING-2567; format in src/ai_trading_system/research_bench/prereg.py).
+#
+# Written before any result of this question exists. Approved by Baker with the owner decision below,
+# recorded in docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md. The signals are the
+# fixed classic trend modules pinned by the SHA-256 of their module and specification (TRADING-2565-11);
+# the four time-series momentum modules are one file under four names. Any change to this file, to
+# strategy.py or to a pinned signal closes the validation window until a new owner decision approves it.
+schema_version: research_prereg.v1
+question_id: QQQ-Q3
+question: >-
+  Does halving exposure when a fast and a slow trend signal disagree give a shallower drawdown and a milder
+  left tail than a constant exposure with the same average, at a similar geometric return? Q3: the fast
+  signal is the sign of the trailing 21-day (about one month) return, the slow signal the sign of the
+  trailing 252-day (about twelve months) return; both positive is fully invested, both negative is out,
+  and a disagreement (a pullback in an up-trend, a rebound in a down-trend) is half invested; set at month
+  end, no leverage. The twelve-month rule alone (in or out) is the reference rule of the same family.
+question_type: qqq_direction
+owner_decision: owner_decision:TRADING-2567:2026-10-15:qqq_q3_prereg
+data:
+  snapshot_id: qlh-20261013-0b0df53cb1a2
+  qqq_series: actual                # the real QQQ (FMP adjusted close) from 1999-03-10
+  signal_snapshot_id: null          # the trend signals need no outside source
+screens: []                         # classic trend signals are fixed baselines, not screened (research_screens/signals/README.md)
+screen_family_size: 4               # screened signals in the global ledger when this was written
+strategy_module: strategy.py        # imports the bench's signal_exposure; the signals are pinned by hash below
+# Score "sign": 1 when the oriented signal is positive, 0 when negative. Equal weights: the mean of the
+# scores. Mapping "linear" low 0, high 1: exposure = mean score (0, 0.5 or 1 with two signals).
+# Mapping "threshold": high at or above cut, low below it (cut is left out for a pure sign signal).
+strategies:
+  - id: fast_slow
+    function: signal_exposure
+    params:
+      signals:
+        - {id: tsmom_21, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: b3a7d3e36f3a418f614ce08ace10d8e7cbf800ebad026ea9d40249289e757934, score: sign}
+        - {id: tsmom_252, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: e1e85a47a3cf93dd72ba8d27232d3d8cc5c0fb53545b667cd577a3751cf4e62a, score: sign}
+      mapping: linear
+      low: 0
+      high: 1
+    rebalance: {schedule: month_end, band: 0.0}
+    delay_days: 0
+  - id: slow_only
+    function: signal_exposure
+    params:
+      signals:
+        - {id: tsmom_252, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: e1e85a47a3cf93dd72ba8d27232d3d8cc5c0fb53545b667cd577a3751cf4e62a, score: sign}
+      mapping: threshold
+      low: 0
+      high: 1
+    rebalance: {schedule: month_end, band: 0.0}
+    delay_days: 0
+  # Sensitivity variants, development window only (each is its own trial).
+  - id: fast_only
+    function: signal_exposure
+    params:
+      signals:
+        - {id: tsmom_21, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: b3a7d3e36f3a418f614ce08ace10d8e7cbf800ebad026ea9d40249289e757934, score: sign}
+      mapping: threshold
+      low: 0
+      high: 1
+    rebalance: {schedule: month_end, band: 0.0}
+  - id: fast_slow_weekly
+    function: signal_exposure
+    params:
+      signals:
+        - {id: tsmom_21, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: b3a7d3e36f3a418f614ce08ace10d8e7cbf800ebad026ea9d40249289e757934, score: sign}
+        - {id: tsmom_252, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: e1e85a47a3cf93dd72ba8d27232d3d8cc5c0fb53545b667cd577a3751cf4e62a, score: sign}
+      mapping: linear
+      low: 0
+      high: 1
+    rebalance: {schedule: week_end, band: 0.0}
+  - id: slow_only_weekly
+    function: signal_exposure
+    params:
+      signals:
+        - {id: tsmom_252, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: e1e85a47a3cf93dd72ba8d27232d3d8cc5c0fb53545b667cd577a3751cf4e62a, score: sign}
+      mapping: threshold
+      low: 0
+      high: 1
+    rebalance: {schedule: week_end, band: 0.0}
+  - id: fast63_slow252
+    function: signal_exposure
+    params:
+      signals:
+        - {id: tsmom_63, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: 23ac5e338bb5265af00d78c633c1a4ae32f861e4963dff58f82ea5a281f70992, score: sign}
+        - {id: tsmom_252, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: e1e85a47a3cf93dd72ba8d27232d3d8cc5c0fb53545b667cd577a3751cf4e62a, score: sign}
+      mapping: linear
+      low: 0
+      high: 1
+    rebalance: {schedule: month_end, band: 0.0}
+  - id: fast21_slow126
+    function: signal_exposure
+    params:
+      signals:
+        - {id: tsmom_21, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: b3a7d3e36f3a418f614ce08ace10d8e7cbf800ebad026ea9d40249289e757934, score: sign}
+        - {id: tsmom_126, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: 0309640809301bd11d6e38e107085501aa0acc14f7577847b9e05be97db20938, score: sign}
+      mapping: linear
+      low: 0
+      high: 1
+    rebalance: {schedule: month_end, band: 0.0}
+validation:
+  # fast_slow decides Q3. slow_only is run in the same read as the reference rule: its result is shown beside
+  # fast_slow (does the fast signal add anything to the slow one?) and never changes fast_slow's verdict.
+  # Each is compared with the constant exposure with the same average, rebalanced the same way. Kept when
+  # every rule holds; rejected when the point estimate of the left tail (comparison.cvar_5pct_relative_improvement)
+  # or of the drawdown (comparison.max_drawdown) is worse than the constant exposure (this construction only);
+  # otherwise evidence insufficient. Development results only check the implementation; no parameter
+  # changes after reading them except recorded bug fixes. Thresholds are the ones Q1a and Q2 used, so the
+  # three questions read the same way. The de-risk event table is printed with every run and is read, not
+  # ruled on. trend4 (Q2a) is not run again: the comparison with it uses the numbers already published in
+  # research/QQQ-Q2/decision.md.
+  strategies: [fast_slow, slow_only]
+  rules:
+    fast_slow:
+      - {metric: comparison.cvar_5pct_relative_improvement, op: ">=", value: 0.10, note: left tail at least 10% milder}
+      - {metric: ci_low.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: the interval excludes no improvement}
+      - {metric: comparison.max_drawdown, op: ">=", value: 0.05, note: drawdown at least 5 points shallower}
+      - {metric: comparison.geometric_annual_return, op: ">=", value: -0.010, note: gives up at most 1.0 point a year}
+      - {metric: cost_25.geometric_annual_return, op: ">=", value: -0.010, note: the cost condition holds at 25 bps}
+      - {metric: delay_2.cvar_5pct_relative_improvement, op: ">=", value: 0.10, note: the tail condition holds two days late}
+      - {metric: leave_year_min.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: no single year carries the tail result}
+      - {metric: leave_year_min.max_drawdown, op: ">", value: 0.0, note: no single year carries the drawdown result}
+      - {metric: leave_episode_min.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: no single fixed episode carries the tail result}
+      - {metric: leave_episode_min.max_drawdown, op: ">", value: 0.0, note: no single fixed episode carries the drawdown result}
+      - {metric: placebo_rank.cvar_5pct_relative_improvement, op: ">=", value: 0.95, note: beats 95% of same-exposure random timings}
+    slow_only:
+      - {metric: comparison.cvar_5pct_relative_improvement, op: ">=", value: 0.10, note: left tail at least 10% milder}
+      - {metric: ci_low.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: the interval excludes no improvement}
+      - {metric: comparison.max_drawdown, op: ">=", value: 0.05, note: drawdown at least 5 points shallower}
+      - {metric: comparison.geometric_annual_return, op: ">=", value: -0.010, note: gives up at most 1.0 point a year}
+      - {metric: cost_25.geometric_annual_return, op: ">=", value: -0.010, note: the cost condition holds at 25 bps}
+      - {metric: delay_2.cvar_5pct_relative_improvement, op: ">=", value: 0.10, note: the tail condition holds two days late}
+      - {metric: leave_year_min.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: no single year carries the tail result}
+      - {metric: leave_year_min.max_drawdown, op: ">", value: 0.0, note: no single year carries the drawdown result}
+      - {metric: leave_episode_min.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: no single fixed episode carries the tail result}
+      - {metric: leave_episode_min.max_drawdown, op: ">", value: 0.0, note: no single fixed episode carries the drawdown result}
+      - {metric: placebo_rank.cvar_5pct_relative_improvement, op: ">=", value: 0.95, note: beats 95% of same-exposure random timings}
+  confidence: 0.95                  # one hypothesis (fast/slow; the slow-only reference is the same family)
+sensitivity:                        # development only, each a trial, none decides anything
+  - fast signal alone, one-month sign (fast_only)
+  - weekly rebalance (fast_slow_weekly, slow_only_weekly)
+  - fast signal on 63 days instead of 21 (fast63_slow252)
+  - slow signal on 126 days instead of 252 (fast21_slow126)
+prior_expectation:
+  effect: >-
+    The slow signal keeps the exposure down in slow declines; the fast signal adds a half position
+    after a bad month inside an up-trend, which is where the paper finds traditional momentum loses
+    most (turning points: a rebound inside a down-trend, a pullback inside an up-trend). A shallower
+    drawdown and a milder left tail are expected in the development window (two slow bear markets, 2000-2002
+    and 2008). On 2011-2021 (one long rise with short sharp breaks) a small net effect is expected and
+    evidence insufficient is the most likely verdict.
+  fails_when: >-
+    A pullback inside an up-trend is often followed by a rebound (one-month reversal, and V-shaped falls
+    in 2015-08, 2018-12 and 2020-03), so halving exposure after a bad month gives up the rebound; with the
+    slow signal positive almost all of 2011-2021 the rule behaves as a one-month filter (fast_only in the
+    sensitivity list) and the half position is a cost. The paper's gain is for futures across 55 markets
+    with estimated weights and gross returns; a single index with a fixed half weight can be much
+    weaker. The rule is a subset of Q2's trend4 (it shares the 21-day and 252-day signals), so its
+    result is not independent evidence of trend4's. Differs from the falsified scope in
+    research/negative_results.md: no leverage, no realized-volatility signal, no credit spread.
+  sources:
+    - Garg, Goulding, Harvey and Mazzoleni (2021), Momentum Turning Points, Journal of Financial Economics 142(1)
+    - Daniel and Moskowitz (2016), Momentum Crashes, Journal of Financial Economics 122(2)
+    - Moskowitz, Ooi and Pedersen (2012), Time Series Momentum
+    - Levine and Pedersen (2016), Which Trend Is Your Friend?
+    - Jegadeesh (1990), Evidence of Predictable Behavior of Security Returns
+sample_floor:
+  min_return_days: 2000             # the validation window has about 2,550; CVaR 5% uses about 128
+trial_cap: 14                       # 7 configurations, and each once more after a recorded bug fix
+stop_conditions:
+  - the bench's invariant tests fail
+  - the snapshot check is FAIL
+  - after reading development results, no parameter changes except recorded bug fixes; each rerun counts as a trial
+production_effect: none
+broker_action: none

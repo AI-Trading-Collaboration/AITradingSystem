@@ -13,6 +13,7 @@
 - 第一题 `QQQ-Q1/` 已结束（2026-10-14）：Q1a 证据不足，Q1b 拒绝，见 `QQQ-Q1/decision.md`。按波动降仓有信息，但在 2011–2021 年不足以胜过同平均敞口的固定仓位。
 - 第二题 `QQQ-Q2/` 已结束（2026-10-15）：Q2a（四个回看期趋势）证据不足，参照 10 个月均线和 Q2b（信用利差门）拒绝，见 `QQQ-Q2/decision.md`。三条降风险规则在 2011–2021 年都没有胜过同平均敞口的固定仓位；加上第一题，五条降风险规则在开发窗口都有效，在验证窗口都不成立。
 - 卖波动代理测量（2026-10-15，TRADING-2567-20、TRADING-2567-21）：只读开发窗口，用 VXN 当波动率的 Black-Scholes 代理给月度平值现金担保卖 put 定价。几何年化比同平均敞口的固定仓位高，但最大回撤和左尾更差（缩放 0.9：回撤 −38.8% 对 −29.4%，CVaR 5% 差 62.2%），定价越保守越差。Baker 选择收掉：不买 ORATS 数据，不起草预注册；评级 C，登记在 `negative_results.md`。这是描述性测量，不是台账里的一条研究线。
+- 第三题 `QQQ-Q3/` 已开题（2026-10-15，`owner_decision:TRADING-2567:2026-10-15:qqq_q3_prereg`）：快（21 日）慢（252 日）两个趋势信号分歧时减半，参照只看慢信号，各自对平均敞口相同的固定仓位比较回撤和左尾；它是 Q2 `trend4` 的子集，结果不是独立于 Q2a 的证据。预注册和策略模块在 `QQQ-Q3/`，信号模块在 `src/ai_trading_system/research_screens/signals/`。下一步是开发窗口运行；核对实现没有问题后，研究线程先告诉 owner，再读一次验证窗口（开题批准已一并同意）。
 - 旧的研究代码、文档、配置和测试按 GOV-009（`owner_decision:GOV-009:2026-10-12:research_cleanup`）分批删除。删除前的完整内容保存在 tag `research-archive-2026-10-12`。
 
 ## 文件
@@ -25,6 +26,7 @@
 | `_template/` | 一个研究问题的样例：`prereg.yaml`（逐项说明）和 `strategy.py`（策略接口）；`brief.md` 是 pi 研究运行的 brief 模板 |
 | `QQQ-Q1/` | 第一题（已结束）：结论 `decision.md`；预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |
 | `QQQ-Q2/` | 第二题（已结束）：结论 `decision.md`；预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |
+| `QQQ-Q3/` | 第三题（已开题）：预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl`（读取之后才有） |
 
 研究进展页面（TRADING-2568）由 `python -m ai_trading_system.research_site --out <目录>` 从这里的记录生成：只读，不另存事实。main 上的研究记录更新后，GitHub Actions 的 Research site 自动重建并发布到 GitHub Pages：https://ai-trading-collaboration.github.io/AITradingSystem/
 
