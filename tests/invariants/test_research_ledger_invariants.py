@@ -13,8 +13,9 @@ for a question whose rules were fixed first. Each guard has a negative control.
     preregistered parameters, one run per validated strategy; the consistency window only after it.
 15. Records hold summaries only, no daily series.
 16. The deflated Sharpe ratio matches the paper's worked example and a hand computation.
-17. In this repository, every question's records and reads are intact, git history never changed
-    or removed one, and a decision cites only recorded runs and registered reads.
+17. In this repository, every question's records and reads and the trial runs
+    (``research/_trials/runs``, TRADING-2565 trial mode) are intact, git history never changed or
+    removed one, and a decision cites only recorded runs and registered reads.
 22. Validation and consistency runs always face the standard falsification (S3c), and their rules
     are judged on it; a rule naming a metric no run has refuses the read before it is registered.
     (18-21, the falsification itself: ``test_research_falsify_invariants.py``.)
@@ -51,6 +52,7 @@ from ai_trading_system.research_bench import (
     run_strategy,
 )
 from ai_trading_system.research_bench import ledger as lg
+from ai_trading_system.research_bench import trial as tr
 from ai_trading_system.research_bench.deflated import (
     ReturnMoments,
     deflated_sharpe,
@@ -407,6 +409,7 @@ def test_repository_ledgers_are_intact_and_only_ever_appended() -> None:
         problems += [f"{directory.name}: {p}" for p in lg.verify_runs(directory)]
         problems += [f"{directory.name}: {p}" for p in lg.verify_reads(directory)]
         problems += [f"{directory.name}: {p}" for p in lg.admission_problems(directory)]
+    problems += [f"{tr.TRIALS_DIR}: {p}" for p in tr.verify_trial_runs(root_dir)]
     if lg.git_output(PROJECT_ROOT, "rev-parse", "--show-toplevel") is not None:
         problems += lg.history_problems(PROJECT_ROOT, LOADED.settings.research_root)
     assert problems == []

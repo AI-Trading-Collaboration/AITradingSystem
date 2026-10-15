@@ -10,9 +10,14 @@ python -m ai_trading_system.research_bench report QUESTION [--run RUN_ID ...]
 python -m ai_trading_system.research_bench screen SIGNAL_ID --signal-snapshot ID
     [--bench-snapshot ID] [--root PATH]
 python -m ai_trading_system.research_bench screen-ledger
+python -m ai_trading_system.research_bench trial-run TRIAL --config ID --market qqq|us_market
+    [--root PATH]
+python -m ai_trading_system.research_bench trial-ledger
+python -m ai_trading_system.research_bench trial-report TRIAL
 
 Screens are recorded in research/_screens/ledger/; only development data is evaluated.
 Every run is recorded under research/<QUESTION>/ (see ``research_bench.ledger``).
+Trial runs are recorded in research/_trials/runs/ (see ``research_bench.trial``).
 """
 
 from __future__ import annotations
@@ -28,6 +33,7 @@ import typer
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.core.provenance import git_provenance
 from ai_trading_system.research_bench import ledger as lg
+from ai_trading_system.research_bench import trial as tr
 from ai_trading_system.research_bench.data import (
     BenchData,
     QqqSeries,
@@ -331,6 +337,86 @@ def screen_ledger_command() -> None:
             f"记录时 {_verdict_text(member['verdict_at_record'])}；"
             f"当前 {_verdict_text(member['verdict'])}"
         )
+
+
+@app.command("trial-run")
+def trial_run_command(
+    trial_id: Annotated[str, typer.Argument(help="试跑编号，例如 T0001。")],
+    config: Annotated[str, typer.Option(help="试跑计划的配置 id。")],
+    market: Annotated[str, typer.Option(help="市场：qqq 或 us_market。")],
+    root: SnapshotRootOption = qlh.DEFAULT_SNAPSHOT_ROOT,
+) -> None:
+    """在开发窗口试跑一个配置和市场，登记结果及门的判定。"""
+    try:
+        loaded = load_settings()
+        root_dir = lg.research_root(loaded)
+        gate, plan = tr.load_trial(root_dir, trial_id)
+        if market not in tr.MARKETS:
+            raise tr.TrialError(f"market must be one of {list(tr.MARKETS)}")
+        data = tr.market_data(market, gate, plan, snapshot_root=root, project_root=PROJECT_ROOT)
+        record = tr.run_trial(root_dir, trial_id, config, market, data, loaded=loaded)
+    except tr.TrialError as exc:
+        typer.echo(f"试跑拒绝，不记账：{exc}")
+        raise typer.Exit(code=1) from None
+    except (OSError, ValueError, KeyError) as exc:
+        typer.echo(f"试跑拒绝，不记账：{str(exc).splitlines()[0]}")
+        raise typer.Exit(code=1) from None
+    text = f"记录 {record['run_id']}；{trial_id} {config} {market}；状态 {record['status']}"
+    if record["status"] == "ok":
+        rows = record["gate"]
+        text += f"；门 {sum(row['holds'] for row in rows)}/{len(rows)} 条成立"
+        failed = [row["metric"] for row in rows if not row["holds"]]
+        if failed:
+            text += f"；没过：{', '.join(failed)}"
+    elif record["status"] == "check_failed":
+        text += f"；问题：{'; '.join(record['problems'])}"
+    elif record["status"] == "error":
+        text += f"；错误：{record['error']}"
+    typer.echo(text)
+    if record["status"] != "ok":
+        raise typer.Exit(code=1)
+
+
+@app.command("trial-ledger")
+def trial_ledger_command() -> None:
+    """检查试跑账链，列出主配置判定和包含试跑配置的全局试验数。"""
+    loaded = load_settings()
+    summary = tr.trial_ledger_summary(lg.research_root(loaded))
+    typer.echo("试跑账链状态：" + ("BROKEN" if summary["problems"] else "PASS"))
+    for problem in summary["problems"]:
+        typer.echo(f"  问题：{problem}")
+    typer.echo(
+        f"全局总试验数 {summary['global_trials']}（各题开发试验 {summary['question_trials']}，"
+        f"试跑配置 {summary['trial_configs']}）"
+    )
+    for trial_id, item in summary["trials"].items():
+        typer.echo(
+            f"{trial_id}：配置 {item['configs']}/{item['max_configs']}；"
+            f"运行 {len(item['runs'])} 条；主配置 {item['primary']}："
+            f"{tr.VERDICT_NAMES[item['verdict']]}"
+        )
+        for run in item["runs"]:
+            typer.echo(
+                f"  {run['run_id']} {run['config']} {run['market']} {run['status']} "
+                f"门 {run['rules_held']}/{run['rules']}"
+            )
+    if summary["problems"]:
+        raise typer.Exit(code=1)
+
+
+@app.command("trial-report")
+def trial_report_command(
+    trial_id: Annotated[str, typer.Argument(help="试跑编号，例如 T0001。")],
+) -> None:
+    """从已登记的汇总生成试跑候选包的第一页，不读取数据快照。"""
+    try:
+        loaded = load_settings()
+        lines = tr.trial_report(lg.research_root(loaded), trial_id, loaded)
+    except (tr.TrialError, OSError, ValueError, KeyError) as exc:
+        typer.echo(f"试跑报告拒绝：{exc}")
+        raise typer.Exit(code=1) from None
+    for line in lines:
+        typer.echo(line)
 
 
 def _verdict_text(verdict: str | None) -> str:

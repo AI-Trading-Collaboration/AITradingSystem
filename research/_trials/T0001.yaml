@@ -1,0 +1,62 @@
+# Trial plan T0001 (TRADING-2565 trial mode; format in src/ai_trading_system/research_bench/trial.py).
+#
+# Written before any trial of this candidate ran; judged by the gate in prereg.yaml. Every run records
+# this file's SHA-256 and the bench refuses a run once the plan differs from the one an earlier run
+# used: a configuration thought of after reading results is a new hypothesis and starts again from a
+# hypothesis card. The signal is pinned by the SHA-256 of its module and specification.
+schema_version: research_trial_plan.v1
+trial_id: T0001
+candidate:
+  signals: [industry_corr_63]
+  screens: [S0009]                  # candidate in the first loop screen (signal snapshot sig-7ad8aa00b736)
+hypothesis_card: research loop period 1, hypothesis batch 01, card H05 (Pollet and Wilson 2010)
+from_validation_window: false
+data:
+  snapshot_id: qlh-20261013-0b0df53cb1a2   # long-history snapshot for the QQQ market (QQQ-Q2 and QQQ-Q3)
+  signal_snapshot_id: sig-7ad8aa00b736     # industries and US market, the snapshot S0009 was screened on
+# Score "percentile": the signal's expanding percentile, oriented by its specification's expected sign
+# so that 1 is the end the hypothesis favours (high average industry correlation, higher later market
+# returns). Mapping "linear" low 0, high 1: exposure = score; "threshold": high at or above cut, low
+# below it.
+primary: primary
+configs:
+  - id: primary
+    function: signal_exposure
+    params:
+      signals:
+        - {id: industry_corr_63, module_sha256: a09666503e6338c1a2b4ece01d48d5d686a58e4da37a30047decff540dc9efa6, spec_sha256: f013ccbf6c2d88dff5bdf021963e39da44484f5b54a3477ec2902bbb3a07186c, score: percentile}
+      mapping: linear
+      low: 0
+      high: 1
+    rebalance: {schedule: month_end, band: 0.0}
+  # Sensitivity, never deciding: in or out at the median, a half floor, and a weekly rebalance.
+  - id: threshold
+    function: signal_exposure
+    params:
+      signals:
+        - {id: industry_corr_63, module_sha256: a09666503e6338c1a2b4ece01d48d5d686a58e4da37a30047decff540dc9efa6, spec_sha256: f013ccbf6c2d88dff5bdf021963e39da44484f5b54a3477ec2902bbb3a07186c, score: percentile}
+      mapping: threshold
+      low: 0
+      high: 1
+      cut: 0.5
+    rebalance: {schedule: month_end, band: 0.0}
+  - id: floor_half
+    function: signal_exposure
+    params:
+      signals:
+        - {id: industry_corr_63, module_sha256: a09666503e6338c1a2b4ece01d48d5d686a58e4da37a30047decff540dc9efa6, spec_sha256: f013ccbf6c2d88dff5bdf021963e39da44484f5b54a3477ec2902bbb3a07186c, score: percentile}
+      mapping: linear
+      low: 0.5
+      high: 1
+    rebalance: {schedule: month_end, band: 0.0}
+  - id: weekly
+    function: signal_exposure
+    params:
+      signals:
+        - {id: industry_corr_63, module_sha256: a09666503e6338c1a2b4ece01d48d5d686a58e4da37a30047decff540dc9efa6, spec_sha256: f013ccbf6c2d88dff5bdf021963e39da44484f5b54a3477ec2902bbb3a07186c, score: percentile}
+      mapping: linear
+      low: 0
+      high: 1
+    rebalance: {schedule: week_end, band: 0.0}
+production_effect: none
+broker_action: none
