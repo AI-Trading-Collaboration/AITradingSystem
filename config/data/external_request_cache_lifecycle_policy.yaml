@@ -50,3 +50,31 @@ review_condition:
   - provider_quota_or_429_distribution_change
   - poisoned_cache_recurrence
 exit_condition: owner_approves_evidence_backed_stable_ttl_or_replacement_policy
+positive_ttl_rules:
+  - lifecycle_class: positive_bounded_mutable_source
+    provider: SEC EDGAR
+    api_families: [companyfacts]
+    ttl_seconds: 43200
+  - lifecycle_class: positive_bounded_mutable_source
+    provider: Financial Modeling Prep
+    api_families:
+      - quote-short
+      - key-metrics-ttm
+      - ratios-ttm
+      - analyst-estimates
+      - key-metrics
+      - ratios
+      - price-target-summary
+      - price-target-consensus
+      - grades
+      - grades-consensus
+      - ratings-snapshot
+      - earnings-calendar
+    ttl_seconds: 43200
+  - lifecycle_class: positive_bounded_mutable_source
+    provider: Official policy source
+    api_families: [source_fetch]
+    ttl_seconds: 43200
+amendments:
+  - id: DATA-024
+    effect: 请求键里没有日期的可变数据源（SEC companyfacts、FMP 估值端点、官方政策源页面）的成功响应改为 12 小时后过期重取；其余来源和 4xx/5xx 规则不变。

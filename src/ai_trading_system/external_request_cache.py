@@ -596,6 +596,8 @@ def write_external_request_cache_response(
         response_headers=safe_headers,
         observed_at=requested_timestamp,
         policy=policy,
+        provider=provider,
+        api_family=api_family,
     )
     _write_cache_bytes_atomically(body_path, content)
     negative_observation_path: Path | None = None
@@ -1052,6 +1054,8 @@ def _validated_cache_generation(
         response_headers={str(key): str(value) for key, value in headers.items()},
         observed_at=created_at,
         policy=policy,
+        provider=_text_or_none(metadata.get("provider")),
+        api_family=_text_or_none(metadata.get("api_family")),
     )
     if schema_version == EXTERNAL_REQUEST_CACHE_SCHEMA_VERSION:
         if not _valid_v2_lifecycle_metadata(metadata, lifecycle=lifecycle):
@@ -1074,6 +1078,10 @@ def _validated_cache_generation(
         content=content,
         expires_at=lifecycle.expires_at,
     )
+
+
+def _text_or_none(value: object) -> str | None:
+    return value if isinstance(value, str) else None
 
 
 def _valid_v2_lifecycle_metadata(

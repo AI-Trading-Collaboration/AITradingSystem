@@ -37,6 +37,17 @@ class HttpStatusLifecycleRule:
 
 
 @dataclass(frozen=True)
+class PositiveTtlRule:
+    lifecycle_class: str
+    provider: str
+    api_families: frozenset[str]
+    ttl_seconds: int
+
+    def matches(self, provider: str | None, api_family: str | None) -> bool:
+        return provider == self.provider and api_family in self.api_families
+
+
+@dataclass(frozen=True)
 class ExternalRequestCacheLifecyclePolicy:
     policy_id: str
     policy_version: str
@@ -49,6 +60,7 @@ class ExternalRequestCacheLifecyclePolicy:
     nonstandard_lifecycle_class: str
     nonstandard_ttl_seconds: int
     retry_after_maximum_seconds: int
+    positive_ttl_rules: tuple[PositiveTtlRule, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -99,6 +111,7 @@ def load_external_request_cache_lifecycle_policy(
         nonstandard_lifecycle_class=_required_text(nonstandard, "lifecycle_class"),
         nonstandard_ttl_seconds=_required_nonnegative_int(nonstandard, "ttl_seconds"),
         retry_after_maximum_seconds=_required_nonnegative_int(retry_after, "maximum_seconds"),
+        positive_ttl_rules=_parse_positive_ttl_rules(raw.get("positive_ttl_rules", [])),
     )
     if policy.status != "pilot_baseline":
         raise ValueError("external request cache lifecycle policy status must be pilot_baseline")
@@ -114,12 +127,31 @@ def evaluate_external_request_cache_lifecycle(
     response_headers: Mapping[str, str],
     observed_at: datetime,
     policy: ExternalRequestCacheLifecyclePolicy | None = None,
+    provider: str | None = None,
+    api_family: str | None = None,
 ) -> ExternalRequestCacheLifecycleDecision:
     if not isinstance(status_code, int) or isinstance(status_code, bool):
         raise ValueError("status_code must be an integer")
     lifecycle_policy = policy or load_external_request_cache_lifecycle_policy()
     observed = _aware_utc(observed_at, field="observed_at")
     if lifecycle_policy.positive_minimum <= status_code <= lifecycle_policy.positive_maximum:
+        positive_rule = next(
+            (
+                candidate
+                for candidate in lifecycle_policy.positive_ttl_rules
+                if candidate.matches(provider, api_family)
+            ),
+            None,
+        )
+        if positive_rule is not None:
+            return ExternalRequestCacheLifecycleDecision(
+                policy_id=lifecycle_policy.policy_id,
+                policy_version=lifecycle_policy.policy_version,
+                lifecycle_class=positive_rule.lifecycle_class,
+                ttl_seconds=positive_rule.ttl_seconds,
+                expires_at=observed + timedelta(seconds=positive_rule.ttl_seconds),
+                retry_after_seconds=None,
+            )
         return ExternalRequestCacheLifecycleDecision(
             policy_id=lifecycle_policy.policy_id,
             policy_version=lifecycle_policy.policy_version,
@@ -164,6 +196,47 @@ def evaluate_external_request_cache_lifecycle(
         expires_at=observed + timedelta(seconds=ttl_seconds),
         retry_after_seconds=parsed_retry_after,
     )
+
+
+def _parse_positive_ttl_rules(raw: Any) -> tuple[PositiveTtlRule, ...]:
+    if not isinstance(raw, list):
+        raise ValueError("positive_ttl_rules must be a list")
+    rules: list[PositiveTtlRule] = []
+    seen: set[tuple[str, str]] = set()
+    for entry in raw:
+        if not isinstance(entry, Mapping):
+            raise ValueError("positive TTL rule must be a mapping")
+        provider = _required_text(entry, "provider")
+        lifecycle_class = _required_text(entry, "lifecycle_class")
+        families_payload = entry.get("api_families")
+        if not isinstance(families_payload, list) or not families_payload:
+            raise ValueError("api_families must be a non-empty list")
+        families = []
+        for value in families_payload:
+            family = _list_text(value, field="api_families")
+            key = (provider, family)
+            if key in seen:
+                raise ValueError("positive TTL rules overlap for provider and api_family")
+            seen.add(key)
+            families.append(family)
+        ttl_seconds = _required_nonnegative_int(entry, "ttl_seconds")
+        if ttl_seconds < 1:
+            raise ValueError("ttl_seconds must be a positive integer")
+        rules.append(
+            PositiveTtlRule(
+                lifecycle_class=lifecycle_class,
+                provider=provider,
+                api_families=frozenset(families),
+                ttl_seconds=ttl_seconds,
+            )
+        )
+    return tuple(rules)
+
+
+def _list_text(value: object, *, field: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field} must contain non-empty text")
+    return value.strip()
 
 
 def _parse_rule(raw: Any) -> HttpStatusLifecycleRule:

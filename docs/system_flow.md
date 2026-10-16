@@ -2196,6 +2196,14 @@ size/checksum、policy 与 invalidation，任一漂移均 MISS/fail closed。req
 Marketstack、FRED、SEC 仍由 provider 层解释 HTTP failure，不会把负缓存解释为成功数据；本节点不绕过
 `aits validate-data`。并发 writer 保证 pointer 只指向已落盘且 checksum 匹配的 immutable body。
 
+DATA-024（`owner_decision:DATA-024:2026-10-16:cache_positive_ttl`）修改上面“200～399 继续持久复用”的默认：
+`config/data/external_request_cache_lifecycle_policy.yaml` 的 `positive_ttl_rules` 点名键里没有日期、来源又会变的请求
+（SEC EDGAR `companyfacts`、Financial Modeling Prep 的 12 个估值端点、Official policy source `source_fetch`），
+它们的成功响应有 12 小时有效期，到期后走 `EXPIRED_REVALIDATE` 联网并写新 generation，旧 body 不删除；联网失败照常抛出，不退回旧响应。
+`evaluate_external_request_cache_lifecycle` 因此多收 `provider`、`api_family`；没被点名的来源（价格、FRED、`filing_archive`、
+`sec_pit_*`、`quarterly_text`）和 4xx/5xx 规则不变，`policy_version` 不变；规则生效前存下的、被点名来源的条目校验不通过，联网一次后换新。
+起因是 2026-10-15 的电脑试运行：运行副本的 SEC companyfacts 连续几天逐字节相同，17 家里 15 家比空缓存取到的旧。
+
 OPS-065 在不改变上述 cache identity、body、TTL、CAS invalidation 或 provider interpretation 的前提下，
 只对已经判定为 `EXPIRED_REVALIDATE` / `INVALIDATED_REVALIDATE` 的 key 增加跨进程 singleflight。
 `config/data/external_request_cache_revalidation_coordination_policy.yaml` 冻结 lease TTL、waiter timeout、
