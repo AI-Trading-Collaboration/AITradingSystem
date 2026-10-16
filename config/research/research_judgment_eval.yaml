@@ -1,10 +1,11 @@
 # Evaluation settings for the judgment ledger (TRADING-2569). Zone C (config/research/research_*.yaml):
-# the owner reviews every change. J2 adds the settlement section; J3 adds the report thresholds.
+# the owner reviews every change. J2 added the settlement section; J3a adds the report section.
 # Prices are the system's own adj_close series. A window that breaks one of these limits is not settled
-# (state data_gap) and is left for a human, never estimated.
+# (state data_gap) and is left for a human, never estimated. The report thresholds decide only a status
+# label in a private report; they never feed scoring, position sizing or any production path.
 schema_version: 1
 policy_id: research_judgment_eval_v1
-version: 2026-10-14
+version: 2026-10-16
 status: pilot_baseline
 owner: baker
 production_effect: none
@@ -13,20 +14,32 @@ rationale: >
   time a trading day closes, how large a gap between price dates still counts as a normal
   holiday stretch, and how large a one-day move is more likely an unadjusted split than a
   return. They are set conservatively so that a doubtful window is left to a human instead of
-  being settled.
+  being settled. The report section says when a research idea has enough independent events to
+  be called promising or abandonable: 30 merged events before "promising", 60 before "abandon",
+  a Brier gain of 0.02 over the base rate as the edge worth pursuing, 90% confidence, 80% power
+  and a 10% false discovery rate across ideas. They are set so that a handful of judgments from
+  one earnings season can never reach a verdict, and so that "abandon" means the edge is
+  excluded, not merely "not significant".
 intended_effect: >
   A window that breaks a limit becomes data_gap and is not scored; it never changes the result
-  of a window that passes. Settlement is read-only evaluation of the owner's own judgments and
-  does not feed scoring, position sizing or any production path.
+  of a window that passes. A report threshold only moves a method between the labels
+  insufficient, promising and abandon in a private report; it never changes a judgment, a
+  settlement or any production decision. Settlement and the report are read-only evaluation of
+  the owner's own judgments.
 validation_evidence: >
-  Acceptance tests in tests/test_research_judgments_settle.py check each limit at its boundary
-  (a gap of exactly the limit is allowed, one day more is not; a move of exactly the limit is
-  allowed, more is not) and that the limits come from this file and nowhere else; the first real
-  settlement (TSM, 2026-10-15) is the first field check.
+  Acceptance tests in tests/test_research_judgments_settle.py check each settlement limit at its
+  boundary (a gap of exactly the limit is allowed, one day more is not; a move of exactly the
+  limit is allowed, more is not) and that the limits come from this file and nowhere else; the
+  first real settlement (TSM, 2026-10-15) found no data_gap. Acceptance tests in
+  tests/test_research_judgments_report.py check every report threshold at its boundary with
+  hand-computed Wilson, Brier, base-rate and cluster-error values, and that no report threshold
+  is hard-coded in the code; the first real report (3 judgments of one earnings event) is
+  expected to be insufficient with no minimum detectable effect.
 review_condition: >
   Review after the first real settlement that produces a data_gap, after any change to how the
-  price cache is adjusted, and before the J3 report starts to use settled results for group
-  statistics.
+  price cache is adjusted, and when the first method group reaches 30 merged events (the first
+  time a threshold can change a label). Review the thresholds again before the J3b return-based
+  report is added.
 settlement:
   # A trading day's close is taken at this local time; createdAt after it counts as after that close.
   market_timezone: America/New_York
@@ -35,3 +48,21 @@ settlement:
   max_calendar_gap_days: 7
   # One-day move on either leg inside a window; larger usually means an unadjusted split, not a return.
   max_abs_daily_move: 0.5
+report:
+  # Two-sided Wilson intervals and one-sided bounds use this confidence.
+  confidence: 0.90
+  # Power for the minimum detectable Brier lift.
+  power: 0.80
+  # Fewer merged events than this is always "insufficient".
+  min_events: 30
+  # Fewer merged events than this can never be "abandon".
+  abandon_events: 60
+  # The Brier lift over the leave-one-event-out base rate that is worth pursuing.
+  edge_brier: 0.02
+  # The MDE needs at least this many events and earnings-quarter clusters, else it is not computed.
+  min_events_for_mde: 5
+  min_clusters: 3
+  # Benjamini-Hochberg false discovery rate across the method groups judged in one report.
+  bh_q: 0.10
+  # Calibration bins over the folded probability; the last bin includes its upper edge.
+  calibration_bins: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]

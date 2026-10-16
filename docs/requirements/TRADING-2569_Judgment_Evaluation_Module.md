@@ -263,3 +263,4 @@ Baker 给的量级：20 个交易日相对 SMH 的波动，TSM 5.2%、NVDA 8.8%�
 
 - 2026-10-14：J1（TRADING-2569-02）判断导入器、检查、方法登记表和数据源登记；production_effect=none；broker_action=none。
 - 2026-10-15：J2（TRADING-2569-04）判断结算器、受审结算阈值配置；production_effect=none；broker_action=none。
+- 2026-10-16：J3a（TRADING-2569-06）判断报告、报告阈值配置、补记概率交叉检查；production_effect=none；broker_action=none。

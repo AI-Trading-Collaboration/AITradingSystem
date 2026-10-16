@@ -105,6 +105,8 @@ def test_real_policy_zone_c_globs_match_tracked_files() -> None:
         ("src/ai_trading_system/research_judgments/prices.py", "B"),
         ("src/ai_trading_system/research_judgments/settle.py", "B"),
         ("src/ai_trading_system/research_judgments/settlements.py", "B"),
+        ("src/ai_trading_system/research_judgments/report.py", "B"),
+        ("src/ai_trading_system/research_judgments/reports.py", "B"),
         ("config/research/research_governance_policy.yaml", "C"),
         ("config/research/transaction_cost_model.yaml", "C"),
         ("config/research/experiments/x.yaml", "B"),

@@ -13,6 +13,8 @@ from ai_trading_system.config import PROJECT_ROOT, load_universe, load_watchlist
 from ai_trading_system.paths import state_dir
 from ai_trading_system.research_judgments.importer import import_export
 from ai_trading_system.research_judgments.methods import load_methods
+from ai_trading_system.research_judgments.report import load_report_params
+from ai_trading_system.research_judgments.reports import make_report
 from ai_trading_system.research_judgments.settle import load_settle_params
 from ai_trading_system.research_judgments.settlements import settle
 
@@ -101,6 +103,42 @@ def settle_command(
         f"{prefix} asof={selected_asof.isoformat()} settled={counts['settled']}"
         f" pending={counts['pending']} void={counts['void']} data_gap={counts['data_gap']}"
         f" conflicts={counts['conflicts']}"
+    )
+
+
+@app.command("report")
+def report_command(
+    root: Annotated[Path, typer.Option("--root")] = PROJECT_ROOT,
+    asof: Annotated[str | None, typer.Option("--asof")] = None,
+    dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
+) -> None:
+    selected_asof = datetime.now(UTC).date()
+    if asof is not None:
+        try:
+            if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", asof):
+                raise ValueError("invalid date format")
+            selected_asof = date.fromisoformat(asof)
+        except ValueError as exc:
+            raise typer.BadParameter("expected YYYY-MM-DD", param_hint="--asof") from exc
+    result = make_report(
+        data_dir=state_dir(root, "data", "external", "judgments"),
+        params=load_report_params(),
+        asof=selected_asof,
+        dry_run=dry_run,
+    )
+    for issue in result.issues:
+        typer.echo(f"issue {issue.code} id={issue.id or '-'} field={issue.field or '-'}")
+    if result.status == "rejected":
+        typer.echo("rejected: nothing was written")
+        raise typer.Exit(1)
+    if result.status == "unchanged":
+        typer.echo(f"unchanged file={result.name}")
+        return
+    prefix = "ok" if dry_run else f"reported file={result.name}"
+    summary = result.summary
+    typer.echo(
+        f"{prefix} asof={selected_asof.isoformat()} methods={summary['methods']}"
+        f" events={summary['events']} clusters={summary['clusters']}"
     )
 
 

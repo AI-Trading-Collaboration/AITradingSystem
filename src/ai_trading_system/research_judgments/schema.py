@@ -212,6 +212,23 @@ def _check_record(
                 time_error = True
     if time_error:
         issues.append(Issue("time_order", id_, "probRevisions"))
+    addenda = record.get("addenda", [])
+    mismatch = False
+    if _objects(addenda):
+        for addendum in addenda:
+            if "prob" not in addendum:
+                continue
+            at = parse_timestamp(addendum.get("at"))
+            prob = addendum["prob"]
+            if at is None or not _prob(prob):
+                schema("addenda")
+            elif not any(
+                parse_timestamp(revision.get("at")) == at and revision.get("prob") == prob
+                for revision in revisions
+            ):
+                mismatch = True
+    if mismatch:
+        issues.append(Issue("revisions_mismatch", id_, "addenda"))
 
 
 def check_export(
