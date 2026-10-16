@@ -211,6 +211,20 @@ owner 以管理员身份重跑安装脚本后，只读核对发现：脚本以�
 - `ship.py --dry-run` 显示本次为 C 区。
 - 发布后 owner 在电脑上 Claude Code 的设置里加一条只匹配 `publish.ps1` 的 `permissions.allow` 规则。
 
+### 运行 13：pi 进程去掉所有像密钥的环境变量
+
+起因：2026-10-16 OPS-086-07 的 pi 为找车道变量运行了 `printenv | grep -E 'PI_|LANE|RUN_DIR'`，`PI_` 匹配到 `TIINGO_API_TOKEN` 里的 `API_`，这个变量的值进了工具结果，随对话发给了云端模型。运行 08 只去掉名字以 `_API_KEY` 结尾的变量。
+
+步骤：
+
+1. `agent-run.ps1` 启动 pi 时从子进程环境去掉名字含 `KEY`、`TOKEN`、`SECRET` 或 `PASSWORD`（不分大小写）的所有变量；`GIT_CONFIG_KEY_<n>` 除外（它是 git 设置名，去掉后有 `GIT_CONFIG_COUNT` 时 git 报错）。照旧不改用户和系统环境变量，`AITS_PI_*` 仍由启动脚本按本次运行重新设置。
+2. 测试覆盖 `_API_TOKEN`、大小写混合的 `_Secret`、`_PASSWORD`、名字中间的 `_KEY_` 和保留的 `GIT_CONFIG_KEY_<n>`。
+
+验收：
+
+- 新旧测试通过；这条用例在修改前的脚本上失败；没有 PowerShell 时按现有辅助函数跳过。
+- `ship.py --dry-run` 显示本次为 B 区。
+
 ## 4. 开放问题
 
 - 已决定：受限账户的手动计划任务作为 periodic-operations“不要注册第二个计划任务”规则的唯一例外（`owner_decision:DEVX-025:2026-10-11:manual_agent_task_exception`），运行 05 已登记。
@@ -237,6 +251,7 @@ owner 以管理员身份重跑安装脚本后，只读核对发现：脚本以�
 - 2026-10-11：运行 09 发布（main ead6a6291）。owner 以管理员身份重跑安装脚本，agent venv 与主 venv 同版本（89 个包）。以 aits-agent 复测（DEVX-025-iso02）：agent clone 从主仓库拉取被 git 的所有权检查拦下，未刷新，在原提交上测；PR 测试 8022 个通过、24 个失败，其中 23 个依赖主仓库里未纳入 git 的 `outputs/` 证据文件，1 个是 CLI 输出按控制台宽度折行（受限账户的临时路径更长），都与依赖无关；门禁继续在 owner 账户里跑，受限账户只跑与改动相关的测试。运行 10：安装脚本不再执行受限账户能改的程序，验收记录移到受限账户写不到的验收根目录。
 - 2026-10-12：运行 10 发布（main d27674d09），owner 重跑安装脚本，验收根目录建好；此后 OPS-083、GOV-009、DATA-022 的 pi 运行都按两步式发布。owner 同意签字方案（`owner_decision:DEVX-025:2026-10-12:signoff_policy`）。运行 11：`publish.ps1` 按 Claude 审查的 tree 发布，A/B 区不再要验收记录；守卫认可已登记 owner 决定下脚本对允许路径内 C 区文件的改动，不让 pi 自己跑门禁和发布。运行 12（C 区）把签字原则写进 AGENTS.md，守卫和 `publish.ps1` 进 C 区。
 - 2026-10-12：运行 11 发布。运行 12（C 区）：AGENTS.md 写进签字原则和新的两步发布流程，`config/gov008_ship.yaml` 把 pi 守卫和 `publish.ps1` 列入 C 区。
+- 2026-10-16：OPS-086-07 的 pi 用 `printenv | grep` 找车道变量时，把 `TIINGO_API_TOKEN` 的值打进了工具结果，随对话发给了云端模型（没进 git；owner 换 token）。运行 13：pi 子进程去掉名字含 KEY、TOKEN、SECRET、PASSWORD 的环境变量。
 
 ## 6. 运行影响边界
 
@@ -247,7 +262,7 @@ production_effect=none；broker_action=none。本需求只改变开发工作台�
 依据 `owner_decision:DEVX-025:2026-10-11:model_routing`。Claude 写任务单时按下面的规则填 `model` 和 `thinking`。
 
 - 云端模型是 `openai/gpt-6.1-sol`，走 owner 的 ChatGPT 订阅登录，不用 API key。默认推理强度 high（`agent_config.json` 的 `default_thinking.cloud`），任务单可以单独指定。
-- 计费方式由 pi 用的凭据决定，和 provider 名字无关：每个账户的 pi 都只用 `/login` 里的 Sign in with ChatGPT 登录 `openai`，不在 pi 里保存 API key；登录后在交互界面发一句话，确认底部状态栏显示 `(sub)`。`agent-run.ps1` 启动 pi 时去掉所有名字以 `_API_KEY` 结尾的环境变量，所以订阅凭据不可用时运行直接报错，不会改走按量计费。
+- 计费方式由 pi 用的凭据决定，和 provider 名字无关：每个账户的 pi 都只用 `/login` 里的 Sign in with ChatGPT 登录 `openai`，不在 pi 里保存 API key；登录后在交互界面发一句话，确认底部状态栏显示 `(sub)`。`agent-run.ps1` 启动 pi 时去掉名字含 `KEY`、`TOKEN`、`SECRET` 或 `PASSWORD` 的环境变量（运行 13，`GIT_CONFIG_KEY_<n>` 除外），所以订阅凭据不可用时运行直接报错，不会改走按量计费，pi 打印环境变量时也不会把密钥发给模型。
 - 用本地模型（`model: local`），要同时满足三条：
   - A 区，或者 B 区里的机械改动：记录和文档、任务卡、搬移、重命名、删除、跑检查和测试、小范围只读调查；
   - 改动是确定的：由 Claude 事先测好的脚本或逐条改动清单完成，并且有预期的 tree 哈希或明确的检查结果；

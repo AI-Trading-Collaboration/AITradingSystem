@@ -138,8 +138,10 @@ try {
     $psi.UseShellExecute = $false
     $psi.RedirectStandardInput = $true; $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
     @($psi.Environment.Keys) | Where-Object { $_ -like "AITS_PI_*" } | ForEach-Object { [void]$psi.Environment.Remove($_) }
-    # Cloud runs use the owner's subscription login only (DEVX-025 section 7): no API key from the environment reaches pi.
-    @($psi.Environment.Keys) | Where-Object { $_ -like "*_API_KEY" } | ForEach-Object { [void]$psi.Environment.Remove($_) }
+    # Cloud runs use the owner's subscription login only (DEVX-025 section 7), and whatever pi prints goes to its model:
+    # no variable whose name looks like a secret (KEY, TOKEN, SECRET or PASSWORD, any case) reaches pi.
+    # GIT_CONFIG_KEY_<n> names a git setting, not a secret, and git refuses a GIT_CONFIG_COUNT without it.
+    @($psi.Environment.Keys) | Where-Object { $_ -match "KEY|TOKEN|SECRET|PASSWORD" -and $_ -notlike "GIT_CONFIG_KEY_*" } | ForEach-Object { [void]$psi.Environment.Remove($_) }
     foreach ($key in $AitsEnv.Keys) { $psi.Environment[$key] = [string]$AitsEnv[$key] }
     $oldInputEncoding = [Console]::InputEncoding
     [Console]::InputEncoding = $Utf8NoBom

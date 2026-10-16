@@ -251,25 +251,28 @@ def test_agent_run_executes_fake_pi_direct_and_request_modes(tmp_path: Path) -> 
     assert not req.exists() and (run2 / "attempts/01/request.json").exists()
 
 
-FAKE_PI_ENV_PY = """import json, os, sys
+FAKE_PI_ENV_PY = """import json, os, re, sys
 if '--export' in sys.argv:
     sys.exit(0)
 sys.stdin.buffer.read()
-keys = sorted(k for k in os.environ if k.upper().endswith('_API_KEY'))
-open(os.environ['FAKE_PI_CAPTURE'], 'w', encoding='utf-8').write(json.dumps({'api_keys': keys, 'keep': os.environ.get('AITS_TEST_KEEP')}))
+keys = sorted(k for k in os.environ if re.search('KEY|TOKEN|SECRET|PASSWORD', k.upper()) and not k.upper().startswith('GIT_CONFIG_KEY_'))
+out = {'api_keys': keys, 'keep': os.environ.get('AITS_TEST_KEEP'), 'git_key': os.environ.get('GIT_CONFIG_KEY_7')}
+open(os.environ['FAKE_PI_CAPTURE'], 'w', encoding='utf-8').write(json.dumps(out))
 print(json.dumps({'type': 'message_end', 'message': {'role': 'assistant', 'stopReason': 'stop', 'content': 'ok'}}))
 sys.exit(0)
 """
 
 
-def test_agent_run_removes_api_key_env_from_pi(tmp_path: Path) -> None:
+def test_agent_run_removes_secret_env_from_pi(tmp_path: Path) -> None:
+    # pi's tool results go to its model: a token printed by `printenv` leaked that way on 2026-10-16.
     ps = powershell(); fake = tmp_path / "fake_pi.py"; fake.write_text(FAKE_PI_ENV_PY, encoding="utf-8")
     prompt = tmp_path / "p.md"; prompt.write_text("x", encoding="utf-8"); capture = tmp_path / "cap.json"
     env = os.environ.copy()
     env.update({"FAKE_PI_CAPTURE": str(capture), "PYTHON": sys.executable, "OPENAI_API_KEY": "leak", "FMP_API_KEY": "leak", "AITS_TEST_KEEP": "kept"})
+    env.update({"TIINGO_API_TOKEN": "leak", "Vendor_Client_Secret": "leak", "DB_PASSWORD": "leak", "SIGNING_KEY_FILE": "leak", "GIT_CONFIG_KEY_7": "user.name"})
     done = subprocess.run([ps, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ROOT / "scripts/agent/agent-run.ps1"), "-Repo", str(ROOT), "-RunDir", str(tmp_path / "run"), "-Attempt", "01", "-PromptFile", str(prompt), "-ModelId", "fake/model", "-PiCommand", str(fake)], text=True, capture_output=True, timeout=60, env=env)
     assert done.returncode == 0, done.stdout + done.stderr
-    assert json.loads(capture.read_text(encoding="utf-8")) == {"api_keys": [], "keep": "kept"}
+    assert json.loads(capture.read_text(encoding="utf-8")) == {"api_keys": [], "keep": "kept", "git_key": "user.name"}
 
 
 FAKE_PI_LAUNCHER_JS = """const fs = require('fs');
