@@ -331,6 +331,7 @@ python tools/release/deploy_daily_release.py --activate <release_id> --daily-roo
 - 步骤 6：电脑上试运行（计划 P5），只写新目录。2026-10-16 通过，评审见 `knowledge/claude/runs/OPS-086-06/REVIEW.md`。
 - 步骤 6b（OPS-086-07，B 区）：试运行第一次部署用开发仓的 Python 3.11 对运行副本 3.14 的约束，pip 安装失败。部署在解包前拒绝与约束来源
   不是同一主次版本的解释器（5.3 第 5 步），运维手册 9.3 的三条部署命令明写 `--python C:\Python314\python.exe`。
+- 步骤 6c（OPS-086-08，B 区）：试运行的路径跟踪显示日报读了开发仓里的 15 个文件加 1 次列目录：`sec_pit_shadow_observe` 照读旧汇总（2026-05-26）里记下的开发仓绝对路径，`daily_task_dashboard` 照读 parameter_search manifest 的 `decision_snapshot_path`；运行副本今天也是这样读的。新函数 `ai_trading_system.paths.stored_state_path` 把记录的路径放回当前状态（状态根、代码根或调用方给的目录之下原样用，其他从第一个 `data`/`outputs`/`artifacts` 起接到状态根下，没有则不解析），两处改用它。不改任何报告的内容、评分、门禁。验收：`tests/test_ops086_stored_paths.py`。
 - 步骤 7：Baker 切换计划任务（计划 P6）。之后再单独问旧运行副本和研究数据搬进 archive。
 
 ## 8. 不改的
@@ -348,3 +349,4 @@ python tools/release/deploy_daily_release.py --activate <release_id> --daily-roo
 - 2026-10-15：步骤 5a（OPS-086-05）：登记表加 scope，日报收尾三步只处理日报范围，发布包清单只取日报登记项。production_effect=none；broker_action=none。
 - 2026-10-16：步骤 6（OPS-086-06）电脑试运行通过：发布包 20261014-8d28ea534 在 `D:\Work\AITradingSystem_daily_trial` 用真实入口跑 as_of 2026-10-15，27 步 PASS，命令与运行副本逐条一致，没有写出试运行目录，运行副本零读写。暴露四件事，分别处理：部署解释器版本（OPS-086-07）、日报读开发仓里的绝对路径（OPS-086-08）、SEC 请求缓存永不过期（拟立 DATA-024）、简报里 29 个研究类栏目缺失（步骤 5b）。production_effect=none；broker_action=none。
 - 2026-10-16：步骤 6b（OPS-086-07）：部署拒绝与约束来源不同主次版本的解释器，运维手册 9.3 明写 `--python`。production_effect=none；broker_action=none。
+- 2026-10-16：步骤 6c（OPS-086-08）：状态里记录的绝对路径改经 `stored_state_path` 放回当前状态，日报不再读开发仓。production_effect=none；broker_action=none。

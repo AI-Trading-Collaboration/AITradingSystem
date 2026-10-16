@@ -198,6 +198,8 @@ flowchart LR
 所以报告索引、lineage 和文档契约只处理日报范围的登记项，新的生产状态里本来没有的研究产物不再各出一条缺失警告。`reports quality-gate` 和 Reader Brief 读这份索引。
 日报发布包的清单也只取 `scope: daily` 的登记项。`scope` 不改任何报告的内容、评分或门禁。
 
+**状态里记录的路径（OPS-086-08，`owner_decision:DATA-023:2026-10-13:state_root_separation`）**：报告、汇总和 manifest 里写下的绝对路径只是写下时的位置，可能在开发仓或另一台机器上。`ai_trading_system.paths.stored_state_path(记录的路径, *可信目录)` 把它放回当前状态：状态根、代码根或调用方给的目录之下的绝对路径原样使用；其他绝对路径从第一个 `data`、`outputs` 或 `artifacts` 目录起改接到状态根下，没有这样的目录则不解析；相对路径同 `join_root`。`sec_pit_shadow_observe` 读汇总里的 `output_artifacts`、`daily_task_dashboard` 读 parameter_search manifest 的 `decision_snapshot_path` 都走这个函数，所以日报不再读开发仓里的文件（2026-10-16 试运行的路径跟踪：开发仓 16 次读取）。
+
 ## 6. 已退役、不再运行
 
 | 部分 | 退役时间 | 去向 |

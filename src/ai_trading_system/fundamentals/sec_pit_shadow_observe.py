@@ -32,7 +32,7 @@ from ai_trading_system.fundamentals.sec_pit_evaluation import (
 from ai_trading_system.fundamentals.sec_pit_real_run_diagnostics import (
     DEFAULT_SEC_PIT_DIAGNOSTICS_OUTPUT_DIR,
 )
-from ai_trading_system.paths import glob_root, join_root, state_dir
+from ai_trading_system.paths import glob_root, join_root, state_dir, stored_state_path
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SEC_PIT_SHADOW_OBSERVE_TASK_ID = "TRADING-044"
@@ -718,6 +718,7 @@ def _load_inputs(
             ".csv",
             resolved_end,
         ),
+        candidate_review_summary_path.parent,
     )
     shadow_proposal_path = _artifact_path(
         candidate_review_summary,
@@ -728,6 +729,7 @@ def _load_inputs(
             ".csv",
             resolved_end,
         ),
+        candidate_review_summary_path.parent,
     )
     baseline_overlap_path = _artifact_path(
         candidate_review_summary,
@@ -738,21 +740,25 @@ def _load_inputs(
             ".csv",
             resolved_end,
         ),
+        candidate_review_summary_path.parent,
     )
     feature_effectiveness_path = _artifact_path(
         evaluation_summary,
         "feature_effectiveness_csv",
         _latest_dated_path(evaluation_dir, "sec_pit_feature_effectiveness_", ".csv", resolved_end),
+        evaluation_summary_path.parent,
     )
     signal_attribution_path = _artifact_path(
         evaluation_summary,
         "signal_attribution_csv",
         _latest_dated_path(evaluation_dir, "sec_pit_signal_attribution_", ".csv", resolved_end),
+        evaluation_summary_path.parent,
     )
     decision_impact_path = _artifact_path(
         comparison_summary,
         "decision_impact_csv",
         _latest_dated_path(comparison_dir, "sec_pit_decision_impact_", ".csv", resolved_end),
+        comparison_summary_path.parent,
     )
     label_coverage_path = _artifact_path(
         diagnostics_summary,
@@ -763,6 +769,7 @@ def _load_inputs(
             ".csv",
             resolved_end,
         ),
+        diagnostics_summary_path.parent,
     )
     resolved_feature_panel = _resolve_feature_panel_path(feature_panel_path)
     baseline = _load_baseline_inputs(
@@ -1972,13 +1979,14 @@ def _first_row_for_feature(frame: pd.DataFrame, feature_id: str) -> dict[str, An
     return rows.iloc[0].to_dict()
 
 
-def _artifact_path(summary: dict[str, Any], key: str, default: Path) -> Path:
+def _artifact_path(summary: dict[str, Any], key: str, default: Path, home: Path) -> Path:
+    """Trust the summary's home and state root, not absolute paths recorded elsewhere."""
     outputs = summary.get("output_artifacts") if isinstance(summary, dict) else {}
     raw = outputs.get(key) if isinstance(outputs, dict) else None
     if not raw:
         return default
-    path = Path(str(raw))
-    return path if path.is_absolute() else join_root(PROJECT_ROOT, path)
+    resolved = stored_state_path(str(raw), home)
+    return default if resolved is None else resolved
 
 
 def _latest_dated_path(

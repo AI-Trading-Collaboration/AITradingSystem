@@ -18,9 +18,10 @@ enforces that.
 from __future__ import annotations
 
 import os
+import re
 from collections.abc import Iterator
 from functools import lru_cache
-from pathlib import Path, PurePath
+from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 from typing import TypeVar
 
 STATE_DIRS = ("data", "outputs", "artifacts")
@@ -105,6 +106,49 @@ def contained_root(root: Path, relative_path: str) -> Path:
     if is_state_relative(relative_path) and is_code_root(root):
         return separate
     return root
+
+
+def _stored_pure(text: str) -> PurePath:
+    if re.match(r"^(?:[A-Za-z]:[\\/]|\\\\)", text):
+        return PureWindowsPath(text)
+    if text.startswith("/"):
+        return PurePosixPath(text)
+    return PurePath(text)
+
+
+def _is_under(path: PurePath, root: PurePath | str) -> bool:
+    parts = path.parts
+    root_parts = type(path)(str(root)).parts
+    if isinstance(path, PureWindowsPath):
+        parts = tuple(part.lower() for part in parts)
+        root_parts = tuple(part.lower() for part in root_parts)
+    return parts[: len(root_parts)] == root_parts
+
+
+def stored_state_path(stored: PurePath | str, *roots: PurePath | str) -> Path | None:
+    """Resolve a recorded location, not a read instruction, into the current state.
+
+    Strip whitespace and return None for empty text. Parse Windows drive and UNC paths as
+    Windows paths, slash-rooted paths as POSIX paths, and others in the native flavour.
+    Relative paths use join_root(CODE_ROOT, text). Absolute paths under the state root,
+    code root, or a caller's trusted root are kept as written, without resolve(); containment
+    compares whole parts (case-insensitively for Windows), including the root itself.
+    Otherwise rebase from the first data/outputs/artifacts part onto the state root, lowering
+    that anchor only; return None if there is no state-directory anchor.
+    """
+    text = str(stored).strip()
+    if not text:
+        return None
+    pure = _stored_pure(text)
+    if not pure.is_absolute():
+        return join_root(CODE_ROOT, text)
+    for root in (state_root(), CODE_ROOT, *roots):
+        if _is_under(pure, root):
+            return Path(text)
+    for index, part in enumerate(pure.parts[1:], start=1):
+        if part.lower() in STATE_DIRS:
+            return state_root().joinpath(part.lower(), *pure.parts[index + 1 :])
+    return None
 
 
 def cli_path(value: PurePath | str) -> Path:

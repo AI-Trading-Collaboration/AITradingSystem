@@ -11,7 +11,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 from ai_trading_system.core import ArtifactRef, ProductionEffect
-from ai_trading_system.paths import glob_root, join_root, state_dir
+from ai_trading_system.paths import glob_root, join_root, state_dir, stored_state_path
 from ai_trading_system.reports.daily_task_dashboard_view_model import (
     DailyTaskDashboardReport,
     DailyTaskDetail,
@@ -9294,7 +9294,7 @@ def _latest_shadow_parameter_summary(report: DailyTaskDashboardReport) -> TraceR
     target_weights = _json_mapping_from_cell(trial.get("target_weights_json"))
     baseline_gate_caps = _json_mapping_from_cell(baseline.get("gate_cap_overrides_json"))
     baseline_weights = _json_mapping_from_cell(baseline.get("target_weights_json"))
-    production_gate_caps = _production_gate_cap_observations(manifest)
+    production_gate_caps = _production_gate_cap_observations(manifest, report.project_root)
     parameter_comparison = _shadow_parameter_comparison_rows(
         baseline_weights=baseline_weights,
         candidate_weights=target_weights,
@@ -9588,12 +9588,14 @@ def _shadow_parameter_comparison_rows(
     return tuple(rows)
 
 
-def _production_gate_cap_observations(manifest: TraceRecord) -> dict[str, TraceRecord]:
+def _production_gate_cap_observations(
+    manifest: TraceRecord, project_root: Path
+) -> dict[str, TraceRecord]:
     snapshot_path = _string_value(manifest.get("decision_snapshot_path"))
     if not snapshot_path:
         return {}
-    snapshot_dir = Path(snapshot_path)
-    if not snapshot_dir.exists():
+    snapshot_dir = stored_state_path(snapshot_path, project_root)
+    if snapshot_dir is None or not snapshot_dir.exists():
         return {}
     window = _mapping_value(manifest, "search_window")
     start = _parse_iso_date(_string_value(window.get("start")))
