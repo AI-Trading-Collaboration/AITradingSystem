@@ -176,6 +176,32 @@ def _checked(run, argv, code, **kwargs):
     return result
 
 
+def _python_version(python, run) -> str:
+    result = _checked(
+        run,
+        [python, "-c", "import sys; print('%d.%d.%d' % sys.version_info[:3])"],
+        "PYTHON_UNUSABLE",
+    )
+    version = result.stdout.strip()
+    if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
+        raise DeployRefused("PYTHON_UNUSABLE", f"无法读出解释器版本：{python}")
+    return version
+
+
+def _same_python_line(args, current, daily, run) -> None:
+    if args.unpinned:
+        return
+    source = args.constraints_from or venv_python(daily / "releases" / current["release_id"])
+    wanted = _python_version(source, run)
+    built = _python_version(args.python, run)
+    if wanted.split(".")[:2] != built.split(".")[:2]:
+        raise DeployRefused(
+            "PYTHON_VERSION_MISMATCH",
+            f"--python 是 {built}，约束来源 {source} 是 {wanted}；"
+            f"请用 --python 指定 {wanted} 同一主次版本的解释器",
+        )
+
+
 def _verify(release: Path, run):
     _checked(
         run,
@@ -312,6 +338,7 @@ def main(argv=None, *, run=_run, now=_now) -> int:
             release = daily / "releases" / release_id
             if release.exists():
                 raise DeployRefused("RELEASE_EXISTS", "release 目录已存在")
+            _same_python_line(args, current, daily, run)
             release.mkdir(parents=True)
             try:
                 for path, data in contents.items():

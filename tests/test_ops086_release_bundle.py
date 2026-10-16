@@ -38,6 +38,7 @@ CODE_ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = CODE_ROOT / "scripts" / "ops"
 RULES = "config/release/daily_release.yaml"
 NOW = datetime(2026, 10, 14, 3, 0, 0, tzinfo=UTC)
+DEFAULT_PYTHON_VERSION = "3.14.4"
 STAMP = "20261014T030000Z"
 
 # --- build in a temporary git repository ---------------------------------------------------------
@@ -381,11 +382,14 @@ class FakeRunner:
         self.task_status = "Ready"
         self.fail: str | None = None
         self.read_only_at_plan: bool | None = None
+        self.versions: dict[str, str] = {}
 
     @staticmethod
     def kind(argv: list[str]) -> str:
         if argv[0] == "schtasks":
             return "schtasks"
+        if argv[1] == "-c":
+            return "pyversion"
         if argv[1:3] == ["-m", "venv"]:
             return "venv"
         if argv[1:4] == ["-m", "pip", "install"]:
@@ -413,6 +417,10 @@ class FakeRunner:
         if kind == "schtasks":
             text = f"TaskName:      \\{argv[3]}\nStatus:        {self.task_status}\n"
             return subprocess.CompletedProcess(argv, 0, text, "")
+        if kind == "pyversion":
+            return subprocess.CompletedProcess(
+                argv, 0, self.versions.get(argv[0], DEFAULT_PYTHON_VERSION) + "\n", ""
+            )
         if kind == "venv":
             python = deploy.venv_python(Path(argv[-1]).parent)
             python.parent.mkdir(parents=True, exist_ok=True)
@@ -517,7 +525,11 @@ def test_first_deploy_installs_checks_plans_then_activates(tmp_path: Path) -> No
     ]
     order = [kinds.index(kind) for kind in ("venv", "install", "verify", "plan")]
     assert order == sorted(order)
-    old_freeze = [call for call in runner.calls if call["argv"][0] == str(runner.old_python)]
+    old_freeze = [
+        call
+        for call in runner.calls
+        if call["argv"][0] == str(runner.old_python) and call["kind"] == "freeze"
+    ]
     assert len(old_freeze) == 1 and kinds.index("freeze") < kinds.index("install")
     assert runner.one("venv")["argv"] == [
         str(runner.base_python),
@@ -907,6 +919,144 @@ def test_runbook_explains_build_deploy_rollback_and_the_switch() -> None:
         "deploy_log.jsonl",
     ):
         assert needle in section, needle
+
+
+# --- OPS-086-07: the venv is built with the Python line the constraints came from -------------
+
+
+def _nothing_left_behind(daily: Path, runner: FakeRunner) -> None:
+    releases = daily / "releases"
+    assert not releases.exists() or not any(releases.iterdir())
+    assert not (daily / "current.json").exists()
+    assert not (daily / "run_daily.ps1").exists()
+    assert not {"venv", "install", "freeze", "verify", "plan"} & set(runner.kinds())
+
+
+def test_first_deploy_refuses_another_python_line_before_unpacking(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    runner = FakeRunner(tmp_path)
+    runner.versions = {str(runner.old_python): "3.14.4", str(runner.base_python): "3.11.9"}
+    bundle, _ = _bundle(tmp_path / "bundles", "a")
+
+    code, daily, _ = _first(tmp_path, runner, bundle)
+
+    assert code == 2
+    entry = _log(daily)[-1]
+    assert entry["outcome"] == "REFUSED" and entry["code"] == "PYTHON_VERSION_MISMATCH"
+    assert "3.11.9" in str(entry["detail"]) and "3.14.4" in str(entry["detail"])
+    assert "code=PYTHON_VERSION_MISMATCH" in capsys.readouterr().out
+    _nothing_left_behind(daily, runner)
+    queried = [call["argv"][0] for call in runner.calls if call["kind"] == "pyversion"]
+    assert sorted(queried) == sorted([str(runner.old_python), str(runner.base_python)])
+
+
+def test_a_different_patch_release_of_the_same_python_line_is_accepted(tmp_path: Path) -> None:
+    runner = FakeRunner(tmp_path)
+    runner.versions = {str(runner.old_python): "3.14.4", str(runner.base_python): "3.14.2"}
+    bundle, release_id = _bundle(tmp_path / "bundles", "a")
+
+    code, daily, _ = _first(tmp_path, runner, bundle)
+
+    assert code == 0
+    assert _current(daily)["release_id"] == release_id
+
+
+def test_a_later_deploy_checks_the_python_against_the_current_release(tmp_path: Path) -> None:
+    runner = FakeRunner(tmp_path)
+    first, first_id = _bundle(tmp_path / "bundles", "a")
+    second, second_id = _bundle(tmp_path / "bundles", "b")
+    _, daily, _ = _first(tmp_path, runner, first)
+    current_python = deploy.venv_python(daily / "releases" / first_id)
+    runner.versions = {str(current_python): "3.14.4", str(runner.base_python): "3.12.1"}
+    runner.calls.clear()
+
+    assert _later(runner, second, daily) == 2
+
+    entry = _log(daily)[-1]
+    assert entry["code"] == "PYTHON_VERSION_MISMATCH"
+    assert "3.12.1" in str(entry["detail"]) and "3.14.4" in str(entry["detail"])
+    assert _current(daily)["release_id"] == first_id
+    assert not (daily / "releases" / second_id).exists()
+    assert not {"venv", "install", "freeze"} & set(runner.kinds())
+
+    runner.versions[str(runner.base_python)] = "3.14.9"
+    assert _later(runner, second, daily) == 0
+    assert _current(daily)["release_id"] == second_id
+
+
+def test_an_unpinned_deploy_has_no_constraint_source_to_compare_with(tmp_path: Path) -> None:
+    runner = FakeRunner(tmp_path)
+    runner.versions = {str(runner.base_python): "3.11.9"}
+    bundle, _ = _bundle(tmp_path / "bundles", "a")
+
+    code = _deploy(
+        runner,
+        "--bundle",
+        bundle,
+        "--daily-root",
+        tmp_path / "daily",
+        "--state-root",
+        tmp_path / "state",
+        "--unpinned",
+        "--python",
+        runner.base_python,
+    )
+
+    assert code == 0
+    assert "pyversion" not in runner.kinds()
+
+
+@pytest.mark.parametrize("failure", ["command", "output"])
+def test_an_interpreter_whose_version_cannot_be_read_is_refused(
+    tmp_path: Path, failure: str
+) -> None:
+    runner = FakeRunner(tmp_path)
+    if failure == "command":
+        runner.fail = "pyversion"
+    else:
+        runner.versions = {str(runner.base_python): "Python 3.14"}
+    bundle, _ = _bundle(tmp_path / "bundles", "a")
+
+    code, daily, _ = _first(tmp_path, runner, bundle)
+
+    assert code == 2
+    assert _log(daily)[-1]["code"] == "PYTHON_UNUSABLE"
+    _nothing_left_behind(daily, runner)
+
+
+def test_the_version_check_comes_after_the_cheap_refusals(tmp_path: Path) -> None:
+    runner = FakeRunner(tmp_path)
+    runner.versions = {str(runner.base_python): "3.11.9"}
+    bundle, release_id = _bundle(tmp_path / "bundles", "a")
+    daily = tmp_path / "daily"
+    (daily / "releases" / release_id).mkdir(parents=True)
+
+    code, _, _ = _first(tmp_path, runner, bundle)
+
+    assert code == 2
+    assert _log(daily)[-1]["code"] == "RELEASE_EXISTS"
+    assert "pyversion" not in runner.kinds()
+
+
+def test_runbook_deploy_commands_name_the_python_that_builds_the_venv() -> None:
+    text = (CODE_ROOT / "docs" / "operations" / "operations_runbook.md").read_text("utf-8")
+    section = text.split("### 9.3", 1)[1].split("\n## ", 1)[0]
+    deploys = [
+        line
+        for line in section.splitlines()
+        if "deploy_daily_release.py" in line and "--bundle" in line
+    ]
+
+    assert len(deploys) == 3
+    for line in deploys:
+        assert "--python C:\\Python314\\python.exe" in line, line
+    assert "PYTHON_VERSION_MISMATCH" in section
+    requirement = (
+        CODE_ROOT / "docs" / "requirements" / "OPS-086_Daily_Release_Bundle.md"
+    ).read_text("utf-8")
+    for code in ("PYTHON_VERSION_MISMATCH", "PYTHON_UNUSABLE"):
+        assert code in requirement, code
 
 
 # --- slow: this commit's release plans a daily run without the development repository -------------

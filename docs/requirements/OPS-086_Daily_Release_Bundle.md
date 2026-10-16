@@ -227,7 +227,7 @@ broker_action: none
 ```
 python tools/release/deploy_daily_release.py --bundle <zip> --daily-root <目录>
     [--state-root <绝对路径>] [--constraints-from <python.exe>] [--unpinned]
-    [--python <建 venv 用的解释器，默认当前解释器>] [--task-name "AITradingSystem Daily Run"]
+    [--python <建 venv 用的解释器，默认当前解释器；须与约束来源同一主次版本>] [--task-name "AITradingSystem Daily Run"]
 python tools/release/deploy_daily_release.py --activate <release_id> --daily-root <目录> [--task-name ...]
 ```
 
@@ -248,7 +248,11 @@ python tools/release/deploy_daily_release.py --activate <release_id> --daily-roo
 4. 核对 zip：旁边的 `.sha256` 存在、内容是 `<zip 的 sha256>  <zip 文件名>`，否则 `BUNDLE_SHA256_MISMATCH`；zip 能打开，`RELEASE.json`
    的 `schema_version`、`release_id` 格式、`files`（路径规则同 4.2，含不以状态目录开头）、`files_sha256` 都合格，zip 里除 `RELEASE.json`
    外正好是 `files` 里的文件，每个的 sha256 一致；否则 `BUNDLE_INVALID`。
-5. `<daily_root>/releases/<release_id>/` 已存在为 `RELEASE_EXISTS`。以上都在解包前，拒绝时什么都不解、不调用 venv 和 pip。
+5. `<daily_root>/releases/<release_id>/` 已存在为 `RELEASE_EXISTS`。
+   然后（OPS-086-07）解释器版本：没给 `--unpinned` 时，约束来源的解释器（`--constraints-from`，没有则当前 release 的 venv python）和
+   `--python` 各经 `run([<解释器>, "-c", "import sys; print('%d.%d.%d' % sys.version_info[:3])"])` 取版本（命令失败或输出不是
+   `主.次.修`为 `PYTHON_UNUSABLE`）；主次版本不同为 `PYTHON_VERSION_MISMATCH`（`detail` 写两个版本）；`--unpinned` 不比较；`--activate` 不查。
+   以上都在解包前，拒绝时什么都不解、不调用 venv 和 pip，不建 release 目录。
    然后解包到这个目录（editable 安装会记下绝对路径，所以不先解到临时目录再改名）。
 6. 约束：`--constraints-from <py>` 时 `run([py, "-m", "pip", "freeze"])`；否则读当前 release 的 `.venv_freeze.txt`。去掉空行、`#` 行、
    `-e` 行和名字为 `ai-trading-system`（或 `ai_trading_system`）的行，写成约束文件。
@@ -324,7 +328,9 @@ python tools/release/deploy_daily_release.py --activate <release_id> --daily-roo
   - 验收：`tests/test_ops086_registry_scope.py`。`daily` 清单在测试里固定，日报计划加报告或步骤时同一提交改清单。
 - 步骤 5b（等 Baker 答复）：Reader Brief 是否保留“研究治理摘要”一节（默认不保留）。不保留时：日报计划去掉 `research_governance_summary` 一步，
   Reader Brief 和 daily_task_dashboard 去掉对应一节，`research_governance_summary` 改 `scope: research`。
-- 步骤 6：电脑上试运行（计划 P5），只写新目录。
+- 步骤 6：电脑上试运行（计划 P5），只写新目录。2026-10-16 通过，评审见 `knowledge/claude/runs/OPS-086-06/REVIEW.md`。
+- 步骤 6b（OPS-086-07，B 区）：试运行第一次部署用开发仓的 Python 3.11 对运行副本 3.14 的约束，pip 安装失败。部署在解包前拒绝与约束来源
+  不是同一主次版本的解释器（5.3 第 5 步），运维手册 9.3 的三条部署命令明写 `--python C:\Python314\python.exe`。
 - 步骤 7：Baker 切换计划任务（计划 P6）。之后再单独问旧运行副本和研究数据搬进 archive。
 
 ## 8. 不改的
@@ -340,3 +346,5 @@ python tools/release/deploy_daily_release.py --activate <release_id> --daily-roo
 - 2026-10-15：步骤 3（OPS-086-03）：清单规则、构建和部署脚本、run_daily.ps1、注册脚本 -DailyRoot、运维手册 9.3。production_effect=none；broker_action=none。
 - 2026-10-15：步骤 4（OPS-086-04）：scripts/ 的 27 个脚本 48 处改走 paths 模块，棘轮扩到 scripts/。production_effect=none；broker_action=none。
 - 2026-10-15：步骤 5a（OPS-086-05）：登记表加 scope，日报收尾三步只处理日报范围，发布包清单只取日报登记项。production_effect=none；broker_action=none。
+- 2026-10-16：步骤 6（OPS-086-06）电脑试运行通过：发布包 20261014-8d28ea534 在 `D:\Work\AITradingSystem_daily_trial` 用真实入口跑 as_of 2026-10-15，27 步 PASS，命令与运行副本逐条一致，没有写出试运行目录，运行副本零读写。暴露四件事，分别处理：部署解释器版本（OPS-086-07）、日报读开发仓里的绝对路径（OPS-086-08）、SEC 请求缓存永不过期（拟立 DATA-024）、简报里 29 个研究类栏目缺失（步骤 5b）。production_effect=none；broker_action=none。
+- 2026-10-16：步骤 6b（OPS-086-07）：部署拒绝与约束来源不同主次版本的解释器，运维手册 9.3 明写 `--python`。production_effect=none；broker_action=none。

@@ -206,17 +206,22 @@ dynamic-v3 rescue、候选跟踪每日步骤）。发布改由 `python tools/gov
 # 构建：只读提交里的清单规则、报告登记表和 git archive 内容，不读未提交改动。
 .venv/Scripts/python.exe tools/release/build_daily_release.py --commit <已发布SHA> --out-dir <bundle_dir>
 # 首次部署：必须明确状态根，并从现有环境提取依赖约束。
-.venv/Scripts/python.exe tools/release/deploy_daily_release.py --bundle <bundle_dir>/<release_id>.zip --daily-root <daily_root> --state-root <state_root> --constraints-from D:\Work\AITradingSystem_ops_runtime\.venv\Scripts\python.exe
+.venv/Scripts/python.exe tools/release/deploy_daily_release.py --bundle <bundle_dir>/<release_id>.zip --daily-root <daily_root> --state-root <state_root> --constraints-from D:\Work\AITradingSystem_ops_runtime\.venv\Scripts\python.exe --python C:\Python314\python.exe
 # 若 owner 明确选择不固定依赖，首次部署用 --unpinned 替代 --constraints-from。
-.venv/Scripts/python.exe tools/release/deploy_daily_release.py --bundle <bundle_dir>/<release_id>.zip --daily-root <daily_root> --state-root <state_root> --unpinned
+.venv/Scripts/python.exe tools/release/deploy_daily_release.py --bundle <bundle_dir>/<release_id>.zip --daily-root <daily_root> --state-root <state_root> --unpinned --python C:\Python314\python.exe
 # 后续部署：沿用 current.json 的状态根、当前 release 的 .venv_freeze.txt 约束。
-.venv/Scripts/python.exe tools/release/deploy_daily_release.py --bundle <bundle_dir>/<新release_id>.zip --daily-root <daily_root>
+.venv/Scripts/python.exe tools/release/deploy_daily_release.py --bundle <bundle_dir>/<新release_id>.zip --daily-root <daily_root> --python C:\Python314\python.exe
 # 回退或切换：只核对已安装的 release，不再安装；仍须无活动运行。
 .venv/Scripts/python.exe tools/release/deploy_daily_release.py --activate <旧release_id> --daily-root <daily_root>
 # 仅在 owner 决定步骤 7 后执行：更新同一个任务的入口与工作目录。
 powershell -NoProfile -File scripts/ops/register_daily_scheduler_task.ps1 -DailyRoot <daily_root>
 schtasks /query /tn "\AITradingSystem Daily Run" /xml
 ```
+
+`--python` 是建 venv 的解释器，默认是运行脚本的那个解释器（开发仓 `.venv`，Python 3.11），而依赖约束是运行副本 Python 3.14 的
+`pip freeze`，所以三条部署命令都明写 `--python C:\Python314\python.exe`。解释器的主次版本和约束来源（`--constraints-from` 的解释器，
+后续部署为当前 release 的 venv）不同，部署以 `PYTHON_VERSION_MISMATCH` 拒绝，解包之前就停，不建 release 目录；读不出解释器版本为
+`PYTHON_UNUSABLE`。`--unpinned` 没有约束来源，不比较。2026-10-15 的试运行第一次部署就是用开发仓的 3.11 对 3.14 的约束，pip 安装失败。
 
 部署先确认状态根（首次必填，后续不可改变）、任务不在 `Running`、状态根里无日报锁、依赖约束来源明确；
 然后核对 zip 旁的 `.sha256`、`RELEASE.json`、文件集合、路径安全及逐文件 sha256，拒绝覆盖已有 release。
