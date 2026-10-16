@@ -321,8 +321,12 @@ NOTES_TAIL = (
     "；2026-10-15：S4e 第一批真实筛选已跑完并发布为记录 S0001 到 S0004（main 71f00bc1）；"
     "S4f（TRADING-2565-11）第二题用的经典趋势信号"
 )
-NEXT_OWNER = "Claude（第二题 QQQ-Q2 开题批；S4f 发布后把信号模块哈希填进预注册）"
-NEXT_STEP = "S4f（经典趋势信号）待审阅和发布；之后第二题开题批（C 区）和开发窗口运行"
+# The card's current owner and step (TRADING-2565-17), checked against the register.
+NEXT_OWNER = "Claude（查尺子：TRADING-2565-17 发布后请研究会话跑一次，按写定的读法交 Baker）"
+NEXT_STEP = (
+    "TRADING-2565-17（查尺子探针和章程第 11 节）待审阅和发布；之后真实数据运行和判读，"
+    "结果出来前不出新择时卡"
+)
 
 
 def test_the_requirement_progress_gets_exactly_one_new_line_after_the_s4e_line() -> None:

@@ -83,6 +83,8 @@ ad hoc 的 SEC PIT 回填/评估与缓存回放。
 
 期权代理测量（TRADING-2567-20）：`python -m ai_trading_system.research_probes.option_proxy run --out <目录>` 读长历史快照（只取开发窗口 2001-02-02 到 2010-12-31），用 VXN 按 Black-Scholes 给月度平值现金担保卖 put 定价，和同平均敞口的固定仓位、同日敞口的标的加现金对照比较（covered call 只作一致性核对），把汇总写成 `probe_result.json` 和 `probe_result.md`；不进评估台账，不是结论。
 
+查尺子（TRADING-2565-17）：`python -m ai_trading_system.research_probes.gate_power run --out <目录> --workers <进程数>` 读试跑计划 T0001 的美股大盘和 QQQ 数据，先截到 2010-12-31（拒绝更晚的数据），在 36 个美股十年窗口和 QQQ 开发窗口上，用试跑的算法和门评估偷看下个月波动率的假信号（7 档噪声加纯噪声）和三条已检验的规则，把每档的过门比例和写定的读法写成 `power_result.json` 和 `power_result.md`；只量尺子，不进评估台账、筛选账和试跑账，不是结论。
+
 ```mermaid
 flowchart LR
     Q["Owner 定问题（TRADING-2567）"] --> PRE["research/&lt;题号&gt;/prereg.yaml + strategy.py<br/>C 区：随 Owner-Decision ship 进 main"]
