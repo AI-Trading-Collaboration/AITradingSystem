@@ -2,8 +2,8 @@ schema_version: task.v1
 id: DEVX-033_GATE_SPEEDUP
 area: Developer workflow / 门禁提速
 priority: P1
-status: IN_PROGRESS
-next_owner: Claude（发布后在电脑上量门禁）
-next_step: DEVX-033-03（长文件拆段，含 Windows 上测试的修正）发布后再看几次电脑门禁的总秒数、pytest 秒数和 gate timing 摘要（DEVX-033-02 试跑 194 秒，之前 214–223 秒），确认停顿是否还出现；新瓶颈是五个流程工具测试文件起 git 的次数
+status: DONE
+next_owner: 无
+next_step: 无；三批已发布，Baker 2026-10-16 选择先到这里
 acceptance: 见 docs/requirements/DEVX-033_Gate_Speedup.md 第 4 节：排序、拆段、缓存、临时目录清理有测试；改动的测试文件和全套 PR 测试通过；发布后电脑上门禁停顿消失、各进程跑完时间接近
-notes: production_effect=none；broker_action=none；requirement=docs/requirements/DEVX-033_Gate_Speedup.md；owner_decision:DEVX-033:2026-10-15:gate_speedup（Baker 11:14Z "都改下吧"）；门禁命令和 config/gov008_ship.yaml 不变，改动在 tests/ 和文档；分析见项目文件 knowledge/claude/ops/gate-bottleneck-2026-10-15.md
+notes: production_effect=none；broker_action=none；requirement=docs/requirements/DEVX-033_Gate_Speedup.md；owner_decision:DEVX-033:2026-10-15:gate_speedup（Baker 11:14Z "都改下吧"）；门禁命令和 config/gov008_ship.yaml 不变，改动在 tests/ 和文档；分析见项目文件 knowledge/claude/ops/gate-bottleneck-2026-10-15.md；已发布：DEVX-033-01 main 7959883a（2026-10-15），DEVX-033-03 main 99186453（长文件拆段；DEVX-033-02 因一条测试在 Windows 上失败未发布，由 03 替代），DEVX-033-04 用电脑上的各文件耗时更新 tests/file_durations.json 并关闭本卡；电脑全量门禁改前中位 236 秒、34 次里 12 次有 37–52 秒停顿，03 发布后 9 次 193.9–255.6 秒（8 次在 229 秒以内；255.6 秒那次是车道 3 没有耗时记录、用了云端初值）、停顿 0 次；剩下的大头是五个流程工具测试文件启动 git，Baker 2026-10-16 10:21Z 在卡片上选择先到这里，不改 ship.py、lane.py；实测见项目文件 knowledge/claude/ops/gate-speedup-results-2026-10-15.md
