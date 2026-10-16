@@ -27,8 +27,9 @@ window of twelve years).
 - Each rule in each window is evaluated as a trial run evaluates it (simulation, matched constant
   benchmark, comparison, the standard falsification at 0.95) and the bootstrap interval of the
   left-tail improvement is kept at 0.95, 0.99 and 0.997 (0.997: about a Bonferroni correction over
-  the 31 trials so far). The eleven QQQ rules of ``research/_trials/prereg.yaml`` are applied at
-  each of the three levels (only the interval rule changes).
+  the 31 trials so far). The eleven QQQ rules of the gate ``gate_power`` measured
+  (``gate_power.MEASURED_GATE``) are applied at each of the three levels (only the interval rule
+  changes).
 
 Candidate rulers: stage 1 on the long window, either the core four rules (interval lower bound
 above 0, drawdown improvement at least 5%, geometric return and the 25 bp cost case not below -1%)
@@ -853,7 +854,7 @@ def run_ruler(
         "run": RUN_ID,
         "provenance": git_provenance(root_dir),
         "settings_sha256": loaded.sha256,
-        "gate_sha256": lg.chain_digest(trials.joinpath(tr.GATE_FILE).read_bytes()),
+        "gate_sha256": lg.chain_digest(gp.MEASURED_GATE.read_bytes()),
         "plan_sha256": lg.chain_digest(trials.joinpath(f"{gp.TRIAL_ID}.yaml").read_bytes()),
         "falsification_settings": loaded.settings.falsification.model_dump(mode="json"),
         "cutoff": gp.CUTOFF.isoformat(),

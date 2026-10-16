@@ -13,7 +13,6 @@ import pandas as pd
 import pytest
 from typer.testing import CliRunner
 
-from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.research_bench import ledger as lg
 from ai_trading_system.research_bench import load_settings
 from ai_trading_system.research_bench import trial as tr
@@ -35,7 +34,7 @@ LOADED = replace(
         }
     ),
 )
-GATE = tr.load_gate(PROJECT_ROOT / "research/_trials/prereg.yaml")
+GATE = gp.load_measured_gate()
 ROOT_DIR = lg.research_root(LOADED)
 US_END = "1945-12-31"
 # Small windows keep the whole-run tests fast: three-year checks, four-year long windows, starts
@@ -791,7 +790,7 @@ def test_the_result_records_what_produced_it(ruler: dict[str, Any]) -> None:
 
     assert ruler["run"] == "TRADING-2565-18" and ruler["cutoff"] == "2010-12-31"
     assert ruler["provenance"]["commit"]
-    assert ruler["gate_sha256"] == lg.chain_digest(trials.joinpath(tr.GATE_FILE).read_bytes())
+    assert ruler["gate_sha256"] == lg.chain_digest(gp.MEASURED_GATE.read_bytes())
     assert ruler["plan_sha256"] == lg.chain_digest(trials.joinpath("T0001.yaml").read_bytes())
     assert ruler["settings_sha256"] == LOADED.sha256
     assert ruler["confidences"] == [0.95, 0.99, 0.997] and ruler["check_years"] == 3

@@ -25,7 +25,8 @@ each column from earlier dates only); no validation or consistency window is eva
 - Each rule in each window is evaluated as a trial run evaluates it (``research_bench.run``):
   simulation, matched constant benchmark, comparison and the standard falsification at 0.95, plus
   the bootstrap lower bound at 0.9875 (the level of the next validation read, k = 4); then the
-  eleven QQQ rules and the four US rules of ``research/_trials/prereg.yaml``.
+  eleven QQQ rules and the four US rules of the trial gate as it stood when the probe was written
+  (``MEASURED_GATE``, kept byte for byte after the gate moved to the two-stage ruler).
 - Leave-one-episode-out uses ``US_EPISODES`` on the US market (the bench's episodes are 2000 and
   later) and the bench's episodes on QQQ. A window without any episode has no leave-episode
   value; its two leave-episode rules count as holding and the window is flagged.
@@ -97,7 +98,11 @@ NOISE_LEVELS: tuple[float, ...] = (0.0, 0.25, 0.5, 1.0, 1.5, 2.0, 3.0)
 PLANTED_SEED = 20261016
 WARMUP_MONTHS = 36
 TRADING_DAYS = 252
-# The gate's confidence (research/_trials/prereg.yaml) and the next validation read's (k = 4).
+# The trial gate this probe and ``ruler_power`` measured: research/_trials/prereg.yaml before
+# owner_decision:TRADING-2565:2026-10-17:ruler_40y, kept byte for byte so a later run measures the
+# same rules and records the same gate_sha256.
+MEASURED_GATE = Path(__file__).with_name("trial_gate_v1.yaml")
+# The gate's confidence and the next validation read's (k = 4).
 CONFIDENCE = 0.95
 STRICT_CONFIDENCE = 0.9875
 # The fixed reading (module docstring): it decides only what Claude proposes next, never a rule.
@@ -672,7 +677,7 @@ def run_power(
         "run": "TRADING-2565-17",
         "provenance": git_provenance(root_dir),
         "settings_sha256": loaded.sha256,
-        "gate_sha256": lg.chain_digest(trials.joinpath(tr.GATE_FILE).read_bytes()),
+        "gate_sha256": lg.chain_digest(MEASURED_GATE.read_bytes()),
         "plan_sha256": lg.chain_digest(trials.joinpath(f"{TRIAL_ID}.yaml").read_bytes()),
         "falsification_settings": loaded.settings.falsification.model_dump(mode="json"),
         "cutoff": CUTOFF.isoformat(),
@@ -882,14 +887,21 @@ def write_result(result: Mapping[str, Any], out_dir: Path) -> None:
     (out_dir / "power_result.md").write_text(render_markdown(result), encoding="utf-8")
 
 
+def load_measured_gate() -> tr.TrialGate:
+    """The trial gate the probes measured (``MEASURED_GATE``), not the one trials use now."""
+
+    return tr.load_gate(MEASURED_GATE)
+
+
 def load_datasets(
     snapshot_root: Path,
 ) -> tuple[dict[str, BenchData], tr.TrialGate, LoadedSettings, Path]:
-    """The trial plan T0001's data for both markets, cut at 2010-12-31."""
+    """The trial plan T0001's data for both markets, cut at 2010-12-31, and the measured gate."""
 
     loaded = load_settings()
     root_dir = lg.research_root(loaded)
-    gate, plan = tr.load_trial(root_dir, TRIAL_ID)
+    _, plan = tr.load_trial(root_dir, TRIAL_ID)
+    gate = load_measured_gate()
     datasets = {
         market: cut(
             tr.market_data(

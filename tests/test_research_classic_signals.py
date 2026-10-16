@@ -321,11 +321,11 @@ NOTES_TAIL = (
     "；2026-10-15：S4e 第一批真实筛选已跑完并发布为记录 S0001 到 S0004（main 71f00bc1）；"
     "S4f（TRADING-2565-11）第二题用的经典趋势信号"
 )
-# The card's current owner and step (TRADING-2565-18), checked against the register.
-NEXT_OWNER = "Claude（两段尺子：TRADING-2565-18 发布后请研究会话跑一次，按写定的挑法交 Baker）"
+# The card's current owner and step (TRADING-2565-19), checked against the register.
+NEXT_OWNER = "Claude（只认 40 年：TRADING-2565-20 把试跑门换成两段尺子，Baker 按决定记录批 C 区）"
 NEXT_STEP = (
-    "TRADING-2565-18（两段尺子探针）待审阅和发布；之后真实数据运行和挑尺子，"
-    "新尺子定下前不出新择时卡"
+    "TRADING-2565-19（记决定和探针结果，钉住探针量的旧门）发布后做 TRADING-2565-20"
+    "（试跑门换成两段尺子，C 区）；新尺子写进试跑门以前不出新择时卡"
 )
 
 

@@ -85,7 +85,7 @@ ad hoc 的 SEC PIT 回填/评估与缓存回放。
 
 查尺子（TRADING-2565-17）：`python -m ai_trading_system.research_probes.gate_power run --out <目录> --workers <进程数>` 读试跑计划 T0001 的美股大盘和 QQQ 数据，先截到 2010-12-31（拒绝更晚的数据），在 36 个美股十年窗口和 QQQ 开发窗口上，用试跑的算法和门评估偷看下个月波动率的假信号（7 档噪声加纯噪声）和三条已检验的规则，把每档的过门比例和写定的读法写成 `power_result.json` 和 `power_result.md`；只量尺子，不进评估台账、筛选账和试跑账，不是结论。
 
-两段尺子（TRADING-2565-18）：`python -m ai_trading_system.research_probes.ruler_power run --out <目录> --workers <进程数>` 读和查尺子相同的美股大盘数据（截到 2010-12-31），在十年、20/30/40 年和整段 1930–2010 的窗口上，用查尺子的波动率假信号、留出的回撤假信号和三条已检验的规则评估候选的两段尺子（长窗口上的主检验加紧接着十年的查方向），按写定的读法挑一把，把结果写成 `ruler_result.json` 和 `ruler_result.md`（运行中每个评估先写进 `ruler_rows.jsonl`，中途停下也留得住）；只量尺子，不改试跑门，不进任何账本，不是结论。
+两段尺子（TRADING-2565-18）：`python -m ai_trading_system.research_probes.ruler_power run --out <目录> --workers <进程数>` 读和查尺子相同的美股大盘数据（截到 2010-12-31），在十年、20/30/40 年和整段 1930–2010 的窗口上，用查尺子的波动率假信号、留出的回撤假信号和三条已检验的规则评估候选的两段尺子（长窗口上的主检验加紧接着十年的查方向），按写定的读法挑一把，把结果写成 `ruler_result.json` 和 `ruler_result.md`（运行中每个评估先写进 `ruler_rows.jsonl`，中途停下也留得住）；只量尺子，不改试跑门，不进任何账本，不是结论。两个探针量的门固定为 `src/ai_trading_system/research_probes/trial_gate_v1.yaml`，即试跑门换成两段尺子（`owner_decision:TRADING-2565:2026-10-17:ruler_40y`）以前的原样，重跑量的还是同一套规则。
 
 ```mermaid
 flowchart LR

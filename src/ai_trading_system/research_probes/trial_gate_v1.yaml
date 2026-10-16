@@ -1,0 +1,48 @@
+# Trial gate of the research loop (TRADING-2565 trial mode; format in
+# src/ai_trading_system/research_bench/trial.py). Zone C, like every research/*/prereg.yaml.
+#
+# Written before any trial ran and approved by Baker with the owner decision below, recorded in
+# docs/requirements/TRADING-2565_Research_Bench.md. A screened candidate is not opened as a question
+# first: its trial plan (T0001.yaml, T0002.yaml, ...) fixes up to max_configs_per_trial configurations,
+# and each runs on the development data of both markets below. The plan's primary configuration passes
+# the gate when every rule holds on both markets; the other configurations are sensitivity, run, counted
+# and reported, and never decide. Only a candidate whose primary configuration passes goes to Baker. A
+# trial never reads a validation window. Any change to this file needs a new owner decision.
+schema_version: research_trial_gate.v1
+owner_decision: owner_decision:TRADING-2565:2026-10-15:trial_mode
+max_configs_per_trial: 8            # research loop charter, period 1, section 5: every configuration counts
+confidence: 0.95                    # bootstrap interval of every trial run
+markets:
+  qqq:
+    question_type: qqq_direction    # development window qqq_long_history_development, 1999-03-10..2010-12-31
+    qqq_series: actual              # the real QQQ from 1999-03-10, as in QQQ-Q2 and QQQ-Q3
+    rules:                          # the eleven rules of QQQ-Q2 and QQQ-Q3, unchanged
+      - {metric: comparison.cvar_5pct_relative_improvement, op: ">=", value: 0.10, note: left tail at least 10% milder}
+      - {metric: ci_low.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: the interval excludes no improvement}
+      - {metric: comparison.max_drawdown, op: ">=", value: 0.05, note: drawdown at least 5 points shallower}
+      - {metric: comparison.geometric_annual_return, op: ">=", value: -0.010, note: gives up at most 1.0 point a year}
+      - {metric: cost_25.geometric_annual_return, op: ">=", value: -0.010, note: the cost condition holds at 25 bps}
+      - {metric: delay_2.cvar_5pct_relative_improvement, op: ">=", value: 0.10, note: the tail condition holds two days late}
+      - {metric: leave_year_min.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: no single year carries the tail result}
+      - {metric: leave_year_min.max_drawdown, op: ">", value: 0.0, note: no single year carries the drawdown result}
+      - {metric: leave_episode_min.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: no single fixed episode carries the tail result}
+      - {metric: leave_episode_min.max_drawdown, op: ">", value: 0.0, note: no single fixed episode carries the drawdown result}
+      - {metric: placebo_rank.cvar_5pct_relative_improvement, op: ">=", value: 0.95, note: beats 95% of same-exposure random timings}
+  us_market:
+    question_type: us_market_trial  # development window us_market_1929_2010, 1929-01-02..2010-12-31 (Ken French)
+    rules:                          # replication on 82 years: drawdown, left tail, cost and delay
+      - {metric: comparison.max_drawdown, op: ">=", value: 0.05, note: drawdown at least 5 points shallower}
+      - {metric: comparison.cvar_5pct_relative_improvement, op: ">=", value: 0.10, note: left tail at least 10% milder}
+      - {metric: cost_25.geometric_annual_return, op: ">=", value: -0.010, note: gives up at most 1.0 point a year at 25 bps}
+      - {metric: delay_2.cvar_5pct_relative_improvement, op: ">=", value: 0.10, note: the tail condition holds two days late}
+    # Episodes of the de-risk event table on the US market, by calendar month. They are read in the
+    # report and never ruled on.
+    event_episodes:
+      - {id: crash_1929, start: "1929-10", end: "1929-11"}
+      - {id: flash_crash_1962, start: "1962-05", end: "1962-06"}
+      - {id: crash_1987, start: "1987-10", end: "1987-10"}
+      - {id: ltcm_1998, start: "1998-08", end: "1998-10"}
+      - {id: dotcom_bear, start: "2000-03", end: "2002-10"}
+      - {id: global_financial_crisis, start: "2007-10", end: "2009-03"}
+production_effect: none
+broker_action: none

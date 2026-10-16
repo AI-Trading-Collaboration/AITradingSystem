@@ -10,6 +10,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import pytest
+import yaml
 from typer.testing import CliRunner
 
 from ai_trading_system.config import PROJECT_ROOT
@@ -40,7 +41,7 @@ LOADED = replace(
         }
     ),
 )
-GATE = tr.load_gate(PROJECT_ROOT / "research/_trials/prereg.yaml")
+GATE = gp.load_measured_gate()
 ROOT_DIR = lg.research_root(LOADED)
 US_END = "1943-06-30"  # two US windows: 1930 (to 1940-02-19) and 1932 (to 1942-02-19)
 LEVELS = (0.0, 3.0)  # two noise levels keep the whole-probe tests fast
@@ -471,7 +472,7 @@ def test_the_result_records_what_produced_it(power: dict[str, Any]) -> None:
 
     assert set(power["provenance"]) >= {"commit", "branch", "code_modified"}
     assert power["settings_sha256"] == LOADED.sha256
-    assert power["gate_sha256"] == lg.chain_digest(trials.joinpath("prereg.yaml").read_bytes())
+    assert power["gate_sha256"] == lg.chain_digest(gp.MEASURED_GATE.read_bytes())
     assert power["plan_sha256"] == lg.chain_digest(trials.joinpath("T0001.yaml").read_bytes())
     assert power["falsification_settings"]["placebo_draws"] == 10
     assert power["falsification_settings"]["bootstrap_draws"] == 200
@@ -710,11 +711,20 @@ def test_the_loaded_data_are_cut_at_2010(monkeypatch: pytest.MonkeyPatch) -> Non
         inputs=late["qqq"].inputs.reindex(pd.bdate_range("1994-01-03", "2011-06-30")),
         source=late["qqq"].source,
     )
-    monkeypatch.setattr(tr, "market_data", lambda market, *args, **kwargs: late[market])
+    given: list[tr.TrialGate] = []
+
+    def fake_data(market: str, gate: tr.TrialGate, *args: Any, **kwargs: Any) -> BenchData:
+        given.append(gate)
+        return late[market]
+
+    monkeypatch.setattr(tr, "market_data", fake_data)
 
     datasets, gate, loaded, root_dir = gp.load_datasets(Path("unused"))
 
+    # The data come with the measured gate, not the one trials use now.
     assert root_dir == ROOT_DIR and gate.confidence == 0.95
+    assert gate == gp.load_measured_gate()
+    assert given == [gate, gate]
     for market, data in datasets.items():
         assert pd.Timestamp(data.returns.index.max()) == pd.Timestamp("2010-12-31"), market
         assert pd.Timestamp(data.inputs.index.max()) == pd.Timestamp("2010-12-31"), market
@@ -733,3 +743,26 @@ def test_the_command_stops_when_the_data_do_not_load(
     assert result.exit_code == 1
     assert "数据载入失败：snapshot not checked" in result.output
     assert not tmp_path.joinpath("x").exists()
+
+
+def test_the_measured_gate_is_the_one_both_probe_runs_recorded() -> None:
+    # Both real runs (gate_power on main 7f665986, ruler_power on main e019b10a) recorded this
+    # digest; the trial gate moved to the two-stage ruler after them.
+    gate = gp.load_measured_gate()
+    q3 = yaml.safe_load((PROJECT_ROOT / "research/QQQ-Q3/prereg.yaml").read_text(encoding="utf-8"))[
+        "validation"
+    ]["rules"]["fast_slow"]
+
+    assert lg.chain_digest(gp.MEASURED_GATE.read_bytes()) == (
+        "b17d97a9f9358f34c404cf84b28e031c64c2f87296b080bb7cd0c53e94fa3b0d"
+    )
+    assert gate.owner_decision == "owner_decision:TRADING-2565:2026-10-15:trial_mode"
+    assert [(r.metric, r.op, r.value) for r in gate.markets["qqq"].rules] == [
+        (r["metric"], r["op"], r["value"]) for r in q3
+    ]
+    assert [(r.metric, r.op, r.value) for r in gate.markets["us_market"].rules] == [
+        ("comparison.max_drawdown", ">=", 0.05),
+        ("comparison.cvar_5pct_relative_improvement", ">=", 0.10),
+        ("cost_25.geometric_annual_return", ">=", -0.010),
+        ("delay_2.cvar_5pct_relative_improvement", ">=", 0.10),
+    ]
