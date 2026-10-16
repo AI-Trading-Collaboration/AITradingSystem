@@ -794,6 +794,7 @@ def _refresh_reader_brief_from_daily_run_summary(
         ),
         report_index_path=default_report_index_json_path(reports_dir, as_of),
         documentation_contract_path=default_documentation_contract_json_path(reports_dir, as_of),
+        registry_scope="daily",
     )
     html_path = write_reader_brief_html(payload, reader_brief_html_path)
     json_path = write_reader_brief_json(payload, reader_brief_json_path)

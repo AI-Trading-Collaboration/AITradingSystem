@@ -1748,6 +1748,12 @@ def reader_brief_command(
         Path | None,
         typer.Option(help="Reader Brief JSON 输出路径。"),
     ] = None,
+    scope: Annotated[
+        str,
+        typer.Option(
+            "--scope", help="登记表范围：all（默认，全部）或 daily（日报范围，不含研究类栏目）。"
+        ),
+    ] = "all",
 ) -> None:
     """生成只读统一读者入口 HTML/JSON。"""
     if latest and as_of:
@@ -1818,6 +1824,7 @@ def reader_brief_command(
             research_governance_summary_path=research_governance_path,
             report_index_path=index_path,
             documentation_contract_path=docs_contract_path,
+            registry_scope=parse_registry_scope(scope),
         )
     except FileNotFoundError as exc:
         raise typer.BadParameter(str(exc)) from exc

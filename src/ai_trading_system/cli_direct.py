@@ -810,6 +810,7 @@ def _dispatch(args: list[str]) -> None:
         reports_cli.reader_brief_command(
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             latest=_flag(args, "--latest"),
+            **_scope_kwargs(args),
         )
         return
     if args[:2] == ["reports", "validate-reader-brief"]:

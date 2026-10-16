@@ -1479,7 +1479,9 @@ def build_daily_ops_plan(
                 step_id="reader_brief",
                 title="生成 Reader Brief",
                 command=(
-                    ("aits", "reports", "reader-brief", "--latest") if dashboard_enabled else ()
+                    ("aits", "reports", "reader-brief", "--latest", "--scope", "daily")
+                    if dashboard_enabled
+                    else ()
                 ),
                 required_env_vars=(),
                 produced_paths=(reader_brief_html, reader_brief_json),

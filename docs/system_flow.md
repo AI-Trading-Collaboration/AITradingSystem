@@ -200,6 +200,12 @@ flowchart LR
 
 **状态里记录的路径（OPS-086-08，`owner_decision:DATA-023:2026-10-13:state_root_separation`）**：报告、汇总和 manifest 里写下的绝对路径只是写下时的位置，可能在开发仓或另一台机器上。`ai_trading_system.paths.stored_state_path(记录的路径, *可信目录)` 把它放回当前状态：状态根、代码根或调用方给的目录之下的绝对路径原样使用；其他绝对路径从第一个 `data`、`outputs` 或 `artifacts` 目录起改接到状态根下，没有这样的目录则不解析；相对路径同 `join_root`。`sec_pit_shadow_observe` 读汇总里的 `output_artifacts`、`daily_task_dashboard` 读 parameter_search manifest 的 `decision_snapshot_path` 都走这个函数，所以日报不再读开发仓里的文件（2026-10-16 试运行的路径跟踪：开发仓 16 次读取）。
 
+**日报 Reader Brief 的范围（OPS-086-09，`owner_decision:OPS-086:2026-10-16:reader_brief_daily_scope`）**：`aits reports reader-brief` 有 `--scope all|daily`，默认 `all`，行为不变；
+`daily` 时 payload 去掉 29 个研究类栏目（`reader_brief.RESEARCH_ONLY_SECTIONS`，它们读的报告都是 `scope: research`），HTML 不渲染这些栏目，报告索引只留日报范围的记录，
+并记下 `registry_scope` 和 `omitted_sections`。Owner Daily Brief 看到 payload 的 `registry_scope` 是 `daily` 时去掉 `research_review_due`，共 9 个 section。
+日报计划的 `aits reports reader-brief --latest --scope daily` 和 `aits ops daily-run` 收尾重建最终简报都用 `daily`。简报状态、质量检查和 report quality gate 不读这 29 个栏目，所以结果不变；
+`research_governance_summary` 一步仍在日报计划里（步骤 5c 另定）。
+
 ## 6. 已退役、不再运行
 
 | 部分 | 退役时间 | 去向 |

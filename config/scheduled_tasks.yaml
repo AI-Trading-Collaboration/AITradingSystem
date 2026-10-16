@@ -493,11 +493,13 @@ cadences:
           - market_data_recover_freshness
           - research_governance_summary
         title: Build Reader Brief
-        command: aits reports reader-brief --latest
+        command: aits reports reader-brief --latest --scope daily
         command_contains:
           - reports
           - reader-brief
           - --latest
+          - --scope
+          - daily
         closed_market_behavior: skip_score_artifacts
         production_effect: none
         production_weight_write: false

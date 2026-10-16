@@ -19,6 +19,8 @@ DEVX-029（C 区决定记录）；任务记录 `tasks/OPS-086_DAILY_RELEASE_BUND
   `src/ai_trading_system/scoring/position_gates.py`），只改路径，不改规则和数值。Baker 2026-10-14 08:06 JST 在本任务线程的卡片上
   选「批准」（卡片问题：批准 P2 搬家时一并改 3 个 C 区文件里的 thesis 路径文字吗？）。它属于上面 DATA-023 决定的范围，按 DEVX-029 写成该决定的决定记录，`c_paths` 就是这 3 个文件；
   提交的 `Owner-Decision:` 也写这个决定。
+- `owner_decision:OPS-086:2026-10-16:reader_brief_daily_scope`：Baker 2026-10-16 14:16 JST 在本任务线程的卡片上选「删掉」
+  （卡片问题：删掉日报简报里的 29 个研究类栏目吗？）。见第 7 节步骤 5b。
 
 计划全文在项目文件 `knowledge/claude/daily-release-and-data-root-plan-2026-10-13.md`；本文是其中 P2、P3 的需求，两者不一致时以本文为准。
 
@@ -326,8 +328,21 @@ python tools/release/deploy_daily_release.py --activate <release_id> --daily-roo
     `tools/release/build_daily_release.py` 只取 `scope: daily` 的登记项的 globs。
   - 不改：任何报告的内容、评分、门禁；不带 `--scope` 时的输出。
   - 验收：`tests/test_ops086_registry_scope.py`。`daily` 清单在测试里固定，日报计划加报告或步骤时同一提交改清单。
-- 步骤 5b（等 Baker 答复）：Reader Brief 是否保留“研究治理摘要”一节（默认不保留）。不保留时：日报计划去掉 `research_governance_summary` 一步，
-  Reader Brief 和 daily_task_dashboard 去掉对应一节，`research_governance_summary` 改 `scope: research`。
+- 步骤 5b（OPS-086-09，B 区，`owner_decision:OPS-086:2026-10-16:reader_brief_daily_scope`）：日报简报去掉 29 个研究类栏目。
+  - 为什么：试运行的日报简报里有 29 个栏目（报告索引豁免清单、Reader Brief 一致性、研究月度复核、next-candidate 系列、executable binding 系列等）读的报告都是
+    `scope: research`，新的生产状态里没有这些报告，每个栏目都显示“artifact missing”。它们不影响简报状态、质量检查或质量门禁（拿掉这 29 项后，Reader Brief 质量检查的
+    13 项、report quality gate 的状态逐项相同）。Baker 2026-10-16 14:16 JST 在本任务线程的卡片上选「删掉」。
+  - 命令：`aits reports reader-brief` 加 `--scope all|daily`，默认 `all`（行为不变）；`build_reader_brief_payload` 加 `registry_scope`（`None` 或 `daily`，其他值拒绝）。
+    `daily` 时：payload 去掉 29 个键（`reader_brief.RESEARCH_ONLY_SECTIONS`），记下 `registry_scope` 和 `omitted_sections`；HTML 不渲染这 29 节；
+    报告索引只留 `scope: daily` 的记录（日报计划写出的索引本来就是，原样使用；整表索引则过滤并重算 4 个计数）；没有索引时的 cadence 兜底只读 `scope: daily` 的登记项；
+    Owner Daily Brief 看到 payload 的 `registry_scope == "daily"` 时去掉 `research_review_due`，共 9 个 section（`reporting_architecture.yaml` 不改）。
+    日报计划和 `config/scheduled_tasks.yaml` 的 `reader_brief` 一步传 `--scope daily`；`aits ops daily-run` 收尾里重建最终简报的函数固定用 `daily`。
+  - 不改：29 个 `_x_summary` 函数及其测试（`--scope all` 照常使用）、`research_governance_summary` 一步及它在简报里的用途（见 5c）、简报状态与质量检查、任何评分和门禁。
+    仍带研究味的内容（`pit_source_manifest`、`data_refresh_audit`、`data_source_fallback_policy`、`cache_catalog`、Operations Health 和研究治理相关条目）不在本步，等 Baker 另定。
+  - 验收：`tests/test_ops086_reader_brief_scope.py`；`test_ops086_registry_scope.py`、`test_scheduled_tasks.py`、`test_ops_daily.py` 里相关断言随命令改。
+- 步骤 5c（等 Baker 答复，不在 5b 里）：Reader Brief 是否保留“研究治理摘要”一节（默认不保留）。不保留时：日报计划去掉 `research_governance_summary` 一步，
+  Reader Brief 和 daily_task_dashboard 去掉对应一节（含 `backtest_shadow_governance`、Research Promotion Status 和研究治理条目），`research_governance_summary` 改 `scope: research`；
+  简报状态逻辑要同时改，因为这份摘要现在是“重要”输入，缺了简报会一直是 LIMITED_READER_CONTEXT。
 - 步骤 6：电脑上试运行（计划 P5），只写新目录。2026-10-16 通过，评审见 `knowledge/claude/runs/OPS-086-06/REVIEW.md`。
 - 步骤 6b（OPS-086-07，B 区）：试运行第一次部署用开发仓的 Python 3.11 对运行副本 3.14 的约束，pip 安装失败。部署在解包前拒绝与约束来源
   不是同一主次版本的解释器（5.3 第 5 步），运维手册 9.3 的三条部署命令明写 `--python C:\Python314\python.exe`。
@@ -350,3 +365,4 @@ python tools/release/deploy_daily_release.py --activate <release_id> --daily-roo
 - 2026-10-16：步骤 6（OPS-086-06）电脑试运行通过：发布包 20261014-8d28ea534 在 `D:\Work\AITradingSystem_daily_trial` 用真实入口跑 as_of 2026-10-15，27 步 PASS，命令与运行副本逐条一致，没有写出试运行目录，运行副本零读写。暴露四件事，分别处理：部署解释器版本（OPS-086-07）、日报读开发仓里的绝对路径（OPS-086-08）、SEC 请求缓存永不过期（拟立 DATA-024）、简报里 29 个研究类栏目缺失（步骤 5b）。production_effect=none；broker_action=none。
 - 2026-10-16：步骤 6b（OPS-086-07）：部署拒绝与约束来源不同主次版本的解释器，运维手册 9.3 明写 `--python`。production_effect=none；broker_action=none。
 - 2026-10-16：步骤 6c（OPS-086-08）：状态里记录的绝对路径改经 `stored_state_path` 放回当前状态，日报不再读开发仓。production_effect=none；broker_action=none。
+- 2026-10-16：步骤 5b（OPS-086-09）：Reader Brief 加 `--scope daily`，日报简报去掉 29 个研究类栏目，Owner Daily Brief 为 9 个 section；日报计划、计划任务和 daily-run 收尾重建都用 daily。production_effect=none；broker_action=none。

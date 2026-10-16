@@ -29,6 +29,41 @@ REPORT_TYPE = "reader_brief"
 PRODUCTION_EFFECT = "none"
 QUALITY_REPORT_TYPE = "reader_brief_quality"
 
+# Owner decision 2026-10-16 (OPS-086 step 5b): the daily Reader Brief leaves these research-only
+# sections out. Payload key -> HTML section title. The report ids they read are all
+# `scope: research` in config/report_registry.yaml, so a clean daily state never has them.
+RESEARCH_ONLY_SECTIONS: dict[str, str] = {
+    "report_index_waiver_inventory": "Report Index Waiver Inventory",
+    "reader_brief_consistency": "Reader Brief Consistency Pack",
+    "production_boundary_static_scan": "Production Boundary Static Scan",
+    "owner_review_template_v2": "Owner Review Template V2",
+    "owner_decision_audit_log": "Owner Decision Audit Log",
+    "research_monthly_review_pack": "Research Monthly Review Pack",
+    "paper_shadow_promotion_board": "Paper Shadow Promotion Board",
+    "candidate_rejection_postmortem": "Candidate Rejection Postmortem Template",
+    "decision_snapshot_lifecycle_policy": "Decision Snapshot Lifecycle Policy",
+    "extended_shadow_observation_clock": "Extended Shadow Observation Clock",
+    "extended_shadow_protocol": "Extended Shadow Protocol",
+    "research_roadmap_dashboard": "Research Roadmap Dashboard",
+    "research_governance_end_to_end_pack": "Research Governance End-to-End Pack",
+    "research_governance_recovery_pack": "Research Governance Recovery Pack",
+    "decision_stage_governance_snapshot": "Decision-Stage Governance Snapshot",
+    "return_to_research_governance_snapshot": "Return-To-Research Governance Snapshot",
+    "next_research_cycle_snapshot": "Next Research Cycle Snapshot",
+    "next_candidate_backfill": "Next Candidate Backfill",
+    "next_candidate_stress_cost_benchmark": "Next Candidate Stress Cost Benchmark",
+    "next_candidate_vs_returned_comparison": "Next Candidate Vs Returned Comparison",
+    "next_candidate_signal_window_sensitivity": "Next Candidate Signal Window Sensitivity",
+    "next_candidate_research_gate": "Next Candidate Research Gate",
+    "next_candidate_owner_research_review_packet": "Next Candidate Owner Research Review Packet",
+    "executable_binding_contract": "Executable Binding Contract",
+    "executable_signal_binding": "Executable Signal Binding",
+    "executable_research_weight_binding": "Executable Research Weight Binding",
+    "executable_binding_safety_audit": "Executable Binding Safety Audit",
+    "research_safety_boundary_audit": "Research Safety Boundary Audit",
+    "task_register_consistency": "Task Register Consistency",
+}
+
 
 def default_reader_brief_json_path(output_dir: Path, as_of: date) -> Path:
     return output_dir / f"reader_brief_{as_of.isoformat()}.json"
@@ -63,7 +98,10 @@ def build_reader_brief_payload(
     report_index_path: Path | None = None,
     documentation_contract_path: Path | None = None,
     report_registry_path: Path = DEFAULT_REPORT_REGISTRY_PATH,
+    registry_scope: str | None = None,
 ) -> dict[str, Any]:
+    if registry_scope not in (None, "daily"):
+        raise ValueError("the Reader Brief supports --scope all or daily")
     snapshot = _read_required_json(decision_snapshot_path, "decision_snapshot")
     calculation_explainers = _read_optional_json(calculation_explainers_path)
     daily_decision_summary = _read_optional_json(daily_decision_summary_path)
@@ -72,7 +110,11 @@ def build_reader_brief_payload(
     score_change_attribution = _read_optional_json(score_change_attribution_path)
     market_panel = _read_optional_json(market_panel_path)
     research_governance_summary = _read_optional_json(research_governance_summary_path)
-    report_index = _read_optional_json(report_index_path)
+    report_index = _scope_report_index(
+        _read_optional_json(report_index_path),
+        report_registry_path=report_registry_path,
+        registry_scope=registry_scope,
+    )
     documentation_contract = _read_optional_json(documentation_contract_path)
     warnings = _input_warnings(
         {
@@ -253,6 +295,7 @@ def build_reader_brief_payload(
     task_cadence_calendar = _task_cadence_calendar(
         report_index,
         report_registry_path=report_registry_path,
+        registry_scope=registry_scope,
     )
     missing_artifact_impact = _missing_artifact_impact(
         source_inputs=source_inputs,
@@ -405,8 +448,48 @@ def build_reader_brief_payload(
         "appendix_links": _appendix_links(reports_dir, source_inputs),
         "report_navigation": report_navigation,
         "report_navigation_groups": report_navigation_groups,
+        "registry_scope": registry_scope or "all",
     }
+    if registry_scope == "daily":
+        for key in RESEARCH_ONLY_SECTIONS:
+            del payload[key]
+        payload["omitted_sections"] = list(RESEARCH_ONLY_SECTIONS)
     return payload
+
+
+def _scope_report_index(
+    report_index: Mapping[str, Any],
+    *,
+    report_registry_path: Path,
+    registry_scope: str | None,
+) -> Mapping[str, Any]:
+    """Keep daily records from a whole-registry index; return an already-daily index as is."""
+    if registry_scope != "daily" or not report_index:
+        return report_index
+    if _mapping(report_index.get("registry")).get("scope") == "daily":
+        return report_index
+    daily_ids = {
+        report["report_id"]
+        for report in load_report_registry(report_registry_path, scope="daily")["reports"]
+    }
+    records = [
+        report
+        for report in _records(report_index.get("reports"))
+        if report.get("report_id") in daily_ids
+    ]
+    summary = {
+        **_mapping(report_index.get("summary")),
+        "report_count": len(records),
+        "missing_count": sum(report.get("freshness_status") == "MISSING" for report in records),
+        "stale_count": sum(report.get("freshness_status") == "STALE" for report in records),
+        "required_missing_count": sum(
+            report.get("freshness_status") == "MISSING"
+            and report.get("required_for_daily_reading") is True
+            for report in records
+        ),
+    }
+    registry = {**_mapping(report_index.get("registry")), "scope": "daily"}
+    return {**report_index, "registry": registry, "summary": summary, "reports": records}
 
 
 def write_reader_brief_json(payload: Mapping[str, Any], output_path: Path) -> Path:
@@ -3240,6 +3323,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
         "</body>",
         "</html>",
     ]
+    if payload.get("registry_scope") == "daily":
+        research_section_prefixes = tuple(
+            f"<section><h2>{html.escape(title)}</h2>" for title in RESEARCH_ONLY_SECTIONS.values()
+        )
+        html_parts = [part for part in html_parts if not part.startswith(research_section_prefixes)]
     return "\n".join(html_parts)
 
 
@@ -10291,10 +10379,11 @@ def _task_cadence_calendar(
     payload: Mapping[str, Any],
     *,
     report_registry_path: Path,
+    registry_scope: str | None = None,
 ) -> dict[str, Any]:
     if not payload:
         try:
-            registry = load_report_registry(report_registry_path)
+            registry = load_report_registry(report_registry_path, scope=registry_scope)
         except (FileNotFoundError, ValueError) as exc:
             return {
                 "availability": "MISSING",

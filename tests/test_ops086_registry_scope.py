@@ -63,7 +63,7 @@ DAILY_IDS = frozenset(
         "sec_pit_shadow_observe",
     }
 )
-SCOPED_STEPS = ("artifact_lineage", "report_index", "documentation_contract")
+SCOPED_STEPS = ("artifact_lineage", "report_index", "documentation_contract", "reader_brief")
 
 
 def _real_entries() -> list[dict[str, Any]]:
@@ -390,7 +390,7 @@ def test_the_daily_dispatcher_passes_scope_to_the_three_commands(monkeypatch) ->
 # --- the daily plan and its schedule -------------------------------------------------------------
 
 
-def test_the_daily_plan_scopes_exactly_the_three_closeout_registry_steps(tmp_path: Path) -> None:
+def test_the_daily_plan_scopes_exactly_the_registry_steps(tmp_path: Path) -> None:
     plan = build_daily_ops_plan(as_of=AS_OF, project_root=tmp_path)
 
     for step in plan.steps:
@@ -400,10 +400,15 @@ def test_the_daily_plan_scopes_exactly_the_three_closeout_registry_steps(tmp_pat
             assert step.command[-2:] == ("--scope", "daily"), step.step_id
 
 
-def test_the_schedule_declares_the_scope_in_the_three_tasks() -> None:
+def test_the_schedule_declares_the_scope_in_its_tasks() -> None:
     tasks = load_scheduled_tasks_config().tasks_by_id()
 
-    for task_id in ("daily_artifact_lineage", "daily_report_index", "daily_documentation_contract"):
+    for task_id in (
+        "daily_artifact_lineage",
+        "daily_report_index",
+        "daily_documentation_contract",
+        "daily_reader_brief",
+    ):
         assert task_id in tasks
         assert tasks[task_id].command.endswith("--scope daily"), task_id
         assert {"--scope", "daily"} <= set(tasks[task_id].command_contains), task_id

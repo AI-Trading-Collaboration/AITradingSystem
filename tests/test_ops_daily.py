@@ -32,6 +32,7 @@ from ai_trading_system.ops_daily import (
     run_daily_ops_plan,
     write_daily_ops_run_report,
 )
+from ai_trading_system.reports.reader_brief import RESEARCH_ONLY_SECTIONS
 from ai_trading_system.trading_calendar import us_equity_market_session
 
 
@@ -76,7 +77,7 @@ def test_daily_ops_plan_defers_provider_env_failures_until_capture() -> None:
     assert "`aits reports index --latest --scope daily`" in markdown
     assert "`aits docs report-contract --latest --scope daily`" in markdown
     assert "`aits reports research-governance-summary --latest`" in markdown
-    assert "`aits reports reader-brief --latest`" in markdown
+    assert "`aits reports reader-brief --latest --scope daily`" in markdown
     assert "`aits reports validate-reader-brief --latest`" in markdown
     assert "`live_provider`" in markdown
     assert "`readonly`" in markdown
@@ -565,6 +566,8 @@ def test_daily_ops_plan_includes_forward_evidence_after_score_daily() -> None:
         "reports",
         "reader-brief",
         "--latest",
+        "--scope",
+        "daily",
     )
 
 
@@ -611,7 +614,7 @@ def test_daily_ops_plan_cli_writes_report(tmp_path: Path) -> None:
     assert "reports index --latest" in markdown
     assert "docs report-contract --latest" in markdown
     assert "reports research-governance-summary --latest" in markdown
-    assert "reports reader-brief --latest" in markdown
+    assert "reports reader-brief --latest --scope daily" in markdown
     assert "reports validate-reader-brief --latest" in markdown
     assert "ops health --as-of 2026-05-06" in markdown
     assert "security scan-secrets --as-of 2026-05-06" in markdown
@@ -920,7 +923,12 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
     assert reader_brief["source_inputs"]["trace_bundle"]["availability"] == "AVAILABLE"
     assert Path(reader_brief["source_inputs"]["trace_bundle"]["full_path"]) == canonical_trace
     owner_daily_brief = json.loads(owner_daily_brief_json.read_text(encoding="utf-8"))
-    assert len(owner_daily_brief["sections"]) == 10
+    assert len(owner_daily_brief["sections"]) == 9
+    assert "research_review_due" not in {
+        section["section_id"] for section in owner_daily_brief["sections"]
+    }
+    assert reader_brief["registry_scope"] == "daily"
+    assert not set(RESEARCH_ONLY_SECTIONS) & set(reader_brief)
     assert owner_daily_brief["production_effect"] == "none"
     order_candidates = json.loads(order_intent_candidates_json.read_text(encoding="utf-8"))
     assert order_candidates["production_effect"] == "none"
@@ -1243,7 +1251,7 @@ def test_daily_ops_plan_closed_market_skips_score_and_current_download(
     assert "--non-trading-day" in step_by_id["pipeline_health"].command
     assert "`aits score-daily --as-of 2026-05-10" not in markdown
     assert "`aits reports dashboard --as-of 2026-05-10`" not in markdown
-    assert "`aits reports reader-brief --latest`" not in markdown
+    assert "`aits reports reader-brief --latest --scope daily`" not in markdown
     assert "市场日状态：CLOSED_MARKET" in markdown
     assert "不生成新的 daily_score" in markdown
 

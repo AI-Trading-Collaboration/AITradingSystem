@@ -27,6 +27,8 @@ from ai_trading_system.platform.reporting.reader_brief_native import (
 
 _PASS_STATES = {"PASS", "READY", "AVAILABLE", "OK", "COMPLETE", "DONE"}
 _BLOCKED_STATES = {"BLOCKED", "FAILED", "FAIL", "ERROR", "UNSAFE"}
+# Owner decision 2026-10-16 (OPS-086 step 5b): daily payloads have no research sections.
+_RESEARCH_ONLY_SECTION_IDS = frozenset({"research_review_due"})
 
 
 def build_owner_daily_brief_view_model(
@@ -43,6 +45,10 @@ def build_owner_daily_brief_view_model(
             order=index,
         )
         for index, item in enumerate(resolved_policy.core_sections, start=1)
+        if not (
+            legacy_payload.get("registry_scope") == "daily"
+            and item.section_id in _RESEARCH_ONLY_SECTION_IDS
+        )
     )
     sections = tuple(_section_provider(spec)(legacy_payload, spec=spec) for spec in specs)
     queue = _typed_owner_queue(legacy_payload.get("owner_action_queue"))

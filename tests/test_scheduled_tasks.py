@@ -132,7 +132,7 @@ def test_daily_plan_matches_required_scheduled_order() -> None:
         "reports index --latest",
         "docs report-contract --latest",
         "reports research-governance-summary --latest",
-        "reports reader-brief --latest",
+        "reports reader-brief --latest --scope daily",
         "reports quality-gate --latest",
         "reports validate-reader-brief --latest",
         "ops health",
@@ -295,7 +295,7 @@ def test_daily_run_executes_forward_evidence_then_reader_brief_chain_after_score
         ("reports", "index", "--latest", "--scope", "daily"),
         ("docs", "report-contract", "--latest", "--scope", "daily"),
         ("reports", "research-governance-summary", "--latest"),
-        ("reports", "reader-brief", "--latest"),
+        ("reports", "reader-brief", "--latest", "--scope", "daily"),
         ("reports", "quality-gate", "--latest"),
         ("reports", "validate-reader-brief", "--latest"),
     ]
