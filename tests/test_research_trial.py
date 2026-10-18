@@ -58,7 +58,7 @@ LOADED = replace(
         }
     ),
 )
-DECISION = "owner_decision:TRADING-2565:2026-10-17:ruler_40y"
+DECISION = "owner_decision:TRADING-2565:2026-10-19:tail_floor10"
 GATE_FILE = PROJECT_ROOT / "research/_trials/prereg.yaml"
 PLAN_FILE = PROJECT_ROOT / "research/_trials/T0001.yaml"
 SIG = "sig-0123456789ab"
@@ -248,11 +248,14 @@ def _sha(path: Path) -> str:
 
 def test_the_gate_is_the_two_stage_ruler_the_probe_measured() -> None:
     # Stage 1 on the US market's 82 years is the core four rules as the ruler probe applied them
-    # (the measured gate's own rules on those metrics); the QQQ development window is stage 2, S3.
+    # (the measured gate's own rules on those metrics) and the left-tail floor of
+    # owner_decision:TRADING-2565:2026-10-19:tail_floor10; the QQQ development window is
+    # stage 2, S3.
     gate = tr.load_gate(GATE_FILE)
     measured = {
         r.metric: (r.metric, r.op, r.value) for r in gp.load_measured_gate().markets["qqq"].rules
     }
+    floor = ("comparison.cvar_5pct_relative_improvement", ">=", 0.10)
 
     assert gate.owner_decision == DECISION
     assert (gate.max_configs_per_trial, gate.confidence) == (8, 0.95) == (8, gp.CONFIDENCE)
@@ -266,8 +269,11 @@ def test_the_gate_is_the_two_stage_ruler_the_probe_measured() -> None:
         ("ci_high.cvar_5pct_relative_improvement", ">", 0.0),
         measured[rp.GEO_METRIC],
     ]
-    assert [r.metric for r in us.rules] == list(rp.CORE_METRICS)
-    assert [(r.metric, r.op, r.value) for r in us.rules] == [measured[m] for m in rp.CORE_METRICS]
+    assert [r.metric for r in us.rules] == [*rp.CORE_METRICS, floor[0]]
+    assert [(r.metric, r.op, r.value) for r in us.rules] == [
+        *(measured[m] for m in rp.CORE_METRICS),
+        floor,
+    ]
     assert (us.question_type, us.qqq_series) == ("us_market_trial", None)
     assert us.event_episodes is not None
     assert [(e.id, e.start, e.end) for e in us.event_episodes] == [
@@ -701,7 +707,10 @@ def test_the_us_market_run_uses_its_window_and_crash_episodes(trial: dict[str, A
     assert record["source"] == US.source
     assert list(record["result"]["events"]["episodes"]) == CRASH_IDS
     assert record["falsification_confidence"] == 0.95
-    assert [row["metric"] for row in record["gate"]] == list(rp.CORE_METRICS)
+    assert [row["metric"] for row in record["gate"]] == [
+        *rp.CORE_METRICS,
+        "comparison.cvar_5pct_relative_improvement",
+    ]
 
 
 def test_records_are_chained_and_written_once(trial: dict[str, Any]) -> None:

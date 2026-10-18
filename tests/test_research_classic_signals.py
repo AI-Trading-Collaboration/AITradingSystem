@@ -321,13 +321,13 @@ NOTES_TAIL = (
     "；2026-10-15：S4e 第一批真实筛选已跑完并发布为记录 S0001 到 S0004（main 71f00bc1）；"
     "S4f（TRADING-2565-11）第二题用的经典趋势信号"
 )
-# The card's current owner and step (TRADING-2565-22), checked against the register.
-NEXT_OWNER = "Claude（TRADING-2565-22：研究会话跑误放率探针）"
+# The card's current owner and step (TRADING-2565-24), checked against the register.
+NEXT_OWNER = "Claude（研究自动循环：恢复每周择时卡）"
 NEXT_STEP = (
-    "T0002 主配置没过门，不开题，P2 不做；"
-    "误放率探针（TRADING-2565-22）发布后研究会话在真实数据上跑一次，"
-    "按写定的读法定择时卡和择时候选的试跑是否恢复、每期几个信号；"
-    "之前研究自动循环仍在后台只筛不开题（章程第 13 节）"
+    "误放率探针判为偏松，Baker 选收紧重读，试跑门第一段加左尾点估计至少改善 10%"
+    "（TRADING-2565-24，owner_decision:TRADING-2565:2026-10-19:tail_floor10）；"
+    "研究自动循环恢复每周新择时卡和择时候选的试跑，新信号每期 20 个（章程第 11、13 节），"
+    "主配置过门才叫 Baker"
 )
 
 

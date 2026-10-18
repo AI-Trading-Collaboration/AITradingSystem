@@ -151,14 +151,13 @@ def probe(probe_run: tuple[dict[str, Any], Path]) -> dict[str, Any]:
 # --- the gate and the fixed design ---------------------------------------------------------------
 
 
-def test_the_gate_copy_is_the_trial_gate_byte_for_byte() -> None:
-    # The probe measures the gate trials use now: research/_trials/prereg.yaml after the two-stage
-    # ruler (TRADING-2565-20) and the Treasury reserve types (TRADING-2565-21).
-    assert fp.GATE_COPY.read_bytes() == PREREG.read_bytes()
+def test_the_gate_copy_is_the_gate_the_probe_measured() -> None:
+    # The probe measured research/_trials/prereg.yaml after the two-stage ruler (TRADING-2565-20)
+    # and the Treasury reserve types (TRADING-2565-21), kept byte for byte so a rerun measures the
+    # same rules and records the same gate_sha256.
     assert lg.chain_digest(fp.GATE_COPY.read_bytes()) == (
         "d9de5cc21bd1f02085eab72b8d87bb8715db2f62dbe4d7f1105dce44cad7380f"
     )
-    assert GATE == tr.load_gate(PREREG)
     assert GATE.owner_decision == "owner_decision:TRADING-2565:2026-10-17:ruler_40y"
     assert GATE.confidence == 0.95
     assert [(r.metric, r.op, r.value) for r in GATE.markets["us_market"].rules] == [
@@ -171,6 +170,33 @@ def test_the_gate_copy_is_the_trial_gate_byte_for_byte() -> None:
         ("ci_high.cvar_5pct_relative_improvement", ">", 0.0),
         ("comparison.geometric_annual_return", ">=", -0.01),
     ]
+
+
+def test_the_trial_gate_adds_only_the_tail_floor_to_the_measured_gate() -> None:
+    # After the probe's reading, owner_decision:TRADING-2565:2026-10-19:tail_floor10 adds one
+    # stage 1 rule, a left-tail point improvement of at least 10%; the rest is the measured gate.
+    current = tr.load_gate(PREREG)
+    measured_us = GATE.markets["us_market"]
+    current_rules = current.markets["us_market"].rules
+
+    assert current.owner_decision == "owner_decision:TRADING-2565:2026-10-19:tail_floor10"
+    assert current_rules[:-1] == measured_us.rules
+    floor = current_rules[-1]
+    assert (floor.metric, floor.op, floor.value) == (
+        "comparison.cvar_5pct_relative_improvement",
+        ">=",
+        0.10,
+    )
+    assert current == GATE.model_copy(
+        update={
+            "owner_decision": current.owner_decision,
+            "markets": {
+                **GATE.markets,
+                "us_market": measured_us.model_copy(update={"rules": current_rules}),
+            },
+        }
+    )
+    assert fp.GATE_COPY.read_bytes() != PREREG.read_bytes()
 
 
 def test_the_design_is_the_one_fixed_before_any_run() -> None:

@@ -14,10 +14,18 @@
 # every rule holds on both markets; the other configurations are sensitivity, run, counted and
 # reported, and never decide. Only a candidate whose primary configuration passes goes to Baker. A
 # trial never reads a validation window. Any change to this file needs a new owner decision.
-# The gate before this decision is kept, byte for byte, as
-# src/ai_trading_system/research_probes/trial_gate_v1.yaml: the two probes measured that one.
+#
+# Stage 1 also needs a left-tail point improvement of at least 10% (the gate price in
+# research/families.md), approved by Baker with the owner decision below. The false-pass probe
+# (TRADING-2565-22) found the gate without it loose: zero-effect planted rules passed both stages
+# in 31 of 450 seeds (95% upper bound 9.6%), all of them near-zero rules with a small left-tail
+# effect; with the floor none of the 450 passed (upper bound 0.85%) and both controls still passed
+# 20 of 20.
+# The gate before the two-stage ruler is kept, byte for byte, as
+# src/ai_trading_system/research_probes/trial_gate_v1.yaml (the gate power and ruler probes
+# measured it); the gate before the floor as trial_gate_v2.yaml (the false-pass probe measured it).
 schema_version: research_trial_gate.v1
-owner_decision: owner_decision:TRADING-2565:2026-10-17:ruler_40y
+owner_decision: owner_decision:TRADING-2565:2026-10-19:tail_floor10
 max_configs_per_trial: 8            # research loop charter, period 1, section 5: every configuration counts
 confidence: 0.95                    # bootstrap interval of every trial run
 markets:
@@ -34,11 +42,12 @@ markets:
     # (TRADING-2567 P1, owner_decision:TRADING-2567:2026-10-18:portfolio_p1). QQQ needs none: its
     # window starts in 1999.
     reserve_question_types: {treasury_10y: us_market_bond_trial}
-    rules:                          # stage 1 (core four at 0.95) on 82 years, at least the 40 the ruler needs
+    rules:                          # stage 1 (core four at 0.95 and the 10% floor) on 82 years, at least the 40 the ruler needs
       - {metric: ci_low.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: the interval excludes no left-tail improvement}
       - {metric: comparison.max_drawdown, op: ">=", value: 0.05, note: drawdown at least 5 points shallower}
       - {metric: comparison.geometric_annual_return, op: ">=", value: -0.010, note: gives up at most 1.0 point a year}
       - {metric: cost_25.geometric_annual_return, op: ">=", value: -0.010, note: the cost condition holds at 25 bps}
+      - {metric: comparison.cvar_5pct_relative_improvement, op: ">=", value: 0.10, note: the left tail at least 10% better (owner_decision:TRADING-2565:2026-10-19:tail_floor10)}
     # Episodes of the de-risk event table on the US market, by calendar month. They are read in the
     # report and never ruled on.
     event_episodes:

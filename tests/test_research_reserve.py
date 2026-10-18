@@ -64,7 +64,7 @@ LOADED = replace(
     ),
 )
 DECISION = "owner_decision:TRADING-2567:2026-10-18:portfolio_p1"
-GATE_DECISION = "owner_decision:TRADING-2565:2026-10-17:ruler_40y"
+GATE_DECISION = "owner_decision:TRADING-2565:2026-10-19:tail_floor10"
 GATE_FILE = PROJECT_ROOT / "research/_trials/prereg.yaml"
 PLAN_FILE = PROJECT_ROOT / "research/_trials/T0002.yaml"
 SIG = "sig-0123456789ab"
@@ -678,7 +678,7 @@ def _repo(
     _git(top, "init", "-q", "-b", "main")
     _git(top, "config", "user.email", "test@example.com")
     _git(top, "config", "user.name", "test")
-    lines = [f"- {GATE_DECISION}: two-stage ruler."]
+    lines = [f"- {GATE_DECISION}: two-stage ruler with the tail floor."]
     if decision:
         lines.append(f"- {DECISION}: P1.")
     top.joinpath("docs", "requirements", "TRADING-2567.md").write_text(

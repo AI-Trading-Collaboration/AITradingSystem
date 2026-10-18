@@ -64,6 +64,9 @@ from ai_trading_system.research_probes import gate_power as gp
 from ai_trading_system.research_probes import ruler_power as rp
 
 RUN_ID = "TRADING-2565-22"
+# The trial gate this probe measured: research/_trials/prereg.yaml before
+# owner_decision:TRADING-2565:2026-10-19:tail_floor10, kept byte for byte so a rerun measures the
+# same rules and records the same gate_sha256.
 GATE_COPY = Path(__file__).with_name("trial_gate_v2.yaml")
 # Prerun design from requirement R1 and Baker's card 先做探针 (2026-10-18).
 SEED_START = 20261018
