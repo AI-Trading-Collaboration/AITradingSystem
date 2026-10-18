@@ -87,6 +87,7 @@ class FalsificationInputs:
     cost_bps: float
     strategy: Simulation
     benchmark: Simulation
+    strategy_returns: pd.DataFrame | None = None
 
 
 def paired_fields(settings: BenchSettings) -> tuple[str, ...]:
@@ -245,7 +246,7 @@ def placebo_comparisons(inputs: FalsificationInputs, loaded: LoadedSettings) -> 
     paths = placebo_targets(inputs, loaded)
     while chunk := list(islice(paths, _CHUNK)):
         sim = simulate_many(
-            inputs.returns,
+            inputs.returns if inputs.strategy_returns is None else inputs.strategy_returns,
             np.vstack([targets.to_numpy(dtype=float) for targets in chunk]),
             start=inputs.start,
             end=inputs.end,
@@ -373,7 +374,7 @@ def _rerun(
     cost = inputs.cost_bps if cost_bps is None else cost_bps
     delay = inputs.delay_days if delay_days is None else delay_days
     sim = simulate(
-        inputs.returns,
+        inputs.returns if inputs.strategy_returns is None else inputs.strategy_returns,
         inputs.targets,
         start=inputs.start,
         end=inputs.end,

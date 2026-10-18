@@ -81,6 +81,8 @@ ad hoc 的 SEC PIT 回填/评估与缓存回放。
 
 试跑模式（TRADING-2565 S5b，`owner_decision:TRADING-2565:2026-10-15:trial_mode`）：筛出的候选先不开题，写一份试跑计划 `research/_trials/T<四位数>.yaml`（钉住信号和两份快照，最多 8 个配置，指定主配置），按冻结的门 `research/_trials/prereg.yaml`（C 区）在 QQQ 和美股大盘的开发窗口上跑；门是两段尺子（`owner_decision:TRADING-2565:2026-10-17:ruler_40y`）：美股大盘 82 年上过核心 4 条是主检验，QQQ 只查方向，开题以后读验证窗口也只查方向。`research_bench trial-run` 把每次运行记进 `research/_trials/runs/NNNN.json` 的哈希链（失败的也记；同一配置在同一市场成功一次后不再跑；计划改了就拒绝），`trial-ledger` 查链并把试跑配置算进全局总试验数，`trial-report` 生成候选包的第一页。主配置在两个市场都过门才交 owner 评估；试跑不读验证窗口。试跑记录和题目的运行记录一样走研究记录快车道，由账本不变量检查。
 
+股债固定比例（TRADING-2565-21，`owner_decision:TRADING-2567:2026-10-18:portfolio_p1`）：`research_bench.data.with_reserves` 用信号快照里的 FRED DGS10 合成 10 年期国债收益，运行规格的 `reserve` 指定策略拿什么代替现金（默认现金；基准照旧持有现金）；`fixed_strategy.fixed_exposure` 是固定敞口策略。试跑计划可按 owner 决定写（`research/_trials/T0002.yaml`），美股大盘上持有国债的配置走 `us_market_bond_trial` 和开发窗口 `us_market_1962_2010`。每次运行的 `diagnostics` 里有同波动率对照（不进指纹）。
+
 期权代理测量（TRADING-2567-20）：`python -m ai_trading_system.research_probes.option_proxy run --out <目录>` 读长历史快照（只取开发窗口 2001-02-02 到 2010-12-31），用 VXN 按 Black-Scholes 给月度平值现金担保卖 put 定价，和同平均敞口的固定仓位、同日敞口的标的加现金对照比较（covered call 只作一致性核对），把汇总写成 `probe_result.json` 和 `probe_result.md`；不进评估台账，不是结论。
 
 查尺子（TRADING-2565-17）：`python -m ai_trading_system.research_probes.gate_power run --out <目录> --workers <进程数>` 读试跑计划 T0001 的美股大盘和 QQQ 数据，先截到 2010-12-31（拒绝更晚的数据），在 36 个美股十年窗口和 QQQ 开发窗口上，用试跑的算法和门评估偷看下个月波动率的假信号（7 档噪声加纯噪声）和三条已检验的规则，把每档的过门比例和写定的读法写成 `power_result.json` 和 `power_result.md`；只量尺子，不进评估台账、筛选账和试跑账，不是结论。

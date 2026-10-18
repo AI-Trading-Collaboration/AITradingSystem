@@ -15,17 +15,25 @@ under 1% a year. A gap after the QQQ series has started stays a gap.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
 
-from ai_trading_system.research_bench.sources import known_at
+from ai_trading_system.research_bench.sources import DEFAULT_MAX_STALE_DAYS, known_at
 from ai_trading_system.research_data import qqq_long_history as qlh
 
 ASSETS: tuple[str, ...] = ("qqq", "cash", "lev2", "lev3")
+RESERVES = ("cash", "treasury_10y")
+TREASURY_RESERVE = "treasury_10y"
+TREASURY_SOURCE = "dgs10"
+# Ten years of semiannual payments: an instrument-definition invariant.
+TREASURY_PERIODS = 20
+# Percent-unit checks, not investment thresholds; reject decimal yields and implausible units.
+TREASURY_MIN_YIELD_PERCENT = 0.1
+TREASURY_MAX_YIELD_PERCENT = 25.0
 # Exposure to the Nasdaq-100 that one unit of each asset carries.
 EXPOSURE_FACTORS: dict[str, float] = {"qqq": 1.0, "cash": 0.0, "lev2": 2.0, "lev3": 3.0}
 QqqSeries = Literal["proxy", "actual"]
@@ -50,6 +58,56 @@ class BenchData:
     returns: pd.DataFrame
     inputs: pd.DataFrame
     source: dict[str, Any]
+    reserves: Mapping[str, pd.Series] = field(default_factory=dict)
+
+
+def treasury_returns(yields: pd.Series, calendar: pd.DatetimeIndex) -> pd.Series:
+    """Realized constant-ten-year par-bond returns from percent yields, without signal lag."""
+
+    observations = yields.dropna()
+    if (
+        (observations < TREASURY_MIN_YIELD_PERCENT) | (observations > TREASURY_MAX_YIELD_PERCENT)
+    ).any():
+        raise ValueError("Treasury yields must be percent")
+    y = known_at(yields / 100, calendar, 0, DEFAULT_MAX_STALE_DAYS)
+    coupon = y.shift(1).to_numpy(dtype=float)
+    rates = y.to_numpy(dtype=float)
+    days = np.full(len(calendar), np.nan)
+    days[1:] = (calendar[1:] - calendar[:-1]).days
+    discount = (1 + rates / 2) ** -TREASURY_PERIODS
+    price = coupon / rates * (1 - discount) + discount
+    return pd.Series(price - 1 + coupon * days / 365, index=calendar, name=TREASURY_RESERVE)
+
+
+def with_reserves(data: BenchData, frames: Mapping[str, pd.DataFrame]) -> BenchData:
+    """Attach the realized Treasury reserve without changing inputs or benchmark returns."""
+
+    if TREASURY_SOURCE not in frames:
+        return data
+    frame = frames[TREASURY_SOURCE]
+    if "value" not in frame.columns:
+        raise ValueError(f"{TREASURY_SOURCE} frame needs a value column")
+    reserve = treasury_returns(frame["value"], pd.DatetimeIndex(data.returns.index))
+    return BenchData(
+        returns=data.returns,
+        inputs=data.inputs,
+        source=data.source,
+        reserves={**data.reserves, TREASURY_RESERVE: reserve},
+    )
+
+
+def strategy_returns(data: BenchData, reserve: str) -> pd.DataFrame:
+    """Use the selected reserve in the simulator's cash slot for the strategy only."""
+
+    if reserve not in RESERVES:
+        raise ValueError(f"unknown reserve {reserve}")
+    if reserve == "cash":
+        return data.returns
+    if reserve not in data.reserves:
+        raise ValueError(f"data have no {reserve} reserve")
+    traded = data.returns.copy()
+    traded["cash"] = data.reserves[reserve].reindex(traded.index)
+    return traded
 
 
 def with_signal_sources(
@@ -73,6 +131,7 @@ def with_signal_sources(
         returns=data.returns,
         inputs=inputs,
         source={**data.source, "signal_snapshot_id": snapshot_id},
+        reserves=data.reserves,
     )
 
 

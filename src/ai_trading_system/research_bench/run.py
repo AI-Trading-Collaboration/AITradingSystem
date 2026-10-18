@@ -27,7 +27,7 @@ from ai_trading_system.research_bench.checks import (
     cut_dates,
     strategy_targets,
 )
-from ai_trading_system.research_bench.data import BenchData
+from ai_trading_system.research_bench.data import BenchData, strategy_returns
 from ai_trading_system.research_bench.events import derisk_events
 from ai_trading_system.research_bench.falsify import FalsificationInputs, falsify
 from ai_trading_system.research_bench.metrics import compare, exposure_gap, summarize
@@ -52,6 +52,7 @@ from ai_trading_system.research_bench.simulate import (
 
 OPEN_WINDOW_ROLES: tuple[WindowRole, ...] = ("development",)
 PRIMARY_BENCHMARK = "matched_constant"
+MATCHED_VOLATILITY = "matched_volatility"
 FINGERPRINT_DIGITS = 12
 
 
@@ -85,6 +86,7 @@ class RunSpec:
     delay_days: int = 0
     cost_bps: float | None = None
     leveraged_benchmarks: bool = False
+    reserve: str = "cash"
 
 
 @dataclass(frozen=True)
@@ -102,6 +104,7 @@ class RunResult:
     fingerprint: str
     falsification: dict[str, Any] | None = None
     events: dict[str, Any] | None = None
+    diagnostics: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -158,9 +161,15 @@ def run_strategy(
     if problems:
         raise BenchCheckError(problems)
 
+    traded = strategy_returns(data, spec.reserve)
+    if spec.reserve != "cash":
+        missing = traded.loc[(traded.index > start) & (traded.index <= end), "cash"].isna()
+        if missing.any():
+            when = missing.index[missing][0].date()
+            raise ValueError(f"reserve {spec.reserve} has no return on {when} inside the window")
     cost_bps = loaded.cost_bps if spec.cost_bps is None else float(spec.cost_bps)
     sim = simulate(
-        data.returns,
+        traded,
         targets,
         start=window.start,
         end=window.end,
@@ -203,6 +212,7 @@ def run_strategy(
                 cost_bps=cost_bps,
                 strategy=sim,
                 benchmark=benchmark_sims[PRIMARY_BENCHMARK],
+                strategy_returns=None if spec.reserve == "cash" else traded,
             ),
             loaded,
             falsification_confidence,
@@ -245,13 +255,57 @@ def run_strategy(
         fingerprint=fingerprint,
         falsification=falsification,
         events=events,
+        diagnostics={
+            MATCHED_VOLATILITY: matched_volatility(
+                data,
+                window,
+                strategy_summary,
+                benchmarks["buy_and_hold_qqq"],
+                rebalance=spec.rebalance,
+                cost_bps=cost_bps,
+                loaded=loaded,
+            )
+        },
     )
+
+
+def matched_volatility(
+    data: BenchData,
+    window: Window,
+    strategy: dict[str, Any],
+    qqq: dict[str, Any],
+    *,
+    rebalance: Rebalance,
+    cost_bps: float,
+    loaded: LoadedSettings,
+) -> dict[str, Any] | None:
+    """Descriptive QQQ/cash control, not a benchmark or part of the fingerprint."""
+
+    denominator = float(qqq["annual_volatility"])
+    ratio = float(strategy["annual_volatility"]) / denominator if denominator != 0 else math.nan
+    if not math.isfinite(ratio):
+        return None
+    exposure = min(1.0, max(0.0, ratio))
+    sim = simulate(
+        data.returns,
+        constant_targets(data.returns.index, exposure),
+        start=window.start,
+        end=window.end,
+        rebalance=rebalance,
+        cost_bps=cost_bps,
+    )
+    summary = summarize(sim, data.returns["cash"], loaded)
+    return {
+        "exposure": exposure,
+        "summary": summary,
+        "comparison": compare(strategy, summary, loaded),
+    }
 
 
 def spec_record(spec: RunSpec) -> dict[str, Any]:
     """The run specification as plain JSON (the cost is recorded separately, resolved)."""
 
-    return {
+    payload = {
         "question_type": spec.question_type,
         "strategy_id": spec.strategy_id,
         "params": _json_params(spec.params),
@@ -260,6 +314,9 @@ def spec_record(spec: RunSpec) -> dict[str, Any]:
         "delay_days": spec.delay_days,
         "leveraged_benchmarks": spec.leveraged_benchmarks,
     }
+    if spec.reserve != "cash":
+        payload["reserve"] = spec.reserve
+    return payload
 
 
 def benchmark_simulations(

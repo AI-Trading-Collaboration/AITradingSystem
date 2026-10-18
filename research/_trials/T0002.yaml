@@ -1,0 +1,43 @@
+# Trial plan T0002 (TRADING-2567 P1; format in src/ai_trading_system/research_bench/trial.py).
+#
+# Not a screened candidate: Baker chose the stock-bond question by
+# owner_decision:TRADING-2567:2026-10-18:portfolio_p1, recorded in
+# docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md. Written before any trial of
+# it ran; judged by the gate in prereg.yaml like T0001. A configuration thought of after reading
+# results is a new hypothesis and needs a new plan.
+#
+# Each configuration holds a fixed share of QQQ (on the US market: the Ken French market) and the
+# rest in a synthetic ten-year Treasury priced from FRED DGS10, rebalanced at each month end; the
+# benchmarks still hold cash. On the US market the Treasury runs on us_market_1962_2010 (DGS10
+# starts in 1962), on QQQ on the QQQ development window.
+#
+# from_validation_window is true: the idea came after QQQ-Q1 to QQQ-Q3, whose authors had read
+# QQQ's validation window once each.
+schema_version: research_trial_plan.v1
+trial_id: T0002
+owner_decision: owner_decision:TRADING-2567:2026-10-18:portfolio_p1
+hypothesis_card: docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md, decision portfolio_p1 (2026-10-18)
+from_validation_window: true
+data:
+  snapshot_id: qlh-20261013-0b0df53cb1a2   # long-history snapshot for the QQQ market, as T0001
+  signal_snapshot_id: sig-7ad8aa00b736     # US market and DGS10, as T0001
+primary: qqq60_t10y40
+configs:
+  - id: qqq60_t10y40
+    function: fixed_exposure
+    params: {exposure: 0.6}
+    reserve: treasury_10y
+    rebalance: {schedule: month_end, band: 0.0}
+  # Sensitivity, never deciding: half and half, and 70/30.
+  - id: qqq50_t10y50
+    function: fixed_exposure
+    params: {exposure: 0.5}
+    reserve: treasury_10y
+    rebalance: {schedule: month_end, band: 0.0}
+  - id: qqq70_t10y30
+    function: fixed_exposure
+    params: {exposure: 0.7}
+    reserve: treasury_10y
+    rebalance: {schedule: month_end, band: 0.0}
+production_effect: none
+broker_action: none

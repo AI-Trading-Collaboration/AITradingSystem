@@ -29,6 +29,11 @@ markets:
       - {metric: comparison.geometric_annual_return, op: ">=", value: -0.010, note: gives up at most 1.0 point a year}
   us_market:
     question_type: us_market_trial  # development window us_market_1929_2010, 1929-01-02..2010-12-31 (Ken French)
+    # A configuration that holds the synthetic ten-year Treasury in place of cash runs on this type
+    # (window us_market_1962_2010, 49 years: DGS10 starts in 1962), with the same rules
+    # (TRADING-2567 P1, owner_decision:TRADING-2567:2026-10-18:portfolio_p1). QQQ needs none: its
+    # window starts in 1999.
+    reserve_question_types: {treasury_10y: us_market_bond_trial}
     rules:                          # stage 1 (core four at 0.95) on 82 years, at least the 40 the ruler needs
       - {metric: ci_low.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: the interval excludes no left-tail improvement}
       - {metric: comparison.max_drawdown, op: ">=", value: 0.05, note: drawdown at least 5 points shallower}

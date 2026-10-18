@@ -75,6 +75,19 @@ question_windows:
     rules:
       development_only: true
       window_ends_with_qqq_development_window: true
+  # The stock-bond trial (TRADING-2567 P1): the US market with a synthetic ten-year Treasury in place
+  # of cash. Development only, as us_market_trial.
+  us_market_bond_trial:
+    owner_decision: owner_decision:TRADING-2567:2026-10-18:portfolio_p1
+    requirement: docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md
+    scope: >
+      Fixed stock-bond mixes on the Ken French US market with a synthetic ten-year Treasury priced
+      from FRED DGS10 in place of cash, judged by the frozen trial gate in
+      research/_trials/prereg.yaml before any question is opened.
+    development: us_market_1962_2010
+    rules:
+      development_only: true
+      window_ends_with_qqq_development_window: true
 windows:
   exact_three_asset_validated:
     role: primary_validated

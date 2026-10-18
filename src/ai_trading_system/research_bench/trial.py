@@ -1,7 +1,8 @@
 """Development-only trials before opening a research question (TRADING-2565 S5b).
 
-Three files define the process: the frozen gate ``_trials/prereg.yaml``, each candidate's
-fixed plan ``_trials/T0001.yaml`` and the global append-only chain ``_trials/runs/NNNN.json``.
+Three files define the process: the frozen gate ``_trials/prereg.yaml``, a fixed plan per
+candidate or owner decision (``_trials/T0001.yaml``), and the global append-only chain
+``_trials/runs/NNNN.json``.
 Unapproved or changed files, stale signal pins, duplicate candidates, wrong snapshots, broken
 chains and repeat successful config/market runs are refused without recording anything.
 Once a run starts, failures and errors are recorded too. Every planned configuration counts
@@ -15,6 +16,7 @@ from __future__ import annotations
 import json
 import math
 import re
+from numbers import Real
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
@@ -23,12 +25,17 @@ from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator, 
 from ai_trading_system.core.provenance import git_output, git_provenance
 from ai_trading_system.research_bench import ledger as lg
 from ai_trading_system.research_bench import screen as sc
+from ai_trading_system.research_bench.checks import Strategy
 from ai_trading_system.research_bench.data import (
+    RESERVES,
     BenchData,
     from_snapshot,
     from_us_market,
+    strategy_returns,
+    with_reserves,
     with_signal_sources,
 )
+from ai_trading_system.research_bench.fixed_strategy import fixed_exposure
 from ai_trading_system.research_bench.prereg import (
     OWNER_DECISION_PATTERN,
     Rule,
@@ -36,7 +43,13 @@ from ai_trading_system.research_bench.prereg import (
     evaluate_rules,
     rule_sections,
 )
-from ai_trading_system.research_bench.run import BenchCheckError, RunSpec, run_strategy, spec_record
+from ai_trading_system.research_bench.run import (
+    MATCHED_VOLATILITY,
+    BenchCheckError,
+    RunSpec,
+    run_strategy,
+    spec_record,
+)
 from ai_trading_system.research_bench.screen_ledger import ScreenLedgerError, screen_records
 from ai_trading_system.research_bench.screen_settings import LoadedScreenSettings
 from ai_trading_system.research_bench.settings import (
@@ -65,6 +78,13 @@ VERDICT_NAMES = {"pass": "过门", "fail": "没过", "incomplete": "未完成"}
 # validation read is stage 2 and only checks the direction, with the gate's QQQ rules. The research
 # loop charter still allows one validation read per period; this display never grants that read.
 STRATEGY_FUNCTION = "signal_exposure"
+STRATEGY_FUNCTIONS: dict[str, Strategy] = {
+    "signal_exposure": signal_exposure,
+    "fixed_exposure": fixed_exposure,
+}
+RESERVE_NAMES = {"cash": "现金", "treasury_10y": "10 年期国债"}
+# Display-only unit boundary: less than 0.1 percentage point is described as no return given up.
+COST_BENEFIT_RETURN_TOLERANCE = 0.001
 Market = Literal["qqq", "us_market"]
 
 
@@ -81,6 +101,20 @@ class MarketGate(_Strict):
     qqq_series: Literal["proxy", "actual"] | None = None
     rules: tuple[Rule, ...] = Field(min_length=1)
     event_episodes: tuple[EpisodeSpec, ...] | None = None
+    reserve_question_types: dict[str, Annotated[str, Field(min_length=1)]] | None = None
+
+    @field_validator("reserve_question_types")
+    @classmethod
+    def _reserve_types(cls, value: dict[str, str] | None) -> dict[str, str] | None:
+        for reserve, question_type in (value or {}).items():
+            if reserve == "cash" or reserve not in RESERVES:
+                raise ValueError(f"invalid reserve {reserve} in reserve_question_types")
+            if not question_type.strip():
+                raise ValueError("reserve question type must not be blank")
+        return value
+
+    def question_type_for(self, reserve: str) -> str:
+        return (self.reserve_question_types or {}).get(reserve, self.question_type)
 
     @model_validator(mode="after")
     def _episodes(self) -> MarketGate:
@@ -139,45 +173,69 @@ class TrialData(_Strict):
         return value
 
 
+class TrialConfig(StrategyEntry):
+    reserve: str = "cash"
+
+    @field_validator("reserve")
+    @classmethod
+    def _reserve(cls, value: str) -> str:
+        if value not in RESERVES:
+            raise ValueError(f"unknown reserve {value}")
+        return value
+
+
 class TrialPlan(_Strict):
     schema_version: Literal["research_trial_plan.v1"]
     trial_id: str = Field(pattern=TRIAL_ID_PATTERN)
-    candidate: Candidate
+    candidate: Candidate | None = None
+    owner_decision: str | None = Field(default=None, pattern=OWNER_DECISION_PATTERN)
     hypothesis_card: str = Field(min_length=1)
     from_validation_window: StrictBool
     data: TrialData
     primary: str
-    configs: tuple[StrategyEntry, ...] = Field(min_length=1)
+    configs: tuple[TrialConfig, ...] = Field(min_length=1)
     production_effect: Literal["none"]
     broker_action: Literal["none"]
 
     @model_validator(mode="after")
     def _configs(self) -> TrialPlan:
+        if self.candidate is not None and self.owner_decision is not None:
+            raise ValueError("a plan needs a candidate or owner decision, not both")
+        if self.candidate is None and self.owner_decision is None:
+            raise ValueError("a plan needs a screened candidate or the owner decision")
         ids = [config.id for config in self.configs]
         if len(set(ids)) != len(ids):
             raise ValueError("config ids must be unique")
         if self.primary not in ids:
             raise ValueError(f"primary {self.primary} is not a config")
         for config in self.configs:
-            if config.function != STRATEGY_FUNCTION:
-                raise ValueError(f"{config.id}: function must be signal_exposure")
+            if config.function not in STRATEGY_FUNCTIONS:
+                raise ValueError(f"{config.id}: function must be signal_exposure or fixed_exposure")
             if config.delay_days != 0 or config.leveraged_benchmarks:
                 raise ValueError(f"{config.id}: no delay and no leveraged benchmarks")
-            signals = config.params.get("signals")
-            if (
-                not isinstance(signals, list)
-                or not all(isinstance(signal, dict) for signal in signals)
-                or sorted(str(signal.get("id")) for signal in signals)
-                != sorted(self.candidate.signals)
-            ):
-                raise ValueError(f"{config.id}: signals must be exactly the candidate's")
-            mapping = config.params.get("mapping")
-            if mapping in ("linear", "threshold"):
-                levels: Any = [config.params.get("low"), config.params.get("high")]
-            elif mapping == "steps":
-                levels = config.params.get("levels")
+            levels: Any
+            if config.function == "fixed_exposure":
+                if set(config.params) != {"exposure"}:
+                    raise ValueError("fixed_exposure takes exactly one parameter, exposure")
+                levels = [config.params["exposure"]]
             else:
-                raise ValueError("mapping must be linear, threshold or steps")
+                if self.candidate is None:
+                    raise ValueError(f"{config.id}: signal_exposure needs a candidate")
+                signals = config.params.get("signals")
+                if (
+                    not isinstance(signals, list)
+                    or not all(isinstance(signal, dict) for signal in signals)
+                    or sorted(str(signal.get("id")) for signal in signals)
+                    != sorted(self.candidate.signals)
+                ):
+                    raise ValueError(f"{config.id}: signals must be exactly the candidate's")
+                mapping = config.params.get("mapping")
+                if mapping in ("linear", "threshold"):
+                    levels = [config.params.get("low"), config.params.get("high")]
+                elif mapping == "steps":
+                    levels = config.params.get("levels")
+                else:
+                    raise ValueError("mapping must be linear, threshold or steps")
             if (
                 not isinstance(levels, list | tuple)
                 or not levels
@@ -191,7 +249,7 @@ class TrialPlan(_Strict):
                 raise ValueError(f"{config.id}: exposures lie between 0 and 1")
         return self
 
-    def config(self, config_id: str) -> StrategyEntry:
+    def config(self, config_id: str) -> TrialConfig:
         for config in self.configs:
             if config.id == config_id:
                 return config
@@ -251,10 +309,11 @@ def gate_problems(gate: TrialGate, loaded: LoadedSettings) -> list[str]:
             section, _, name = rule.metric.partition(".")
             if name not in sections.get(section, ()):
                 problems.append(f"{market}: no metric {rule.metric}")
-        try:
-            resolve_window(loaded, entry.question_type, "development")
-        except KeyError as exc:
-            problems.append(f"{market}: {str(exc).strip(chr(39))}")
+        for question_type in (entry.question_type, *(entry.reserve_question_types or {}).values()):
+            try:
+                resolve_window(loaded, question_type, "development")
+            except KeyError as exc:
+                problems.append(f"{market}: {str(exc).strip(chr(39))}")
     return problems
 
 
@@ -268,10 +327,15 @@ def plan_problems(root_dir: Path, plan: TrialPlan) -> list[str]:
         except (OSError, ValueError) as exc:
             problems.append(f"{path.name} is not a valid trial plan: {str(exc).splitlines()[0]}")
             continue
-        common = sorted(set(plan.candidate.signals) & set(other.candidate.signals))
-        if common:
-            problems.append(f"{other.trial_id} already tries {', '.join(common)}")
+        if plan.candidate is not None and other.candidate is not None:
+            common = sorted(set(plan.candidate.signals) & set(other.candidate.signals))
+            if common:
+                problems.append(f"{other.trial_id} already tries {', '.join(common)}")
+        if plan.owner_decision is not None and plan.owner_decision == other.owner_decision:
+            problems.append(f"{other.trial_id} already tries {plan.owner_decision}")
     for config in plan.configs:
+        if config.function != STRATEGY_FUNCTION:
+            continue
         for pin in config.params["signals"]:
             signal_id = pin["id"]
             try:
@@ -305,6 +369,12 @@ def approval_problems(root_dir: Path, plan: TrialPlan, gate: TrialGate, ref: str
         top, "grep", "-F", "-l", "-e", gate.owner_decision, ref, "--", "docs/requirements"
     ):
         problems.append(f"{gate.owner_decision} is not in docs/requirements on {ref}")
+    if plan.owner_decision is not None and not git_output(
+        top, "grep", "-F", "-l", "-e", plan.owner_decision, ref, "--", "docs/requirements"
+    ):
+        problems.append(f"{plan.owner_decision} is not in docs/requirements on {ref}")
+    if plan.candidate is None:
+        return problems
     try:
         records = {record["screen_id"]: record for record in screen_records(top)}
     except (OSError, ScreenLedgerError) as exc:
@@ -411,8 +481,9 @@ def market_data(
         base = from_us_market(snapshot.frames, snapshot_id=plan.data.signal_snapshot_id)
     else:
         raise TrialError(f"unknown market {market}")
-    return with_signal_sources(
-        base, snapshot.frames, lags, snapshot_id=plan.data.signal_snapshot_id
+    return with_reserves(
+        with_signal_sources(base, snapshot.frames, lags, snapshot_id=plan.data.signal_snapshot_id),
+        snapshot.frames,
     )
 
 
@@ -488,16 +559,31 @@ def run_trial(
         ):
             raise TrialError(f"{run_id} already ran {config_id} on {market}")
     entry = gate.markets[market_key]
+    question_type = entry.question_type_for(config.reserve)
+    window = resolve_window(loaded, question_type, "development")
+    if config.reserve != "cash":
+        try:
+            traded = strategy_returns(data, config.reserve)
+        except ValueError as exc:
+            raise TrialError(str(exc)) from exc
+        missing = traded.loc[
+            (traded.index > str(window.start))
+            & (True if window.end is None else traded.index <= str(window.end)),
+            "cash",
+        ].isna()
+        if missing.any():
+            when = missing.index[missing][0].date()
+            raise TrialError(f"{config.reserve} has no return on {when} inside the window")
     spec = RunSpec(
-        question_type=entry.question_type,
+        question_type=question_type,
         strategy_id=config.id,
         params=config.params,
         window_role="development",
         rebalance=config.rebalance.to_rebalance(),
         delay_days=config.delay_days,
         leveraged_benchmarks=config.leveraged_benchmarks,
+        reserve=config.reserve,
     )
-    window = resolve_window(loaded, entry.question_type, "development")
     body: dict[str, Any] = {
         "trial_id": trial_id,
         "config": config_id,
@@ -525,7 +611,7 @@ def run_trial(
     try:
         result = run_strategy(
             data,
-            signal_exposure,
+            STRATEGY_FUNCTIONS[config.function],
             spec,
             loaded,
             falsification_confidence=gate.confidence,
@@ -555,6 +641,7 @@ def run_trial(
                     "fingerprint",
                     "falsification",
                     "events",
+                    "diagnostics",
                 )
             },
             "gate": rows,
@@ -643,11 +730,15 @@ def trial_summary(root_dir: Path, trial_id: str, loaded: LoadedSettings) -> dict
     toplevel = git_output(directory, "rev-parse", "--show-toplevel")
     if toplevel is None:
         raise TrialError(f"{directory} is not inside a git repository")
-    families = [
-        record["family_size"]
-        for record in screen_records(Path(toplevel))
-        if record["screen_id"] in plan.candidate.screens
-    ]
+    families = (
+        [
+            record["family_size"]
+            for record in screen_records(Path(toplevel))
+            if record["screen_id"] in plan.candidate.screens
+        ]
+        if plan.candidate is not None
+        else []
+    )
     events = None
     for record in records:
         if (
@@ -665,8 +756,9 @@ def trial_summary(root_dir: Path, trial_id: str, loaded: LoadedSettings) -> dict
     ledger = trial_ledger_summary(root_dir)
     return {
         "trial_id": trial_id,
-        "signals": list(plan.candidate.signals),
-        "screens": list(plan.candidate.screens),
+        "signals": list(plan.candidate.signals) if plan.candidate is not None else [],
+        "screens": list(plan.candidate.screens) if plan.candidate is not None else [],
+        "owner_decision": plan.owner_decision,
         "family_size": max(families) if families else None,
         "hypothesis_card": plan.hypothesis_card,
         "from_validation_window": plan.from_validation_window,
@@ -677,17 +769,22 @@ def trial_summary(root_dir: Path, trial_id: str, loaded: LoadedSettings) -> dict
         "verdict": primary_verdict(records, trial_id, plan.primary),
         "runs": [
             {
-                key: record.get(key)
-                for key in (
-                    "run_id",
-                    "config",
-                    "market",
-                    "status",
-                    "gate_holds",
-                    "gate",
-                    "problems",
-                    "error",
-                )
+                **{
+                    key: record.get(key)
+                    for key in (
+                        "run_id",
+                        "config",
+                        "market",
+                        "status",
+                        "gate_holds",
+                        "gate",
+                        "problems",
+                        "error",
+                    )
+                },
+                "reserve": record.get("spec", {}).get("reserve", "cash"),
+                "comparison": (record.get("result") or {}).get("comparison"),
+                "diagnostics": (record.get("result") or {}).get("diagnostics"),
             }
             for record in records
         ],
@@ -715,14 +812,60 @@ def _percent(value: Any) -> str:
     return text if text == "-" else text + "%"
 
 
+def _finite_number(value: Any) -> bool:
+    return not isinstance(value, bool) and isinstance(value, Real) and math.isfinite(value)
+
+
+def cost_benefit_line(comparison: dict[str, Any]) -> str:
+    """Describe the tail/drawdown change per percentage point of return given up."""
+
+    geometric = comparison.get("geometric_annual_return", math.nan)
+    tail = comparison.get("cvar_5pct_relative_improvement", math.nan)
+    drawdown = comparison.get("max_drawdown", math.nan)
+    if not all(_finite_number(value) for value in (geometric, tail, drawdown)):
+        return "- 代价换效果：-"
+    if geometric > -COST_BENEFIT_RETURN_TOLERANCE:
+        return f"- 代价换效果：没有放弃收益（几何年化 {geometric * 100:+.1f} 个点）"
+    points = abs(geometric) / 0.01
+    return (
+        f"- 代价换效果：每放弃 1 个点几何年化，左尾改善 {tail / points:.1%}，"
+        f"回撤浅 {drawdown * 100 / points:.1f} 个点"
+    )
+
+
+def matched_volatility_line(diagnostics: dict[str, Any] | None) -> str:
+    """Render the descriptive control; undefined numbers stay explicitly missing."""
+
+    diagnostic = (diagnostics or {}).get(MATCHED_VOLATILITY)
+    if diagnostic is None:
+        return "- 同波动率对照：-"
+    comparison = diagnostic.get("comparison") or {}
+
+    def number(value: Any, fmt: str, scale: float = 1) -> str:
+        return format(value * scale, fmt) if _finite_number(value) else "-"
+
+    exposure = number(diagnostic.get("exposure"), ".2f")
+    geometric = number(comparison.get("geometric_annual_return"), "+.1f", 100)
+    drawdown = number(comparison.get("max_drawdown"), ".1f", 100)
+    tail = number(comparison.get("cvar_5pct_relative_improvement"), ".1%")
+    return (
+        f"- 同波动率对照（QQQ 加现金，固定敞口 {exposure}）：几何年化 {geometric} 个点，"
+        f"回撤浅 {drawdown} 个点，左尾改善 {tail}"
+    )
+
+
 def trial_report(root_dir: Path, trial_id: str, loaded: LoadedSettings) -> list[str]:
     item = trial_summary(root_dir, trial_id, loaded)
     validation = item["validation"]
     lines = [
         f"# 试跑 {trial_id}",
         "",
-        f"- 信号：{', '.join(item['signals'])}；筛选记录：{', '.join(item['screens'])}"
-        f"（筛选时家族大小 {_number(item['family_size'])}）",
+        (
+            f"- 信号：{', '.join(item['signals'])}；筛选记录：{', '.join(item['screens'])}"
+            f"（筛选时家族大小 {_number(item['family_size'])}）"
+            if item["signals"]
+            else f"- 设计：没有筛选候选，按 {item['owner_decision']} 试跑"
+        ),
         f"- 假设卡：{item['hypothesis_card']}",
         f"- 想法来自验证窗口：{'是' if item['from_validation_window'] else '否'}",
         f"- 数据：长历史快照 {item['data']['snapshot_id']}；"
@@ -736,10 +879,13 @@ def trial_report(root_dir: Path, trial_id: str, loaded: LoadedSettings) -> list[
         f"{'；'.join(validation['rules'])}",
     ]
     for run in item["runs"]:
+        reserve_label = (
+            "" if run["reserve"] == "cash" else f" · 储备 {RESERVE_NAMES[run['reserve']]}"
+        )
         lines.extend(
             [
                 "",
-                f"## {run['config']} · {MARKET_NAMES[run['market']]}"
+                f"## {run['config']} · {MARKET_NAMES[run['market']]}{reserve_label}"
                 f"（{run['run_id']}，{run['status']}）",
                 "",
             ]
@@ -755,6 +901,13 @@ def trial_report(root_dir: Path, trial_id: str, loaded: LoadedSettings) -> list[
                     f"| {row['metric']} | {row['op']} {_number(row['value'], 'g')} | "
                     f"{_number(row['observed'], '.4f')} | {'是' if row['holds'] else '否'} |"
                 )
+            lines.extend(
+                [
+                    "",
+                    cost_benefit_line(run["comparison"] or {}),
+                    matched_volatility_line(run["diagnostics"]),
+                ]
+            )
     events = item["events"]
     if events is not None:
         lines.extend(

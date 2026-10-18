@@ -659,6 +659,7 @@ def test_a_trial_run_record_carries_the_plan_the_gate_and_the_result(trial: dict
         "fingerprint",
         "falsification",
         "events",
+        "diagnostics",
     }
     assert isinstance(record["recorded_at"], str) and record["recorded_at"].endswith("Z")
 

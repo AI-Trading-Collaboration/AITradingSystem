@@ -238,6 +238,38 @@ windows:
       - ken_french_value_weighted_us_market_not_qqq
       - synthetic_2x_3x_without_fees_never_held_by_a_trial
       - ken_french_daily_data_revised_between_snapshots
+  # Stock-bond trial (TRADING-2567 P1, owner_decision:TRADING-2567:2026-10-18:portfolio_p1): the US
+  # market with a synthetic ten-year Treasury priced from FRED DGS10 in place of cash. Development
+  # only, like us_market_1929_2010, and it ends there too. It starts on DGS10's first day, so it has
+  # 49 years, still at least the 40 the two-stage ruler needs.
+  us_market_1962_2010:
+    start: 1962-01-02
+    end: 2010-12-31
+    requested_start: 1962-01-02
+    actual_start: 1962-01-02
+    actual_portfolio_start: 1962-01-02
+    role: development
+    question_types: [us_market_bond_trial]
+    assets: [US_MARKET_KEN_FRENCH, CASH_KEN_FRENCH_RF, TREASURY_10Y_SYNTHETIC_DGS10]
+    exact_or_proxy: proxy
+    data_quality_contract: signal_snapshot_check
+    data_source: ken_french_ff_factors_daily_and_fred_dgs10
+    data_spec: config/research/research_screen.yaml
+    lookback_history_from: 1962-01-02
+    allowed_usage:
+      - candidate_trial
+      - falsification_tests
+    blocked_usage:
+      - validation_read
+      - promotion_evidence
+      - production
+      - paper_shadow
+      - broker_order
+    caveats:
+      - ken_french_value_weighted_us_market_not_qqq
+      - synthetic_2x_3x_without_fees_never_held_by_a_trial
+      - ken_french_daily_data_revised_between_snapshots
+      - treasury_synthetic_constant_maturity_par_bond_without_fees
 safety_boundary:
   research_only: true
   actual_path_required: true
