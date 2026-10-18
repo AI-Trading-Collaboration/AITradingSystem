@@ -55,7 +55,7 @@ owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes：owner（Baker）在项目
 | 动作 | 做什么 |
 |---|---|
 | `setup --lane L` | 建车道 worktree，detached 在 main。用主 `.venv` 的基础 Python 和同样的包建 `.venv`，代码用 `.pth` 指向车道的 `src`；最后核对 HEAD、包、导入路径和工作区是否干净 |
-| `start --lane L --run R [--fix 文件]` | 运行目录要有 `brief.md` 和 `SHA256SUMS`，并逐个核对哈希。brief 要用 main 的 `brief.py` 校验，并且就是这个运行的。车道空闲、干净、detached 时，先挪到 main 再启动 pi，一直等到 pi 停下 |
+| `start --lane L --run R [--fix 文件] [--with-state-root] [--then-report]` | 运行目录要有 `brief.md` 和 `SHA256SUMS`，并逐个核对哈希。brief 要用 main 的 `brief.py` 校验，并且就是这个运行的。车道空闲、干净、detached 时，先挪到 main 再启动 pi，一直等到 pi 停下。加 `--then-report` 时，pi 正常停下后接着做 `report`（3.6） |
 | `report --lane L --run R` | 依次做：main 版 `accept_checks`；车道里分支自己的 `ship.py --gate`；`accept_checks --gate`；main 版 `ship.py --dry-run`，取 tree、区和指纹。然后把 `pi/*` 分支推到 origin 供审查，结果写进 `lane-report.json` |
 | `refresh --lane L --run R` | main 前进后，先跑 main 版 `ship.py --replay`，再做一遍 `report` 的检查、门禁和推送 |
 | `publish --lane L --run R` + 审过的指纹 | 指纹是三选一：`--expected-tree`；`--expected-patch` 加 `--expected-message`；`--expected-change` 加 `--expected-message`。main 前进了就先 `refresh`，但按 tree 批的批次不 refresh，而是拒绝。然后在主工作区跑 `publish.ps1`，删掉远端分支，把车道放回 main |
@@ -93,9 +93,24 @@ owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes：owner（Baker）在项目
 
 ### 3.5 推送分支
 
-- 只有 `lane.py report` 和 `refresh` 会推送，用 `--force-with-lease`，只推 `pi/*` 运行分支。
+- 只有 `lane.py report`（包括 `start --then-report` 接着做的 report）和 `refresh` 会推送，用 `--force-with-lease`，只推 `pi/*` 运行分支。
 - `publish` 成功后删除远端分支。
 - pi 本身照旧不能推送，pi 守卫没有改。
+
+### 3.6 pi 跑完接着 report（`start --then-report`）
+
+- 起因：2026-10-18 电脑会话在后台运行 `lane.py start`，会话闲置后被平台停掉；pi 19:19 JST 在车道里跑完，`report` 两个小时没人跑。加了 `--then-report`，pi 跑完到推送分支都在 `start` 这一个进程里做完，不再要电脑会话醒着接着运行 `report`。
+- `--then-report` 只能和 `start` 一起用（别的动作带它，退出码 2）；可以和 `--fix`、`--with-state-root` 一起用。不带它时 `start` 和原来完全一样。
+- 先照常做 `start`。`start` 拒绝、`run-brief.ps1` 在 pi 启动前就停下、或者 pi 没有正常结束时，不做 report，输出和退出码都和不带开关时一样。
+- pi 正常停下后：
+  - 重新读一次 `agent_config.json`（`--config` 指的文件），和之后手工运行 `report` 读到的一样；
+  - 等到可以 report：没有发布在跑（`publish.lock`），日报窗口开着。先查一次，不行就每 `report_poll_seconds` 秒（缺省 60，小于 1 按 1 秒）再查，最多等 `report_wait_seconds` 秒（缺省 7200）。两个值都必须是不小于 0 的数，真实的 `agent_config.json` 不写它们，用缺省值；
+  - 然后做和手工 `report` 一样的事。不自动 refresh：main 动过时，结果就是 `report` 自己的 "use refresh" 拒绝。
+- 成功：退出码 0，一行 JSON 是 `start` 原来的字段加 `report`（`report` 的结果）；车道状态是 `reported`，写 `lane-report.json`，和手工 `report` 一样。
+- pi 停下以后的任何失败（等到时限还不能 report、两个值不对、`report` 拒绝或失败）：
+  - 退出码 1；JSON 的 `error` 是 `pi finished; report did not run or failed: ` 加上 report 那一步的错误，带 `start` 原来的字段（`run_brief_exit`、`branch`、`commits`、`tail`），`report_error` 里是错误文字和细节（等到时限时另有查了几次 `tries`）；
+  - 车道照旧被这个运行占用（`stopped`），状态文件里多一个 `report_error`（错误文字），`status` 会显示它；什么都不推送；
+  - 原因解决后照常手工运行 `report`（或 `refresh`）；成功的 report 把 `report_error` 从状态里去掉。
 
 ## 4. 验收
 
@@ -121,7 +136,8 @@ owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes：owner（Baker）在项目
   - 按 tree 批的批次在 main 前进后拒绝；
   - 指纹不符时什么都不动；
   - 发布锁、`release`、`status`；
-  - 真实配置里的窗口标签和 summary 目录。
+  - 真实配置里的窗口标签和 summary 目录；
+  - `start --then-report`（3.6）：pi 跑完接着检查、门禁、推送；report 失败时保留 pi 的结果，状态里有 `report_error`，`status` 显示它，不推送；pi 运行期间日报窗口关上、`report_wait_seconds` 为 0 时查一次就失败，之后手工 `report` 成功并去掉 `report_error`；等发布锁放开后再 report，main 在等待期间动过时结果是 report 的 "use refresh" 拒绝；`report_poll_seconds` 为 0 时也至少隔 1 秒查一次，到时限失败；两个值不对时失败；`start` 拒绝或失败时不做 report；参数规则和模块说明。
 - 全套 PR 测试通过。规则 1.3.0 把 `scripts/agent/lane.py` 放进 C 区和 `decision_record_excluded`。
 
 ## 5. 步骤
@@ -146,3 +162,4 @@ owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes：owner（Baker）在项目
 - 2026-10-14，02 的云端验证（Linux、Python 3.13、PowerShell 7）：
   - 全套 PR 测试除 30 个失败外都通过；这 30 个在改动前的 main 上同样失败（Windows 专用的 schtasks、icacls 用例，IBKR 模拟、交易时段检查和两条报告用例）。
   - 对 `ship.py`、`lane.py`、`daily_window.py` 的关键检查做了 22 个变异，20 个让测试失败。剩下 2 个是兜底检查，正常路径上碰不到：replay 后再核对一次提交信息；冲突的任务总表先取 main 的版本，再被重新渲染覆盖。
+- 2026-10-18，DEVX-031-06：`lane.py start --then-report`（3.6）。当天 pi 在车道里 19:19 JST 跑完，但在后台运行 `start` 的电脑会话已经闲置、被平台停掉，`report` 两个小时没人跑。Claude 在项目线程「pi 队列 10-18」问 Baker：「改 lane.py，让 pi 跑完后自动接着跑测试和推分支，不再依赖电脑会话醒着。这要改代码，算一个小批次。要做吗？」Baker 2026-10-18 21:19 JST（12:19:51Z）回答：「按照你的建议做下把」。这是本任务的后续，决定号仍是 owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes；`lane.py` 在 `decision_record_excluded` 里，按 tree 批。需求和验收测试由 Claude 写，`lane.py` 的代码由 pi 写。

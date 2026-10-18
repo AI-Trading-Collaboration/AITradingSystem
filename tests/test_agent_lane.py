@@ -15,6 +15,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -50,7 +51,8 @@ print(json.dumps({"checks": [{"name": "fake", "ok": not fail}]}))
 sys.exit(1 if fail else 0)
 """
 # Stand-in for powershell: run-brief.ps1 plays pi in the lane; publish.ps1 goes to the real
-# script under PowerShell when there is one.
+# script under PowerShell when there is one. pi["outside"] (absolute path -> text) is written while
+# pi runs, before its commit: the config or a publish lock that changes during a run (DEVX-031-06).
 FAKE_POWERSHELL = """import json, pathlib, shutil, subprocess, sys
 args = sys.argv[1:]
 script = pathlib.Path(args[args.index("-File") + 1])
@@ -73,6 +75,8 @@ if script.name == "run-brief.ps1":
         path = repo / rel
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
+    for name, text in pi.get("outside", {}).items():
+        pathlib.Path(name).write_text(text, encoding="utf-8")
     git(repo, "add", "-A")
     git(repo, "commit", "-m", pi["message"])
     print("stopReason=stop")
@@ -193,6 +197,19 @@ class Setup:
         lines = [line for line in done.stdout.splitlines() if line.startswith("{")]
         assert lines, done.stdout + done.stderr
         return done.returncode, json.loads(lines[-1])
+
+    def lane_in_background(self, *args: str) -> subprocess.Popen[str]:
+        env = {k: v for k, v in os.environ.items() if not k.startswith("AITS_PI_")}
+        return subprocess.Popen(
+            [sys.executable, "-I", str(LANE), *args, "--config", str(self.config)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            env=env,
+        )
+
+    def state(self, lane: str = "lane1") -> dict:
+        return json.loads((self.runs / f"lanes/{lane}.json").read_text(encoding="utf-8"))
 
     def main_moves(self, files: dict[str, str], message: str = "main moved") -> None:
         for rel, text in files.items():
@@ -476,6 +493,224 @@ def test_report_stops_on_failed_checks_before_the_gate(lanes: Setup) -> None:
     assert run_git(lanes.origin, "branch", "--list", "pi/T-01") == ""
 
 
+# ----- start --then-report (DEVX-031-06) --------------------------------------------------------
+# 2026-10-18: pi finished in a lane at 19:19 JST, but the PC session that ran start in the
+# background had gone idle and been stopped, so nobody ran report for two hours.
+REPORT_FAILED = "pi finished; report did not run or failed: "
+LOCK_TEXT = "lane2 X-01 pid 1"
+
+
+def pi_that_also_writes(outside: dict[Path, str]) -> dict[str, object]:
+    return {
+        "files": {"src/a/x.py": "x\n"},
+        "message": "code: T-01",
+        "outside": {str(path): text for path, text in outside.items()},
+    }
+
+
+def finished(proc: subprocess.Popen[str]) -> tuple[int, dict]:
+    stdout, stderr = proc.communicate(timeout=180)
+    lines = [line for line in stdout.splitlines() if line.startswith("{")]
+    assert lines, stdout + stderr
+    return proc.returncode, json.loads(lines[-1])
+
+
+def remove(path: Path) -> None:
+    # Windows refuses to delete a file another process has open for that moment: try again.
+    for _ in range(100):
+        try:
+            path.unlink()
+            return
+        except PermissionError:
+            time.sleep(0.05)
+    path.unlink()
+
+
+def test_start_then_report_reports_when_pi_finishes(lanes: Setup) -> None:
+    lanes.batch("T-01", {"src/a/x.py": "x\n"}, ["src/a/**"])
+    code, out = lanes.lane("start", "--lane", "lane1", "--run", "T-01", "--then-report")
+    assert code == 0, out
+    lane1 = lanes.lanes["lane1"]
+    assert out["action"] == "start" and out["run_brief_exit"] == 0
+    assert out["branch"] == "pi/T-01" and out["commits"] == "1"
+    assert out["tail"] == ["stopReason=stop"] and "report_error" not in out
+    assert out["report"]["commit"] == run_git(lane1, "rev-parse", "HEAD")
+    assert run_git(lanes.origin, "rev-parse", "refs/heads/pi/T-01") == out["report"]["commit"]
+    assert run_git(lane1, "log", "-1", "--format=%(trailers:key=Gate,valueonly)").startswith(
+        "zone=B"
+    )
+    calls = [
+        json.loads(x) for x in (lanes.runs / "T-01/accept-calls.jsonl").read_text().splitlines()
+    ]
+    assert ["--gate" in c for c in calls] == [False, True]
+    state = lanes.state()
+    assert state["phase"] == "reported" and state["commit"] == out["report"]["commit"]
+    assert "report_error" not in state
+    report = json.loads((lanes.runs / "T-01/lane-report.json").read_text())
+    assert report["tree"] == out["report"]["tree"]
+    assert report["commit"] == out["report"]["commit"]
+    code, status = lanes.lane("status")
+    assert code == 0 and "report_error" not in status["lanes"]["lane1"]["state"]
+
+
+def test_start_then_report_keeps_the_pi_result_when_the_report_fails(lanes: Setup) -> None:
+    lanes.batch("T-01", {"src/a/x.py": "x\n"}, ["src/a/**"], accept_fail=True)
+    code, out = lanes.lane("start", "--lane", "lane1", "--run", "T-01", "--then-report")
+    assert code == 1 and out["ok"] is False, out
+    assert out["error"] == REPORT_FAILED + "accept_checks failed"
+    assert out["report_error"]["error"] == "accept_checks failed"
+    assert out["report_error"]["failed"] == ["fake"]
+    assert out["run_brief_exit"] == 0 and out["branch"] == "pi/T-01" and out["commits"] == "1"
+    assert out["tail"] == ["stopReason=stop"] and "report" not in out
+    state = lanes.state()
+    assert state["run"] == "T-01" and state["phase"] == "stopped"
+    assert state["report_error"] == "accept_checks failed"
+    assert run_git(lanes.origin, "branch", "--list", "pi/T-01") == ""
+    assert run_git(lanes.lanes["lane1"], "branch", "--show-current") == "pi/T-01"
+    code, status = lanes.lane("status")
+    assert code == 0 and status["lanes"]["lane1"]["state"]["phase"] == "stopped"
+    assert status["lanes"]["lane1"]["state"]["report_error"] == "accept_checks failed"
+
+
+def test_start_then_report_stops_on_a_closed_window_and_report_works_later(lanes: Setup) -> None:
+    # The config changes while pi runs: the report reads it as it is after pi stopped.
+    closed = {
+        **lanes.settings,
+        "daily_windows_jst": [{"start": "00:00", "end": "23:59"}],
+        "report_wait_seconds": 0,
+    }
+    lanes.batch(
+        "T-01", {}, ["src/a/**"], pi=pi_that_also_writes({lanes.config: json.dumps(closed)})
+    )
+    code, out = lanes.lane("start", "--lane", "lane1", "--run", "T-01", "--then-report")
+    assert code == 1, out
+    assert "daily-run window" in out["report_error"]["error"]
+    assert out["error"] == REPORT_FAILED + out["report_error"]["error"]
+    assert out["report_error"]["tries"] == 1
+    assert out["run_brief_exit"] == 0 and out["branch"] == "pi/T-01"
+    assert not (lanes.runs / "T-01/accept-calls.jsonl").exists()
+    assert run_git(lanes.origin, "branch", "--list", "pi/T-01") == ""
+    state = lanes.state()
+    assert state["phase"] == "stopped"
+    assert "daily-run window" in state["report_error"]
+    lanes.save()
+    code, out = lanes.lane("report", "--lane", "lane1", "--run", "T-01")
+    assert code == 0, out
+    assert run_git(lanes.origin, "rev-parse", "refs/heads/pi/T-01") == out["commit"]
+    state = lanes.state()
+    assert state["phase"] == "reported" and "report_error" not in state
+
+
+@pytest.mark.parametrize("main_moves", [False, True])
+def test_start_then_report_waits_for_a_publish_to_end(lanes: Setup, main_moves: bool) -> None:
+    lock = lanes.runs / "lanes/publish.lock"
+    lanes.settings.update({"report_poll_seconds": 1, "report_wait_seconds": 60})
+    lanes.save()
+    lanes.batch("T-01", {}, ["src/a/**"], pi=pi_that_also_writes({lock: LOCK_TEXT}))
+    proc = lanes.lane_in_background("start", "--lane", "lane1", "--run", "T-01", "--then-report")
+    try:
+        deadline = time.monotonic() + 120
+        while not lock.exists() and proc.poll() is None and time.monotonic() < deadline:
+            time.sleep(0.05)
+        time.sleep(2.5)
+        assert proc.poll() is None, finished(proc)
+        if main_moves:
+            lanes.main_moves({"docs/other.md": "m\n"})
+        remove(lock)
+        code, out = finished(proc)
+    finally:
+        if proc.poll() is None:
+            proc.kill()
+            proc.wait()
+    if main_moves:
+        # No refresh on its own: report's own refusal is the outcome.
+        assert code == 1 and "use refresh" in out["report_error"]["error"], out
+        assert run_git(lanes.origin, "branch", "--list", "pi/T-01") == ""
+        assert lanes.state()["phase"] == "stopped"
+        assert "use refresh" in lanes.state()["report_error"]
+    else:
+        assert code == 0, out
+        assert run_git(lanes.origin, "rev-parse", "refs/heads/pi/T-01") == out["report"]["commit"]
+        assert lanes.state()["phase"] == "reported"
+
+
+def test_start_then_report_gives_up_after_report_wait_seconds_without_spinning(
+    lanes: Setup,
+) -> None:
+    lock = lanes.runs / "lanes/publish.lock"
+    lanes.settings.update({"report_poll_seconds": 0, "report_wait_seconds": 2.5})
+    lanes.save()
+    lanes.batch("T-01", {}, ["src/a/**"], pi=pi_that_also_writes({lock: LOCK_TEXT}))
+    began = time.monotonic()
+    code, out = lanes.lane("start", "--lane", "lane1", "--run", "T-01", "--then-report")
+    assert code == 1, out
+    assert f"a publish is running ({LOCK_TEXT})" in out["report_error"]["error"]
+    assert out["error"] == REPORT_FAILED + out["report_error"]["error"]
+    # report_poll_seconds 0 still sleeps 1 s between tries: tries at about 0, 1 and 2 s.
+    assert 2 <= out["report_error"]["tries"] <= 3
+    assert time.monotonic() - began >= 1
+    assert not (lanes.runs / "T-01/accept-calls.jsonl").exists()
+    state = lanes.state()
+    assert state["phase"] == "stopped" and LOCK_TEXT in state["report_error"]
+    remove(lock)
+    code, out = lanes.lane("report", "--lane", "lane1", "--run", "T-01")
+    assert code == 0, out
+    assert run_git(lanes.origin, "rev-parse", "refs/heads/pi/T-01") == out["commit"]
+
+
+@pytest.mark.parametrize(
+    ("key", "value"),
+    [("report_wait_seconds", "soon"), ("report_poll_seconds", -1), ("report_poll_seconds", True)],
+)
+def test_start_then_report_refuses_bad_wait_settings(lanes: Setup, key: str, value: object) -> None:
+    lanes.settings[key] = value
+    lanes.save()
+    lanes.batch("T-01", {"src/a/x.py": "x\n"}, ["src/a/**"])
+    code, out = lanes.lane("start", "--lane", "lane1", "--run", "T-01", "--then-report")
+    assert code == 1 and key in out["report_error"]["error"], out
+    assert out["error"] == REPORT_FAILED + out["report_error"]["error"]
+    assert out["branch"] == "pi/T-01"
+    assert not (lanes.runs / "T-01/accept-calls.jsonl").exists()
+    state = lanes.state()
+    assert state["phase"] == "stopped" and key in state["report_error"]
+
+
+@pytest.mark.parametrize("case", ["refused", "before_pi", "pi_failed"])
+def test_start_then_report_does_not_report_when_start_fails(lanes: Setup, case: str) -> None:
+    pi = {
+        "refused": {"files": {"src/a/x.py": "x\n"}, "message": "code: T-01"},
+        "before_pi": {"exit": 1, "before_pi": True},
+        "pi_failed": {"exit": 1},
+    }[case]
+    run_dir = lanes.batch("T-01", {}, ["src/a/**"], pi=pi)
+    if case == "refused":
+        write(lanes.runs / "lanes/publish.lock", LOCK_TEXT)
+    code, out = lanes.lane("start", "--lane", "lane1", "--run", "T-01", "--then-report")
+    want_code, problem = {
+        "refused": (2, "publish is running"),
+        "before_pi": (1, "before pi started"),
+        "pi_failed": (1, "did not finish cleanly"),
+    }[case]
+    assert code == want_code and problem in out["error"], out
+    assert not out["error"].startswith(REPORT_FAILED)
+    assert "report_error" not in out and "report" not in out
+    assert not (run_dir / "accept-calls.jsonl").exists()
+    assert run_git(lanes.origin, "branch", "--list", "pi/T-01") == ""
+    if case == "pi_failed":
+        assert out["run_brief_exit"] == 1
+        state = lanes.state()
+        assert state["phase"] == "stopped" and "report_error" not in state
+    else:
+        assert not (lanes.runs / "lanes/lane1.json").exists()
+
+
+def test_the_actions_in_the_docstring_name_then_report() -> None:
+    lane = load("lane_mod", LANE)
+    actions = lane.__doc__.split("Actions", 1)[1].split("Rules it enforces", 1)[0]
+    start = [line for line in actions.splitlines() if line.lstrip().startswith("start ")]
+    assert len(start) == 1 and start[0].rstrip().endswith("[--then-report]")
+
+
 def test_refresh_replays_onto_moved_main_and_keeps_the_change(lanes: Setup) -> None:
     lanes.batch("T-01", {"src/app.py": edited(10, "lane ten")}, ["src/app.py"])
     lanes.lane("start", "--lane", "lane1", "--run", "T-01")
@@ -716,6 +951,7 @@ def test_status_lists_lanes_and_their_runs(lanes: Setup) -> None:
         ["report", "--lane", "lane1", "--run", "T-01", "--expected-tree", "a" * 40],
         ["report", "--lane", "lane1", "--run", "T-01", "--fix", "x.md"],
         ["report", "--lane", "lane1", "--run", "T-01", "--with-state-root"],
+        ["report", "--lane", "lane1", "--run", "T-01", "--then-report"],
     ],
 )
 def test_cli_argument_rules(lanes: Setup, args: list[str]) -> None:

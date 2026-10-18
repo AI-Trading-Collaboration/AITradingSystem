@@ -8,10 +8,13 @@ says which run, branch and allowed paths it holds.
 
 Actions (each prints one JSON line; exit 0 ok, 1 failed step, 2 refused before doing anything):
   setup   --lane L               create the lane worktree (detached at main) and its .venv
-  start   --lane L --run R [--fix FILE] [--with-state-root]
+  start   --lane L --run R [--fix FILE] [--with-state-root] [--then-report]
                                  check the run dir against SHA256SUMS, put the lane on main, run
                                  run-brief.ps1 -Direct in the lane (blocks until pi stops);
                                  --with-state-root adds -StateRoot <main> (AITS_STATE_ROOT)
+                                 --then-report waits after pi finishes for the daily window and
+                                 any publish (report_poll_seconds, report_wait_seconds), then
+                                 reports; failures are saved in the lane state's report_error
   report  --lane L --run R       mechanical checks (main's accept_checks), gate in the lane, checks
                                  again with --gate, main's ship.py --dry-run for the fingerprints,
                                  push the branch to origin for review
@@ -37,11 +40,13 @@ import datetime as dt
 import hashlib
 import importlib.util
 import json
+import math
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -50,6 +55,9 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 RENDERED_VIEWS = ("docs/task_register.md", "docs/task_register_completed.md")
 WILDCARDS = "*?["
 BASE = "main"
+# Operational polling/timeout defaults, not investment interpretation thresholds.
+REPORT_POLL_SECONDS = 60
+REPORT_WAIT_SECONDS = 7200
 
 
 class LaneError(RuntimeError):
@@ -569,6 +577,56 @@ class Lanes:
             raise LaneError("run-brief.ps1 did not finish cleanly", **result)
         return result
 
+    def start_then_report(
+        self, lane: str, run_id: str, fix: Path | None, state_root: bool = False
+    ) -> dict[str, Any]:
+        started = self.start(lane, run_id, fix, state_root)
+        try:
+            self.config = json.loads(self.config_path.read_text(encoding="utf-8-sig"))
+            self._wait_for_report()
+            reported = self.report(lane, run_id)
+        except LaneError as exc:
+            state = self.read_state(lane)
+            if state is not None and state.get("run") == run_id:
+                state["report_error"] = str(exc)
+                self.write_state(lane, state)
+            raise LaneError(
+                "pi finished; report did not run or failed: " + str(exc),
+                **started,
+                report_error={"error": str(exc), **exc.details},
+            ) from exc
+        return {**started, "report": reported}
+
+    def _report_seconds(self, key: str, default: int) -> int | float:
+        value = self.config.get(key, default)
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or (isinstance(value, float) and not math.isfinite(value))
+            or value < 0
+        ):
+            raise LaneError(f"agent_config.json {key} must be a number >= 0, not {value!r}")
+        return value
+
+    def _wait_for_report(self) -> None:
+        interval = max(1, self._report_seconds("report_poll_seconds", REPORT_POLL_SECONDS))
+        wait = self._report_seconds("report_wait_seconds", REPORT_WAIT_SECONDS)
+        began = time.monotonic()
+        tries = 0
+        while True:
+            tries += 1
+            try:
+                self.no_publish_running()
+                self.window_open()
+                return
+            except LaneError as exc:
+                if time.monotonic() - began + interval > wait:
+                    raise LaneError(
+                        f"report not allowed after waiting {wait:g} s: {exc}",
+                        **{**exc.details, "tries": tries},
+                    ) from exc
+            time.sleep(interval)
+
     def _branch_of(self, lane: str, path: Path, state: dict[str, Any]) -> str:
         branch = git(path, "branch", "--show-current")
         if not branch or branch == BASE or branch != (state.get("branch") or branch):
@@ -629,6 +687,7 @@ class Lanes:
                 "reported_at": iso(),
             }
         )
+        state.pop("report_error", None)
         self.write_state(lane, state)
         (run_dir / "lane-report.json").write_text(
             json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
@@ -806,6 +865,8 @@ class Lanes:
                     for k in ("run", "phase", "model", "branch", "commit", "tree", "fingerprints")
                 }
                 entry["state"]["pid_alive"] = pid_alive(int(state.get("pid") or 0))
+                if "report_error" in state:
+                    entry["state"]["report_error"] = state["report_error"]
             lanes[lane] = entry
         lock = self.publish_lock()
         return {
@@ -843,7 +904,7 @@ def pid_alive(pid: int) -> bool:
     if os.name == "nt":
         import ctypes
 
-        kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
+        kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined,unused-ignore]
         handle = kernel32.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
         if not handle:
             return False
@@ -875,6 +936,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--run")
     parser.add_argument("--fix", type=Path)
     parser.add_argument("--with-state-root", action="store_true")
+    parser.add_argument("--then-report", action="store_true")
     parser.add_argument("--expected-tree")
     parser.add_argument("--expected-patch")
     parser.add_argument("--expected-change")
@@ -888,6 +950,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--fix goes with start")
     if args.with_state_root and args.action != "start":
         parser.error("--with-state-root goes with start")
+    if args.then_report and args.action != "start":
+        parser.error("--then-report goes with start")
     expected = {
         k: v
         for k, v in {
@@ -913,7 +977,12 @@ def main(argv: list[str] | None = None) -> int:
         if args.action == "setup":
             result = lanes.setup(args.lane)
         elif args.action == "start":
-            result = lanes.start(args.lane, args.run, args.fix, args.with_state_root)
+            if args.then_report:
+                result = lanes.start_then_report(
+                    args.lane, args.run, args.fix, args.with_state_root
+                )
+            else:
+                result = lanes.start(args.lane, args.run, args.fix, args.with_state_root)
         elif args.action == "report":
             result = lanes.report(args.lane, args.run)
         elif args.action == "refresh":
