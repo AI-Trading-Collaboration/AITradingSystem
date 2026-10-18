@@ -42,6 +42,8 @@ from ai_trading_system.research_bench.sources import SourceSpec
 from ai_trading_system.research_data import qqq_long_history as qlh
 from ai_trading_system.research_data import signal_sources
 from ai_trading_system.research_data.signal_sources import SignalSnapshot
+from ai_trading_system.research_probes import gate_power as gp
+from ai_trading_system.research_probes import ruler_power as rp
 from tools.gov008 import ship
 
 FULL = load_settings()
@@ -56,10 +58,9 @@ LOADED = replace(
         }
     ),
 )
-DECISION = "owner_decision:TRADING-2565:2026-10-15:trial_mode"
+DECISION = "owner_decision:TRADING-2565:2026-10-17:ruler_40y"
 GATE_FILE = PROJECT_ROOT / "research/_trials/prereg.yaml"
 PLAN_FILE = PROJECT_ROOT / "research/_trials/T0001.yaml"
-Q3_PREREG = PROJECT_ROOT / "research/QQQ-Q3/prereg.yaml"
 SIG = "sig-0123456789ab"
 QLH = "qlh-test-snapshot"
 TSMOM = load_signal("tsmom_21")
@@ -245,12 +246,16 @@ def _sha(path: Path) -> str:
 # The gate and the first plan ----------------------------------------------------------------------
 
 
-def test_the_gate_holds_the_q2_q3_rules_and_the_us_market_rules() -> None:
+def test_the_gate_is_the_two_stage_ruler_the_probe_measured() -> None:
+    # Stage 1 on the US market's 82 years is the core four rules as the ruler probe applied them
+    # (the measured gate's own rules on those metrics); the QQQ development window is stage 2, S3.
     gate = tr.load_gate(GATE_FILE)
-    q3 = _yaml(Q3_PREREG)["validation"]["rules"]["fast_slow"]
+    measured = {
+        r.metric: (r.metric, r.op, r.value) for r in gp.load_measured_gate().markets["qqq"].rules
+    }
 
     assert gate.owner_decision == DECISION
-    assert (gate.max_configs_per_trial, gate.confidence) == (8, 0.95)
+    assert (gate.max_configs_per_trial, gate.confidence) == (8, 0.95) == (8, gp.CONFIDENCE)
     qqq, us = gate.markets["qqq"], gate.markets["us_market"]
     assert (qqq.question_type, qqq.qqq_series, qqq.event_episodes) == (
         "qqq_direction",
@@ -258,14 +263,11 @@ def test_the_gate_holds_the_q2_q3_rules_and_the_us_market_rules() -> None:
         None,
     )
     assert [(r.metric, r.op, r.value) for r in qqq.rules] == [
-        (r["metric"], r["op"], r["value"]) for r in q3
+        ("ci_high.cvar_5pct_relative_improvement", ">", 0.0),
+        measured[rp.GEO_METRIC],
     ]
-    assert [(r.metric, r.op, r.value) for r in us.rules] == [
-        ("comparison.max_drawdown", ">=", 0.05),
-        ("comparison.cvar_5pct_relative_improvement", ">=", 0.10),
-        ("cost_25.geometric_annual_return", ">=", -0.010),
-        ("delay_2.cvar_5pct_relative_improvement", ">=", 0.10),
-    ]
+    assert [r.metric for r in us.rules] == list(rp.CORE_METRICS)
+    assert [(r.metric, r.op, r.value) for r in us.rules] == [measured[m] for m in rp.CORE_METRICS]
     assert (us.question_type, us.qqq_series) == ("us_market_trial", None)
     assert us.event_episodes is not None
     assert [(e.id, e.start, e.end) for e in us.event_episodes] == [
@@ -698,12 +700,7 @@ def test_the_us_market_run_uses_its_window_and_crash_episodes(trial: dict[str, A
     assert record["source"] == US.source
     assert list(record["result"]["events"]["episodes"]) == CRASH_IDS
     assert record["falsification_confidence"] == 0.95
-    assert [row["metric"] for row in record["gate"]] == [
-        "comparison.max_drawdown",
-        "comparison.cvar_5pct_relative_improvement",
-        "cost_25.geometric_annual_return",
-        "delay_2.cvar_5pct_relative_improvement",
-    ]
+    assert [row["metric"] for row in record["gate"]] == list(rp.CORE_METRICS)
 
 
 def test_records_are_chained_and_written_once(trial: dict[str, Any]) -> None:
@@ -926,7 +923,7 @@ def test_the_ledger_counts_configs_and_question_trials(
     ]
     first = trial["records"][0]
     assert item["runs"][0]["rules_held"] == sum(row["holds"] for row in first["gate"])
-    assert item["runs"][0]["rules"] == 11
+    assert item["runs"][0]["rules"] == 2
     assert item["runs"][0]["failed"] == [row["metric"] for row in first["gate"] if not row["holds"]]
 
     monkeypatch.setattr(lg, "ledger_summary", lambda root_dir: {"global_trials": 7})
@@ -975,7 +972,10 @@ def test_the_summary_counts_reads_of_the_validation_window(tmp_path: Path) -> No
         "window_id": validation,
         "reads": 2,
         "next_k": 3,
-        "alpha": pytest.approx(0.05 / 3),
+        "rules": [
+            "ci_high.cvar_5pct_relative_improvement > 0",
+            "comparison.geometric_annual_return >= -0.01",
+        ],
     }
     assert summary["family_size"] == 5
     assert summary["verdict"] == "incomplete"
@@ -1001,7 +1001,9 @@ def test_the_report_shows_the_verdict_the_rules_and_the_cost(trial: dict[str, An
         f"- 数据：长历史快照 {QLH}；信号快照 {SIG}",
         f"- 判定（主配置 primary）：{verdict}",
         "- 配置 2 个（上限 8）；全局总试验数 2（各题开发试验 0，试跑配置 2）",
-        "- 验证窗口 qqq_long_history_validation 已读 0 次；再读是第 1 次，显著性 0.05/1 = 0.0500",
+        "- 验证窗口 qqq_long_history_validation 已读 0 次；再读是第 1 次，只查方向，"
+        "规则同 QQQ 开发窗口：ci_high.cvar_5pct_relative_improvement > 0；"
+        "comparison.geometric_annual_return >= -0.01",
         "## primary · QQQ（trial-r0001，ok）",
         "## primary · 美股大盘（trial-r0002，ok）",
         "## half · QQQ（trial-r0003，ok）",
@@ -1073,7 +1075,7 @@ def test_cli_trial_run_records_and_prints(tmp_path: Path, monkeypatch: pytest.Mo
     record = tr.trial_records(root)[0]
     held = sum(row["holds"] for row in record["gate"])
     failed = [row["metric"] for row in record["gate"] if not row["holds"]]
-    expected = f"记录 trial-r0001；T0001 primary qqq；状态 ok；门 {held}/11 条成立"
+    expected = f"记录 trial-r0001；T0001 primary qqq；状态 ok；门 {held}/2 条成立"
     assert failed
     assert result.output == f"{expected}；没过：{', '.join(failed)}\n"
     assert calls == ["qqq"]
@@ -1143,7 +1145,7 @@ def test_cli_trial_ledger_and_report(
     assert "全局总试验数 2（各题开发试验 0，试跑配置 2）" in lines
     assert f"T0001：配置 2/8；运行 3 条；主配置 primary：{verdict}" in lines
     held = sum(row["holds"] for row in records[0]["gate"])
-    assert f"  trial-r0001 primary qqq ok 门 {held}/11" in lines
+    assert f"  trial-r0001 primary qqq ok 门 {held}/2" in lines
 
     result = runner.invoke(cli.app, ["trial-report", "T0001"])
     assert result.exit_code == 0, result.output

@@ -61,9 +61,9 @@ PLAN_NAME = re.compile(r"^T[0-9]{4}\.yaml$")
 MARKETS: tuple[str, ...] = ("qqq", "us_market")
 MARKET_NAMES = {"qqq": "QQQ", "us_market": "美股大盘"}
 VERDICT_NAMES = {"pass": "过门", "fail": "没过", "incomplete": "未完成"}
-# Frozen research-loop error budget: owner_decision:TRADING-2565:2026-10-15:research_loop_p1.
-# Each next validation read spends 0.05/k; this display never grants permission for that read.
-VALIDATION_ALPHA = 0.05
+# The two-stage ruler (owner_decision:TRADING-2565:2026-10-17:ruler_40y): an opened question's
+# validation read is stage 2 and only checks the direction, with the gate's QQQ rules. The research
+# loop charter still allows one validation read per period; this display never grants that read.
 STRATEGY_FUNCTION = "signal_exposure"
 Market = Literal["qqq", "us_market"]
 
@@ -696,7 +696,9 @@ def trial_summary(root_dir: Path, trial_id: str, loaded: LoadedSettings) -> dict
             "window_id": window.window_id,
             "reads": reads,
             "next_k": reads + 1,
-            "alpha": VALIDATION_ALPHA / (reads + 1),
+            "rules": [
+                f"{rule.metric} {rule.op} {rule.value:g}" for rule in gate.markets["qqq"].rules
+            ],
         },
         **{key: ledger[key] for key in ("trial_configs", "question_trials", "global_trials")},
     }
@@ -730,8 +732,8 @@ def trial_report(root_dir: Path, trial_id: str, loaded: LoadedSettings) -> list[
         f"全局总试验数 {item['global_trials']}（各题开发试验 {item['question_trials']}，"
         f"试跑配置 {item['trial_configs']}）",
         f"- 验证窗口 {validation['window_id']} 已读 {validation['reads']} 次；"
-        f"再读是第 {validation['next_k']} 次，显著性 0.05/{validation['next_k']} = "
-        f"{validation['alpha']:.4f}",
+        f"再读是第 {validation['next_k']} 次，只查方向，规则同 QQQ 开发窗口："
+        f"{'；'.join(validation['rules'])}",
     ]
     for run in item["runs"]:
         lines.extend(
