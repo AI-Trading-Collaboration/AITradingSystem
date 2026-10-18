@@ -89,6 +89,8 @@ ad hoc 的 SEC PIT 回填/评估与缓存回放。
 
 两段尺子（TRADING-2565-18）：`python -m ai_trading_system.research_probes.ruler_power run --out <目录> --workers <进程数>` 读和查尺子相同的美股大盘数据（截到 2010-12-31），在十年、20/30/40 年和整段 1930–2010 的窗口上，用查尺子的波动率假信号、留出的回撤假信号和三条已检验的规则评估候选的两段尺子（长窗口上的主检验加紧接着十年的查方向），按写定的读法挑一把，把结果写成 `ruler_result.json` 和 `ruler_result.md`（运行中每个评估先写进 `ruler_rows.jsonl`，中途停下也留得住）；只量尺子，不改试跑门，不进任何账本，不是结论。两个探针量的门固定为 `src/ai_trading_system/research_probes/trial_gate_v1.yaml`，即试跑门换成两段尺子（`owner_decision:TRADING-2565:2026-10-17:ruler_40y`）以前的原样，重跑量的还是同一套规则。
 
+误放率探针（TRADING-2565-22）：`python -m ai_trading_system.research_probes.gate_false_pass run --out <目录> --workers <进程数>` 读和查尺子相同的数据（截到 2010-12-31），在试跑门的两段开发窗口上评估三族零效果的假信号（各 150 个种子）和两族对照，按写定的读法看两段都过的比例的 95% Wilson 上限，把结果写成 `false_pass_result.json` 和 `false_pass_result.md`（运行中每个评估先写进 `false_pass_rows.jsonl`）；量的门固定为 `src/ai_trading_system/research_probes/trial_gate_v2.yaml`，即两段尺子试跑门的原样；只量门，不改试跑门，不进任何账本，不是结论。
+
 ```mermaid
 flowchart LR
     Q["Owner 定问题（TRADING-2567）"] --> PRE["research/&lt;题号&gt;/prereg.yaml + strategy.py<br/>C 区：随 Owner-Decision ship 进 main"]
