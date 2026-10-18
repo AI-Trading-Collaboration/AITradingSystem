@@ -94,6 +94,18 @@
   - 这个决定同时同意之后读一次验证窗口（`owner_decision:TRADING-2567:2026-10-14:opening_covers_validation_read`）：开发运行跑完、Claude 核对实现没有问题以后，研究线程先告诉 Baker，再单独一次运行读验证窗口，不等回复；核对发现问题就停下问 Baker。
   - 这份决定批准的是设计。预注册和策略模块是 C 区文件，随后另作一批，按这条决定的记录批准，以 Baker 之后在研究线程打出的、带那份决定记录 SHA-256 的一行为准。它不是 paper-shadow 准入，也不是 production 或 broker 批准。
 
+- `owner_decision:TRADING-2567:2026-10-18:portfolio_p1`
+- 选择（Baker，2026-10-18 19:15 JST 在「研究流程评审与结果分析」线程的决定卡上选「组合层面 P1」）：卡片的问题是「下一道正式开题的题目定哪条?」，这个选项的后果是「换问题设计转正式需求,交「研究自动生成和初筛」线程打包,你批 C 区 1–2 次;循环降为后台只筛不开题。」另两个选项是「继续单资产择时」和「先不开题」。卡片的背景写明 P1 是 QQQ 加国债固定比例、当基准，P2 是事先写定的小幅倾斜；一页设计是项目文件 `knowledge/claude/qqq-options/auto-loop/power-check/change-question-2026-10-16.md`，复盘是项目文件 `knowledge/claude/research-review/research-status-review-2026-10-18.md`。
+- 含义：
+  - 下一道正式题目是 P1：QQQ 加 10 年期美国国债，按固定比例、月底再平衡，和平均 QQQ 敞口相同、同样月底调仓的 QQQ 加现金比，回撤是否更浅、左尾是否更温和、几何年化是否不低。不择时，只换不持 QQQ 的那部分放什么。主配置 QQQ 60%、国债 40%；敏感性 QQQ 50% 和 70%，只在开发数据上跑，计入试验数，不参与判定。
+  - 国债收益由信号快照里的 DGS10（FRED 10 年期国债固定期限收益率，1962-01-02 起）合成：每个交易日把前一个交易日的收益率当票息、期限 10 年、半年付息的平价债，用当天的收益率重新定价，再加上按日历天数计的票息。这是研究代理，不是可交易路径（IEF 2002 年才有）。各市场的现金不变：美股大盘是 Ken French 的 RF，QQQ 市场是 DTB3。
+  - 先试跑，不先开题：P1 按试跑门 `research/_trials/prereg.yaml` 的两段尺子（`owner_decision:TRADING-2565:2026-10-17:ruler_40y`）试跑，计划是 `research/_trials/T0002.yaml`。第一段在美股大盘 1962-01-02 到 2010-12-31（49 年；DGS10 从 1962 年开始，尺子要求至少 40 年），第二段在 QQQ 开发窗口只查方向。试跑只读开发数据，不读验证窗口。P1 的想法是在第一到三题的验证读取都失败之后定的，计划里记为「想法来自验证窗口：是」。
+  - 评估台改造是 C 区一批，细节记在 `docs/requirements/TRADING-2565_Research_Bench.md`：评估台加「储备」（不持 QQQ 的部分放现金或合成 10 年期国债，对照仍是 QQQ 加现金），固定比例的策略函数，试跑计划可以不带筛选候选、改为写明要它的 owner decision，美股大盘带国债时用 1962–2010 的窗口；同一批给试跑报告加两行只读的对照：每放弃 1 个点几何年化换到多少左尾和回撤，以及和同波动率的 QQQ 加现金比。两行不进门、不进判定。这一批按这条决定的记录批准（Baker 运行一次 approve.ps1，是卡上说的第一次）。
+  - 主配置过门才开题：开题照第二、三题的做法，开题草稿经 Baker 同意后另作一批 C 区改动（`research/QQQ-P1/` 的预注册和策略模块，评估台的题目路径接上国债），按那条决定的记录批准（第二次）；开题批准一并同意读一次验证窗口（`owner_decision:TRADING-2567:2026-10-14:opening_covers_validation_read`），验证窗口只查方向，和第二段相同。开题前用 IEF 复权价核对 2002 年以后合成国债的跟踪差，只核对，不进规则。结论按股债相关性的正负分段报告：开发期横跨两种状态，验证窗口几乎全在负相关期（推断），验证窗口好看不能单独算数。
+  - 主配置没过门：报告 Baker，不开题；P2（倾斜）也不做，因为它以 P1 的固定比例为基准。
+  - 研究自动循环降为后台：照章程筛选和记账，不开题；择时候选的试跑和每周的新择时卡也先停（从「只筛不开题」推断），P1 有结论后再定。
+  - 不做：期权、杠杆、生产、买数据。这份决定批准的是方向和设计，不是 paper-shadow 准入，也不是 production 或 broker 批准。
+
 ## 背景
 
 - 22 条旧研究线的结论在 `research/ledger.md`。旧的 QQQ 期权线（第 19 行）没测成：约 60 个任务只跑过 1 次策略损益（+4.48%），对照组只算了一股 QQQ，结果无法解释；它用来定方向的 Composer v2（第 21 行）后来被证伪。
@@ -184,3 +196,4 @@ FMP 没有期权数据；现有 FMP Starter 档只有 5 年历史。QQQ 实际 E
 - 2026-10-15：TRADING-2567-25 在研究工作区跑第三题的开发窗口：运行 `QQQ-Q3-r0001`..`r0007`，试验 7/14，发布为 main 8ab8b2ad。Claude 只核对实现，没有发现问题（fast_slow 的平均敞口 0.59，约等于只看快信号 0.53 和只看慢信号 0.66 的平均）；运行时的 numpy RuntimeWarning 来自评估台的前视检查（故意改乱后面的数据），真实数据下不出现。production_effect=none；broker_action=none。
 - 2026-10-15：按开题批准里的验证读取同意，TRADING-2567-26 单独一次运行读验证窗口（读取 `QQQ-Q3-w0001`，运行 `QQQ-Q3-r0008`、`QQQ-Q3-r0009`），记录按 Baker 2026-10-15T04:44:16Z 的常设授权发布为 main b5fc234e。fast_slow 11 条规则成立 6 条，证据不足；参照 slow_only 成立 0 条，拒绝。一致性窗口不读。
 - 2026-10-15：TRADING-2567-27 记下第三题的结论：`research/QQQ-Q3/decision.md`（Baker 20:27 JST 审过草稿，回复"同意"），`research/ledger.md` 第 25 行，`research/README.md` 和它的测试常量同步；`research/negative_results.md` 不加新行（和 Q2a、ma10 一样，证据不足和参照拒绝不进已证伪表）。第三题结束。production_effect=none；broker_action=none。
+- 2026-10-18：Baker 选下一道题为组合层面 P1，决定 `owner_decision:TRADING-2567:2026-10-18:portfolio_p1` 写在上面：QQQ 加合成 10 年期国债固定比例，先按两段尺子试跑，过门才开题；评估台改造另作一批 C 区。同一批给第一到三题的结论加补注：查尺子（TRADING-2565-17）测得的检出率 19.4%，「证据不足」不作负结果读；第二、三题的方向定于上一题的验证读取之后，记为软泄漏。补注在各题 `decision.md`、`research/ledger.md` 第 23–25 节和 `research/README.md`，结论和评级不改。production_effect=none；broker_action=none。
