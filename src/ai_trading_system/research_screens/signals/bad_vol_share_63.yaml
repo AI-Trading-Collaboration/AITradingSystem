@@ -1,0 +1,14 @@
+signal_id: bad_vol_share_63
+mechanism: >-
+  坏波动占比：下跌日带来的波动比上涨日带来的波动更持久。一段时间里方差主要来自下跌日时，之后的波动偏高；主要来自上涨日时
+  （比如急涨行情），之后的波动并不偏高。信号值是过去 63 个交易日里下跌日收益平方和减上涨日收益平方和，除以两者之和
+  （取值 -1 到 1；收益为 0 的日子两边都不算；窗口内有缺失或分母为 0 时没有值），每个市场用自己的收益。看的是波动的
+  方向构成，不是水平。来自研究自动循环第二批假设卡 H07，写在任何筛选之前；选它的理由引用了第一题 q1a 在验证窗口里的
+  失败原因（代价太高），验证窗口对它不是干净的检验。
+expected_sign: 1
+target: risk
+params:
+  window: 63
+sources: []
+markets: all
+literature: Patton & Sheppard 2015, Good Volatility, Bad Volatility - Signed Jumps and the Persistence of Volatility, Review of Economics and Statistics 97(3); Barndorff-Nielsen, Kinnebrock & Shephard 2010, Measuring Downside Risk - Realised Semivariance (原文用日内高频收益，这里是日收益的粗化版本)

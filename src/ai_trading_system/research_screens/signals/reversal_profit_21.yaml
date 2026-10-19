@@ -1,0 +1,17 @@
+signal_id: reversal_profit_21
+mechanism: >-
+  反转策略的近期收益：短期反转策略（买前几天跌得多的、卖涨得多的）的收益是给市场提供流动性的报酬；做市和套利资金撤退时
+  这份报酬变高，风险也在上升，所以反转策略近期赚得多，之后的波动偏高。每个交易日 t，49 个行业里在 t 之前 5 个交易日和
+  t 当天都有收益的行业参加：取它们前 5 日的复利收益减截面均值，取负号做权重，做多和做空两边各缩放到 1（权重绝对值之和
+  为 2），算 t 当天的组合收益；参加的行业少于 2 个或前 5 日收益全部相同时，当天没有组合收益。信号值是过去 21 个交易日
+  组合收益之和，窗口内有一天没有组合收益就没有值；所有市场共用同一个值。来自研究自动循环第二批假设卡 H08，写在任何
+  筛选之前。
+expected_sign: 1
+target: risk
+params:
+  formation: 5
+  window: 21
+sources:
+  - ff_49_industries_daily
+markets: all
+literature: Nagel 2012, Evaporating Liquidity, Review of Financial Studies 25(7); 行业层面月度上更像动量（Moskowitz & Grinblatt 1999, Do Industries Explain Momentum?, Journal of Finance 54(4)），周度反转是否还在不确定
