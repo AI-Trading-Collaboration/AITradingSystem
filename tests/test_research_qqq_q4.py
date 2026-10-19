@@ -240,9 +240,16 @@ README_Q3_ROW = (
     "sonl` |"
 )
 README_ROW = (
-    "| `QQQ-Q4/` | 第四题（进行中，试跑 T0004 转正式题）：预注册 `prereg.yaml` 和策略模块 "
-    "`strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.j"
-    "sonl` |"
+    "| `QQQ-Q4/` | 第四题（已结束，试跑 T0004 转正式题）：结论 `decision.md`；预注册 `prereg.yaml` "
+    "和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_r"
+    "eads.jsonl` |"
+)
+README_BULLET = (
+    "- 第四题 `QQQ-Q4/` 已结束（2026-10-19）：离散度规则（试跑 T0004 转正式题）证据不足，参照 rv21"
+    "（QQQ 自己的 21 日已实现波动，同法）证据不足，见 `QQQ-Q4/decision.md`。左尾方向对，几何年化每"
+    "年少 1.6 个点，和第一题 q1a 几乎相同；九条降风险规则在 2011–2021 年都没有以每年少不到 1 个点的"
+    "代价改善左尾。失败标签都是「有效果但代价太高」，Baker 2026-10-19 同意；「波动」家族关闭，「广"
+    "度和相关」停车，见 `families.md`。"
 )
 NOTES_TAIL = (
     "；2026-10-19：Baker 选研究自动循环的 T0004（行业收益离散度）开题为第四题 QQQ-Q4（ow"
@@ -251,27 +258,35 @@ NOTES_TAIL = (
     " 开题，`research/QQQ-Q4/prereg.yaml`、`strategy.py` 和对照信号 `realized_vol_21` 进 m"
     "ain。production_effect=none；broker_action=none"
 )
-NEXT_OWNER = "Claude（第四题 QQQ-Q4：开发窗口运行交研究会话，核对实现后读验证窗口）"
+NOTES_CLOSE = (
+    "；2026-10-19：QQQ-Q4 结题（读取 QQQ-Q4-w0001）：dispersion 证据不足（左尾 +7.6%，几何每年少 1."
+    "6 个点），参照 rv21 证据不足（几何每年少 3.2 个点）；Baker 同意结论和失败标签「有效果但代价太"
+    "高」，TRADING-2567-32 记 decision.md、台账第 26 条、families 和 scorecard。production_effect=n"
+    "one；broker_action=none"
+)
+NEXT_OWNER = "Claude（研究自动循环；下一道正式题等候选过试跑门）"
 NEXT_STEP = (
-    "第四题 QQQ-Q4（试跑 T0004 行业收益离散度转正式题，owner_decision:TRADING-2567:2026-10-"
-    "19:qqq_q4_prereg）已开题：研究会话跑开发窗口 5 个配置，Claude 核对实现，然后按开题批"
-    "准读一次验证窗口（只查方向，参照 rv21 同一次读），结论给 Baker 审。详见 `docs/requir"
-    "ements/TRADING-2567_QQQ_Research_Program_1999_Window.md`"
+    "第四题 QQQ-Q4 已结束：dispersion 和参照 rv21 都是证据不足（`research/QQQ-Q4/decision.md`，台账"
+    "第 26 条），失败标签「有效果但代价太高」，「波动」家族关闭、「广度和相关」停车（`research/fami"
+    "lies.md`）。下一道正式题等研究自动循环有候选过试跑门再问 Baker。详见 `docs/requirements/TRADIN"
+    "G-2567_QQQ_Research_Program_1999_Window.md`"
 )
 
 
 def test_the_research_readme_lists_the_fourth_question() -> None:
     lines = README.read_text(encoding="utf-8").splitlines()
-    assert lines.count(README_ROW) == 1
+    assert lines.count(README_ROW) == 1 and lines.count(README_BULLET) == 1
     assert lines.index(README_ROW) == lines.index(README_Q3_ROW) + 1
+    assert lines[lines.index(README_BULLET) - 1].startswith("- 第三批试跑 T0004–T0006")
 
 
 def test_the_task_card_notes_are_only_appended() -> None:
     card = yaml.safe_load(CARD.read_text(encoding="utf-8"))
-    assert card["notes"].count(NOTES_TAIL) == 1 and card["notes"].endswith(NOTES_TAIL)
+    assert card["notes"].count(NOTES_TAIL) == 1 and card["notes"].count(NOTES_CLOSE) == 1
+    assert card["notes"].endswith(NOTES_TAIL + NOTES_CLOSE)
     assert card["notes"].split(NOTES_TAIL)[0].endswith("broker_action=none")
     assert "portfolio_p1" in card["notes"].split(NOTES_TAIL)[0]
     assert (card["next_owner"], card["next_step"]) == (NEXT_OWNER, NEXT_STEP)
     assert card["status"] == "IN_PROGRESS"
     register = REGISTER.read_text(encoding="utf-8")
-    assert NOTES_TAIL in register and NEXT_STEP in register
+    assert NOTES_TAIL in register and NOTES_CLOSE in register and NEXT_STEP in register
