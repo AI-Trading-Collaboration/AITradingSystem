@@ -1,0 +1,12 @@
+signal_id: realized_vol_21
+mechanism: >-
+  已实现波动：资产自己过去 21 个交易日日收益的标准差（ddof = 1）乘 √252。波动有聚集性，最近波动高，之后一段时间的波动
+  也偏高。窗口不满或窗口里有一天没有收益时没有值。和筛选的基准信号 rv_21（research_bench/screen.py 的 baseline_signals）
+  是同一个量；它是固定基准，不另做筛选，做成模块是为了在第四题 QQQ-Q4 的预注册里按哈希钉住，作参照规则。
+expected_sign: 1
+target: risk
+params:
+  window: 21
+sources: []
+markets: all
+literature: Andersen, Bollerslev, Diebold & Labys 2003, Modeling and Forecasting Realized Volatility, Econometrica 71(2); Moreira & Muir 2017, Volatility-Managed Portfolios, Journal of Finance 72(4)

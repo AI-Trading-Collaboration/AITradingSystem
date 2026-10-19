@@ -1,0 +1,148 @@
+# QQQ-Q4 preregistration (TRADING-2567; format in src/ai_trading_system/research_bench/prereg.py).
+#
+# Written before any result of this question exists. Approved by Baker with the owner decision below,
+# recorded in docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md. The question is
+# trial T0004 (research/_trials/T0004.yaml), the first research loop candidate whose primary
+# configuration passed both stages of the trial gate; dispersion is that configuration, unchanged.
+# The signals are pinned by the SHA-256 of their module and specification: industry_dispersion_21
+# (TRADING-2565-28, screened as S0013) and realized_vol_21 (the screen baseline rv_21 as a module,
+# TRADING-2567-31; a fixed baseline, not screened). Any change to this file, to strategy.py or to a
+# pinned signal closes the validation window until a new owner decision approves it.
+#
+# Expected before any result (charter section 12; the format has no field for it yet): dispersion
+# holds both direction rules on the validation window with probability about one half; the left-tail
+# improvement of rv21 is within 3 points of dispersion's with probability about 0.6 (both inferred).
+# After failure (direction_changes_either_way: true): if dispersion holds, Q4 goes on to the
+# consistency window and its conclusion, and the breadth and correlation family gets its first
+# variant with a validation read; if rv21 holds too, the reason the volatility family is parked
+# (q1a's cost) is looked at again. If dispersion fails, Q4 closes with a failure tag, dispersion and
+# volatility timing each count once on QQQ, and the loop stops proposing breadth signals that are
+# mostly the level of volatility unless a new mechanism is written down.
+schema_version: research_prereg.v1
+question_id: QQQ-Q4
+question: >-
+  Does cutting exposure when the cross-sectional dispersion of US industry returns is high give a
+  shallower drawdown and a milder left tail than a constant exposure with the same average, at a
+  similar geometric return? Q4: the signal is the 21-day mean of the daily cross-sectional standard
+  deviation of the 49 Ken French industry returns; exposure is one minus its expanding percentile
+  (low dispersion fully invested, high dispersion out), set at month end, no leverage. The same
+  mapping on QQQ's own 21-day realized volatility is the reference rule.
+question_type: qqq_direction
+owner_decision: owner_decision:TRADING-2567:2026-10-19:qqq_q4_prereg
+data:
+  snapshot_id: qlh-20261013-0b0df53cb1a2
+  qqq_series: actual                # the real QQQ (FMP adjusted close) from 1999-03-10
+  signal_snapshot_id: sig-7ad8aa00b736   # the snapshot T0004 used; ff_49_industries_daily 1926-07-01..2026-08-31
+screens: [S0013]                    # industry_dispersion_21, candidate; realized_vol_21 is a fixed baseline, not screened
+screen_family_size: 15              # screened signals in the global ledger when this was written (S0001-S0015)
+strategy_module: strategy.py        # imports the bench's signal_exposure; the signals are pinned by hash below
+# Score "percentile": the signal's expanding percentile, oriented by its specification's expected sign
+# and target so that 1 is the end the hypothesis favours. Both targets are risk with expected sign +1
+# (higher dispersion or volatility, higher later volatility), so the favoured end is the low one.
+# Mapping "linear" low 0, high 1: exposure = score; "threshold": high at or above cut, low below it.
+strategies:
+  - id: dispersion
+    function: signal_exposure
+    params:
+      signals:
+        - {id: industry_dispersion_21, module_sha256: f173b29ef9b116dc08fb618c2bc4c052fe601a4c203bc9187f0e0f2a5bfd7d29, spec_sha256: efbaf8f95c1e79ddff36b0bf40012137914644bb6272fb1ea925ebf5a24270eb, score: percentile}
+      mapping: linear
+      low: 0
+      high: 1
+    rebalance: {schedule: month_end, band: 0.0}
+    delay_days: 0
+  - id: rv21
+    function: signal_exposure
+    params:
+      signals:
+        - {id: realized_vol_21, module_sha256: c49e3627b57e9ce9c3669679fd5ab73962cd6b4e406a335c5c18d0fd012803fd, spec_sha256: 179342c45994b4be56354d0f4426075a889b0f21feba86c39831f1ff7446c970, score: percentile}
+      mapping: linear
+      low: 0
+      high: 1
+    rebalance: {schedule: month_end, band: 0.0}
+    delay_days: 0
+  # Sensitivity variants, development window only (each is its own trial): T0004's other three
+  # configurations, unchanged.
+  - id: dispersion_threshold
+    function: signal_exposure
+    params:
+      signals:
+        - {id: industry_dispersion_21, module_sha256: f173b29ef9b116dc08fb618c2bc4c052fe601a4c203bc9187f0e0f2a5bfd7d29, spec_sha256: efbaf8f95c1e79ddff36b0bf40012137914644bb6272fb1ea925ebf5a24270eb, score: percentile}
+      mapping: threshold
+      low: 0
+      high: 1
+      cut: 0.5
+    rebalance: {schedule: month_end, band: 0.0}
+  - id: dispersion_floor_half
+    function: signal_exposure
+    params:
+      signals:
+        - {id: industry_dispersion_21, module_sha256: f173b29ef9b116dc08fb618c2bc4c052fe601a4c203bc9187f0e0f2a5bfd7d29, spec_sha256: efbaf8f95c1e79ddff36b0bf40012137914644bb6272fb1ea925ebf5a24270eb, score: percentile}
+      mapping: linear
+      low: 0.5
+      high: 1
+    rebalance: {schedule: month_end, band: 0.0}
+  - id: dispersion_weekly
+    function: signal_exposure
+    params:
+      signals:
+        - {id: industry_dispersion_21, module_sha256: f173b29ef9b116dc08fb618c2bc4c052fe601a4c203bc9187f0e0f2a5bfd7d29, spec_sha256: efbaf8f95c1e79ddff36b0bf40012137914644bb6272fb1ea925ebf5a24270eb, score: percentile}
+      mapping: linear
+      low: 0
+      high: 1
+    rebalance: {schedule: week_end, band: 0.0}
+validation:
+  # dispersion decides Q4. rv21 is run in the same read as the reference rule: its result is shown
+  # beside dispersion (is dispersion more than volatility timing under another name?) and never
+  # changes dispersion's verdict. Each is compared with the constant exposure with the same average,
+  # rebalanced the same way. The validation window checks the direction only, as stage 2 of the trial
+  # gate (owner_decision:TRADING-2565:2026-10-17:ruler_40y): the 95% interval upper bound of the
+  # left-tail improvement above 0, and at most 1 point a year of geometric return given up. Kept
+  # when both hold; the consistency window is then read with the same two rules. Rejected when the
+  # upper bound is not above 0 (failure tag mechanism absent; this construction only). Evidence
+  # insufficient when the left tail holds and more than 1 point a year is given up (failure tag
+  # effect but too costly). Development results only check the implementation; no parameter changes
+  # after reading them except recorded bug fixes. The de-risk event table is printed with every run
+  # and is read, not ruled on.
+  strategies: [dispersion, rv21]
+  rules:
+    dispersion:
+      - {metric: ci_high.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: the left tail is not clearly worse (95% interval upper bound above 0)}
+      - {metric: comparison.geometric_annual_return, op: ">=", value: -0.010, note: gives up at most 1.0 point a year}
+    rv21:
+      - {metric: ci_high.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: the left tail is not clearly worse (95% interval upper bound above 0)}
+      - {metric: comparison.geometric_annual_return, op: ">=", value: -0.010, note: gives up at most 1.0 point a year}
+  confidence: 0.95                  # stage 2 of the trial gate; the probe measured the ruler at this level
+sensitivity:                        # development only, each a trial, none decides anything
+  - in or out at the median of the percentile (dispersion_threshold)
+  - a half floor, exposure from 0.5 to 1 (dispersion_floor_half)
+  - weekly rebalance (dispersion_weekly)
+prior_expectation:
+  effect: >-
+    Industry returns spread apart when firm and industry news and disagreement rise, and that
+    uncertainty passes to the whole market, so later market volatility is higher after high
+    dispersion. Cutting exposure then should give a shallower drawdown and a milder left tail. In
+    trial T0004 the rule passed both stages on the development data (US market 1929-2010: left tail
+    18.2% milder, drawdown 21.0 points shallower, 0.5 points a year more geometric return; QQQ
+    1999-2010: direction holds) without giving up geometric return.
+  fails_when: >-
+    Dispersion moves with volatility (rank correlation 0.878 with the screen baseline rv_21 in S0013),
+    so the rule may be volatility timing under another name; the volatility family's q1a gave up 1.6
+    points a year on 2011-2021, one long rise with short sharp breaks, where a low average exposure
+    is a cost. In the trial dispersion did not rise before the 1987 crash, and after 1929 and 1998
+    the rule re-entered slowly (1286 and 1215 days). Differs from the falsified scope in
+    research/negative_results.md: no leverage, and the deciding signal is the dispersion of industry
+    returns, not the asset's own volatility (rv21 is the reference rule, not the question).
+  sources:
+    - Stivers (2003), Firm-Level Return Dispersion and the Future Volatility of Aggregate Stock Market Returns, Journal of Financial Markets 6(3)
+    - Garcia, Mantilla-Garcia and Martellini (2014), A Model-Free Measure of Aggregate Idiosyncratic Volatility and the Prediction of Market Returns, Journal of Financial and Quantitative Analysis 49(5)
+    - Moreira and Muir (2017), Volatility-Managed Portfolios, Journal of Finance 72(4)
+sample_floor:
+  min_return_days: 2000             # the validation window has about 2,550; CVaR 5% uses about 128
+trial_cap: 10                       # 5 configurations, and each once more after a recorded bug fix
+stop_conditions:
+  - the bench's invariant tests fail
+  - the snapshot check is FAIL
+  - after reading development results, no parameter changes except recorded bug fixes; each rerun counts as a trial
+production_effect: none
+broker_action: none

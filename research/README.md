@@ -36,6 +36,7 @@
 | `QQQ-Q1/` | 第一题（已结束）：结论 `decision.md`；预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |
 | `QQQ-Q2/` | 第二题（已结束）：结论 `decision.md`；预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |
 | `QQQ-Q3/` | 第三题（已结束）：结论 `decision.md`；预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |
+| `QQQ-Q4/` | 第四题（进行中，试跑 T0004 转正式题）：预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |
 
 研究进展页面（TRADING-2568）由 `python -m ai_trading_system.research_site --out <目录>` 从这里的记录生成：只读，不另存事实。main 上的研究记录更新后，GitHub Actions 的 Research site 自动重建并发布到 GitHub Pages：https://ai-trading-collaboration.github.io/AITradingSystem/
 

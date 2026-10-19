@@ -321,13 +321,12 @@ NOTES_TAIL = (
     "；2026-10-15：S4e 第一批真实筛选已跑完并发布为记录 S0001 到 S0004（main 71f00bc1）；"
     "S4f（TRADING-2565-11）第二题用的经典趋势信号"
 )
-# The card's current owner and step (TRADING-2565-28), checked against the register.
+# The card's current owner and step (TRADING-2567-31), checked against the register.
 NEXT_OWNER = "Claude（研究自动循环）"
 NEXT_STEP = (
-    "研究自动循环去掉产量上限、改成定期复盘"
-    "（owner_decision:TRADING-2565:2026-10-19:no_output_caps，章程第 14 节）；"
-    "第三批筛选信号 absorption_shift_63、industry_dispersion_21、defensive_lead_63"
-    "（TRADING-2565-28）上 main 后筛选，候选写试跑计划，主配置过门才叫 Baker"
+    "研究自动循环第 1 期：第三批试跑 T0004 industry_dispersion_21 过门，Baker 选开题为 QQQ-Q4"
+    "（owner_decision:TRADING-2567:2026-10-19:qqq_q4_prereg，章程第 15 节）；T0005、T0006 记失败"
+    "标签。下一步每周假设卡、筛选和试跑照章程，周五摘要；本期再有候选过门、要读验证窗口时问 Baker"
 )
 
 
