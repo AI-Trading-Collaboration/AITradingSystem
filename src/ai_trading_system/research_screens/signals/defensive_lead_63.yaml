@@ -1,0 +1,16 @@
+signal_id: defensive_lead_63
+mechanism: >-
+  防御行业领先：投资者变谨慎时先挪到需求稳定的行业，再轮到卖出大盘；防御行业过去一个季度明显跑赢大盘，说明风险偏好在
+  下降，之后的波动偏高。防御篮子是 Ken French 49 行业里的 Food、Beer、Smoke、Hshld、Drugs、Util（行业表缺其中任何
+  一列就报错），每天取其中有收益的行业的等权平均，少于 3 个时当天没有值；大盘收益是三因子文件的 Mkt-RF 加 RF。信号值 =
+  篮子过去 63 个交易日的复利收益减大盘同期的复利收益，窗口不满或窗口里有一天篮子或大盘没有值时没有值。所有市场共用
+  同一个值。来自研究自动循环第三批假设卡 H11，写在任何筛选之前；防御行业清单是按需求稳定性定的，不是文献的清单。
+expected_sign: 1
+target: risk
+params:
+  window: 63
+sources:
+  - ff_49_industries_daily
+  - ff_factors_daily
+markets: all
+literature: Hong, Torous & Valkanov 2007, Do Industries Lead Stock Markets?, Journal of Financial Economics 83(2); Baker & Wurgler 2012, Comovement and Predictability Relationships Between Bonds and the Cross-Section of Stocks, Review of Asset Pricing Studies 2(1)

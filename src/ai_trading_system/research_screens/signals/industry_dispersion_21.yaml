@@ -1,0 +1,14 @@
+signal_id: industry_dispersion_21
+mechanism: >-
+  行业收益离散度：各行业当天收益差得越开，说明公司和行业层面的消息、分歧越多，这种不确定性会传到整个市场，之后的大盘
+  波动偏高。每个交易日，当天有收益的行业不少于 2 个时，取它们收益的截面标准差（ddof = 0），否则当天没有值；信号值是
+  过去 21 个交易日这个标准差的均值，窗口不满或窗口里有一天没有值时没有值。所有市场共用同一个值。来自研究自动循环第三批
+  假设卡 H10，写在任何筛选之前。
+expected_sign: 1
+target: risk
+params:
+  window: 21
+sources:
+  - ff_49_industries_daily
+markets: all
+literature: Stivers 2003, Firm-Level Return Dispersion and the Future Volatility of Aggregate Stock Market Returns, Journal of Financial Markets 6(3); Garcia, Mantilla-Garcia & Martellini 2014, A Model-Free Measure of Aggregate Idiosyncratic Volatility and the Prediction of Market Returns, Journal of Financial and Quantitative Analysis 49(5) (原文用个股，这里是 49 个行业的粗化版本)

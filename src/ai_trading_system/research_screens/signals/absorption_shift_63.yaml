@@ -1,0 +1,18 @@
+signal_id: absorption_shift_63
+mechanism: >-
+  吸收比的突变：行业收益的协方差里前几个公共因子解释的比例（吸收比）越高，各行业绑得越紧，冲击越容易传开；吸收比在
+  短时间里明显高于它自己过去一年的水平，说明市场正在变得脆弱，之后的波动偏高。每个交易日 t，取 t 和它之前共 63 个
+  交易日都有收益的行业（k 个，少于 2 个时当天没有吸收比），算样本协方差矩阵（ddof = 1）；吸收比 = 最大的 ceil(k / 5)
+  个特征值之和除以全部特征值之和（全部特征值之和为 0 时没有值）。信号值 = 吸收比过去 15 个交易日的均值减过去 252 个
+  交易日的均值，除以过去 252 个交易日的标准差（ddof = 1）；窗口不满、窗口里有一天没有吸收比或标准差为 0 时没有值。
+  所有市场共用同一个值。来自研究自动循环第三批假设卡 H09，写在任何筛选之前。
+expected_sign: 1
+target: risk
+params:
+  window: 63
+  short: 15
+  long: 252
+sources:
+  - ff_49_industries_daily
+markets: all
+literature: Kritzman, Li, Page & Rigobon 2011, Principal Components as a Measure of Systemic Risk, Journal of Portfolio Management 37(4) (原文 51 个行业、500 天指数加权窗口；这里缩到 63 天等权，以赶上试跑门第一段的起点)
