@@ -34,6 +34,7 @@
 | `assets.md` | 可以复用的代码、检验和记录，以及它们在哪里 |
 | `_template/` | 一个研究问题的样例：`prereg.yaml`（逐项说明）和 `strategy.py`（策略接口）；`brief.md` 是 pi 研究运行的 brief 模板 |
 | `_trials/` | 试跑：门 `prereg.yaml`（C 区）、每个候选一份试跑计划（`T0001.yaml` 等）、试跑记录 `runs/`；见 `_trials/README.md` |
+| `signal_names.yaml`、`<问题ID>/zh.yaml` | 研究进展页面用的中文名和中文说明（TRADING-2568）：信号的中文名；每题的中文标题、一句话摘要、判定摘要和每个策略的名字与角色。只给页面显示用，不进评估台、不影响任何运行；格式见 `_template/zh.yaml` |
 | `QQQ-Q1/` | 第一题（已结束）：结论 `decision.md`；预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |
 | `QQQ-Q2/` | 第二题（已结束）：结论 `decision.md`；预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |
 | `QQQ-Q3/` | 第三题（已结束）：结论 `decision.md`；预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |
@@ -75,8 +76,8 @@ git checkout research-archive-2026-10-12 -- <路径>     # 取回到工作区
 评估台建好后启用，细节以 TRADING-2565 的需求文档为准。命令都是 `python -m ai_trading_system.research_bench ...`，输出只有汇总。
 
 1. Owner 定问题。同时进行的问题数不设上限（TRADING-2567）；假阳性靠评估台跨问题累计试验次数、抬高门槛来控制。
-2. 新信号先写进 `src/ai_trading_system/research_screens/signals/`（模块和规格），用 `screen <id> --signal-snapshot <ID> [--bench-snapshot <ID>]` 筛选并进全局账，只有候选才开题；经典信号（均线、动量、实际波动）是基准，不筛。`screen-ledger` 看全家族 BH 修正后的当前裁决。策略是“一个或几个信号按固定规则变成仓位”时，复制 `_template/signal_strategy.py` 为 `strategy.py`，在预注册里写信号和映射，不再写策略代码。候选先在 `_trials/` 试跑（见 `_trials/README.md`）：主配置在 QQQ 和美股大盘的开发窗口都过门，才交 owner 评估是否开题。
-3. 把 `_template/` 复制成 `research/<问题ID>/`，写 `prereg.yaml` 和 `strategy.py`（都在 C 区）：问题、问题类型（决定窗口角色）、固定的数据快照、策略和参数、要验证的策略和判定规则、已有研究的预期、样本地板、试验上限、停止条件。基准和成本由评估台固定，不在这里写。
+2. 新信号先写进 `src/ai_trading_system/research_screens/signals/`（模块和规格），用 `screen <id> --signal-snapshot <ID> [--bench-snapshot <ID>]` 筛选并进全局账，只有候选才开题；经典信号（均线、动量、实际波动）是基准，不筛。`screen-ledger` 看全家族 BH 修正后的当前裁决。策略是“一个或几个信号按固定规则变成仓位”时，复制 `_template/signal_strategy.py` 为 `strategy.py`，在预注册里写信号和映射，不再写策略代码。候选先在 `_trials/` 试跑（见 `_trials/README.md`）：主配置在 QQQ 和美股大盘的开发窗口都过门，才交 owner 评估是否开题。新信号的中文名可以顺手写进 `research/signal_names.yaml`（页面用，不写也行，页面会回退到规格里的说明）。
+3. 把 `_template/` 复制成 `research/<问题ID>/`，写 `prereg.yaml` 和 `strategy.py`（都在 C 区）：问题、问题类型（决定窗口角色）、固定的数据快照、策略和参数、要验证的策略和判定规则、已有研究的预期、样本地板、试验上限、停止条件。基准和成本由评估台固定，不在这里写。再写一份 `research/<问题ID>/zh.yaml`（格式见 `_template/zh.yaml`）：中文标题、一句话摘要、判定摘要和每个策略的中文名与角色，研究进展页面用；它只管显示，和预注册有出入时以预注册为准。
 4. 开发窗口：`run <问题ID> --strategy <id> [--set 参数=值] [--falsify]`。策略代码只给出每日目标敞口；执行滞后、成本、指标、基准都由评估台负责。每次运行登记在 `research/<问题ID>/runs/`，失败的也算；不同的配置算新试验，超过上限就拒绝。`--falsify` 同时跑标准证伪，不算新试验；要验证的策略都要先这样跑一次。`ledger` 看试验数和折算夏普，`report <问题ID>` 看第一屏。
 5. Owner 确认预注册，记为一个 `Owner-Decision`；`prereg.yaml` 和 `strategy.py` 随一次 ship 进 main，决定写进 `docs/requirements`。
 6. 验证窗口：`validate <问题ID>`，每题一次，pi 在单独一次运行里做（`_template/brief.md`）。预注册或策略模块和 main 上的不一致、或判定规则写了不存在的指标，就拒绝。验证和一致性窗口的运行总是跑标准证伪，判定规则可以读证伪结果（如 `ci_low.max_drawdown`）。之后才能 `consistency <问题ID>`。从第二题起，开题批准同时同意读验证窗口（`owner_decision:TRADING-2567:2026-10-14:opening_covers_validation_read`）：开发运行和实现核对都没有问题时，研究线程先告诉 owner，再读，不等回复。

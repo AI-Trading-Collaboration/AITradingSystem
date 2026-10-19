@@ -1,0 +1,19 @@
+# Chinese wording of this question for the research progress page (TRADING-2568). Optional display
+# text: the preregistration (prereg.yaml) decides everything and this file never feeds a run.
+# Without it the page shows the English question and a rule card generated from prereg.yaml.
+#   title    one Chinese sentence naming the question
+#   summary  what the formal strategies do, in plain Chinese (technical terms may stay English)
+#   verdict  optional: when the verdict is keep, reject or evidence insufficient, in plain Chinese
+#   strategies.<id>   every key must be a strategy id of prereg.yaml
+#     name   short Chinese name;  role  what it is (formal strategy, reference rule, variant)
+#     rule   optional [{label, text}] lines, only for strategies the page cannot describe itself
+#            (custom functions in strategy.py); strategies using signal_exposure or fixed_exposure
+#            get their rule card generated from prereg.yaml
+schema_version: research_zh.v1
+title: 一句话中文题目
+summary: >-
+  用几句中文说明正式策略怎么定仓位、多久调一次、和什么对照。
+strategies:
+  strategy_id:
+    name: 中文短名
+    role: 正式策略

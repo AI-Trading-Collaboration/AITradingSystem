@@ -123,8 +123,10 @@ flowchart LR
   守卫防的是误操作，不是安全边界；窗口由评估台控制。
 - 人工判断评估（TRADING-2569，只读，production_effect=none）：owner 在训练手册里记的判断导出成 `judgments_export.v1`，`python -m ai_trading_system.research_judgments check|import|settle|report` 检查后原样存进数据目录 `data/external/judgments/`（不入库、不打印判断内容、不发给外部模型），导入记录 `imports.jsonl` 是哈希链；`settle` 用价格缓存 `prices_daily.csv` 的 adj_close 对基准（默认 SMH）结算价格类判断，其余沿用台账的人工结果，状态 settled/pending/void/data_gap，窗口异常只标 data_gap 不估算，已结算的价格结果冻结（再算不一致就整次拒绝），结果写在同目录 `settlements/` 和哈希链 `settlements.jsonl`（只有 id、数字、状态和哈希，不含判断文字），`report` 对已结算的 research 判断按研究思路出报告（事件合并成样本、命中率和 Wilson 区间、记分与原始两个 Brier、对基准率的提升和最小可检出效应、校准表、样本不足/有希望/可放弃），写在 `reports/judgment_report_<日期>_<哈希前8位>.json` 和同名 `.md`（只有 id、数字和状态，不含判断文字）；阈值在 `config/research/research_judgment_eval.yaml`；研究思路标签在 `config/research/research_judgment_methods.yaml`。不进评分、仓位或任何生产路径。
 - 展示：研究进展页面（TRADING-2568）由 `python -m ai_trading_system.research_site` 只读上面这些记录（预注册、运行记录、窗口读取、
-  `decision.md`、台账、负结果清单、筛选账和研究任务卡）生成一个静态页面，不重算、不另存事实。页面不进门禁，生成失败不挡
-  发布。
+  `decision.md`、台账、负结果清单、筛选账和研究任务卡）生成一个静态页面，不重算、不另存事实。每个策略的买入、卖出和调仓规则、
+  每个信号的淘汰理由和试验次数，都是从预注册、信号规格、`research_screen.yaml`、`research_bench` 设置和试跑记录里按固定
+  规则翻译成中文；中文名和中文摘要另读 `research/signal_names.yaml` 和 `research/<问题ID>/zh.yaml`（只管显示，和预注册有出入以
+  预注册为准）。页面不进门禁，生成失败不挡发布。
   main 上研究记录、任务卡、需求文档或这两个包更新后，`.github/workflows/research-site.yml` 在 GitHub Actions 上重建页面并发布到 GitHub Pages。
 - 验证 PASS 不代表候选有效、可进入 paper shadow 或获准用于 production/broker。
 

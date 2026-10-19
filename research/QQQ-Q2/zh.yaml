@@ -1,0 +1,42 @@
+# Chinese wording of QQQ-Q2 for the research progress page (TRADING-2568). Display text only: the
+# preregistration (prereg.yaml) decides everything; this file never feeds a run.
+schema_version: research_zh.v1
+title: 经典趋势规则能让回撤更浅、左尾更温和吗？
+summary: >-
+  两个子问题。Q2a：1、3、6、12 个月四个周期里，收益为正的比例就是仓位，每月最后一个交易日调整，
+  不加杠杆，同族的 10 个月均线规则（进或出）做参照。Q2b：信用利差（穆迪 Baa 公司债收益率减 10 年期
+  国债收益率）处在自己历史最高的五分之一时，仓位减半。对照是平均仓位相同的固定仓位，看能否在几何
+  年化相近的前提下让回撤更浅、左尾更温和。
+verdict: >-
+  保留：所有门槛都成立。拒绝：左尾或最大回撤的点估计比对照更差（只对这种构造成立）。其余是证据不足。参照规则 ma10 的结果放在旁边，不改变 trend4 的结论。
+strategies:
+  trend4:
+    name: 四周期趋势
+    role: 正式策略 Q2a
+  ma10:
+    name: 10 个月均线（进或出）
+    role: 同族参照规则（同样要过门槛）
+  credit_gate:
+    name: 信用利差高位减半
+    role: 正式策略 Q2b
+  trend4_weekly:
+    name: 四周期趋势·每周调仓
+    role: 开发期变体：改成每周最后一个交易日调仓
+  trend3_long:
+    name: 三周期趋势（3、6、12 个月）
+    role: 开发期变体：去掉 1 个月周期，只用 3、6、12 个月三个周期
+  ma10_weekly:
+    name: 10 个月均线·每周调仓
+    role: 开发期变体：改成每周最后一个交易日调仓
+  credit_gate_top10:
+    name: 信用利差最高 10% 才减半
+    role: 开发期变体：门槛从最高的 20% 改成最高的 10%
+  credit_gate_top30:
+    name: 信用利差最高 30% 就减半
+    role: 开发期变体：门槛从最高的 20% 改成最高的 30%
+  credit_gate_low25:
+    name: 信用利差高位减到 25%
+    role: 开发期变体：高位时仓位从 50% 改成 25%
+  credit_gate_weekly:
+    name: 信用利差高位减半·每周调仓
+    role: 开发期变体：改成每周最后一个交易日调仓

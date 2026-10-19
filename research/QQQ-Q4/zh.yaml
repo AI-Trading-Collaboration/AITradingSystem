@@ -1,0 +1,26 @@
+# Chinese wording of QQQ-Q4 for the research progress page (TRADING-2568). Display text only: the
+# preregistration (prereg.yaml) decides everything; this file never feeds a run.
+schema_version: research_zh.v1
+title: 行业收益离散度高的时候降仓位，能改善回撤和左尾吗？
+summary: >-
+  信号是 49 个 Ken French 行业每天收益的横截面标准差，取过去 21 个交易日的均值。仓位 = 1 减去这个
+  信号在自己历史（到当天为止）里的百分位：离散度低时满仓，高时空仓，每月最后一个交易日调整，不加
+  杠杆。参照规则是对 QQQ 自己的 21 日已实现波动用同样的映射。
+verdict: >-
+  验证期只查方向（试跑门槛的第二段）。保留：两条门槛都成立，之后再用同样两条读一致性窗口。拒绝：左尾改善的 95% 区间上限不高于 0（这种构造下机制不存在）。证据不足：左尾成立，但每年少赚超过 1 个点（有效果但代价太高）。参照规则 rv21 的结果放在旁边，不改变结论。
+strategies:
+  dispersion:
+    name: 行业离散度减仓
+    role: 正式策略
+  rv21:
+    name: 21 日波动减仓（参照）
+    role: 参照规则：同样的映射，信号换成 QQQ 自己的 21 日已实现波动
+  dispersion_threshold:
+    name: 离散度过中位数就空仓
+    role: 开发期变体：改成门槛式，信号在自己历史的中位数以下满仓，以上空仓
+  dispersion_floor_half:
+    name: 离散度减仓·最低留半仓
+    role: 开发期变体：仓位只在 50% 到 100% 之间变化
+  dispersion_weekly:
+    name: 离散度减仓·每周调仓
+    role: 开发期变体：改成每周最后一个交易日调仓

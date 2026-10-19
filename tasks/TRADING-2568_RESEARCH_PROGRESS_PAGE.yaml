@@ -4,6 +4,6 @@ area: 研究方法 / 研究进展页面（GitHub Pages）
 priority: P2
 status: IN_PROGRESS
 next_owner: Project Owner
-next_step: 运行 02 按 tree 批准并发布后，确认 Actions 里 Research site 跑成功、页面能打开，然后 DONE
-acceptance: 见 docs/requirements/TRADING-2568_Research_Progress_Page.md 第 6 节：验收测试 tests/test_research_site.py 全过；页面只读仓库里的研究记录，同样内容生成同样页面；研究记录发布到 main 后 GitHub Pages 自动更新
-notes: production_effect=none；broker_action=none；requirement=docs/requirements/TRADING-2568_Research_Progress_Page.md；owner_decision:TRADING-2568:2026-10-14:research_progress_page（2026-10-13 23:44:05Z 卡上选 GitHub Pages）；替代 2026-10-10 退役的 Atlas（TRADING-2466）；2026-10-15：运行 02 加 .github/workflows/research-site.yml
+next_step: 运行 03（页面按策略写出买入、卖出、调仓规则和信号淘汰标准，除专业名词外用中文）发布后，在线上页面核对，然后 DONE
+acceptance: 见 docs/requirements/TRADING-2568_Research_Progress_Page.md 第 6 节：验收测试 tests/test_research_site.py 和 tests/test_research_site_zh.py 全过；页面只读仓库里的研究记录，同样内容生成同样页面；研究记录发布到 main 后 GitHub Pages 自动更新
+notes: production_effect=none；broker_action=none；requirement=docs/requirements/TRADING-2568_Research_Progress_Page.md；owner_decision:TRADING-2568:2026-10-14:research_progress_page（2026-10-13 23:44:05Z 卡上选 GitHub Pages）；替代 2026-10-10 退役的 Atlas（TRADING-2466）；2026-10-15：运行 02 加 .github/workflows/research-site.yml；2026-10-19：Baker 要求页面写清每个策略的买入、卖出、调仓规则和淘汰信号的标准、除专业名词外用中文（owner_decision:TRADING-2568:2026-10-19:page_rules_and_zh），运行 03

@@ -1,0 +1,69 @@
+# Plain Chinese names and one-line meanings of the research signals, for the research progress page
+# (TRADING-2568, src/ai_trading_system/research_site). Display text only: the page never changes a
+# signal's definition, which stays in src/ai_trading_system/research_screens/signals/<id>.yaml.
+# A signal missing here shows the part of its mechanism before the first "：" (or its id).
+schema_version: research_signal_names.v1
+signals:
+  absorption_shift_63:
+    name: 吸收比突变（63 日）
+    meaning: 49 个行业的收益有多「绑在一起」（前几个公共因子解释的比例，叫吸收比）：最近 15 日的平均比过去一年的平均高出多少个标准差
+  bad_vol_share_63:
+    name: 坏波动占比（63 日）
+    meaning: 过去 63 个交易日里，下跌日收益平方和减上涨日收益平方和，再除以两者之和（-1 到 1）；越高说明波动主要来自下跌
+  bill3m_change_126:
+    name: 3 个月国库券利率 126 日变化
+    meaning: 3 个月国库券利率比 126 个交易日前上升了多少个百分点；上升说明货币在收紧
+  credit_spread_change_63:
+    name: 信用利差 63 日变化
+    meaning: 信用利差（穆迪 Baa 公司债收益率减 10 年期国债收益率）比 63 个交易日前走阔了多少个百分点；走阔说明企业融资条件在变差
+  credit_spread_level:
+    name: 信用利差水平
+    meaning: 信用利差（穆迪 Baa 公司债收益率减 10 年期国债收益率）的当前水平，单位百分点；越高说明债券市场计入的风险越大
+  defensive_lead_63:
+    name: 防御行业领先（63 日）
+    meaning: 食品、啤酒、烟草、家用品、药品、公用事业 6 个防御行业，过去 63 个交易日的复利收益减大盘同期的复利收益；越高说明资金在躲进防御行业
+  dip_in_uptrend_10:
+    name: 上升趋势里的急跌（10 日）
+    meaning: 过去 252 个交易日的复利收益为正（慢趋势向上）时，过去 10 个交易日的复利收益；慢趋势不向上时没有值
+  high_distance_252:
+    name: 离 252 日高点的距离
+    meaning: 对数价格减过去 252 个交易日内最高的对数价格（不大于 0）；越接近 0 说明离高点越近
+  industry_breadth_210:
+    name: 行业广度（210 日均线）
+    meaning: 49 个行业里，累计收益指数低于自己 210 日均线的行业占比（0 到 1）；越高说明上涨在变窄
+  industry_corr_63:
+    name: 行业平均相关（63 日）
+    meaning: 49 个行业过去 63 个交易日日收益两两相关系数的平均值；越高说明分散效果越差
+  industry_dispersion_21:
+    name: 行业收益离散度（21 日）
+    meaning: 每天 49 个行业收益的横截面标准差，取过去 21 个交易日的均值；越高说明行业之间的分歧越大
+  ma_distance_210:
+    name: 距 210 日均线
+    meaning: 价格除以 210 个交易日（约 10 个月）简单均线再减 1；为正说明价格在均线之上、处在上升趋势
+  rate10_change_126:
+    name: 10 年期国债收益率 126 日变化
+    meaning: 10 年期美国国债收益率比 126 个交易日前上升了多少个百分点；上升说明长端利率在收紧
+  realized_vol_21:
+    name: 已实现波动（21 日）
+    meaning: 资产自己过去 21 个交易日日收益的标准差乘 √252（年化）；越高说明最近波动越大
+  reversal_profit_21:
+    name: 反转策略近期收益（21 日）
+    meaning: 一个短期反转组合（做多前 5 日跌得多的行业、做空涨得多的行业）过去 21 个交易日每天收益的总和；越高说明流动性提供者在撤退
+  term_spread_level:
+    name: 期限利差
+    meaning: 10 年期国债收益率减 3 个月国库券收益率（百分点）；低或倒挂说明货币偏紧、衰退风险高
+  tsmom_21:
+    name: 时间序列动量（21 日）
+    meaning: 资产自己最近 21 个交易日（约 1 个月）的复利收益；为正说明在上升趋势
+  tsmom_63:
+    name: 时间序列动量（63 日）
+    meaning: 资产自己最近 63 个交易日（约 3 个月）的复利收益；为正说明在上升趋势
+  tsmom_126:
+    name: 时间序列动量（126 日）
+    meaning: 资产自己最近 126 个交易日（约 6 个月）的复利收益；为正说明在上升趋势
+  tsmom_252:
+    name: 时间序列动量（252 日）
+    meaning: 资产自己最近 252 个交易日（约 12 个月）的复利收益；为正说明在上升趋势
+  vrp_21:
+    name: 波动率风险溢价（21 日）
+    meaning: VIX 减美股大盘过去 21 个交易日的实际波动（都用年化百分点）；越高说明市场为保险付的价比实际波动高得越多

@@ -8,14 +8,19 @@ import re
 import subprocess
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import ValidationError
 
 from ai_trading_system.research_bench import ledger as bench
+from ai_trading_system.research_bench import trial
 from ai_trading_system.research_bench.prereg import load_prereg
+from ai_trading_system.research_bench.screen_ledger import screen_ledger_summary
+from ai_trading_system.research_bench.screen_settings import load_screen_settings
+from ai_trading_system.research_bench.settings import load_settings
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
+from . import zh
 from .markdown import cells
 
 SCHEMA_VERSION = "research_site.v1"
@@ -144,6 +149,9 @@ def _run(record: dict[str, Any], dsr: Mapping[str, Any]) -> dict[str, Any]:
         if isinstance(rules, list)
         else None,
         "rules_total": len(rules) if isinstance(rules, list) else None,
+        "rules": zh.rule_rows(rules, record.get("falsification_confidence"))
+        if isinstance(rules, list)
+        else None,
     }
 
 
@@ -153,6 +161,8 @@ def _question(
     dsr: Mapping[str, Any],
     source: Mapping[str, Any],
     repo: Path,
+    names: Mapping[str, Any],
+    warmup_days: int | None,
 ) -> tuple[dict[str, Any], bool]:
     problems: list[str] = []
     question: dict[str, Any] = {
@@ -171,6 +181,9 @@ def _question(
         "last_activity": None,
         "links": {"prereg": None, "decision": None},
         "problems": problems,
+        "zh": None,
+        "strategy_cards": [],
+        "gates": [],
     }
     invalid = False
     try:
@@ -183,6 +196,34 @@ def _question(
             approved=prereg.owner_decision is not None
             and any(prereg.owner_decision in text for text in requirements),
         )
+        text_zh = zh.load_question_text(directory, question["strategies"], problems)
+        strategy_text = text_zh["strategies"] if text_zh else None
+        question["zh"] = (
+            {key: text_zh[key] for key in ("title", "summary", "verdict")} if text_zh else None
+        )
+        question["strategy_cards"] = [
+            zh.strategy_card(
+                strategy.model_dump(),
+                repo=repo,
+                names=names,
+                text=strategy_text,
+                validated=strategy.id in prereg.validation.strategies,
+                warmup_days=warmup_days,
+            )
+            for strategy in prereg.strategies
+        ]
+        card_names = {card["id"]: card["name"] for card in question["strategy_cards"]}
+        question["gates"] = [
+            {
+                "strategy": key,
+                "name": card_names[key],
+                "rules": zh.rule_rows(
+                    [rule.model_dump() for rule in prereg.validation.rules[key]],
+                    prereg.validation.confidence,
+                ),
+            }
+            for key in prereg.validation.strategies
+        ]
         if prereg.question_id != directory.name:
             problems.append(f"prereg.yaml: question_id {prereg.question_id} 与目录名不一致")
             invalid = True
@@ -343,6 +384,253 @@ def _screens(directory: Path, problems: list[str]) -> dict[str, Any]:
     }
 
 
+def _screen_settings(
+    repo: Path, problems: list[str]
+) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    path = repo / "config/research/research_screen.yaml"
+    if not path.exists():
+        return None, {}
+    try:
+        settings = load_screen_settings(path, root=repo).settings.screen
+        criteria = {
+            key: getattr(settings, key)
+            for key in (
+                "primary_market",
+                "primary_horizon",
+                "eliminate_breadth",
+                "candidate_breadth",
+                "copy_corr",
+                "bh_q",
+                "confidence",
+                "warmup_days",
+            )
+        }
+        criteria["screen_end"] = settings.screen_end.isoformat()
+    except Exception as exc:
+        problems.append(f"config/research/research_screen.yaml: {_error(exc)}")
+        return None, {}
+    try:
+        current = screen_ledger_summary(repo, settings)
+        return criteria, {str(m["number"]): m for m in current["members"]}
+    except Exception as exc:
+        problems.append(f"筛选记录的 BH 校正: {_error(exc)}")
+        return criteria, {}
+
+
+def _screen_details(
+    repo: Path,
+    screens: dict[str, Any],
+    names: Mapping[str, Any],
+    criteria: dict[str, Any] | None,
+    current: dict[str, Any],
+) -> dict[str, Any]:
+    details = {}
+    counts = dict.fromkeys(("candidate", "eliminated", "inconclusive"), 0)
+    for member in screens["members"]:
+        key = str(member["number"])
+        view = zh.signal_view(repo, member["signal_id"], names)
+        now = current.get(key, {})
+        results: dict[str, Any] = {}
+        try:
+            path = repo / "research/_screens/ledger" / f"{member['number']:04d}.json"
+            results = json.loads(path.read_text(encoding="utf-8")).get("results") or {}
+        except (OSError, ValueError, TypeError):
+            pass
+        inputs = results.get("verdict_inputs")
+        details[key] = {
+            **{k: view[k] for k in ("name", "meaning", "expectation")},
+            "adjusted_p": now.get("adjusted_p"),
+            "verdict_now": now.get("verdict"),
+            "direction_matches": results.get("direction_matches"),
+            "direction_tested": results.get("direction_tested"),
+            "reasons": zh.screen_reasons(inputs, results, now.get("adjusted_p"), criteria)
+            if inputs and criteria
+            else [],
+        }
+        verdict = now.get("verdict") or member["verdict"]
+        if verdict in counts:
+            counts[verdict] += 1
+    screens["counts"] = counts
+    return details
+
+
+def _spec_problems(repo: Path, problems: list[str]) -> None:
+    """Broken display inputs are visible without importing executable signal modules."""
+    directory = repo / "src/ai_trading_system/research_screens/signals"
+    for path in sorted(directory.glob("*.yaml")):
+        try:
+            raw = safe_load_yaml_path(path)
+            if (
+                not isinstance(raw, dict)
+                or not isinstance(raw.get("mechanism"), str)
+                or not raw["mechanism"].strip()
+                or isinstance(raw.get("expected_sign"), bool)
+                or raw.get("expected_sign") not in (-1, 1)
+                or raw.get("target") not in ("return", "risk")
+            ):
+                raise ValueError("信号规格缺少有效的 mechanism、expected_sign 或 target")
+        except Exception as exc:
+            problems.append(f"{path.relative_to(repo).as_posix()}: {_error(exc)}")
+
+
+def _bench_settings(repo: Path, problems: list[str]) -> dict[str, Any] | None:
+    path = repo / "config/research/research_bench.yaml"
+    if not path.exists():
+        return None
+    try:
+        settings = load_settings(path, root=repo).settings
+        falsification = settings.falsification
+        return {
+            **{
+                key: getattr(settings, key)
+                for key in (
+                    "cvar_levels",
+                    "rolling_years",
+                    "rolling_percentile",
+                )
+            },
+            **{
+                key: getattr(falsification, key)
+                for key in (
+                    "cost_bps",
+                    "delay_days",
+                    "placebo_block_days",
+                    "placebo_draws",
+                    "bootstrap_draws",
+                    "confidence",
+                )
+            },
+            "bootstrap_block_days": falsification.bootstrap_mean_block_days,
+            "episodes": [
+                {**episode.model_dump(), "name": zh.EPISODE_NAMES.get(episode.id, episode.id)}
+                for episode in settings.episodes
+            ],
+        }
+    except Exception as exc:
+        problems.append(f"config/research/research_bench.yaml: {_error(exc)}")
+        return None
+
+
+_MARKETS: dict[Literal["us_market", "qqq"], str] = {
+    "us_market": "美股大盘长历史（第一段，主检验）",
+    "qqq": "QQQ 开发期（第二段，只查方向）",
+}
+
+
+def _trials(
+    repo: Path,
+    names: Mapping[str, Any],
+    criteria: dict[str, Any] | None,
+    problems: list[str],
+) -> dict[str, Any]:
+    research = repo / "research"
+    directory = research / trial.TRIALS_DIR
+    view: dict[str, Any] = {
+        "present": directory.is_dir(),
+        "trial_configs": 0,
+        "question_trials": 0,
+        "global_trials": 0,
+        "gate": None,
+        "plans": [],
+    }
+    if not view["present"]:
+        return view
+    summary: dict[str, Any] = {}
+    try:
+        summary = trial.trial_ledger_summary(research)
+        for key in ("trial_configs", "question_trials", "global_trials"):
+            view[key] = summary[key]
+        problems.extend(f"试跑: {problem}" for problem in summary["problems"])
+    except Exception as exc:
+        problems.append(f"试跑: {_error(exc)}")
+    gate = None
+    try:
+        gate = trial.load_gate(directory / "prereg.yaml")
+        view["gate"] = {
+            "confidence": gate.confidence,
+            "markets": [
+                {
+                    "market": market,
+                    "name": name,
+                    "rules": zh.rule_rows(
+                        [rule.model_dump() for rule in gate.markets[market].rules],
+                        gate.confidence,
+                    ),
+                }
+                for market, name in _MARKETS.items()
+            ],
+        }
+    except Exception as exc:
+        problems.append(f"试跑: prereg.yaml: {_error(exc)}")
+    records = []
+    try:
+        records = trial.trial_records(research)
+    except Exception as exc:
+        problems.append(f"试跑: {_error(exc)}")
+    for path in trial.plan_paths(research):
+        try:
+            plan = trial.load_plan(path, gate)
+            primary = plan.config(plan.primary)
+            verdict = summary.get("trials", {}).get(plan.trial_id, {}).get("verdict", "incomplete")
+            markets = []
+            for market, name in _MARKETS.items():
+                record = next(
+                    (
+                        record
+                        for record in records
+                        if (
+                            record.get("trial_id") == plan.trial_id
+                            and record.get("config") == plan.primary
+                            and record.get("market") == market
+                            and record.get("status") == "ok"
+                        )
+                    ),
+                    None,
+                )
+                rules = record.get("gate") or [] if record else []
+                expected = [r.model_dump() for r in gate.markets[market].rules] if gate else []
+                keys = ("metric", "op", "value")
+                current = [{k: r[k] for k in keys} for r in rules] == [
+                    {k: r[k] for k in keys} for r in expected
+                ]
+                markets.append(
+                    {
+                        "market": market,
+                        "name": name,
+                        "holds": record.get("gate_holds") if record else None,
+                        "current_gate": current,
+                        "rules": zh.rule_rows(rules, gate.confidence if gate else None),
+                    }
+                )
+            view["plans"].append(
+                {
+                    "trial_id": plan.trial_id,
+                    "signals": [zh.signal_view(repo, key, names) for key in plan.candidate.signals]
+                    if plan.candidate
+                    else [],
+                    "owner_decision": plan.owner_decision,
+                    "hypothesis_card": plan.hypothesis_card,
+                    "from_validation_window": plan.from_validation_window,
+                    "primary": plan.primary,
+                    "configs": [config.id for config in plan.configs],
+                    "verdict": verdict,
+                    "verdict_name": trial.VERDICT_NAMES[verdict],
+                    "card": zh.strategy_card(
+                        primary.model_dump(),
+                        repo=repo,
+                        names=names,
+                        text=None,
+                        validated=False,
+                        warmup_days=criteria["warmup_days"] if criteria else None,
+                    ),
+                    "markets": markets,
+                }
+            )
+        except Exception as exc:
+            problems.append(f"试跑: {path.name}: {_error(exc)}")
+    return view
+
+
 def collect(repo: Path, *, repo_url: str | None = None) -> dict[str, Any]:
     """Collect repository facts without evaluating strategies or reading market data."""
     problems: list[str] = []
@@ -372,16 +660,30 @@ def collect(repo: Path, *, repo_url: str | None = None) -> dict[str, Any]:
         for path in sorted((repo / "docs" / "requirements").glob("*.md"))
         if (text := _text(path, problems, f"docs/requirements/{path.name}")) is not None
     ]
+    _spec_problems(repo, problems)
+    names = zh.load_signal_names(research, problems)
+    criteria, screen_current = _screen_settings(repo, problems)
+    bench_view = _bench_settings(repo, problems)
+    trials = _trials(repo, names, criteria, problems)
     questions: list[dict[str, Any]] = []
     chain_ok = True
     for directory in bench.question_directories(research):
-        question, valid_chain = _question(directory, requirements, dsr, source, repo)
+        question, valid_chain = _question(
+            directory,
+            requirements,
+            dsr,
+            source,
+            repo,
+            names,
+            criteria["warmup_days"] if criteria else None,
+        )
         questions.append(question)
         chain_ok = chain_ok and valid_chain
         problems.extend(f"{directory.name}: {problem}" for problem in question["problems"])
     ledger = _ledger(_text(research / "ledger.md", problems, "research/ledger.md"), problems)
     negative = _text(research / "negative_results.md", problems, "research/negative_results.md")
     screens = _screens(research / "_screens" / "ledger", problems)
+    screen_details = _screen_details(repo, screens, names, criteria, screen_current)
     tasks: list[dict[str, Any]] = []
     for path in sorted((repo / "tasks").glob("*.yaml")):
         try:
@@ -418,9 +720,21 @@ def collect(repo: Path, *, repo_url: str | None = None) -> dict[str, Any]:
         "summary": {
             "active": sum(question["status"] != "closed" for question in questions),
             "closed": sum(question["status"] == "closed" for question in questions),
-            "global_trials": summary["global_trials"]
-            if summary is not None
-            else sum(question["trials"] for question in questions),
+            "global_trials": trials["global_trials"]
+            if trials["present"]
+            else (
+                summary["global_trials"]
+                if summary is not None
+                else sum(question["trials"] for question in questions)
+            ),
+            "trial_configs": trials["trial_configs"],
+            "question_trials": trials["question_trials"]
+            if trials["present"]
+            else (
+                summary["global_trials"]
+                if summary is not None
+                else sum(question["trials"] for question in questions)
+            ),
             "failed_runs": sum(question["runs_failed"] for question in questions),
             "validation_reads": sum(
                 read["role"] == "validation" for question in questions for read in question["reads"]
@@ -433,6 +747,10 @@ def collect(repo: Path, *, repo_url: str | None = None) -> dict[str, Any]:
         "negative_results": negative,
         "negative_sections": _negative_sections(negative),
         "screens": screens,
+        "screen_details": screen_details,
+        "screen_criteria": criteria,
+        "bench": bench_view,
+        "trials": trials,
         "tasks": tasks,
         "activity": activity,
         "problems": problems,
