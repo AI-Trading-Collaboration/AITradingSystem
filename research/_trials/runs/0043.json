@@ -1,0 +1,1998 @@
+{
+ "config": "floor_half",
+ "cost_bps": 4.0,
+ "falsification_confidence": 0.95,
+ "gate": [
+  {
+   "holds": false,
+   "metric": "ci_low.cvar_5pct_relative_improvement",
+   "observed": -0.04075714584596183,
+   "op": ">",
+   "value": 0.0
+  },
+  {
+   "holds": false,
+   "metric": "comparison.max_drawdown",
+   "observed": -0.06308813527960799,
+   "op": ">=",
+   "value": 0.05
+  },
+  {
+   "holds": true,
+   "metric": "comparison.geometric_annual_return",
+   "observed": -0.007117477790168358,
+   "op": ">=",
+   "value": -0.01
+  },
+  {
+   "holds": true,
+   "metric": "cost_25.geometric_annual_return",
+   "observed": -0.009010028903381873,
+   "op": ">=",
+   "value": -0.01
+  },
+  {
+   "holds": false,
+   "metric": "comparison.cvar_5pct_relative_improvement",
+   "observed": -0.00875741892173401,
+   "op": ">=",
+   "value": 0.1
+  }
+ ],
+ "gate_holds": false,
+ "market": "us_market",
+ "prereg_sha256": "908dd6ecc5f201a00c6080bf3e861b33806e9001306998c07b513ad6fcde7379",
+ "prev_sha256": "aabb38de20b09c0b35cdc9d6b0632d4268f9a46aa6662b054e95b72c003b19cd",
+ "provenance": {
+  "branch": "unavailable",
+  "code_modified": false,
+  "commit": "b1a23c2377ffb5a24c78df48925f7bb4b8a43ffc"
+ },
+ "recorded_at": "2026-10-19T09:33:19Z",
+ "result": {
+  "benchmarks": {
+   "buy_and_hold_qqq": {
+    "annual_cost": 0.0,
+    "annual_turnover": 0.0,
+    "annual_volatility": 0.171879761845778,
+    "average_exposure": 1.0,
+    "cvar_1pct": -0.045371889400921656,
+    "cvar_5pct": -0.025916728280961185,
+    "episodes": {
+     "dotcom_bear": {
+      "complete": true,
+      "return": -0.36797175619258804
+     },
+     "global_financial_crisis": {
+      "complete": true,
+      "return": -0.44588874274395074
+     }
+    },
+    "excess_kurtosis": 19.684056142789007,
+    "excess_skewness": -0.10078699625726882,
+    "first_return_date": "1929-01-03",
+    "geometric_annual_return": 0.08936330646442414,
+    "last_return_date": "2010-12-31",
+    "longest_drawdown_days": 4612,
+    "max_drawdown": -0.8407399476860209,
+    "return_days": 21632,
+    "rolling_geometric_return_low": -0.05261515175181666,
+    "sharpe_daily": 0.023319413046999943,
+    "sharpe_vs_cash": 0.3701842058541409,
+    "worst_month": -0.2911037495299549,
+    "years": 81.99315537303217
+   },
+   "cash": {
+    "annual_cost": 0.0,
+    "annual_turnover": 0.0,
+    "annual_volatility": 0.0020223189561777806,
+    "average_exposure": 0.0,
+    "cvar_1pct": 0.0,
+    "cvar_5pct": 0.0,
+    "episodes": {
+     "dotcom_bear": {
+      "complete": true,
+      "return": 0.11214428095287787
+     },
+     "global_financial_crisis": {
+      "complete": true,
+      "return": 0.027777208332726122
+     }
+    },
+    "excess_kurtosis": 3.854069694744231,
+    "excess_skewness": -0.9535755970337009,
+    "first_return_date": "1929-01-03",
+    "geometric_annual_return": 0.03507016546092623,
+    "last_return_date": "2010-12-31",
+    "longest_drawdown_days": 0,
+    "max_drawdown": 0.0,
+    "return_days": 21632,
+    "rolling_geometric_return_low": 0.0,
+    "sharpe_daily": -1.02596617361764,
+    "sharpe_vs_cash": -16.286708093740756,
+    "worst_month": 0.0,
+    "years": 81.99315537303217
+   },
+   "matched_constant": {
+    "annual_cost": 3.512122784833127e-05,
+    "annual_turnover": 0.08780306962082819,
+    "annual_volatility": 0.1278084961860566,
+    "average_exposure": 0.7494732613297583,
+    "cvar_1pct": -0.03353745893660093,
+    "cvar_5pct": -0.019262117104203304,
+    "episodes": {
+     "dotcom_bear": {
+      "complete": true,
+      "return": -0.26440737192552755
+     },
+     "global_financial_crisis": {
+      "complete": true,
+      "return": -0.34287070249441
+     }
+    },
+    "excess_kurtosis": 18.530391656913835,
+    "excess_skewness": -0.09465272961607618,
+    "first_return_date": "1929-01-03",
+    "geometric_annual_return": 0.07918147189718994,
+    "last_return_date": "2010-12-31",
+    "longest_drawdown_days": 4140,
+    "max_drawdown": -0.7303422306399283,
+    "return_days": 21632,
+    "rolling_geometric_return_low": -0.029241874810340334,
+    "sharpe_daily": 0.023676210046672017,
+    "sharpe_vs_cash": 0.37584818263213876,
+    "worst_month": -0.21785107480472343,
+    "years": 81.99315537303217
+   }
+  },
+  "checks": {
+   "lookahead_cut_dates": 20,
+   "parameters_unchecked": [
+    "mapping",
+    "signals"
+   ],
+   "problems": []
+  },
+  "comparison": {
+   "annual_cost": 0.00033676947910067206,
+   "annual_turnover": 0.84192369775168,
+   "annual_volatility": 0.0007303984092923987,
+   "average_exposure": -0.00047012930775880424,
+   "cvar_1pct": -0.0007183676604894315,
+   "cvar_1pct_relative_improvement": -0.021419859562032732,
+   "cvar_5pct": -0.00016868642880100634,
+   "cvar_5pct_relative_improvement": -0.00875741892173401,
+   "geometric_annual_return": -0.007117477790168358,
+   "longest_drawdown_days": 684.0,
+   "max_drawdown": -0.06308813527960799,
+   "rolling_geometric_return_low": -0.005250077311117287,
+   "sharpe_vs_cash": -0.05055003748287007,
+   "worst_month": -0.0693886408598039
+  },
+  "diagnostics": {
+   "matched_volatility": {
+    "comparison": {
+     "annual_cost": 0.00033666204476114287,
+     "annual_turnover": 0.841655111902857,
+     "annual_volatility": 0.0009323477493085319,
+     "average_exposure": 0.0006892790037079655,
+     "cvar_1pct": -0.0007723201929702994,
+     "cvar_1pct_relative_improvement": -0.02306569042229303,
+     "cvar_5pct": -0.0001992368680982584,
+     "cvar_5pct_relative_improvement": -0.01035988755205408,
+     "geometric_annual_return": -0.007064725854524001,
+     "longest_drawdown_days": 684.0,
+     "max_drawdown": -0.06372140335538101,
+     "rolling_geometric_return_low": -0.005341722069371838,
+     "sharpe_vs_cash": -0.05057646316430342,
+     "worst_month": -0.06972724014049103
+    },
+    "exposure": 0.7478419402901122,
+    "summary": {
+     "annual_cost": 3.522866218786046e-05,
+     "annual_turnover": 0.08807165546965115,
+     "annual_volatility": 0.12760654684604048,
+     "average_exposure": 0.7483138530182916,
+     "cvar_1pct": -0.03348350640412006,
+     "cvar_5pct": -0.019231566664906052,
+     "episodes": {
+      "dotcom_bear": {
+       "complete": true,
+       "return": -0.2639023819306958
+      },
+      "global_financial_crisis": {
+       "complete": true,
+       "return": -0.3423686296858598
+      }
+     },
+     "excess_kurtosis": 18.52583103787119,
+     "excess_skewness": -0.09460050188714676,
+     "first_return_date": "1929-01-03",
+     "geometric_annual_return": 0.07912871996154558,
+     "last_return_date": "2010-12-31",
+     "longest_drawdown_days": 4140,
+     "max_drawdown": -0.7297089625641553,
+     "return_days": 21632,
+     "rolling_geometric_return_low": -0.029150230052085783,
+     "sharpe_daily": 0.023677874708131496,
+     "sharpe_vs_cash": 0.3758746083135721,
+     "worst_month": -0.2175124755240363,
+     "years": 81.99315537303217
+    }
+   }
+  },
+  "events": {
+   "count": 63,
+   "episodes": {
+    "crash_1929": {
+     "days": 43,
+     "derisked_share": 0.37209302325581395,
+     "exit_lag_days": 27,
+     "missed_loss": -0.23093019761837486,
+     "reentry_lag_days": 125
+    },
+    "crash_1987": {
+     "days": 22,
+     "derisked_share": 0.0,
+     "exit_lag_days": null,
+     "missed_loss": -0.22576076057536365,
+     "reentry_lag_days": 0
+    },
+    "dotcom_bear": {
+     "days": 671,
+     "derisked_share": 0.05961251862891207,
+     "exit_lag_days": 240,
+     "missed_loss": -0.3786977720588266,
+     "reentry_lag_days": 146
+    },
+    "flash_crash_1962": {
+     "days": 43,
+     "derisked_share": 0.46511627906976744,
+     "exit_lag_days": 23,
+     "missed_loss": -0.08740831674870109,
+     "reentry_lag_days": 169
+    },
+    "global_financial_crisis": {
+     "days": 378,
+     "derisked_share": 0.30423280423280424,
+     "exit_lag_days": 0,
+     "missed_loss": -0.26333308202261585,
+     "reentry_lag_days": 3
+    },
+    "ltcm_1998": {
+     "days": 64,
+     "derisked_share": 0.0,
+     "exit_lag_days": null,
+     "missed_loss": -0.03486023932840143,
+     "reentry_lag_days": 63
+    }
+   },
+   "events": [
+    {
+     "days": 58,
+     "end": "1930-01-21",
+     "min_exposure": 0.45523106195873686,
+     "outcome": "protective",
+     "qqq_return": -0.06582064437778035,
+     "start": "1929-11-06"
+    },
+    {
+     "days": 2,
+     "end": "1931-05-04",
+     "min_exposure": 0.5598214285714286,
+     "outcome": "neutral",
+     "qqq_return": 0.02523494000000004,
+     "start": "1931-05-02"
+    },
+    {
+     "days": 14,
+     "end": "1931-06-01",
+     "min_exposure": 0.5302070057554517,
+     "outcome": "protective",
+     "qqq_return": -0.14834327173568151,
+     "start": "1931-05-15"
+    },
+    {
+     "days": 50,
+     "end": "1933-01-03",
+     "min_exposure": 0.5167418404905526,
+     "outcome": "neutral",
+     "qqq_return": 0.012092525531654408,
+     "start": "1932-11-02"
+    },
+    {
+     "days": 4,
+     "end": "1934-09-19",
+     "min_exposure": 0.5580902417011249,
+     "outcome": "neutral",
+     "qqq_return": 0.03027971792814954,
+     "start": "1934-09-15"
+    },
+    {
+     "days": 51,
+     "end": "1935-02-01",
+     "min_exposure": 0.5331449718802823,
+     "outcome": "neutral",
+     "qqq_return": -0.033279332717800036,
+     "start": "1934-12-03"
+    },
+    {
+     "days": 51,
+     "end": "1937-08-02",
+     "min_exposure": 0.5018703160851118,
+     "outcome": "false_alarm",
+     "qqq_return": 0.059483184938244005,
+     "start": "1937-06-02"
+    },
+    {
+     "days": 74,
+     "end": "1938-01-03",
+     "min_exposure": 0.4637900573762246,
+     "outcome": "protective",
+     "qqq_return": -0.20235472331641036,
+     "start": "1937-10-02"
+    },
+    {
+     "days": 5,
+     "end": "1938-11-07",
+     "min_exposure": 0.560232004759072,
+     "outcome": "neutral",
+     "qqq_return": 0.02078180390761908,
+     "start": "1938-11-02"
+    },
+    {
+     "days": 12,
+     "end": "1938-12-01",
+     "min_exposure": 0.5508687763759517,
+     "outcome": "neutral",
+     "qqq_return": -0.01849273401785334,
+     "start": "1938-11-17"
+    },
+    {
+     "days": 25,
+     "end": "1940-07-01",
+     "min_exposure": 0.49656894984030325,
+     "outcome": "false_alarm",
+     "qqq_return": 0.06349565790664058,
+     "start": "1940-06-03"
+    },
+    {
+     "days": 51,
+     "end": "1943-07-01",
+     "min_exposure": 0.517394993635978,
+     "outcome": "false_alarm",
+     "qqq_return": 0.07262491737520738,
+     "start": "1943-05-03"
+    },
+    {
+     "days": 24,
+     "end": "1945-11-01",
+     "min_exposure": 0.5523116596058206,
+     "outcome": "neutral",
+     "qqq_return": 0.0430474042936102,
+     "start": "1945-10-02"
+    },
+    {
+     "days": 25,
+     "end": "1946-05-01",
+     "min_exposure": 0.5252108379687781,
+     "outcome": "neutral",
+     "qqq_return": 0.04122575974693099,
+     "start": "1946-04-02"
+    },
+    {
+     "days": 49,
+     "end": "1946-12-02",
+     "min_exposure": 0.4984883905818915,
+     "outcome": "neutral",
+     "qqq_return": -0.026610356524608525,
+     "start": "1946-10-02"
+    },
+    {
+     "days": 25,
+     "end": "1948-11-01",
+     "min_exposure": 0.5447951538338913,
+     "outcome": "false_alarm",
+     "qqq_return": 0.057381842866961685,
+     "start": "1948-10-02"
+    },
+    {
+     "days": 29,
+     "end": "1949-01-06",
+     "min_exposure": 0.5026103464641671,
+     "outcome": "neutral",
+     "qqq_return": 0.03728417103501869,
+     "start": "1948-12-02"
+    },
+    {
+     "days": 2,
+     "end": "1949-01-17",
+     "min_exposure": 0.5608457911886678,
+     "outcome": "neutral",
+     "qqq_return": 0.004705399999999971,
+     "start": "1949-01-15"
+    },
+    {
+     "days": 5,
+     "end": "1949-02-01",
+     "min_exposure": 0.5593990106528578,
+     "outcome": "neutral",
+     "qqq_return": -0.0026270721879035897,
+     "start": "1949-01-27"
+    },
+    {
+     "days": 43,
+     "end": "1950-10-02",
+     "min_exposure": 0.5035305849151543,
+     "outcome": "false_alarm",
+     "qqq_return": 0.1030610717912468,
+     "start": "1950-08-02"
+    },
+    {
+     "days": 66,
+     "end": "1953-08-03",
+     "min_exposure": 0.5123985564426692,
+     "outcome": "neutral",
+     "qqq_return": 0.016287009261102714,
+     "start": "1953-05-04"
+    },
+    {
+     "days": 1,
+     "end": "1953-09-01",
+     "min_exposure": 0.5580232974328159,
+     "outcome": "neutral",
+     "qqq_return": 0.0042999999999999705,
+     "start": "1953-09-01"
+    },
+    {
+     "days": 1,
+     "end": "1954-12-02",
+     "min_exposure": 0.5607300188797986,
+     "outcome": "neutral",
+     "qqq_return": 0.006799999999999917,
+     "start": "1954-12-02"
+    },
+    {
+     "days": 94,
+     "end": "1955-06-16",
+     "min_exposure": 0.5004964877498047,
+     "outcome": "false_alarm",
+     "qqq_return": 0.12043995440933863,
+     "start": "1955-02-02"
+    },
+    {
+     "days": 41,
+     "end": "1956-01-03",
+     "min_exposure": 0.5044020542920029,
+     "outcome": "false_alarm",
+     "qqq_return": 0.08366606249884767,
+     "start": "1955-11-02"
+    },
+    {
+     "days": 85,
+     "end": "1958-02-03",
+     "min_exposure": 0.49111569745172484,
+     "outcome": "neutral",
+     "qqq_return": -0.006343540500817313,
+     "start": "1957-10-02"
+    },
+    {
+     "days": 21,
+     "end": "1959-04-01",
+     "min_exposure": 0.5351443032678678,
+     "outcome": "neutral",
+     "qqq_return": 0.003275493755149572,
+     "start": "1959-03-03"
+    },
+    {
+     "days": 56,
+     "end": "1959-12-01",
+     "min_exposure": 0.5207049634723971,
+     "outcome": "neutral",
+     "qqq_return": 0.038123298255462235,
+     "start": "1959-09-11"
+    },
+    {
+     "days": 41,
+     "end": "1961-01-03",
+     "min_exposure": 0.5360844962672358,
+     "outcome": "false_alarm",
+     "qqq_return": 0.0807655572913768,
+     "start": "1960-11-02"
+    },
+    {
+     "days": 84,
+     "end": "1962-10-01",
+     "min_exposure": 0.46813400538400957,
+     "outcome": "protective",
+     "qqq_return": -0.05993791381450886,
+     "start": "1962-06-04"
+    },
+    {
+     "days": 41,
+     "end": "1964-03-02",
+     "min_exposure": 0.5307857701329164,
+     "outcome": "neutral",
+     "qqq_return": 0.03862676172565971,
+     "start": "1964-01-03"
+    },
+    {
+     "days": 64,
+     "end": "1965-10-01",
+     "min_exposure": 0.49994066500843853,
+     "outcome": "false_alarm",
+     "qqq_return": 0.0732278958080026,
+     "start": "1965-07-02"
+    },
+    {
+     "days": 65,
+     "end": "1966-09-01",
+     "min_exposure": 0.529181749850484,
+     "outcome": "protective",
+     "qqq_return": -0.08912573590724615,
+     "start": "1966-06-02"
+    },
+    {
+     "days": 42,
+     "end": "1968-06-03",
+     "min_exposure": 0.5280129747800227,
+     "outcome": "false_alarm",
+     "qqq_return": 0.11174667013086137,
+     "start": "1968-04-02"
+    },
+    {
+     "days": 65,
+     "end": "1969-11-03",
+     "min_exposure": 0.5024226989974292,
+     "outcome": "false_alarm",
+     "qqq_return": 0.0640502500780773,
+     "start": "1969-08-04"
+    },
+    {
+     "days": 59,
+     "end": "1970-08-24",
+     "min_exposure": 0.5085322956407166,
+     "outcome": "neutral",
+     "qqq_return": 0.03719046644664292,
+     "start": "1970-06-02"
+    },
+    {
+     "days": 84,
+     "end": "1973-08-01",
+     "min_exposure": 0.49159039703509877,
+     "outcome": "neutral",
+     "qqq_return": -0.03438385731398741,
+     "start": "1973-04-03"
+    },
+    {
+     "days": 11,
+     "end": "1973-08-29",
+     "min_exposure": 0.5556550772870756,
+     "outcome": "neutral",
+     "qqq_return": 0.012330295763764099,
+     "start": "1973-08-15"
+    },
+    {
+     "days": 10,
+     "end": "1974-12-02",
+     "min_exposure": 0.5456606629201719,
+     "outcome": "neutral",
+     "qqq_return": -0.04794959911268204,
+     "start": "1974-11-18"
+    },
+    {
+     "days": 61,
+     "end": "1978-03-01",
+     "min_exposure": 0.5116962310481464,
+     "outcome": "protective",
+     "qqq_return": -0.05838477104248252,
+     "start": "1977-12-02"
+    },
+    {
+     "days": 82,
+     "end": "1979-03-01",
+     "min_exposure": 0.49439334525038703,
+     "outcome": "neutral",
+     "qqq_return": 0.03566450154757983,
+     "start": "1978-11-02"
+    },
+    {
+     "days": 43,
+     "end": "1983-01-03",
+     "min_exposure": 0.536358116912778,
+     "outcome": "neutral",
+     "qqq_return": 0.03880193919249586,
+     "start": "1982-11-02"
+    },
+    {
+     "days": 63,
+     "end": "1984-12-03",
+     "min_exposure": 0.5260813505451177,
+     "outcome": "neutral",
+     "qqq_return": -0.005240179728916217,
+     "start": "1984-09-05"
+    },
+    {
+     "days": 87,
+     "end": "1986-11-03",
+     "min_exposure": 0.4980013062138694,
+     "outcome": "neutral",
+     "qqq_return": -0.03217280978245851,
+     "start": "1986-07-02"
+    },
+    {
+     "days": 62,
+     "end": "1988-02-01",
+     "min_exposure": 0.47901614173746493,
+     "outcome": "neutral",
+     "qqq_return": 0.02154200215403712,
+     "start": "1987-11-03"
+    },
+    {
+     "days": 63,
+     "end": "1990-02-01",
+     "min_exposure": 0.5051190730038612,
+     "outcome": "neutral",
+     "qqq_return": -0.04137730896619363,
+     "start": "1989-11-02"
+    },
+    {
+     "days": 5,
+     "end": "1990-10-18",
+     "min_exposure": 0.5584274332594804,
+     "outcome": "neutral",
+     "qqq_return": 0.03120838793623948,
+     "start": "1990-10-12"
+    },
+    {
+     "days": 63,
+     "end": "1994-08-01",
+     "min_exposure": 0.4990496110658886,
+     "outcome": "neutral",
+     "qqq_return": 0.009350614446336447,
+     "start": "1994-05-03"
+    },
+    {
+     "days": 21,
+     "end": "1996-05-01",
+     "min_exposure": 0.5128703309737956,
+     "outcome": "neutral",
+     "qqq_return": 0.01644650001807646,
+     "start": "1996-04-02"
+    },
+    {
+     "days": 65,
+     "end": "1996-11-01",
+     "min_exposure": 0.5037375972216864,
+     "outcome": "false_alarm",
+     "qqq_return": 0.08303853278440232,
+     "start": "1996-08-02"
+    },
+    {
+     "days": 61,
+     "end": "1998-02-02",
+     "min_exposure": 0.4971131413441983,
+     "outcome": "false_alarm",
+     "qqq_return": 0.05396683620202136,
+     "start": "1997-11-04"
+    },
+    {
+     "days": 13,
+     "end": "2001-03-01",
+     "min_exposure": 0.5429053453732446,
+     "outcome": "protective",
+     "qqq_return": -0.05790710794558751,
+     "start": "2001-02-12"
+    },
+    {
+     "days": 2,
+     "end": "2001-03-23",
+     "min_exposure": 0.5599677113817075,
+     "outcome": "neutral",
+     "qqq_return": 0.01671431000000001,
+     "start": "2001-03-22"
+    },
+    {
+     "days": 12,
+     "end": "2001-07-02",
+     "min_exposure": 0.5552087177389216,
+     "outcome": "neutral",
+     "qqq_return": 0.016927547554500766,
+     "start": "2001-06-15"
+    },
+    {
+     "days": 16,
+     "end": "2002-10-11",
+     "min_exposure": 0.5469039513619182,
+     "outcome": "neutral",
+     "qqq_return": -0.013585236059563188,
+     "start": "2002-09-20"
+    },
+    {
+     "days": 13,
+     "end": "2002-11-20",
+     "min_exposure": 0.5532638796630832,
+     "outcome": "neutral",
+     "qqq_return": 0.015710816055718668,
+     "start": "2002-11-04"
+    },
+    {
+     "days": 42,
+     "end": "2004-08-02",
+     "min_exposure": 0.5128002406230768,
+     "outcome": "neutral",
+     "qqq_return": -0.020776349017138318,
+     "start": "2004-06-02"
+    },
+    {
+     "days": 20,
+     "end": "2005-08-01",
+     "min_exposure": 0.5466415203829973,
+     "outcome": "neutral",
+     "qqq_return": 0.03951708118572439,
+     "start": "2005-07-05"
+    },
+    {
+     "days": 63,
+     "end": "2006-10-02",
+     "min_exposure": 0.504525657400737,
+     "outcome": "neutral",
+     "qqq_return": 0.03203915352310682,
+     "start": "2006-07-05"
+    },
+    {
+     "days": 42,
+     "end": "2007-11-01",
+     "min_exposure": 0.5233928379996747,
+     "outcome": "neutral",
+     "qqq_return": 0.018812098784841025,
+     "start": "2007-09-05"
+    },
+    {
+     "days": 11,
+     "end": "2007-11-28",
+     "min_exposure": 0.5544654212810156,
+     "outcome": "neutral",
+     "qqq_return": 0.020673497050368805,
+     "start": "2007-11-13"
+    },
+    {
+     "days": 84,
+     "end": "2009-02-02",
+     "min_exposure": 0.4375830486064868,
+     "outcome": "protective",
+     "qqq_return": -0.28200437512243326,
+     "start": "2008-10-02"
+    },
+    {
+     "days": 65,
+     "end": "2010-09-01",
+     "min_exposure": 0.4975416691685294,
+     "outcome": "neutral",
+     "qqq_return": 0.010011658959085068,
+     "start": "2010-06-02"
+    }
+   ],
+   "outcomes": {
+    "false_alarm": {
+     "count": 13,
+     "qqq_return": 1.6807444491957049
+    },
+    "neutral": {
+     "count": 42,
+     "qqq_return": 0.4878856487323018
+    },
+    "protective": {
+     "count": 8,
+     "qqq_return": -0.6538944104517085
+    }
+   },
+   "per_year": 0.7339127218934912,
+   "reference_exposure": 0.7490031320219995,
+   "short_count": 19,
+   "threshold": 0.5617523490164996
+  },
+  "exposure_gap": {
+   "avoided_downside": 0.05797077856398876,
+   "extra_downside": 0.05285277260265653,
+   "extra_upside": 0.0561614933145815,
+   "missed_upside": 0.067251193371943,
+   "reference_exposure": 0.7490031320219995
+  },
+  "falsification": {
+   "ci_high": {
+    "annual_volatility": 0.00466674323956074,
+    "cvar_1pct": 0.0014242238018707745,
+    "cvar_1pct_relative_improvement": 0.04084442383828793,
+    "cvar_5pct": 0.0004824037453042897,
+    "cvar_5pct_relative_improvement": 0.02436437418023634,
+    "geometric_annual_return": -0.0007476010663553097,
+    "max_drawdown": 0.04666128392857278,
+    "rolling_geometric_return_low": 0.00419936747971031,
+    "sharpe_vs_cash": -0.005063599083319708
+   },
+   "ci_low": {
+    "annual_volatility": -0.003445999714836102,
+    "cvar_1pct": -0.0026036518548205674,
+    "cvar_1pct_relative_improvement": -0.07981548295302568,
+    "cvar_5pct": -0.000774608851144889,
+    "cvar_5pct_relative_improvement": -0.04075714584596183,
+    "geometric_annual_return": -0.012789483430915427,
+    "max_drawdown": -0.10319482574930323,
+    "rolling_geometric_return_low": -0.021237249521570023,
+    "sharpe_vs_cash": -0.0952813220206532
+   },
+   "cost_15": {
+    "annual_cost": 0.00126288554662752,
+    "annual_turnover": 0.84192369775168,
+    "annual_volatility": 0.0007270591739610976,
+    "average_exposure": -0.00047012930775880424,
+    "cvar_1pct": -0.0007225073895809342,
+    "cvar_1pct_relative_improvement": -0.02154249489126359,
+    "cvar_5pct": -0.00017196706013074617,
+    "cvar_5pct_relative_improvement": -0.00892740824262895,
+    "geometric_annual_return": -0.008109240164664078,
+    "longest_drawdown_days": 694.0,
+    "max_drawdown": -0.06359827376448257,
+    "rolling_geometric_return_low": -0.00598152314390394,
+    "sharpe_vs_cash": -0.05742464102551881,
+    "worst_month": -0.06951426457585874
+   },
+   "cost_25": {
+    "annual_cost": 0.0021048092443792,
+    "annual_turnover": 0.84192369775168,
+    "annual_volatility": 0.0007250418556954408,
+    "average_exposure": -0.00047012930775880424,
+    "cvar_1pct": -0.0007264068778937774,
+    "cvar_1pct_relative_improvement": -0.021658031452535424,
+    "cvar_5pct": -0.00017494517299371237,
+    "cvar_5pct_relative_improvement": -0.009081709059279663,
+    "geometric_annual_return": -0.009010028903381873,
+    "longest_drawdown_days": 703.0,
+    "max_drawdown": -0.06406020233129128,
+    "rolling_geometric_return_low": -0.006632316875856397,
+    "sharpe_vs_cash": -0.06367708561470387,
+    "worst_month": -0.06962846795409083
+   },
+   "cost_4": {
+    "annual_cost": 0.00033676947910067206,
+    "annual_turnover": 0.84192369775168,
+    "annual_volatility": 0.0007303984092923987,
+    "average_exposure": -0.00047012930775880424,
+    "cvar_1pct": -0.0007183676604894315,
+    "cvar_1pct_relative_improvement": -0.021419859562032732,
+    "cvar_5pct": -0.00016868642880100634,
+    "cvar_5pct_relative_improvement": -0.00875741892173401,
+    "geometric_annual_return": -0.007117477790168358,
+    "longest_drawdown_days": 684.0,
+    "max_drawdown": -0.06308813527960799,
+    "rolling_geometric_return_low": -0.005250077311117287,
+    "sharpe_vs_cash": -0.05055003748287007,
+    "worst_month": -0.0693886408598039
+   },
+   "delay_1": {
+    "annual_cost": 0.0003377618099828298,
+    "annual_turnover": 0.8444045249570745,
+    "annual_volatility": 0.0010071663040331358,
+    "average_exposure": -0.00047044943162666275,
+    "cvar_1pct": -0.0008597492618781441,
+    "cvar_1pct_relative_improvement": -0.025642889237468394,
+    "cvar_5pct": -0.0002117321456016584,
+    "cvar_5pct_relative_improvement": -0.010995280371282183,
+    "geometric_annual_return": -0.007367538438975085,
+    "longest_drawdown_days": 705.0,
+    "max_drawdown": -0.06470559990194658,
+    "rolling_geometric_return_low": -0.004979984608946296,
+    "sharpe_vs_cash": -0.052706009361186024,
+    "worst_month": -0.06753466479933079
+   },
+   "delay_2": {
+    "annual_cost": 0.0003386531152993433,
+    "annual_turnover": 0.8466327882483582,
+    "annual_volatility": 0.0010287309985865245,
+    "average_exposure": -0.00047082088459893257,
+    "cvar_1pct": -0.0008824398418197515,
+    "cvar_1pct_relative_improvement": -0.026328478242847054,
+    "cvar_5pct": -0.00024097865134112273,
+    "cvar_5pct_relative_improvement": -0.012518189723091051,
+    "geometric_annual_return": -0.007510705145509888,
+    "longest_drawdown_days": 691.0,
+    "max_drawdown": -0.06553512179189247,
+    "rolling_geometric_return_low": -0.004915340751286291,
+    "sharpe_vs_cash": -0.05374074734940926,
+    "worst_month": -0.06517778198832569
+   },
+   "leave_episode": {
+    "dotcom_bear": {
+     "annual_volatility": 0.0009414366839523847,
+     "cvar_1pct": -0.0007797220859178736,
+     "cvar_1pct_relative_improvement": -0.02324159355043595,
+     "cvar_5pct": -0.00019688492488470835,
+     "cvar_5pct_relative_improvement": -0.010393740024946176,
+     "geometric_annual_return": -0.006720984144425263,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.003653159285159798,
+     "sharpe_vs_cash": -0.051417655683284214
+    },
+    "global_financial_crisis": {
+     "annual_volatility": 0.002990387539774028,
+     "cvar_1pct": -0.001998220177857342,
+     "cvar_1pct_relative_improvement": -0.06284064781746804,
+     "cvar_5pct": -0.0005565408289450804,
+     "cvar_5pct_relative_improvement": -0.030116649639556004,
+     "geometric_annual_return": -0.008497169443755143,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.011791162270570612,
+     "sharpe_vs_cash": -0.06949872645854677
+    }
+   },
+   "leave_episode_max": {
+    "annual_volatility": 0.002990387539774028,
+    "cvar_1pct": -0.0007797220859178736,
+    "cvar_1pct_relative_improvement": -0.02324159355043595,
+    "cvar_5pct": -0.00019688492488470835,
+    "cvar_5pct_relative_improvement": -0.010393740024946176,
+    "geometric_annual_return": -0.006720984144425263,
+    "max_drawdown": -0.06308813527960888,
+    "rolling_geometric_return_low": -0.003653159285159798,
+    "sharpe_vs_cash": -0.051417655683284214
+   },
+   "leave_episode_min": {
+    "annual_volatility": 0.0009414366839523847,
+    "cvar_1pct": -0.001998220177857342,
+    "cvar_1pct_relative_improvement": -0.06284064781746804,
+    "cvar_5pct": -0.0005565408289450804,
+    "cvar_5pct_relative_improvement": -0.030116649639556004,
+    "geometric_annual_return": -0.008497169443755143,
+    "max_drawdown": -0.06308813527960888,
+    "rolling_geometric_return_low": -0.011791162270570612,
+    "sharpe_vs_cash": -0.06949872645854677
+   },
+   "leave_year": {
+    "1929": {
+     "annual_volatility": 0.0006967095388664135,
+     "cvar_1pct": -0.0008406058995064844,
+     "cvar_1pct_relative_improvement": -0.02595643591138494,
+     "cvar_5pct": -0.00019964560274478294,
+     "cvar_5pct_relative_improvement": -0.010582454000183579,
+     "geometric_annual_return": -0.00656348134838021,
+     "max_drawdown": -0.06151310809391364,
+     "rolling_geometric_return_low": -0.004639299598759625,
+     "sharpe_vs_cash": -0.04973990986633864
+    },
+    "1930": {
+     "annual_volatility": 0.0005952101614571659,
+     "cvar_1pct": -0.0006428934723667484,
+     "cvar_1pct_relative_improvement": -0.019180615178434942,
+     "cvar_5pct": -0.00012724212352432235,
+     "cvar_5pct_relative_improvement": -0.006658842963856495,
+     "geometric_annual_return": -0.006223179766715978,
+     "max_drawdown": -0.06579333014351563,
+     "rolling_geometric_return_low": -0.004715689522288718,
+     "sharpe_vs_cash": -0.04646739928888394
+    },
+    "1931": {
+     "annual_volatility": -0.00013271156325775357,
+     "cvar_1pct": -0.00030572317592745396,
+     "cvar_1pct_relative_improvement": -0.009201836286733892,
+     "cvar_5pct": -2.5024777539309206e-05,
+     "cvar_5pct_relative_improvement": -0.0013258759161775976,
+     "geometric_annual_return": -0.005554793430128421,
+     "max_drawdown": -0.060148413428135594,
+     "rolling_geometric_return_low": -0.0015412841796054594,
+     "sharpe_vs_cash": -0.04072036763101411
+    },
+    "1932": {
+     "annual_volatility": -0.0013128775060625014,
+     "cvar_1pct": 4.335272893492281e-05,
+     "cvar_1pct_relative_improvement": 0.001346745703810989,
+     "cvar_5pct": 5.89831146471792e-05,
+     "cvar_5pct_relative_improvement": 0.0031919840123303595,
+     "geometric_annual_return": -0.006770735524654625,
+     "max_drawdown": -0.05142067637771475,
+     "rolling_geometric_return_low": -0.006135138119075005,
+     "sharpe_vs_cash": -0.0489098617403812
+    },
+    "1933": {
+     "annual_volatility": 0.0012827412322370807,
+     "cvar_1pct": -0.0009556376271190048,
+     "cvar_1pct_relative_improvement": -0.029505872669228633,
+     "cvar_5pct": -0.00023911863152767734,
+     "cvar_5pct_relative_improvement": -0.012752907137632167,
+     "geometric_annual_return": -0.0062566403193229925,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.0024318091282314602,
+     "sharpe_vs_cash": -0.04920750793808337
+    },
+    "1934": {
+     "annual_volatility": 0.0006310840236972426,
+     "cvar_1pct": -0.0006550792599917393,
+     "cvar_1pct_relative_improvement": -0.01954057696373483,
+     "cvar_5pct": -0.0001284643841633036,
+     "cvar_5pct_relative_improvement": -0.006691451838616836,
+     "geometric_annual_return": -0.006384630727941265,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.004686793844343035,
+     "sharpe_vs_cash": -0.0477207798342823
+    },
+    "1935": {
+     "annual_volatility": 0.0006013232181849293,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00017387969427739083,
+     "cvar_5pct_relative_improvement": -0.00900055722711384,
+     "geometric_annual_return": -0.007550196995849134,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.004456361136412047,
+     "sharpe_vs_cash": -0.055914902911215536
+    },
+    "1936": {
+     "annual_volatility": 0.0004619082828788146,
+     "cvar_1pct": -0.0006701308877406567,
+     "cvar_1pct_relative_improvement": -0.01990530768030674,
+     "cvar_5pct": -0.00011508269308037333,
+     "cvar_5pct_relative_improvement": -0.0059645845855766525,
+     "geometric_annual_return": -0.007255093128756829,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.006006330075688494,
+     "sharpe_vs_cash": -0.05352517557966824
+    },
+    "1937": {
+     "annual_volatility": 0.0014210190754361252,
+     "cvar_1pct": -0.001063159196276961,
+     "cvar_1pct_relative_improvement": -0.03219260917316623,
+     "cvar_5pct": -0.0002881704945264206,
+     "cvar_5pct_relative_improvement": -0.015167921346026009,
+     "geometric_annual_return": -0.0074039351771377215,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.007512543978538178,
+     "sharpe_vs_cash": -0.056766168337955114
+    },
+    "1938": {
+     "annual_volatility": 0.000616402968105445,
+     "cvar_1pct": -0.0006479272752109647,
+     "cvar_1pct_relative_improvement": -0.019390900430874953,
+     "cvar_5pct": -0.00012652825691907704,
+     "cvar_5pct_relative_improvement": -0.006616419078037775,
+     "geometric_annual_return": -0.006466134936479087,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.0036669833197613064,
+     "sharpe_vs_cash": -0.0485877944333018
+    },
+    "1939": {
+     "annual_volatility": 0.0006122329324261544,
+     "cvar_1pct": -0.0006457920487553254,
+     "cvar_1pct_relative_improvement": -0.01924834689968891,
+     "cvar_5pct": -0.00013511698137038536,
+     "cvar_5pct_relative_improvement": -0.007037643729263161,
+     "geometric_annual_return": -0.006595031595685169,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.004976069848090129,
+     "sharpe_vs_cash": -0.049173390226706803
+    },
+    "1940": {
+     "annual_volatility": 0.0006228203935478849,
+     "cvar_1pct": -0.0005450806175023928,
+     "cvar_1pct_relative_improvement": -0.016375075425734076,
+     "cvar_5pct": -0.00013774258898431244,
+     "cvar_5pct_relative_improvement": -0.007178603909766414,
+     "geometric_annual_return": -0.005973827519889299,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.00057923193240925,
+     "sharpe_vs_cash": -0.044551922846520264
+    },
+    "1941": {
+     "annual_volatility": 0.0005918165130552044,
+     "cvar_1pct": -0.0007005092254178322,
+     "cvar_1pct_relative_improvement": -0.020828194982479595,
+     "cvar_5pct": -0.00015048050464225304,
+     "cvar_5pct_relative_improvement": -0.007788058290456091,
+     "geometric_annual_return": -0.006873331264994079,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.0022108145467665957,
+     "sharpe_vs_cash": -0.05080398807701625
+    },
+    "1942": {
+     "annual_volatility": 0.0006889756898616761,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.0001632669030027442,
+     "cvar_5pct_relative_improvement": -0.008434738444986151,
+     "geometric_annual_return": -0.00710701736119837,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.004466914485634493,
+     "sharpe_vs_cash": -0.052642010920978866
+    },
+    "1943": {
+     "annual_volatility": 0.000826188669460215,
+     "cvar_1pct": -0.0007194811363840994,
+     "cvar_1pct_relative_improvement": -0.02137443600314767,
+     "cvar_5pct": -0.00018123954250292423,
+     "cvar_5pct_relative_improvement": -0.009375526012312198,
+     "geometric_annual_return": -0.006280397623183692,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005383993905467038,
+     "sharpe_vs_cash": -0.046851476323631014
+    },
+    "1944": {
+     "annual_volatility": 0.0007235908327367924,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.0001705912636748401,
+     "cvar_5pct_relative_improvement": -0.008809630258247136,
+     "geometric_annual_return": -0.006987654733370555,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.00535700123259094,
+     "sharpe_vs_cash": -0.05175859258874749
+    },
+    "1945": {
+     "annual_volatility": 0.0006823089678242578,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00014748366614379324,
+     "cvar_5pct_relative_improvement": -0.007625218706307498,
+     "geometric_annual_return": -0.006528317540087647,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005349397850261707,
+     "sharpe_vs_cash": -0.048457324872514196
+    },
+    "1946": {
+     "annual_volatility": 0.0008849843151350623,
+     "cvar_1pct": -0.0007568560023471296,
+     "cvar_1pct_relative_improvement": -0.022670367030125035,
+     "cvar_5pct": -0.0001793078474506514,
+     "cvar_5pct_relative_improvement": -0.009348031206729461,
+     "geometric_annual_return": -0.006420319927465612,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.0030609154079214926,
+     "sharpe_vs_cash": -0.048273964153165594
+    },
+    "1947": {
+     "annual_volatility": 0.00067357456235001,
+     "cvar_1pct": -0.000711288186075805,
+     "cvar_1pct_relative_improvement": -0.021114755160146045,
+     "cvar_5pct": -0.00016339795865037698,
+     "cvar_5pct_relative_improvement": -0.00845171134203744,
+     "geometric_annual_return": -0.006862857889011906,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.0032851873049059913,
+     "sharpe_vs_cash": -0.050886178010565275
+    },
+    "1948": {
+     "annual_volatility": 0.00073516060137363,
+     "cvar_1pct": -0.0007302114831729753,
+     "cvar_1pct_relative_improvement": -0.021728764752593954,
+     "cvar_5pct": -0.00016413733993895022,
+     "cvar_5pct_relative_improvement": -0.008510834519428986,
+     "geometric_annual_return": -0.0064206249668115195,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.003052917851812366,
+     "sharpe_vs_cash": -0.04779854774773601
+    },
+    "1949": {
+     "annual_volatility": 0.0007032666047019354,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00016164420041067315,
+     "cvar_5pct_relative_improvement": -0.00835279652005737,
+     "geometric_annual_return": -0.006931443461630923,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005241921039214548,
+     "sharpe_vs_cash": -0.05137494649373092
+    },
+    "1950": {
+     "annual_volatility": 0.0006639176673213787,
+     "cvar_1pct": -0.0006402378521218957,
+     "cvar_1pct_relative_improvement": -0.019058755006908023,
+     "cvar_5pct": -0.00015492882953964393,
+     "cvar_5pct_relative_improvement": -0.008032136362838874,
+     "geometric_annual_return": -0.0066679117600038085,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005286346603177339,
+     "sharpe_vs_cash": -0.049503728016655424
+    },
+    "1951": {
+     "annual_volatility": 0.0006869165161402513,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00015980384782176768,
+     "cvar_5pct_relative_improvement": -0.008254421168095561,
+     "geometric_annual_return": -0.00684303049031762,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005290899046503081,
+     "sharpe_vs_cash": -0.05071974992228612
+    },
+    "1952": {
+     "annual_volatility": 0.0007173029823273891,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.0001695019247970296,
+     "cvar_5pct_relative_improvement": -0.008757771010187885,
+     "geometric_annual_return": -0.0064609626862476705,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.0052875549960168106,
+     "sharpe_vs_cash": -0.047963315141103025
+    },
+    "1953": {
+     "annual_volatility": 0.0007719737859027131,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00017340887478758601,
+     "cvar_5pct_relative_improvement": -0.008967217333962945,
+     "geometric_annual_return": -0.0067355684928429305,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005285345783767426,
+     "sharpe_vs_cash": -0.05007796349629828
+    },
+    "1954": {
+     "annual_volatility": 0.0006974334297441265,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00016717679190206974,
+     "cvar_5pct_relative_improvement": -0.008639118859537259,
+     "geometric_annual_return": -0.0071231447036647355,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005289247117957724,
+     "sharpe_vs_cash": -0.05278441150192814
+    },
+    "1955": {
+     "annual_volatility": 0.0007953594532851271,
+     "cvar_1pct": -0.0006968303397096864,
+     "cvar_1pct_relative_improvement": -0.020760828798121158,
+     "cvar_5pct": -0.00017903544401303567,
+     "cvar_5pct_relative_improvement": -0.009279321321100627,
+     "geometric_annual_return": -0.0062005742002562425,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005289247117957807,
+     "sharpe_vs_cash": -0.04631661527836295
+    },
+    "1956": {
+     "annual_volatility": 0.0007198954457235118,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.0001698634087754225,
+     "cvar_5pct_relative_improvement": -0.008780250949016959,
+     "geometric_annual_return": -0.007072032902366909,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005285345783767426,
+     "sharpe_vs_cash": -0.052483835357742425
+    },
+    "1957": {
+     "annual_volatility": 0.0008536094947753647,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00019615010486673246,
+     "cvar_5pct_relative_improvement": -0.010152990175987862,
+     "geometric_annual_return": -0.007375251563503396,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005289247117957807,
+     "sharpe_vs_cash": -0.05494120355910043
+    },
+    "1958": {
+     "annual_volatility": 0.0006943813187087755,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00016847043521747707,
+     "cvar_5pct_relative_improvement": -0.008707215448102192,
+     "geometric_annual_return": -0.007205806209710966,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005289247117957752,
+     "sharpe_vs_cash": -0.053400697148796805
+    },
+    "1959": {
+     "annual_volatility": 0.0007945648446125164,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00017328677094516354,
+     "cvar_5pct_relative_improvement": -0.008954350137369827,
+     "geometric_annual_return": -0.0067239500132525165,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005293148452148191,
+     "sharpe_vs_cash": -0.0500401253505009
+    },
+    "1960": {
+     "annual_volatility": 0.0007122279749228189,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.0001711475107364288,
+     "cvar_5pct_relative_improvement": -0.008845012029789106,
+     "geometric_annual_return": -0.006495689870004109,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005289247117957807,
+     "sharpe_vs_cash": -0.04827936086826701
+    },
+    "1961": {
+     "annual_volatility": 0.0007182570288667423,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00016782324950036231,
+     "cvar_5pct_relative_improvement": -0.008676201841980228,
+     "geometric_annual_return": -0.006863146472733242,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.0052814444495770455,
+     "sharpe_vs_cash": -0.05092568339347914
+    },
+    "1962": {
+     "annual_volatility": 0.0009706798048819687,
+     "cvar_1pct": -0.0007772904965129626,
+     "cvar_1pct_relative_improvement": -0.023177058066947285,
+     "cvar_5pct": -0.00021227751404218412,
+     "cvar_5pct_relative_improvement": -0.011016760404371172,
+     "geometric_annual_return": -0.007004355152018554,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005289247117957807,
+     "sharpe_vs_cash": -0.052558179521346005
+    },
+    "1963": {
+     "annual_volatility": 0.0006954759458348836,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00016928058378275213,
+     "cvar_5pct_relative_improvement": -0.00875361831736458,
+     "geometric_annual_return": -0.007015343216134215,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005285345783767426,
+     "sharpe_vs_cash": -0.05200008802698691
+    },
+    "1964": {
+     "annual_volatility": 0.000728320111720443,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00017137514337081314,
+     "cvar_5pct_relative_improvement": -0.008854555865822246,
+     "geometric_annual_return": -0.006784541171651545,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005293148452148191,
+     "sharpe_vs_cash": -0.050324545671784904
+    },
+    "1965": {
+     "annual_volatility": 0.000714442874771376,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00016376069612473315,
+     "cvar_5pct_relative_improvement": -0.008461933880170658,
+     "geometric_annual_return": -0.006414812572638359,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005289247117957807,
+     "sharpe_vs_cash": -0.04765050615305083
+    },
+    "1966": {
+     "annual_volatility": 0.000855534830990462,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.0001889751143712634,
+     "cvar_5pct_relative_improvement": -0.009774236386811202,
+     "geometric_annual_return": -0.007111907590456115,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005289247117957807,
+     "sharpe_vs_cash": -0.053021752262331245
+    },
+    "1967": {
+     "annual_volatility": 0.0006732109083785465,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.0001633919707122282,
+     "cvar_5pct_relative_improvement": -0.008445603629336735,
+     "geometric_annual_return": -0.006710348835270774,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.003949262542023706,
+     "sharpe_vs_cash": -0.04976960446077666
+    },
+    "1968": {
+     "annual_volatility": 0.0007503848723255102,
+     "cvar_1pct": -0.0007159880632316012,
+     "cvar_1pct_relative_improvement": -0.02128594742679379,
+     "cvar_5pct": -0.00017328276283161761,
+     "cvar_5pct_relative_improvement": -0.008961366073345285,
+     "geometric_annual_return": -0.006730906657745103,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.0052439170211160575,
+     "sharpe_vs_cash": -0.05006983311427682
+    },
+    "1969": {
+     "annual_volatility": 0.0008036304839044439,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.0001705688966716426,
+     "cvar_5pct_relative_improvement": -0.008818085251683257,
+     "geometric_annual_return": -0.006990453185976214,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.0052814444495770455,
+     "sharpe_vs_cash": -0.05204408234271207
+    },
+    "1970": {
+     "annual_volatility": 0.0009337916105569,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00019452246849475593,
+     "cvar_5pct_relative_improvement": -0.010070865824001352,
+     "geometric_annual_return": -0.00699626758504901,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005297049786338572,
+     "sharpe_vs_cash": -0.05243095418878857
+    },
+    "1971": {
+     "annual_volatility": 0.0007024121383321369,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.0001651774682342247,
+     "cvar_5pct_relative_improvement": -0.008534489132779025,
+     "geometric_annual_return": -0.006991746625118284,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.004942754553082865,
+     "sharpe_vs_cash": -0.05188717695242606
+    },
+    "1972": {
+     "annual_volatility": 0.0007027258966826877,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00017083060072997647,
+     "cvar_5pct_relative_improvement": -0.008829678510240755,
+     "geometric_annual_return": -0.006799454091101373,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005441094304384251,
+     "sharpe_vs_cash": -0.050441988859472764
+    },
+    "1973": {
+     "annual_volatility": 0.0007948154748578518,
+     "cvar_1pct": -0.0006790431909941552,
+     "cvar_1pct_relative_improvement": -0.02015755498500271,
+     "cvar_5pct": -0.00014701942944623028,
+     "cvar_5pct_relative_improvement": -0.0076136320610778515,
+     "geometric_annual_return": -0.006785908449683811,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.004771957564630131,
+     "sharpe_vs_cash": -0.050683658877792914
+    },
+    "1974": {
+     "annual_volatility": 0.0009138900811157258,
+     "cvar_1pct": -0.0007228726395032553,
+     "cvar_1pct_relative_improvement": -0.021470616218285728,
+     "cvar_5pct": -0.0001962189063337734,
+     "cvar_5pct_relative_improvement": -0.010198881226358541,
+     "geometric_annual_return": -0.006693201435993154,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.004772147221277757,
+     "sharpe_vs_cash": -0.05043896231569023
+    },
+    "1975": {
+     "annual_volatility": 0.0005913631576067446,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00015618049033069847,
+     "cvar_5pct_relative_improvement": -0.008076189554308166,
+     "geometric_annual_return": -0.006837430736283248,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.009365611534425514,
+     "sharpe_vs_cash": -0.05074766365908495
+    },
+    "1976": {
+     "annual_volatility": 0.0007048057606374725,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00017188058081966245,
+     "cvar_5pct_relative_improvement": -0.008880902568408944,
+     "geometric_annual_return": -0.006792834479270954,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.006518701290210569,
+     "sharpe_vs_cash": -0.05045662316508598
+    },
+    "1977": {
+     "annual_volatility": 0.0006809023116274571,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.0001711012716987155,
+     "cvar_5pct_relative_improvement": -0.00884043870534069,
+     "geometric_annual_return": -0.006594973334980075,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005289247117957807,
+     "sharpe_vs_cash": -0.04893027674498118
+    },
+    "1978": {
+     "annual_volatility": 0.0008567430255845832,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.0001823384148452005,
+     "cvar_5pct_relative_improvement": -0.009426931523510968,
+     "geometric_annual_return": -0.0069086167262494835,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005289247117957807,
+     "sharpe_vs_cash": -0.051567597696259015
+    },
+    "1979": {
+     "annual_volatility": 0.0007134995559971713,
+     "cvar_1pct": -0.0007013376945399913,
+     "cvar_1pct_relative_improvement": -0.020826667855573064,
+     "cvar_5pct": -0.00016014301552419452,
+     "cvar_5pct_relative_improvement": -0.00828278792366375,
+     "geometric_annual_return": -0.006680387834261642,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005293148452148191,
+     "sharpe_vs_cash": -0.04968368184494748
+    },
+    "1980": {
+     "annual_volatility": 0.0006956330110867714,
+     "cvar_1pct": -0.0006959831828318927,
+     "cvar_1pct_relative_improvement": -0.020660422580824945,
+     "cvar_5pct": -0.00015430490364699845,
+     "cvar_5pct_relative_improvement": -0.007997191763868153,
+     "geometric_annual_return": -0.006443672567196579,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005293148452148191,
+     "sharpe_vs_cash": -0.04808703183905194
+    },
+    "1981": {
+     "annual_volatility": 0.0007035051335172737,
+     "cvar_1pct": -0.000712898409931266,
+     "cvar_1pct_relative_improvement": -0.021162555029631665,
+     "cvar_5pct": -0.00016088142579245152,
+     "cvar_5pct_relative_improvement": -0.008325768054113308,
+     "geometric_annual_return": -0.006555419301816509,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005293148452148191,
+     "sharpe_vs_cash": -0.04882120289686798
+    },
+    "1982": {
+     "annual_volatility": 0.0008968129287771354,
+     "cvar_1pct": -0.0007369734260806934,
+     "cvar_1pct_relative_improvement": -0.021891627868916186,
+     "cvar_5pct": -0.00018292499722325287,
+     "cvar_5pct_relative_improvement": -0.009466814639208827,
+     "geometric_annual_return": -0.006595762984169501,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005293148452148191,
+     "sharpe_vs_cash": -0.04950467885905235
+    },
+    "1983": {
+     "annual_volatility": 0.0006597054265291002,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.0001576190319451734,
+     "cvar_5pct_relative_improvement": -0.008147990059268712,
+     "geometric_annual_return": -0.006779969874779801,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005293148452148191,
+     "sharpe_vs_cash": -0.0503506632091017
+    },
+    "1984": {
+     "annual_volatility": 0.0007376352087529736,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00016107351606151413,
+     "cvar_5pct_relative_improvement": -0.00832274897502343,
+     "geometric_annual_return": -0.006830300562517391,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005293148452148191,
+     "sharpe_vs_cash": -0.05081645771652943
+    },
+    "1985": {
+     "annual_volatility": 0.0006889168232847853,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00016960130428320466,
+     "cvar_5pct_relative_improvement": -0.008762905717561111,
+     "geometric_annual_return": -0.006851671882132912,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005289247117957807,
+     "sharpe_vs_cash": -0.05084849774848854
+    },
+    "1986": {
+     "annual_volatility": 0.000829330848528792,
+     "cvar_1pct": -0.0007609597610586868,
+     "cvar_1pct_relative_improvement": -0.0226204447549401,
+     "cvar_5pct": -0.00019065348809170143,
+     "cvar_5pct_relative_improvement": -0.009873796365737049,
+     "geometric_annual_return": -0.007001408310393753,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005293148452148191,
+     "sharpe_vs_cash": -0.0522122858817331
+    },
+    "1987": {
+     "annual_volatility": 0.00043766590596647226,
+     "cvar_1pct": -0.0005938806358773835,
+     "cvar_1pct_relative_improvement": -0.018031475552050525,
+     "cvar_5pct": -0.00015851028461991157,
+     "cvar_5pct_relative_improvement": -0.00830451133536882,
+     "geometric_annual_return": -0.0065680023659717285,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005293148452148191,
+     "sharpe_vs_cash": -0.04906931691387423
+    },
+    "1988": {
+     "annual_volatility": 0.0007889430346205428,
+     "cvar_1pct": -0.0007829478873106199,
+     "cvar_1pct_relative_improvement": -0.02332303113262225,
+     "cvar_5pct": -0.00018207811984903913,
+     "cvar_5pct_relative_improvement": -0.009433959162492265,
+     "geometric_annual_return": -0.0067116128585451434,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005293148452148191,
+     "sharpe_vs_cash": -0.05009372159484804
+    },
+    "1989": {
+     "annual_volatility": 0.0005989381902177793,
+     "cvar_1pct": -0.0006735847516682603,
+     "cvar_1pct_relative_improvement": -0.020046448139209836,
+     "cvar_5pct": -0.00015424551639255102,
+     "cvar_5pct_relative_improvement": -0.007983384301783797,
+     "geometric_annual_return": -0.007151998941734142,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005289247117957807,
+     "sharpe_vs_cash": -0.052953038575772104
+    },
+    "1990": {
+     "annual_volatility": 0.0008133977295224359,
+     "cvar_1pct": -0.0006985951718667394,
+     "cvar_1pct_relative_improvement": -0.020743138496189233,
+     "cvar_5pct": -0.00017547866653842142,
+     "cvar_5pct_relative_improvement": -0.009092285303590035,
+     "geometric_annual_return": -0.006912509814659518,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005293148452148191,
+     "sharpe_vs_cash": -0.05161434794586517
+    },
+    "1991": {
+     "annual_volatility": 0.0006364148105650891,
+     "cvar_1pct": -0.0007201937414504783,
+     "cvar_1pct_relative_improvement": -0.021389767226018118,
+     "cvar_5pct": -0.00016340334532985445,
+     "cvar_5pct_relative_improvement": -0.00845215052499876,
+     "geometric_annual_return": -0.007170495275602651,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005293148452148191,
+     "sharpe_vs_cash": -0.053187103453239015
+    },
+    "1992": {
+     "annual_volatility": 0.0006543134153716157,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00016583845816296044,
+     "cvar_5pct_relative_improvement": -0.008569229570849277,
+     "geometric_annual_return": -0.006831527809612867,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005297049786338572,
+     "sharpe_vs_cash": -0.05061613596033476
+    },
+    "1993": {
+     "annual_volatility": 0.0006941753312020571,
+     "cvar_1pct": -0.0007010214803320688,
+     "cvar_1pct_relative_improvement": -0.020809985613394217,
+     "cvar_5pct": -0.00016659174918014566,
+     "cvar_5pct_relative_improvement": -0.0086122691581976,
+     "geometric_annual_return": -0.006936482921530943,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005293148452148191,
+     "sharpe_vs_cash": -0.051418507184036844
+    },
+    "1994": {
+     "annual_volatility": 0.0007500415501774105,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00016452757063337847,
+     "cvar_5pct_relative_improvement": -0.008504465563917036,
+     "geometric_annual_return": -0.006741343716018602,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005289247117957807,
+     "sharpe_vs_cash": -0.05011193332414704
+    },
+    "1995": {
+     "annual_volatility": 0.0007052653203494796,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.0001692257619567289,
+     "cvar_5pct_relative_improvement": -0.008744235043965811,
+     "geometric_annual_return": -0.007098053120002862,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005289247117957807,
+     "sharpe_vs_cash": -0.05262815402545812
+    },
+    "1996": {
+     "annual_volatility": 0.0007905698601541333,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00017329228920308706,
+     "cvar_5pct_relative_improvement": -0.008964473765939734,
+     "geometric_annual_return": -0.006394846232703658,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005297049786338572,
+     "sharpe_vs_cash": -0.04770455891370845
+    },
+    "1997": {
+     "annual_volatility": 0.0008359805096502526,
+     "cvar_1pct": -0.0007550832226913343,
+     "cvar_1pct_relative_improvement": -0.022495992665970112,
+     "cvar_5pct": -0.00018127336457833196,
+     "cvar_5pct_relative_improvement": -0.009395295475935764,
+     "geometric_annual_return": -0.006717707622297786,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005293148452148191,
+     "sharpe_vs_cash": -0.05025762426059943
+    },
+    "1998": {
+     "annual_volatility": 0.00076775219890865,
+     "cvar_1pct": -0.0006937478813293443,
+     "cvar_1pct_relative_improvement": -0.020700152036545325,
+     "cvar_5pct": -0.0001650111634051328,
+     "cvar_5pct_relative_improvement": -0.00858675079989028,
+     "geometric_annual_return": -0.006124023849087834,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005289247117957807,
+     "sharpe_vs_cash": -0.0459591211905126
+    },
+    "1999": {
+     "annual_volatility": 0.000599979253945282,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00014326359737642028,
+     "cvar_5pct_relative_improvement": -0.00742572590563349,
+     "geometric_annual_return": -0.006747941045127798,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.006204727378947925,
+     "sharpe_vs_cash": -0.05018181441166303
+    },
+    "2000": {
+     "annual_volatility": 0.00031700056193900705,
+     "cvar_1pct": -0.0006437069791940392,
+     "cvar_1pct_relative_improvement": -0.019208533166763613,
+     "cvar_5pct": -6.99100224862588e-05,
+     "cvar_5pct_relative_improvement": -0.003651255957781837,
+     "geometric_annual_return": -0.006596559735129931,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.004484116292427259,
+     "sharpe_vs_cash": -0.04886730827414082
+    },
+    "2001": {
+     "annual_volatility": 0.001103249676244783,
+     "cvar_1pct": -0.0007758984986580356,
+     "cvar_1pct_relative_improvement": -0.02313309463211706,
+     "cvar_5pct": -0.0002366220882158987,
+     "cvar_5pct_relative_improvement": -0.012337455853382551,
+     "geometric_annual_return": -0.006947091235617833,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005785691963034453,
+     "sharpe_vs_cash": -0.052614238013835024
+    },
+    "2002": {
+     "annual_volatility": 0.0009508073899157365,
+     "cvar_1pct": -0.0007588663739680063,
+     "cvar_1pct_relative_improvement": -0.02256031968667385,
+     "cvar_5pct": -0.00021272103113250534,
+     "cvar_5pct_relative_improvement": -0.0111192799129054,
+     "geometric_annual_return": -0.006728711019641995,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.0033417410072884464,
+     "sharpe_vs_cash": -0.05092605444734777
+    },
+    "2003": {
+     "annual_volatility": 0.0007200848044617014,
+     "cvar_1pct": -0.0007273293720330906,
+     "cvar_1pct_relative_improvement": -0.021598965887203055,
+     "cvar_5pct": -0.00016597299542441685,
+     "cvar_5pct_relative_improvement": -0.008594222213224386,
+     "geometric_annual_return": -0.007074842874444154,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.006569536168221632,
+     "sharpe_vs_cash": -0.05268841391738671
+    },
+    "2004": {
+     "annual_volatility": 0.000759293252447113,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00016813312006862605,
+     "cvar_5pct_relative_improvement": -0.008687212757194064,
+     "geometric_annual_return": -0.006865896099451194,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005289247117957807,
+     "sharpe_vs_cash": -0.05106195981339884
+    },
+    "2005": {
+     "annual_volatility": 0.0006839395790236014,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00016567503514409304,
+     "cvar_5pct_relative_improvement": -0.008560192278200195,
+     "geometric_annual_return": -0.006635741530545039,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.005123648121060812,
+     "sharpe_vs_cash": -0.04926433924729551
+    },
+    "2006": {
+     "annual_volatility": 0.0007873613018987702,
+     "cvar_1pct": -0.0007148141440966871,
+     "cvar_1pct_relative_improvement": -0.021219424043691856,
+     "cvar_5pct": -0.00017434056617736393,
+     "cvar_5pct_relative_improvement": -0.009013383715818994,
+     "geometric_annual_return": -0.0067536733851737,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.004836503274763385,
+     "sharpe_vs_cash": -0.050294797936509095
+    },
+    "2007": {
+     "annual_volatility": 0.0008109330852444918,
+     "cvar_1pct": -0.00068936213379997,
+     "cvar_1pct_relative_improvement": -0.020471073833346898,
+     "cvar_5pct": -0.00018094734579813393,
+     "cvar_5pct_relative_improvement": -0.009392876777056188,
+     "geometric_annual_return": -0.006749855899858714,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.007973019264424723,
+     "sharpe_vs_cash": -0.05044137826212214
+    },
+    "2008": {
+     "annual_volatility": 0.0024759261279101163,
+     "cvar_1pct": -0.0017390273393497538,
+     "cvar_1pct_relative_improvement": -0.05416836606223095,
+     "cvar_5pct": -0.0004478673042374072,
+     "cvar_5pct_relative_improvement": -0.023982404365487476,
+     "geometric_annual_return": -0.007986981004495075,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.01178813145321788,
+     "sharpe_vs_cash": -0.06405280184066725
+    },
+    "2009": {
+     "annual_volatility": 0.000928766623205235,
+     "cvar_1pct": -0.0009393076280082777,
+     "cvar_1pct_relative_improvement": -0.028194723953826075,
+     "cvar_5pct": -0.0002195899612461999,
+     "cvar_5pct_relative_improvement": -0.011525527629516563,
+     "geometric_annual_return": -0.007520240666234079,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.007037169482957961,
+     "sharpe_vs_cash": -0.056782016628250664
+    },
+    "2010": {
+     "annual_volatility": 0.0007792446792414531,
+     "cvar_1pct": -0.0006857094538413461,
+     "cvar_1pct_relative_improvement": -0.020396010261712234,
+     "cvar_5pct": -0.00016436175776014111,
+     "cvar_5pct_relative_improvement": -0.008542223464660803,
+     "geometric_annual_return": -0.006590599859440549,
+     "max_drawdown": -0.06308813527960888,
+     "rolling_geometric_return_low": -0.008461689380623073,
+     "sharpe_vs_cash": -0.04930597406079856
+    }
+   },
+   "leave_year_max": {
+    "annual_volatility": 0.0024759261279101163,
+    "cvar_1pct": 4.335272893492281e-05,
+    "cvar_1pct_relative_improvement": 0.001346745703810989,
+    "cvar_5pct": 5.89831146471792e-05,
+    "cvar_5pct_relative_improvement": 0.0031919840123303595,
+    "geometric_annual_return": -0.005554793430128421,
+    "max_drawdown": -0.05142067637771475,
+    "rolling_geometric_return_low": -0.00057923193240925,
+    "sharpe_vs_cash": -0.04072036763101411
+   },
+   "leave_year_min": {
+    "annual_volatility": -0.0013128775060625014,
+    "cvar_1pct": -0.0017390273393497538,
+    "cvar_1pct_relative_improvement": -0.05416836606223095,
+    "cvar_5pct": -0.0004478673042374072,
+    "cvar_5pct_relative_improvement": -0.023982404365487476,
+    "geometric_annual_return": -0.007986981004495075,
+    "max_drawdown": -0.06579333014351563,
+    "rolling_geometric_return_low": -0.01178813145321788,
+    "sharpe_vs_cash": -0.06405280184066725
+   },
+   "paired": {
+    "annual_volatility": 0.0007303984092923987,
+    "cvar_1pct": -0.0007183676604894315,
+    "cvar_1pct_relative_improvement": -0.021419859562032732,
+    "cvar_5pct": -0.00016868642880100634,
+    "cvar_5pct_relative_improvement": -0.00875741892173401,
+    "geometric_annual_return": -0.006776233499178372,
+    "max_drawdown": -0.06308813527960888,
+    "rolling_geometric_return_low": -0.005250077311117218,
+    "sharpe_vs_cash": -0.05055003748287007
+   },
+   "placebo_rank": {
+    "annual_volatility": 0.148,
+    "cvar_1pct": 0.759,
+    "cvar_1pct_relative_improvement": 0.759,
+    "cvar_5pct": 0.848,
+    "cvar_5pct_relative_improvement": 0.848,
+    "geometric_annual_return": 0.043,
+    "max_drawdown": 0.011,
+    "rolling_geometric_return_low": 0.404,
+    "sharpe_vs_cash": 0.06
+   },
+   "settings": {
+    "bootstrap_draws": 10000,
+    "bootstrap_mean_block_days": 21.0,
+    "confidence": 0.95,
+    "cost_bps": [
+     4.0,
+     15.0,
+     25.0
+    ],
+    "delay_days": [
+     1,
+     2
+    ],
+    "placebo_block_days": 21,
+    "placebo_draws": 1000,
+    "seed": 20261013
+   }
+  },
+  "fingerprint": "d7db3b337197fe4a2da5d8f79ea52757870df114d3760f22b6163c8ceffc7b45",
+  "strategy": {
+   "annual_cost": 0.00037189070694900334,
+   "annual_turnover": 0.9297267673725081,
+   "annual_volatility": 0.128538894595349,
+   "average_exposure": 0.7490031320219995,
+   "cvar_1pct": -0.03425582659709036,
+   "cvar_5pct": -0.01943080353300431,
+   "episodes": {
+    "dotcom_bear": {
+     "complete": true,
+     "return": -0.2820451030464344
+    },
+    "global_financial_crisis": {
+     "complete": true,
+     "return": -0.25742645730634584
+    }
+   },
+   "excess_kurtosis": 24.062669178119275,
+   "excess_skewness": -0.16088219308544455,
+   "first_return_date": "1929-01-03",
+   "geometric_annual_return": 0.07206399410702158,
+   "last_return_date": "2010-12-31",
+   "longest_drawdown_days": 4824,
+   "max_drawdown": -0.7934303659195363,
+   "return_days": 21632,
+   "rolling_geometric_return_low": -0.03449195212145762,
+   "sharpe_daily": 0.020491857000370407,
+   "sharpe_vs_cash": 0.3252981451492687,
+   "worst_month": -0.28723971566452733,
+   "years": 81.99315537303217
+  }
+ },
+ "run_id": "trial-r0043",
+ "schema_version": "research_trial_run.v1",
+ "seq": 43,
+ "settings_sha256": "69351836d2e2bacb8b2888fe783a0949f485af9bf3e0294ffdb78ba50d0c46c2",
+ "source": {
+  "market": "us_market",
+  "returns_source": "ff_factors_daily",
+  "signal_snapshot_id": "sig-7ad8aa00b736",
+  "snapshot_id": "sig-7ad8aa00b736"
+ },
+ "spec": {
+  "delay_days": 0,
+  "leveraged_benchmarks": false,
+  "params": {
+   "high": 1,
+   "low": 0.5,
+   "mapping": "linear",
+   "signals": [
+    {
+     "id": "absorption_shift_63",
+     "module_sha256": "9e77ac2653fb83fc79589ea9c1d555ffa123b73b129e6dd0b44e427d6039dd69",
+     "score": "percentile",
+     "spec_sha256": "26a0b9e8db9f919c791274430bbed31b4816f96ad5547a3d40661fbd007dc255"
+    }
+   ]
+  },
+  "question_type": "us_market_trial",
+  "rebalance": {
+   "band": 0.0,
+   "schedule": "month_end"
+  },
+  "strategy_id": "floor_half",
+  "window_role": "development"
+ },
+ "status": "ok",
+ "strategy": {
+  "function": "signal_exposure",
+  "id": "floor_half",
+  "module": "T0006.yaml",
+  "module_sha256": "d2b52987afc529c51bebdca45fce25c0c23191a83c0375fcc3f2b12d625db39d"
+ },
+ "trial_id": "T0006",
+ "window": {
+  "end": "2010-12-31",
+  "role": "development",
+  "start": "1929-01-02",
+  "window_id": "us_market_1929_2010"
+ }
+}
