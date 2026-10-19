@@ -1,0 +1,67 @@
+# Trial plan T0003 (TRADING-2565 trial mode; format in src/ai_trading_system/research_bench/trial.py).
+#
+# Written before any trial of this candidate ran; judged by the gate in prereg.yaml. Every run records
+# this file's SHA-256 and the bench refuses a run once the plan differs from the one an earlier run
+# used: a configuration thought of after reading results is a new hypothesis and starts again from a
+# hypothesis card. The signal is pinned by the SHA-256 of its module and specification. The four
+# configurations are the ones T0001 used, unchanged.
+#
+# from_validation_window is true: card H07 was chosen because QQQ-Q1's validation read put q1a's
+# failure down to its cost, so a validation read of this idea is not a clean test (charter section 4).
+schema_version: research_trial_plan.v1
+trial_id: T0003
+candidate:
+  signals: [bad_vol_share_63]
+  screens: [S0011]                  # candidate in the week 2 loop screen (signal snapshot sig-7ad8aa00b736)
+hypothesis_card: research loop period 1, hypothesis batch 02, card H07 (Patton and Sheppard 2015)
+from_validation_window: true
+data:
+  snapshot_id: qlh-20261013-0b0df53cb1a2   # long-history snapshot for the QQQ market, as T0001 and T0002
+  signal_snapshot_id: sig-7ad8aa00b736     # US market, the snapshot S0011 was screened on
+# Score "percentile": the signal's expanding percentile, oriented by its specification's expected sign
+# and target so that 1 is the end the hypothesis favours. The target is risk with expected sign +1
+# (a higher downside share of variance, higher later volatility), so the favoured end is a low
+# downside share. Mapping "linear" low 0, high 1: exposure = score; "threshold": high at or above
+# cut, low below it.
+primary: primary
+configs:
+  - id: primary
+    function: signal_exposure
+    params:
+      signals:
+        - {id: bad_vol_share_63, module_sha256: 86ec613f14ce6d15e3475d10c035c5f2edf45d47b4477de5abf3f559dac55cee, spec_sha256: 67cd95eba8edc22b130cc082181bd8d987636a47246b8650ca237ea0365f5195, score: percentile}
+      mapping: linear
+      low: 0
+      high: 1
+    rebalance: {schedule: month_end, band: 0.0}
+  # Sensitivity, never deciding: in or out at the median, a half floor, and a weekly rebalance.
+  - id: threshold
+    function: signal_exposure
+    params:
+      signals:
+        - {id: bad_vol_share_63, module_sha256: 86ec613f14ce6d15e3475d10c035c5f2edf45d47b4477de5abf3f559dac55cee, spec_sha256: 67cd95eba8edc22b130cc082181bd8d987636a47246b8650ca237ea0365f5195, score: percentile}
+      mapping: threshold
+      low: 0
+      high: 1
+      cut: 0.5
+    rebalance: {schedule: month_end, band: 0.0}
+  - id: floor_half
+    function: signal_exposure
+    params:
+      signals:
+        - {id: bad_vol_share_63, module_sha256: 86ec613f14ce6d15e3475d10c035c5f2edf45d47b4477de5abf3f559dac55cee, spec_sha256: 67cd95eba8edc22b130cc082181bd8d987636a47246b8650ca237ea0365f5195, score: percentile}
+      mapping: linear
+      low: 0.5
+      high: 1
+    rebalance: {schedule: month_end, band: 0.0}
+  - id: weekly
+    function: signal_exposure
+    params:
+      signals:
+        - {id: bad_vol_share_63, module_sha256: 86ec613f14ce6d15e3475d10c035c5f2edf45d47b4477de5abf3f559dac55cee, spec_sha256: 67cd95eba8edc22b130cc082181bd8d987636a47246b8650ca237ea0365f5195, score: percentile}
+      mapping: linear
+      low: 0
+      high: 1
+    rebalance: {schedule: week_end, band: 0.0}
+production_effect: none
+broker_action: none
