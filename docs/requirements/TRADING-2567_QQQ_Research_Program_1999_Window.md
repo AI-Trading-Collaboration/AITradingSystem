@@ -121,6 +121,14 @@
   - 这个决定同时同意之后读一次验证窗口（`owner_decision:TRADING-2567:2026-10-14:opening_covers_validation_read`）：开发运行跑完、Claude 核对实现没有问题以后，研究线程先告诉 Baker，再单独一次运行读验证窗口，不等回复；核对发现问题就停下问 Baker。
   - 这份决定批准的是设计。预注册、策略模块（C 区）和 `realized_vol_21` 的模块、规格（B 区）随后另作一批，按这条决定的记录批准，以 Baker 在自己的 PowerShell 里带决定记录 SHA-256 运行 approve.ps1 为准。它不是 paper-shadow 准入，也不是 production 或 broker 批准。
 
+- `owner_decision:TRADING-2567:2026-10-20:backfill_check`
+- 选择（Baker，2026-10-20 22:20 JST（13:20:21Z）在「研究流程评审与结果分析」线程的决定卡上选「回填检验」）：卡片的问题是「定横读的方向:回填检验、读一致性窗口,还是不调?」，这个选项的后果是「把已关闭题的最好变体(fast_slow、q1a 等)跑一遍试跑门第一阶段 US 1929–2010,预先写下预期,不读保留窗口、不改标签,循环线程打包、pi 跑。」另两个选项是「读一致性窗口」和「不调方向」。卡片的背景写明：关闭的经典趋势、波动两族和停车的广度和相关，证据都来自 2011–2021 验证窗口，这个窗口没有慢熊，只有 V 型急跌，而慢信号能砍的正是慢熊的回撤。依据是第一次横读（项目文件 `knowledge/claude/research-review/horizontal-read-2026-10-20.md`），需求和预先写下的预期在 `knowledge/claude/research-review/backfill-check-requirements-2026-10-20.md`。
+- 含义：
+  - 探针 `src/ai_trading_system/research_probes/backfill_check.py`（TRADING-2567-33，B 区）：六个配置照各题预注册原样载入（`signal_exposure`，信号按哈希钉住）：QQQ-Q3 的 fast_slow、QQQ-Q2 的 trend4、QQQ-Q4 的参照 rv21 判；QQQ-Q3 的参照 slow_only、周度调仓的 fast_slow_weekly 和 rv21_weekly（rv21 只改成每周调仓）只读。q1a 的 `realized_vol_exposure` 不在试跑门的函数表里，这次不加 C 区代码，波动族由 rv21 代表（验证窗口左尾 +6.0%，q1a +7.2%）。dispersion 不重跑，T0004 的第一段试跑记录并列在结果里。
+  - 尺子：试跑门 `research/_trials/prereg.yaml` 美股大盘的五条规则和快跌段表，原样；数据是 T0004 的美股大盘（信号快照 `sig-7ad8aa00b736`），按试跑的方式载入。开跑前检查每个配置在 1929-01-02 起的每一天都有目标敞口，算不出就停。
+  - 它是探针，不是试跑：不写试跑记录、不进 `_trials/` 编号、不占家族次数、不算横读计数、不读验证窗口和一致性窗口、不改标签。预期在运行之前写进 `research/scorecard.md` 第 1 节；结果由复盘线程对照需求第 4 节写好的用法读，台账加注另作一批记录。
+  - 研究会话在电脑上跑（数据只在本机），说明由研究线程按 Baker 2026-10-19 在「每日开发报告」线程选的「直接交」交给它。这份决定不是 paper-shadow 准入，也不是 production 或 broker 批准。
+
 ## 背景
 
 - 22 条旧研究线的结论在 `research/ledger.md`。旧的 QQQ 期权线（第 19 行）没测成：约 60 个任务只跑过 1 次策略损益（+4.48%），对照组只算了一股 QQQ，结果无法解释；它用来定方向的 Composer v2（第 21 行）后来被证伪。
@@ -217,3 +225,4 @@ FMP 没有期权数据；现有 FMP Starter 档只有 5 年历史。QQQ 实际 E
 - 2026-10-19：研究自动循环的 T0004（行业收益离散度，`industry_dispersion_21`）过了试跑门，Baker 选开题读验证，决定 `owner_decision:TRADING-2567:2026-10-19:qqq_q4_prereg` 写在上面：第四题 QQQ-Q4 以离散度规则为主，`realized_vol_21` 同法作对照，验证窗口只查方向。预注册 `research/QQQ-Q4/prereg.yaml`、策略模块和 `realized_vol_21` 另作一批（C 区），按这条决定的记录批准。production_effect=none；broker_action=none。
 - 2026-10-19：TRADING-2567-31 开第四题 QQQ-Q4：`research/QQQ-Q4/prereg.yaml` 和 `strategy.py`，连同对照信号 `realized_vol_21`（筛选的基准信号 `rv_21` 做成模块，固定基准、不筛选；模块、规格和测试在 B 区）进 main，按 owner_decision:TRADING-2567:2026-10-19:qqq_q4_prereg 的记录批准。`dispersion` 和 T0004 的主配置逐字相同，三个敏感性是 T0004 的另外三个配置。下一步研究会话跑开发窗口 5 个配置，Claude 核对实现，然后按开题批准读一次验证窗口（只查方向）。production_effect=none；broker_action=none。
 - 2026-10-19：第四题 QQQ-Q4 结束。开发窗口 5 个配置（`QQQ-Q4-r0001`..`r0005`），实现核对逐项复现试跑 T0004；验证窗口读一次（`QQQ-Q4-w0001`，运行 `r0006`、`r0007`，只查方向）。dispersion 证据不足（左尾 +7.6%、回撤浅 4.0 个点、几何年化每年少 1.6 个点），参照 rv21 证据不足（几何每年少 3.2 个点）。Baker 2026-10-19 23:00 JST（14:00:39Z）在「研究自动生成和初筛」线程的卡上选「同意」，卡上的问题是「同意 Q4 结论「证据不足」和两个「有效果但代价太高」标签吗？」：TRADING-2567-32 记 `research/QQQ-Q4/decision.md`、台账第 26 条、`families.md`（「波动」关闭、「广度和相关」停车）和 `scorecard.md`。production_effect=none；broker_action=none。
+- 2026-10-20：第一次横读（复盘线程）：左尾由崩盘日决定，试过的信号都是慢信号；验证窗口 2011–2021 没有慢熊，经典趋势、波动两族关闭的证据可能是窗口特异。Baker 选「回填检验」（上面的 `owner_decision:TRADING-2567:2026-10-20:backfill_check`）。TRADING-2567-33 加探针 `research_probes/backfill_check.py` 和测试，`research/scorecard.md` 第 1 节在任何运行之前写下五行预期、第 2 节加过门率和过验证率，`research/families.md` 加横读计数行和三族重开条件的一句，章程 `research/_loop/charter_p1.md` 加第 17 节（横读到数即唤醒）。下一步研究会话在电脑上跑探针。production_effect=none；broker_action=none。
