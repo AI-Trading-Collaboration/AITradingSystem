@@ -40,6 +40,7 @@ DEFAULT_DAILY_INPUT_CAPTURE_POLICY_PATH = (
 )
 _REDACTED_ENV_FRAGMENTS = ("KEY", "TOKEN", "SECRET", "PASSWORD", "AUTHORIZATION")
 _ERROR_SUMMARY_LIMIT = 600
+_ERROR_TAIL_LIMIT = 800
 _SUPPORTED_COMPONENT_IDS = (
     "market_macro",
     "fmp_forward_pit",
@@ -986,10 +987,9 @@ def _capture_component_with_source_control(
             )
             artifacts = _artifact_records(component.expected_paths, project_root)
             passed = return_code == 0 and not missing_expected
-            error_summary = _sanitize_error_summary(
-                exception_summary or stderr_text or (stdout_text if return_code else ""),
-                env,
-            )
+            error_source = exception_summary or stderr_text or (stdout_text if return_code else "")
+            error_summary = _sanitize_error_summary(error_source, env)
+            error_tail = _error_tail(error_source, env)
             blocker_code = (
                 "NONE"
                 if passed
@@ -1022,6 +1022,7 @@ def _capture_component_with_source_control(
                 "stdout_line_count": len(stdout_text.splitlines()),
                 "stderr_line_count": len(stderr_text.splitlines()),
                 "error_summary": error_summary or None,
+                "error_tail": error_tail,
                 "source_lease_id": lease["lease_id"],
             }
             prior_attempts.append(attempt)
@@ -1042,6 +1043,7 @@ def _capture_component_with_source_control(
                 "stdout_line_count": len(stdout_text.splitlines()),
                 "stderr_line_count": len(stderr_text.splitlines()),
                 "error_summary": error_summary or None,
+                "error_tail": error_tail,
                 "missing_expected_paths": list(missing_expected),
                 "artifacts": artifacts,
                 "blocker_code": blocker_code,
@@ -2519,12 +2521,24 @@ def _relative_path(path: Path, project_root: Path) -> str:
         return str(path.resolve())
 
 
-def _sanitize_error_summary(text: str, env: Mapping[str, str]) -> str:
+def _clean_error_text(text: str, env: Mapping[str, str]) -> str:
     sanitized = text.replace("\r", " ").replace("\n", " ").strip()
     for name, value in env.items():
         if value and any(fragment in name.upper() for fragment in _REDACTED_ENV_FRAGMENTS):
             sanitized = sanitized.replace(value, "[REDACTED]")
-    return sanitized[:_ERROR_SUMMARY_LIMIT]
+    return sanitized
+
+
+def _sanitize_error_summary(text: str, env: Mapping[str, str]) -> str:
+    return _clean_error_text(text, env)[:_ERROR_SUMMARY_LIMIT]
+
+
+def _error_tail(text: str, env: Mapping[str, str]) -> str | None:
+    """The end of a long error text: the final exception line is not in the first characters."""
+    cleaned = _clean_error_text(text, env)
+    if len(cleaned) <= _ERROR_SUMMARY_LIMIT:
+        return None
+    return cleaned[-_ERROR_TAIL_LIMIT:]
 
 
 def _required_text(mapping: Mapping[str, object], key: str) -> str:
