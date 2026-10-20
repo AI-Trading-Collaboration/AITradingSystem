@@ -1,0 +1,73 @@
+# Trial plan T0007 (TRADING-2565 trial mode; format in src/ai_trading_system/research_bench/trial.py).
+#
+# Written before any trial of this candidate ran; judged by the gate in prereg.yaml. Every run records
+# this file's SHA-256 and the bench refuses a run once the plan differs from the one an earlier run
+# used: a configuration thought of after reading results is a new hypothesis and starts again from a
+# hypothesis card. The signal is pinned by the SHA-256 of its module and specification. The four
+# configurations are the ones T0001 used, unchanged.
+#
+# from_validation_window is false: card H13 came from the literature and from the shape of the
+# development-window failures of questions one to four, not from any validation read (hypothesis
+# batch 04).
+#
+# Expected before running (charter section 12): card H13's most likely failure is that growth can lead
+# value for years (the late 1990s), so the signal cuts exposure years before a fall and pays for it in
+# geometric return; a mechanism this slow may also show little in 21-day risk. In S0017 the QQQ
+# interval included 0 while the US market interval did not, so the QQQ stage is the likelier to fail.
+schema_version: research_trial_plan.v1
+trial_id: T0007
+candidate:
+  signals: [growth_over_value_252]
+  screens: [S0017]                  # candidate in the batch 4 loop screen (signal snapshot sig-7ad8aa00b736)
+hypothesis_card: research loop period 1, hypothesis batch 04, card H13 (Baker and Wurgler 2006, 2007; Asness et al. 2000)
+from_validation_window: false
+data:
+  snapshot_id: qlh-20261013-0b0df53cb1a2   # long-history snapshot for the QQQ market, as T0001 and T0002
+  signal_snapshot_id: sig-7ad8aa00b736     # US market, the snapshot S0017 was screened on
+# Score "percentile": the signal's expanding percentile, oriented by its specification's expected sign
+# and target so that 1 is the end the hypothesis favours. The target is risk with expected sign +1
+# (growth stocks far ahead of value stocks over the past year, higher later volatility), so the
+# favoured end is value ahead of growth.
+# Mapping "linear" low 0, high 1: exposure = score; "threshold": high at or above cut, low below it.
+primary: primary
+configs:
+  - id: primary
+    function: signal_exposure
+    params:
+      signals:
+        - {id: growth_over_value_252, module_sha256: 092b892c20b60e4cdd52e93faafdd56d67959207cb81b4ed4ce274a845c251bd, spec_sha256: 1b492e7c21d89007e89c02a2a2f9a24f392eda9678a91a5cc140774d2388ac4e, score: percentile}
+      mapping: linear
+      low: 0
+      high: 1
+    rebalance: {schedule: month_end, band: 0.0}
+  # Sensitivity, never deciding: in or out at the median, a half floor, and a weekly rebalance.
+  - id: threshold
+    function: signal_exposure
+    params:
+      signals:
+        - {id: growth_over_value_252, module_sha256: 092b892c20b60e4cdd52e93faafdd56d67959207cb81b4ed4ce274a845c251bd, spec_sha256: 1b492e7c21d89007e89c02a2a2f9a24f392eda9678a91a5cc140774d2388ac4e, score: percentile}
+      mapping: threshold
+      low: 0
+      high: 1
+      cut: 0.5
+    rebalance: {schedule: month_end, band: 0.0}
+  - id: floor_half
+    function: signal_exposure
+    params:
+      signals:
+        - {id: growth_over_value_252, module_sha256: 092b892c20b60e4cdd52e93faafdd56d67959207cb81b4ed4ce274a845c251bd, spec_sha256: 1b492e7c21d89007e89c02a2a2f9a24f392eda9678a91a5cc140774d2388ac4e, score: percentile}
+      mapping: linear
+      low: 0.5
+      high: 1
+    rebalance: {schedule: month_end, band: 0.0}
+  - id: weekly
+    function: signal_exposure
+    params:
+      signals:
+        - {id: growth_over_value_252, module_sha256: 092b892c20b60e4cdd52e93faafdd56d67959207cb81b4ed4ce274a845c251bd, spec_sha256: 1b492e7c21d89007e89c02a2a2f9a24f392eda9678a91a5cc140774d2388ac4e, score: percentile}
+      mapping: linear
+      low: 0
+      high: 1
+    rebalance: {schedule: week_end, band: 0.0}
+production_effect: none
+broker_action: none
