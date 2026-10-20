@@ -1,0 +1,14 @@
+signal_id: may_oct_share_30
+mechanism: >-
+  五到十月降仓（Sell in May）：美国和大多数股市五月到十月的收益明显低于十一月到四月；美联储成立以前金融恐慌集中在
+  秋季，几次大跌也多在八到十月。对每个交易日 t（各市场用自己的交易日），看之后的 30 个日历日 t+1 到 t+30（按日历算，
+  不用交易日表），信号值 = 其中月份是五月到十月的天数除以 30，取值 0 到 1。只用 t 的日期，不用收益，也不用任何数据源。
+  用之后 30 天而不是当天的月份，是为了对上月底调仓：10 月最后一个交易日接近 0，4 月最后一个交易日接近 1。来自研究自动
+  循环第四批假设卡 H12（族：日历季节），写在任何筛选之前。
+expected_sign: -1
+target: return
+params:
+  days: 30
+sources: []
+markets: all
+literature: 'Bouman & Jacobsen 2002, The Halloween Indicator, "Sell in May and Go Away": Another Puzzle, American Economic Review 92(5); Maberly & Pierce 2004, Econ Journal Watch 1(1); Miron 1986, Financial Panics, the Seasonality of the Nominal Interest Rate, and the Founding of the Fed, American Economic Review 76(1)'

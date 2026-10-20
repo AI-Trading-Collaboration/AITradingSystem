@@ -1,0 +1,15 @@
+signal_id: growth_over_value_252
+mechanism: >-
+  成长股压倒价值股：投资者情绪过热时，钱涌向难估值的成长股，价值股相对大幅落后；之后情绪回落，往往伴随大跌和高波动。
+  HML 是 Ken French 三因子文件里价值减成长的日收益。信号值 = 1 减 HML 过去 252 个交易日（含当天）的复利增长，即成长股
+  过去一年跑赢价值股的幅度；窗口不满或窗口里有一天 HML 没有值时没有值。只用 HML 一列，所有市场共用同一个值。来自研究
+  自动循环第四批假设卡 H13（族：风格情绪），写在任何筛选之前；用 HML 过去一年的收益代替情绪指数和估值差，是为了赶上
+  试跑门第一段，不是文献的做法。
+expected_sign: 1
+target: risk
+params:
+  window: 252
+sources:
+  - ff_factors_daily
+markets: all
+literature: 'Baker & Wurgler 2006, Investor Sentiment and the Cross-Section of Stock Returns, Journal of Finance 61(4); Baker & Wurgler 2007, Investor Sentiment in the Stock Market, Journal of Economic Perspectives 21(2); Asness, Friedman, Krail & Liew 2000, Style Timing: Value versus Growth, Journal of Portfolio Management 26(3)'
