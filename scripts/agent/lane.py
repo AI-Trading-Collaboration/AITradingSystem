@@ -27,10 +27,12 @@ Actions (each prints one JSON line; exit 0 ok, 1 failed step, 2 refused before d
   status                         lanes, their runs, main, the daily window
 
 Rules it enforces: no two lanes hold overlapping allowed_paths (the rendered task views excepted:
-``ship.py --replay`` renders them again); one local-model run at a time; no start, gate or publish
-inside a closed daily-run window (daily_window.py); one publish at a time; a lane only ever moves
-to main or to its own branch. It does not review anything: Claude reviews the pushed branch, and
-publish.ps1 checks the reviewed tree, patch or change exactly as before.
+``ship.py --replay`` renders them again); one local-model run at a time; no gate or publish inside
+a closed daily-run window (daily_window.py), while start runs pi inside one (DEVX-031 3.7: pi
+writes code and runs targeted tests, the gate's full suite is what competes with the daily run);
+one publish at a time; a lane only ever moves to main or to its own branch. It does not review
+anything: Claude reviews the pushed branch, and publish.ps1 checks the reviewed tree, patch or
+change exactly as before.
 """
 
 from __future__ import annotations
@@ -482,7 +484,6 @@ class Lanes:
         run_dir = self.run_dir(run_id)
         self.check_lane_checkout(lane, path)
         self.no_publish_running()
-        self.window_open()
         files = self.check_run_dir(run_dir)
         brief = self.brief(run_dir / "brief.md", path)
         if brief.get("run") != run_id:

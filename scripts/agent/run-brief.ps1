@@ -25,7 +25,8 @@ function ConvertTo-Hashtable($Object) { $h = @{}; $Object.PSObject.Properties | 
 
 function Test-InDailyWindow([string]$ConfigFile, [string]$NowValue) {
     # daily_window.py (DEVX-031): a window with a label opens early once that day's scheduled run
-    # wrote its summary; exit 3 means a closed window, any other non-zero exit refuses too.
+    # wrote its summary; exit 3 means a closed window, any other non-zero exit counts as closed too.
+    # A closed window only prints a note: pi may start inside it, the gate and publish wait (3.7).
     $windowArgs = @("-I", (Join-Path $ScriptDir "daily_window.py"), "--config", $ConfigFile)
     if ($NowValue) { $windowArgs += @("--now", $NowValue) }
     $oldEap = $ErrorActionPreference
@@ -63,7 +64,7 @@ if ($briefCode -ne 0) {
 }
 $brief = ($briefJsonText -join "`n") | ConvertFrom-Json
 $window = Test-InDailyWindow $ConfigPath $Now
-if ($window.in_window) { Write-Host ("拒绝启动：当前 {0} 落在日报窗口 {1} ({2})" -f $window.now, $window.window, $window.reason); exit 2 }
+if ($window.in_window) { Write-Host ("注意：当前 {0} 在日报窗口 {1} 内（{2}）；pi 照常启动，门禁和发布等窗口打开。" -f $window.now, $window.window, $window.reason) }
 
 $runId = if ($brief.run) { [string]$brief.run } else { [IO.Path]::GetFileNameWithoutExtension($briefFull) }
 $runDir = Join-Path $config.runs_root $runId

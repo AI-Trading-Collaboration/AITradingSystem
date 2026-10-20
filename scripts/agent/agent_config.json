@@ -19,8 +19,9 @@
     {
       "start": "17:20",
       "end": "18:30",
-      "note": "OPS-082 17:30 JST rescue trigger (OPS-085); opens early once that run's summary is written (DEVX-031)",
-      "label": "RESCUE"
+      "note": "OPS-082 17:30 JST rescue trigger (OPS-085); opens early once that run's summary is written (DEVX-031); stays open once today's PRIMARY run passed, since the 17:30 run then only finds its as_of complete (open_if_passed, DEVX-031 3.7)",
+      "label": "RESCUE",
+      "open_if_passed": "PRIMARY"
     }
   ],
   "scheduled_task_name": "AITradingSystem pi agent",

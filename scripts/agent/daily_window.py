@@ -1,12 +1,16 @@
-"""Whether heavy pi work may start now: the daily-run windows (DEVX-031).
+"""Whether a gate or a publish may run now: the daily-run windows (DEVX-031).
 
-``agent_config.json`` lists the daily-run windows in ``daily_windows_jst``. Inside a window no pi
-run starts and no gate or publish runs, so the scheduled daily run has the machine. A window with a
-``label`` (the scheduler's window name, PRIMARY or RESCUE) opens early once that day's run of that
-window wrote its summary under ``daily_scheduler_dir``: ``<YYYY-MM-DD>_<label>[_n].summary.json``,
-written by scripts/ops/daily_scheduler_summary.py at the end of the run, no earlier than the
-window's start (owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes). Without a summary, or
-without the directory, the window stays closed until its end.
+``agent_config.json`` lists the daily-run windows in ``daily_windows_jst``. Inside a closed window
+lane.py runs no gate and no publish, so the scheduled daily run has the machine; a pi run may start
+inside a window (DEVX-031 3.7). A window with a ``label`` (the scheduler's window name, PRIMARY or
+RESCUE) opens early once that day's run of that window wrote its summary under
+``daily_scheduler_dir``: ``<YYYY-MM-DD>_<label>[_n].summary.json``, written by
+scripts/ops/daily_scheduler_summary.py at the end of the run, no earlier than the window's start
+(owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes). A window with ``open_if_passed`` (the label
+of another window) also opens once one of that window's summaries of the same day, found by the
+same rule, shows a run that passed: ``blocker_category`` NONE and ``daily_run_exit_code`` 0 (PASS or
+RUN_CONTROL_ALREADY_COMPLETE); the 17:30 rescue run then finds its as_of complete. Without a
+summary, or without the directory, the window stays closed until its end.
 
 Standard library only, so run-brief.ps1 and lane.py can call it with ``python -I``. Tokyo has no
 daylight saving time, so JST is a fixed +09:00 offset (Windows Python has no tz database).
@@ -27,6 +31,9 @@ from typing import Any
 
 JST = dt.timezone(dt.timedelta(hours=9), "JST")
 BLOCKED_EXIT = 3
+# daily_scheduler_summary.py uses NONE for passed runs and RUN_CONTROL_ALREADY_COMPLETE;
+# this is a protocol category, not a threshold.
+PASSED_BLOCKER_CATEGORY = "NONE"
 
 
 def _at(day: dt.datetime, hhmm: str) -> dt.datetime:
@@ -42,6 +49,29 @@ def _summary(directory: Path, day: str, label: str, start: dt.datetime) -> Path 
     for path in sorted(candidates):
         written = dt.datetime.fromtimestamp(path.stat().st_mtime, tz=dt.UTC)
         if written >= start:
+            return path
+    return None
+
+
+def _passed_summary(directory: Path, day: str, label: str, start: dt.datetime) -> Path | None:
+    candidates = [
+        *directory.glob(f"{day}_{label}.summary.json"),
+        *directory.glob(f"{day}_{label}_*.summary.json"),
+    ]
+    for path in sorted(candidates):
+        try:
+            written = dt.datetime.fromtimestamp(path.stat().st_mtime, tz=dt.UTC)
+            if written < start:
+                continue
+            summary = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if (
+            isinstance(summary, dict)
+            and summary.get("blocker_category") == PASSED_BLOCKER_CATEGORY
+            and type(summary.get("daily_run_exit_code")) is int
+            and summary["daily_run_exit_code"] == 0
+        ):
             return path
     return None
 
@@ -66,6 +96,22 @@ def window_state(config: dict[str, Any], now: dt.datetime) -> dict[str, Any]:
                 state["released_by"] = str(found)
                 return state
             state["reason"] = f"no {label} summary of today written since {window['start']} JST"
+            passed_label = window.get("open_if_passed")
+            if passed_label:
+                for other in config.get("daily_windows_jst") or []:
+                    if other.get("label") != passed_label:
+                        continue
+                    found = _passed_summary(
+                        Path(directory),
+                        jst.strftime("%Y-%m-%d"),
+                        str(passed_label),
+                        _at(jst, str(other["start"])),
+                    )
+                    if found is not None:
+                        state.pop("reason")
+                        state["released_by"] = str(found)
+                        return state
+                state["reason"] += f" and no passed {passed_label} summary of today"
         else:
             state["reason"] = "the window has no label or summary directory to release it early"
         state["blocked"] = True

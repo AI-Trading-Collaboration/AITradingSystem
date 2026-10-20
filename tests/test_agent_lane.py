@@ -341,6 +341,224 @@ def test_daily_window_cli_exit_codes(tmp_path: Path) -> None:
     assert cli("2026-10-14T12:00:00").returncode == 2
 
 
+# ----- the rescue window after a passed primary run (DEVX-031 3.7, 2026-10-19) -----------------
+# Baker chose 「两项都改」: once the 12:00 run passed, the 17:30 run only finds its as_of complete,
+# so the RESCUE window does not close; and pi may start inside a window, only the gate and the
+# publish wait for it.
+OPEN_IF_PASSED = [
+    {"start": "11:50", "end": "13:00", "label": "PRIMARY"},
+    {"start": "17:20", "end": "18:30", "label": "RESCUE", "open_if_passed": "PRIMARY"},
+]
+PASSED = {"blocker_category": "NONE", "daily_run_exit_code": 0, "cli_status": "PASS"}
+COMPLETE = {
+    "blocker_category": "NONE",
+    "daily_run_exit_code": 0,
+    "cli_status": "RUN_CONTROL_ALREADY_COMPLETE",
+}
+SOURCE_FAILED = {"blocker_category": "DATA_SOURCE_UNAVAILABLE", "daily_run_exit_code": 1}
+TODAY = "2026-10-14"
+P1, P2, R1 = (
+    f"{TODAY}_PRIMARY.summary.json",
+    f"{TODAY}_PRIMARY_2.summary.json",
+    f"{TODAY}_RESCUE.summary.json",
+)
+
+
+def scheduler_file(directory: Path, name: str, written: str, content: object) -> Path:
+    """A summary file; content is written as JSON unless it is already text or bytes."""
+    path = directory / name
+    if isinstance(content, bytes):
+        path.write_bytes(content)
+    else:
+        write(path, content if isinstance(content, str) else json.dumps(content))
+    stamp = dt.datetime.fromisoformat(written).timestamp()
+    os.utime(path, (stamp, stamp))
+    return path
+
+
+def jst(day: str, hhmm: str) -> str:
+    return f"{day}T{hhmm}:00+09:00"
+
+
+@pytest.mark.parametrize(
+    ("now", "files", "released_by"),
+    [
+        ("17:25", [(P1, "12:07", PASSED)], P1),
+        ("17:20", [(P1, "12:00", COMPLETE)], P1),
+        ("18:30", [(P1, "12:07", PASSED)], P1),
+        ("17:25", [(P2, "14:10", PASSED)], P2),
+        ("17:25", [(P1, "12:07", SOURCE_FAILED), (P2, "14:10", PASSED)], P2),
+        ("17:25", [(P1, "12:07", PASSED), (P2, "14:10", SOURCE_FAILED)], P1),
+        ("17:25", [(P1, "12:07", PASSED), (R1, "17:24", SOURCE_FAILED)], None),
+        ("17:25", [(P1, "12:07", SOURCE_FAILED), (R1, "17:24", "{}")], R1),
+        ("17:25", [(R1, "17:24", SOURCE_FAILED)], R1),
+        ("12:16", [(P1, "12:07", SOURCE_FAILED)], P1),
+    ],
+)
+def test_rescue_window_opens_on_a_passed_primary_run_of_today(
+    tmp_path: Path, now: str, files: list[tuple[str, str, object]], released_by: str | None
+) -> None:
+    window = load("window_mod", WINDOW)
+    for name, at, content in files:
+        scheduler_file(tmp_path, name, jst(TODAY, at), content)
+    config = {"daily_windows_jst": OPEN_IF_PASSED, "daily_scheduler_dir": str(tmp_path)}
+    state = window.window_state(config, dt.datetime.fromisoformat(jst(TODAY, now)))
+    assert state["blocked"] is False, state
+    assert state["window"] in ("17:20-18:30 JST", "11:50-13:00 JST")
+    if released_by is not None:
+        assert Path(state["released_by"]).name == released_by
+    else:
+        assert Path(state["released_by"]).name in (P1, R1)
+
+
+@pytest.mark.parametrize(
+    "files",
+    [
+        [],
+        [(P1, jst(TODAY, "12:07"), SOURCE_FAILED)],
+        [(P1, jst(TODAY, "12:07"), {"blocker_category": "NONE", "daily_run_exit_code": 1})],
+        [
+            (
+                P1,
+                jst(TODAY, "12:07"),
+                {"blocker_category": "CONTROL_PLANE", "daily_run_exit_code": 0},
+            )
+        ],
+        [(P1, jst(TODAY, "12:07"), {"blocker_category": "NONE", "daily_run_exit_code": None})],
+        [(P1, jst(TODAY, "12:07"), {"blocker_category": "NONE", "daily_run_exit_code": "0"})],
+        [(P1, jst(TODAY, "12:07"), {"blocker_category": "NONE"})],
+        [(P1, jst(TODAY, "12:07"), {"daily_run_exit_code": 0})],
+        [(P1, jst(TODAY, "12:07"), '{"blocker_category": "NONE", "daily_run_exit')],
+        [(P1, jst(TODAY, "12:07"), "[]")],
+        [(P1, jst(TODAY, "12:07"), b"\xff\xfe not utf-8")],
+        [(P1, jst(TODAY, "11:40"), PASSED)],
+        [("2026-10-13_PRIMARY.summary.json", jst("2026-10-13", "12:07"), PASSED)],
+        [(f"{TODAY}_PRIMARYX.summary.json", jst(TODAY, "12:07"), PASSED)],
+        [(f"{TODAY}_PRIMARY.summary.md", jst(TODAY, "12:07"), PASSED)],
+    ],
+)
+def test_rescue_window_stays_closed_without_a_passed_primary_run_of_today(
+    tmp_path: Path, files: list[tuple[str, str, object]]
+) -> None:
+    window = load("window_mod", WINDOW)
+    for name, written, content in files:
+        scheduler_file(tmp_path, name, written, content)
+    config = {"daily_windows_jst": OPEN_IF_PASSED, "daily_scheduler_dir": str(tmp_path)}
+    state = window.window_state(config, dt.datetime.fromisoformat(jst(TODAY, "17:25")))
+    assert state["blocked"] is True, state
+    assert state["window"] == "17:20-18:30 JST"
+    assert state["reason"] == (
+        "no RESCUE summary of today written since 17:20 JST and no passed PRIMARY summary of today"
+    )
+    assert "released_by" not in state
+
+
+def test_open_if_passed_needs_its_own_key_and_a_configured_window(tmp_path: Path) -> None:
+    window = load("window_mod", WINDOW)
+    scheduler_file(tmp_path, P1, jst(TODAY, "12:07"), PASSED)
+    scheduler_file(tmp_path, f"{TODAY}_NOON.summary.json", jst(TODAY, "12:07"), PASSED)
+    at = dt.datetime.fromisoformat(jst(TODAY, "17:25"))
+    plain = window.window_state(
+        {"daily_windows_jst": WINDOWS, "daily_scheduler_dir": str(tmp_path)}, at
+    )
+    assert plain["blocked"] is True
+    assert plain["reason"] == "no RESCUE summary of today written since 17:20 JST"
+    unknown = [OPEN_IF_PASSED[0], {**OPEN_IF_PASSED[1], "open_if_passed": "NOON"}]
+    state = window.window_state(
+        {"daily_windows_jst": unknown, "daily_scheduler_dir": str(tmp_path)}, at
+    )
+    assert state["blocked"] is True
+    missing = {"daily_windows_jst": OPEN_IF_PASSED, "daily_scheduler_dir": str(tmp_path / "none")}
+    assert window.window_state(missing, at)["blocked"] is True
+    # The PRIMARY window has no open_if_passed: it still waits for its own summary.
+    assert window.window_state(
+        {"daily_windows_jst": OPEN_IF_PASSED, "daily_scheduler_dir": str(tmp_path / "none")},
+        dt.datetime.fromisoformat(jst(TODAY, "11:55")),
+    )["blocked"]
+    assert window.window_state(
+        {"daily_windows_jst": OPEN_IF_PASSED, "daily_scheduler_dir": str(tmp_path)},
+        dt.datetime.fromisoformat(jst(TODAY, "17:19")),
+    ) == {"blocked": False, "now": f"{TODAY} 17:19 +0900"}
+
+
+@pytest.mark.parametrize(
+    ("log", "exit_code", "precheck", "blocked"),
+    [
+        ("Canonical run control：RUN_CONTROL_ALREADY_COMPLETE\n", 0, None, False),
+        ("每日运行执行：PASS\n", 0, None, False),
+        ("每日运行执行：FAIL\n", 1, None, True),
+        ("Traceback (most recent call last)\n", 1, None, True),
+        (None, None, "STATE_ROOT_INVALID", True),
+    ],
+)
+def test_rescue_window_reads_what_the_real_scheduler_summary_writes(
+    tmp_path: Path, log: str | None, exit_code: int | None, precheck: str | None, blocked: bool
+) -> None:
+    scheduler = tmp_path / "state/outputs/run_control/scheduler"
+    args = [
+        sys.executable,
+        "-I",
+        str(ROOT / "scripts/ops/daily_scheduler_summary.py"),
+        "--runtime-root",
+        str(tmp_path / "release"),
+        "--state-root",
+        str(tmp_path / "state"),
+        "--window",
+        "PRIMARY",
+        "--output-stem",
+        str(scheduler / f"{TODAY}_PRIMARY"),
+    ]
+    if precheck is not None:
+        args += ["--precheck-blocker", precheck]
+    else:
+        assert log is not None
+        log_path = tmp_path / "daily.log"
+        log_path.write_bytes(("Run ID：daily_ops_run:2026-10-13:x1\n" + log).encode("utf-8"))
+        args += ["--log", str(log_path), "--exit-code", str(exit_code)]
+    subprocess.run(args, check=True, capture_output=True, timeout=60)
+    written = scheduler / P1
+    assert written.is_file()
+    stamp = dt.datetime.fromisoformat(jst(TODAY, "12:07")).timestamp()
+    os.utime(written, (stamp, stamp))
+    window = load("window_mod", WINDOW)
+    config = {"daily_windows_jst": OPEN_IF_PASSED, "daily_scheduler_dir": str(scheduler)}
+    state = window.window_state(config, dt.datetime.fromisoformat(jst(TODAY, "17:25")))
+    assert state["blocked"] is blocked, (state, json.loads(written.read_text(encoding="utf-8")))
+
+
+def test_daily_window_cli_with_open_if_passed(tmp_path: Path) -> None:
+    config = tmp_path / "c.json"
+    scheduler = tmp_path / "scheduler"
+    scheduler.mkdir()
+    config.write_text(
+        json.dumps({"daily_windows_jst": OPEN_IF_PASSED, "daily_scheduler_dir": str(scheduler)}),
+        encoding="utf-8",
+    )
+
+    def cli() -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [
+                sys.executable,
+                "-I",
+                str(WINDOW),
+                "--config",
+                str(config),
+                "--now",
+                jst(TODAY, "17:25"),
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+    assert cli().returncode == 3
+    summary_file = scheduler_file(scheduler, P1, jst(TODAY, "12:07"), '{"blocker_category": ')
+    assert cli().returncode == 3
+    scheduler_file(scheduler, P1, jst(TODAY, "12:07"), PASSED)
+    opened = cli()
+    assert opened.returncode == 0, opened.stdout + opened.stderr
+    assert json.loads(opened.stdout)["released_by"] == str(summary_file)
+
+
 # ----- lanes ------------------------------------------------------------------------------------
 def test_start_runs_pi_in_the_lane_and_holds_it(lanes: Setup) -> None:
     lanes.batch("T-01", {"src/a/x.py": "x\n"}, ["src/a/**"])
@@ -411,7 +629,7 @@ def test_shared_paths_do_not_count_as_overlap_unless_a_glob_covers_them(lanes: S
     assert code == 2 and out["overlaps"][0]["run"] == "T-01"
 
 
-@pytest.mark.parametrize("case", ["sums", "run_name", "held", "on_branch", "dirty", "window"])
+@pytest.mark.parametrize("case", ["sums", "run_name", "held", "on_branch", "dirty"])
 def test_start_refusals_change_nothing(lanes: Setup, case: str) -> None:
     run_dir = lanes.batch("T-01", {"src/a/x.py": "x\n"}, ["src/a/**"])
     lane1 = lanes.lanes["lane1"]
@@ -421,7 +639,6 @@ def test_start_refusals_change_nothing(lanes: Setup, case: str) -> None:
         "held": "holds run",
         "on_branch": "on a branch",
         "dirty": "not clean",
-        "window": "daily-run window",
     }[case]
     if case == "sums":
         (run_dir / "brief.md").write_text((run_dir / "brief.md").read_text() + " ")
@@ -435,12 +652,72 @@ def test_start_refusals_change_nothing(lanes: Setup, case: str) -> None:
         run_git(lane1, "switch", "-q", "-c", "stray")
     elif case == "dirty":
         write(lane1 / "src/app.py", "dirty\n")
-    else:
-        lanes.settings["daily_windows_jst"] = [{"start": "00:00", "end": "23:59"}]
-        lanes.save()
     code, out = lanes.lane("start", "--lane", "lane1", "--run", "T-01")
     assert code == 2 and problem in out["error"], out
     assert not (run_dir / "pi-calls.jsonl").exists()
+
+
+def test_start_runs_pi_inside_a_closed_window_but_report_and_refresh_wait(lanes: Setup) -> None:
+    lanes.batch("T-01", {"src/a/x.py": "x\n"}, ["src/a/**"])
+    lanes.settings["daily_windows_jst"] = [{"start": "00:00", "end": "23:59"}]
+    lanes.save()
+    code, out = lanes.lane("start", "--lane", "lane1", "--run", "T-01")
+    assert code == 0, out
+    assert out["branch"] == "pi/T-01" and out["commits"] == "1"
+    assert (lanes.runs / "T-01/pi-calls.jsonl").exists()
+    for action in ("report", "refresh"):
+        code, out = lanes.lane(action, "--lane", "lane1", "--run", "T-01")
+        assert code == 2 and "daily-run window" in out["error"], (action, out)
+    assert not (lanes.runs / "T-01/accept-calls.jsonl").exists()
+    assert run_git(lanes.origin, "branch", "--list", "pi/T-01") == ""
+    assert lanes.state()["phase"] == "stopped"
+    lanes.settings["daily_windows_jst"] = []
+    lanes.save()
+    code, out = lanes.lane("report", "--lane", "lane1", "--run", "T-01")
+    assert code == 0, out
+
+
+def test_start_then_report_starts_inside_a_closed_window_and_waits_for_it(lanes: Setup) -> None:
+    lanes.settings.update(
+        {"daily_windows_jst": [{"start": "00:00", "end": "23:59"}], "report_wait_seconds": 0}
+    )
+    lanes.save()
+    lanes.batch("T-01", {"src/a/x.py": "x\n"}, ["src/a/**"])
+    code, out = lanes.lane("start", "--lane", "lane1", "--run", "T-01", "--then-report")
+    assert code == 1, out
+    assert out["run_brief_exit"] == 0 and out["commits"] == "1"
+    assert out["error"] == REPORT_FAILED + out["report_error"]["error"]
+    assert "daily-run window" in out["report_error"]["error"]
+    assert out["report_error"]["tries"] == 1
+    assert not (lanes.runs / "T-01/accept-calls.jsonl").exists()
+    assert run_git(lanes.origin, "branch", "--list", "pi/T-01") == ""
+
+
+def test_publish_waits_for_a_closed_window(lanes: Setup) -> None:
+    lanes.batch("T-01", {"src/a/x.py": "x\n"}, ["src/a/**"])
+    lanes.lane("start", "--lane", "lane1", "--run", "T-01")
+    code, report = lanes.lane("report", "--lane", "lane1", "--run", "T-01")
+    assert code == 0, report
+    lanes.settings["daily_windows_jst"] = [{"start": "00:00", "end": "23:59"}]
+    lanes.save()
+    before = run_git(lanes.main, "rev-parse", "main")
+    fp = report["fingerprints"]
+    code, out = lanes.lane(
+        "publish",
+        "--lane",
+        "lane1",
+        "--run",
+        "T-01",
+        "--expected-change",
+        fp["change"],
+        "--expected-message",
+        fp["message"],
+    )
+    assert code == 2 and "daily-run window" in out["error"], out
+    assert run_git(lanes.main, "rev-parse", "main") == before
+    assert run_git(lanes.origin, "rev-parse", "refs/heads/pi/T-01") == report["commit"]
+    assert not (lanes.runs / "lanes/publish.lock").exists()
+    assert lanes.state()["phase"] == "reported"
 
 
 def test_one_local_model_run_at_a_time(lanes: Setup) -> None:
@@ -711,6 +988,13 @@ def test_the_actions_in_the_docstring_name_then_report() -> None:
     assert len(start) == 1 and start[0].rstrip().endswith("[--then-report]")
 
 
+def test_the_docstring_rules_let_start_run_inside_a_window() -> None:
+    lane = load("lane_mod", LANE)
+    rules = " ".join(lane.__doc__.split("Rules it enforces", 1)[1].split())
+    assert "no gate or publish inside a closed daily-run window" in rules
+    assert "no start" not in rules
+
+
 def test_refresh_replays_onto_moved_main_and_keeps_the_change(lanes: Setup) -> None:
     lanes.batch("T-01", {"src/app.py": edited(10, "lane ten")}, ["src/app.py"])
     lanes.lane("start", "--lane", "lane1", "--run", "T-01")
@@ -973,3 +1257,14 @@ def test_real_config_labels_windows_by_scheduler_window_and_names_its_summary_di
     assert "'{0}_{1}' -f $tokyoNow.ToString('yyyy-MM-dd'), $Window" in wrapper
     paths = [config["main_checkout"], *config["lanes"].values()]
     assert len(set(paths)) == len(paths) and config["main_checkout"] not in config["lanes"].values()
+
+
+def test_real_config_keeps_the_rescue_window_open_after_a_passed_primary_run() -> None:
+    config = json.loads((ROOT / "scripts/agent/agent_config.json").read_text(encoding="utf-8"))
+    windows = {w["label"]: w for w in config["daily_windows_jst"]}
+    assert windows["RESCUE"]["open_if_passed"] == "PRIMARY"
+    assert "open_if_passed" not in windows["PRIMARY"]
+    assert [(w["start"], w["end"]) for w in config["daily_windows_jst"]] == [
+        ("11:50", "13:00"),
+        ("17:20", "18:30"),
+    ]

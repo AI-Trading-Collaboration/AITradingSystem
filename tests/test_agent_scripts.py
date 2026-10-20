@@ -116,11 +116,22 @@ def test_run_brief_state_root_goes_to_the_run_environment(tmp_path: Path) -> Non
         assert done.returncode == 2 and "-StateRoot" in done.stdout
 
 
-def test_run_brief_refuses_daily_window(tmp_path: Path) -> None:
+def test_run_brief_starts_inside_a_daily_window_and_says_so(tmp_path: Path) -> None:
+    # DEVX-031 3.7 (2026-10-19): pi may start inside a daily-run window; only the gate and the publish wait.
     ps = powershell(); brief = tmp_path / "brief.md"; config = tmp_path / "config.json"
     write_brief(brief); write_config(config, tmp_path / "runs")
+    inside = run_brief(ps, brief, config, "-DryRun", "-Now", "2026-10-11T09:30:00+09:00")
+    assert inside.returncode == 0, inside.stdout + inside.stderr
+    assert "DryRun: would run" in inside.stdout and "pi -p @" in inside.stdout
+    note = [line for line in inside.stdout.splitlines() if "日报窗口" in line]
+    assert len(note) == 1 and "09:20-10:30 JST" in note[0] and "pi 照常启动" in note[0], inside.stdout
+    outside = run_brief(ps, brief, config, "-DryRun", "-Now", "2026-10-11T12:00:00+09:00")
+    assert outside.returncode == 0 and "DryRun: would run" in outside.stdout
+    assert "日报窗口" not in outside.stdout
+    broken = json.loads(config.read_text(encoding="utf-8")); broken["daily_windows_jst"] = [{"start": "soon", "end": "10:30"}]
+    config.write_text(json.dumps(broken), encoding="utf-8")
     done = run_brief(ps, brief, config, "-DryRun", "-Now", "2026-10-11T09:30:00+09:00")
-    assert done.returncode == 2 and "日报窗口" in done.stdout
+    assert done.returncode == 0 and "DryRun: would run" in done.stdout, done.stdout + done.stderr
 
 
 def test_run_brief_invalid_brief_prints_all_errors(tmp_path: Path) -> None:

@@ -66,7 +66,7 @@ owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes：owner（Baker）在项目
 
 - 两条车道的 `allowed_paths` 不能重叠。按每个 glob 通配符前的字面前缀判断，宁严勿松。渲染出来的任务总表除外，因为 `--replay` 会重新渲染它。
 - 本地模型一次只跑一个运行。
-- 日报窗口关着时，不启动、不跑门禁、不发布。
+- 日报窗口关着时，不跑门禁、不发布；`start` 照常启动 pi（3.7）。
 - 一次只发布一批（`<runs_root>\lanes\publish.lock`）。
 - 车道只会挪到 main 或自己运行的分支上。
 - 检查脚本、`ship.py` 和 `brief.py` 都用 main 上的版本，复制到临时目录里跑。只有门禁跑分支自己的 `ship.py`，和原来在主工作区一样，而发布时 `publish.ps1` 用 main 版重新核对一遍。
@@ -88,6 +88,7 @@ owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes：owner（Baker）在项目
 - `daily_windows_jst` 里的窗口加上 `label`：`PRIMARY`、`RESCUE`，对应 OPS-082 调度包装脚本的窗口名。
 - 窗口内，只要当天这个窗口的日报已经在 `daily_scheduler_dir` 写出 `<日期>_<label>[_n].summary.json`，而且写出时间不早于窗口开始，就提前放开。
 - 没有 summary、没有目录、没有 label，窗口照旧关到结束。
+- 窗口配置里有 `open_if_passed`（另一个窗口的 label）时，那个窗口当天的运行跑通也让这个窗口放开（3.7）。
 - `run-brief.ps1` 和 `lane.py` 都用它。
 - OPS-086 把运行副本移走时，要同步改 `daily_scheduler_dir`。
 
@@ -112,6 +113,14 @@ owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes：owner（Baker）在项目
   - 车道照旧被这个运行占用（`stopped`），状态文件里多一个 `report_error`（错误文字），`status` 会显示它；什么都不推送；
   - 原因解决后照常手工运行 `report`（或 `refresh`）；成功的 report 把 `report_error` 从状态里去掉。
 
+### 3.7 窗口里照常写代码；12:00 跑通后 17:30 窗口不关（2026-10-19）
+
+- 起因：窗口一关，pi 连写代码都不能开始；12:00 已经跑通的日子，17:30 那次只是几秒就退出的空跑，窗口照样关着。写代码主要是在等模型，几乎不占电脑；真正和日报抢机器的是门禁的整套测试。
+- 窗口里可以启动 pi：`lane.py start`（带不带 `--then-report` 都一样）和 `run-brief.ps1` 不再因为日报窗口拒绝；`run-brief.ps1` 在窗口里只打印一行提示。门禁和发布照旧等窗口打开：`report`、`refresh`、`publish` 在关着的窗口里拒绝（退出码 2），`start --then-report` 在 pi 跑完后照 3.6 等窗口。
+- pi 运行里的定向测试照常跑，不等窗口。brief 只要求跑和改动相关的几个测试文件，不跑整套、不跑 main 基线，整套由门禁跑。一次日报的时间主要花在等数据源和模型上（2026-10-11 实测 915 秒，其中采集 165 秒、score_daily 161 秒），电脑 32 核，两条车道同时跑门禁时 CPU 约 75%。本地模型的运行也可以在窗口里启动：日报不调用本地模型。
+- 17:30 补救窗口（`RESCUE`）的配置加 `"open_if_passed": "PRIMARY"`。当天 `PRIMARY` 的 summary 按 3.4 的规则找（`<日期>_PRIMARY[_n].summary.json`，写出时间不早于 `PRIMARY` 窗口的开始），其中只要有一份 `blocker_category` 是 `NONE`、`daily_run_exit_code` 是 0（跑通，或 `RUN_CONTROL_ALREADY_COMPLETE`），`RESCUE` 窗口就整段不关。理由：as_of 按美股日历算，12:00 和 17:30 是同一个 as_of；它已经完成时，17:30 的 `--retry-after-source-failure` 判 `NOT_ELIGIBLE:NO_FAILED_RUN`，接着的普通运行判 `RUN_CONTROL_ALREADY_COMPLETE`，几秒就退出。
+- 12:00 失败、没有跑、或者 summary 读不了（写到一半、不是 JSON 对象），`RESCUE` 照旧：关到当天 `RESCUE` 的 summary 写出，最多到 18:30。`open_if_passed` 指的 label 不在 `daily_windows_jst` 里时，这条规则不放开窗口。`PRIMARY` 窗口不变：自己的 summary 一写出就放开，不看结果。窗口时间不变。
+
 ## 4. 验收
 
 - `tests/test_parallel_lanes_ship.py`：
@@ -129,6 +138,7 @@ owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes：owner（Baker）在项目
   - 日报窗口按 summary 提前放开，以及各种反例；
   - 两条车道并行，路径重叠时拒绝；
   - 启动时的各种拒绝都不会启动 pi；
+  - 关着的日报窗口里 `start` 照常启动 pi，`report`、`refresh`、`publish` 拒绝，`start --then-report` 在 pi 跑完后等窗口（3.7）；
   - 本地模型只能一个；
   - `report` 依次做检查、门禁、推送；
   - `refresh` 后改动指纹不变；
@@ -137,7 +147,9 @@ owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes：owner（Baker）在项目
   - 指纹不符时什么都不动；
   - 发布锁、`release`、`status`；
   - 真实配置里的窗口标签和 summary 目录；
+  - `open_if_passed`（3.7）：当天 `PRIMARY` 的 summary 跑通或 `RUN_CONTROL_ALREADY_COMPLETE` 时 `RESCUE` 整段放开；失败、退出码不是 0、缺字段、读不了、不是当天、写得比 `PRIMARY` 窗口开始早、label 不存在时照旧关着；多份 summary 有一份跑通就放开；`PRIMARY` 窗口的提前放开不看结果；用真的 `daily_scheduler_summary.py` 写出的 summary 核对；命令行退出码；真实配置里 `RESCUE` 带 `open_if_passed: PRIMARY`，窗口时间不变；
   - `start --then-report`（3.6）：pi 跑完接着检查、门禁、推送；report 失败时保留 pi 的结果，状态里有 `report_error`，`status` 显示它，不推送；pi 运行期间日报窗口关上、`report_wait_seconds` 为 0 时查一次就失败，之后手工 `report` 成功并去掉 `report_error`；等发布锁放开后再 report，main 在等待期间动过时结果是 report 的 "use refresh" 拒绝；`report_poll_seconds` 为 0 时也至少隔 1 秒查一次，到时限失败；两个值不对时失败；`start` 拒绝或失败时不做 report；参数规则和模块说明。
+- `tests/test_agent_scripts.py`：`run-brief.ps1` 在日报窗口里照常启动，只打印提示；窗口外没有提示；窗口配置坏了也照常启动（3.7）。
 - 全套 PR 测试通过。规则 1.3.0 把 `scripts/agent/lane.py` 放进 C 区和 `decision_record_excluded`。
 
 ## 5. 步骤
@@ -163,3 +175,4 @@ owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes：owner（Baker）在项目
   - 全套 PR 测试除 30 个失败外都通过；这 30 个在改动前的 main 上同样失败（Windows 专用的 schtasks、icacls 用例，IBKR 模拟、交易时段检查和两条报告用例）。
   - 对 `ship.py`、`lane.py`、`daily_window.py` 的关键检查做了 22 个变异，20 个让测试失败。剩下 2 个是兜底检查，正常路径上碰不到：replay 后再核对一次提交信息；冲突的任务总表先取 main 的版本，再被重新渲染覆盖。
 - 2026-10-18，DEVX-031-06：`lane.py start --then-report`（3.6）。当天 pi 在车道里 19:19 JST 跑完，但在后台运行 `start` 的电脑会话已经闲置、被平台停掉，`report` 两个小时没人跑。Claude 在项目线程「pi 队列 10-18」问 Baker：「改 lane.py，让 pi 跑完后自动接着跑测试和推分支，不再依赖电脑会话醒着。这要改代码，算一个小批次。要做吗？」Baker 2026-10-18 21:19 JST（12:19:51Z）回答：「按照你的建议做下把」。这是本任务的后续，决定号仍是 owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes；`lane.py` 在 `decision_record_excluded` 里，按 tree 批。需求和验收测试由 Claude 写，`lane.py` 的代码由 pi 写。
+- 2026-10-19，DEVX-031-07：窗口里照常写代码，12:00 跑通后 17:30 窗口不关（3.7）。Baker 在项目线程「pi 队列 10-18」问：「不过这样设置经常会阻塞我们的开发任务，有什么改进的方案吗？」（2026-10-19 14:08 JST，05:08:43Z）。Claude 在同一线程用决定卡片问「改日报窗口规则,让开发任务少等日报?」，Baker 2026-10-19 14:10 JST（05:10:13Z）选「两项都改」，这个选项的后果写的是：「12:00 跑通后 17:30 窗口不再关;窗口里 pi 照常写代码,只有门禁测试和发布等日报跑完。」决定号仍是 owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes；`lane.py` 和 AGENTS.md 在 `decision_record_excluded` 里，按 tree 批。需求、AGENTS.md、`agent_config.json` 和验收测试由 Claude 写，`daily_window.py`、`lane.py`、`run-brief.ps1` 的代码由 pi 写。

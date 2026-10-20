@@ -98,9 +98,11 @@ the tested tree -> ordinary push, with the remote checked before and after.
 - **Parallel lanes** (`owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes`): pi batches run in lane
   worktrees (`lanes` in `scripts/agent/agent_config.json`) through `scripts/agent/lane.py` only. A
   lane is held by one run from `start` until it publishes or is released; no two lanes hold
-  overlapping `allowed_paths`, one local-model run at a time, and no start, gate or publish inside a
-  closed daily-run window (`scripts/agent/daily_window.py`: a window opens early once that day's
-  scheduled run wrote its summary). `lane.py report` runs `main`'s checks and the gate in the lane
+  overlapping `allowed_paths`, one local-model run at a time, and no gate or publish inside a closed
+  daily-run window (`scripts/agent/daily_window.py`: a window opens early once that day's scheduled
+  run wrote its summary, and the rescue window stays open once that day's primary run passed). pi
+  may start inside a window: briefs ask only for targeted tests, and only the gate's full suite
+  competes with the daily run. `lane.py report` runs `main`'s checks and the gate in the lane
   and pushes the `pi/*` branch for review. Publishing stays one at a time, in the main checkout,
   through `publish.ps1`. A change that waited is moved onto the new `main` by `ship.py --replay`
   and gated again; it then publishes with `-ExpectedChange` (the patch fingerprint without context
