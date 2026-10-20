@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import time
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from importlib import import_module
@@ -15,6 +17,9 @@ from ai_trading_system.external_request_cache import (
     cached_requests_get,
     default_external_request_cache_dir,
 )
+
+SEC_REQUEST_MAX_ATTEMPTS = 3
+SEC_REQUEST_RETRY_BACKOFF_SECONDS = (5.0, 15.0)
 
 
 @dataclass(frozen=True)
@@ -68,12 +73,24 @@ class SecEdgarCompanyFactsProvider:
         *,
         requests_module: Any | None = None,
         request_cache_dir: Path | str | None = None,
+        max_attempts: int = SEC_REQUEST_MAX_ATTEMPTS,
+        retry_backoff_seconds: Sequence[float] = SEC_REQUEST_RETRY_BACKOFF_SECONDS,
+        sleeper: Callable[[float], None] | None = None,
     ) -> None:
         if not user_agent.strip():
             raise ValueError("SEC User-Agent must not be empty")
+        if max_attempts < 1:
+            raise ValueError("SEC max_attempts must be at least 1")
+        if len(retry_backoff_seconds) < max_attempts - 1:
+            raise ValueError("SEC retry_backoff_seconds must cover every retry")
+        if any(delay < 0 for delay in retry_backoff_seconds):
+            raise ValueError("SEC retry_backoff_seconds must not be negative")
         self.user_agent = user_agent.strip()
         self._requests_module = requests_module
         self._request_cache_dir = request_cache_dir
+        self._max_attempts = max_attempts
+        self._retry_backoff_seconds = tuple(retry_backoff_seconds)
+        self._sleeper = sleeper
 
     def download_companyfacts_raw(self, request: SecCompanyFactsRequest) -> bytes:
         requests = self._requests_module or cast(Any, import_module("requests"))
@@ -81,19 +98,28 @@ class SecEdgarCompanyFactsProvider:
             requests_module=self._requests_module,
             explicit_cache_dir=self._request_cache_dir,
         )
-        response = cached_requests_get(
-            provider="SEC EDGAR",
-            api_family="companyfacts",
-            url=self._endpoint(request.cik),
-            headers={
-                "User-Agent": self.user_agent,
-                "Accept-Encoding": "gzip, deflate",
-                "Accept": "application/json",
-            },
-            timeout=30,
-            requests_module=requests,
-            cache_dir=request_cache_dir,
-        )
+        for attempt in range(1, self._max_attempts + 1):
+            try:
+                response = cached_requests_get(
+                    provider="SEC EDGAR",
+                    api_family="companyfacts",
+                    url=self._endpoint(request.cik),
+                    headers={
+                        "User-Agent": self.user_agent,
+                        "Accept-Encoding": "gzip, deflate",
+                        "Accept": "application/json",
+                    },
+                    timeout=30,
+                    requests_module=requests,
+                    cache_dir=request_cache_dir,
+                )
+                break
+            except Exception as exc:
+                if attempt == self._max_attempts or not _is_retryable_transport_error(
+                    exc, requests
+                ):
+                    raise
+                (self._sleeper or time.sleep)(self._retry_backoff_seconds[attempt - 1])
         response.raise_for_status()
         return bytes(response.content)
 
@@ -108,6 +134,19 @@ class SecEdgarCompanyFactsProvider:
 
     def _endpoint(self, cik: str) -> str:
         return f"{self.base_url}/CIK{cik}.json"
+
+
+def _is_retryable_transport_error(exception: Exception, requests: Any) -> bool:
+    """True for a failure before any HTTP response arrived (TLS, connect, timeout, reset)."""
+    exceptions = getattr(requests, "exceptions", None)
+    if exceptions is None:
+        return False
+    retryable_types = tuple(
+        exception_type
+        for name in ("Timeout", "ConnectionError", "SSLError", "ChunkedEncodingError")
+        if isinstance((exception_type := getattr(exceptions, name, None)), type)
+    )
+    return bool(retryable_types) and isinstance(exception, retryable_types)
 
 
 def download_sec_companyfacts(

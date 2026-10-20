@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DATA-026
+area: 数据工程/SEC companyfacts 下载对响应前的网络失败重试
+priority: P1
+status: IN_PROGRESS
+next_owner: Claude（审 DATA-026-01）
+next_step: DATA-026-01 发布后，下一次发布包部署带上它；OPS-086 步骤 7 重新切换的日期等 DATA-025-01 和本任务发布
+acceptance: SecEdgarCompanyFactsProvider 对响应前的 Timeout、ConnectionError（含 SSLError）、ChunkedEncodingError 做最多 3 次尝试，退避 5 秒和 15 秒，最后一次失败原样抛出；HTTP 错误状态和其他异常不重试；失败的尝试不写缓存；采集策略和其他适配器不变；PR 套件通过
+notes: production_effect=none；broker_action=none；需求文档 docs/requirements/DATA-026_Sec_Companyfacts_Transport_Retry.md；起因：2026-10-20 OPS-086 步骤 7 第一个生产日 sec_companyfacts 在 TLS 握手处 4.9 秒失败，适配器对每家公司只试一次；同一天 13:10 用同一发布包重跑成功（D1 诊断见 knowledge/claude/runs/OPS-086-07S/D1.md）
