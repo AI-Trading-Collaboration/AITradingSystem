@@ -2,8 +2,8 @@ schema_version: task.v1
 id: TRADING-2568_RESEARCH_PROGRESS_PAGE
 area: 研究方法 / 研究进展页面（GitHub Pages）
 priority: P2
-status: IN_PROGRESS
-next_owner: Project Owner
-next_step: 运行 03（页面按策略写出买入、卖出、调仓规则和信号淘汰标准，除专业名词外用中文）发布后，在线上页面核对，然后 DONE
+status: BASELINE_DONE
+next_owner: Claude（等 TRADING-2569 J3、J4 的记录再写运行 04）
+next_step: 运行 01 到 03 已发布，线上页面核对过（2026-10-20 00:29 JST）；剩运行 04：思路快筛和判断对账两个面板，等 TRADING-2569 J3、J4 的记录出现再写需求和测试
 acceptance: 见 docs/requirements/TRADING-2568_Research_Progress_Page.md 第 6 节：验收测试 tests/test_research_site.py 和 tests/test_research_site_zh.py 全过；页面只读仓库里的研究记录，同样内容生成同样页面；研究记录发布到 main 后 GitHub Pages 自动更新
-notes: production_effect=none；broker_action=none；requirement=docs/requirements/TRADING-2568_Research_Progress_Page.md；owner_decision:TRADING-2568:2026-10-14:research_progress_page（2026-10-13 23:44:05Z 卡上选 GitHub Pages）；替代 2026-10-10 退役的 Atlas（TRADING-2466）；2026-10-15：运行 02 加 .github/workflows/research-site.yml；2026-10-19：Baker 要求页面写清每个策略的买入、卖出、调仓规则和淘汰信号的标准、除专业名词外用中文（owner_decision:TRADING-2568:2026-10-19:page_rules_and_zh），运行 03
+notes: production_effect=none；broker_action=none；requirement=docs/requirements/TRADING-2568_Research_Progress_Page.md；owner_decision:TRADING-2568:2026-10-14:research_progress_page（2026-10-13 23:44:05Z 卡上选 GitHub Pages）；替代 2026-10-10 退役的 Atlas（TRADING-2466）；2026-10-15：运行 02 加 .github/workflows/research-site.yml；2026-10-19：Baker 要求页面写清每个策略的买入、卖出、调仓规则和淘汰信号的标准、除专业名词外用中文（owner_decision:TRADING-2568:2026-10-19:page_rules_and_zh），运行 03；2026-10-20：运行 03 发布到 main 12af29a9（Baker 2026-10-19 要求的买卖规则、淘汰标准和中文化），线上页面核对过，累计试验改正为 55（题目 32 + 试跑 23）；状态改为 BASELINE_DONE，剩运行 04
