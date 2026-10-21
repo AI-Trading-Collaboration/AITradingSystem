@@ -24,13 +24,14 @@
 - T0003（bad_vol_share_63，研究自动循环第 1 期第 2 周的候选）试跑没过门（2026-10-19）：美股大盘 1929–2010 年左尾和回撤都比同平均敞口的固定敞口差。失败标签「机制不存在；软泄漏可疑」，Baker 2026-10-19 同意，见 `families.md`。同一天 Baker 去掉研究自动循环的产量上限（每族每期 2 张卡、每周 4–8 张、每期新信号数），改成定期复盘，见 `_loop/charter_p1.md` 第 14 节。
 - 第三批试跑 T0004–T0006（研究自动循环第 1 期，2026-10-19，试跑 trial-r0023..r0046）：T0004（`industry_dispersion_21`，行业收益离散度）主配置两段都过，是循环第一次有候选过试跑门；T0005（`defensive_lead_63`）、T0006（`absorption_shift_63`）没过，失败标签「机制不存在（按左尾）」和「机制不存在」，Baker 2026-10-19 同意，见 `families.md`。Baker 同一天选 T0004 开题为第四题 QQQ-Q4（`owner_decision:TRADING-2567:2026-10-19:qqq_q4_prereg`）：离散度规则为主，QQQ 自己的 21 日已实现波动同法作对照，读一次验证窗口，只查方向；预注册和策略模块另作一批（C 区）。
 - 第四题 `QQQ-Q4/` 已结束（2026-10-19）：离散度规则（试跑 T0004 转正式题）证据不足，参照 rv21（QQQ 自己的 21 日已实现波动，同法）证据不足，见 `QQQ-Q4/decision.md`。左尾方向对，几何年化每年少 1.6 个点，和第一题 q1a 几乎相同；九条降风险规则在 2011–2021 年都没有以每年少不到 1 个点的代价改善左尾。失败标签都是「有效果但代价太高」，Baker 2026-10-19 同意；「波动」家族关闭，「广度和相关」停车，见 `families.md`。
+- 第五题 `QQQ-Q5/` 已结束（2026-10-21）：QQQ-Q3 的 fast_slow 改每周调仓，证据不足，评级 B（软泄漏，降一档），见 `QQQ-Q5/decision.md`。左尾改善从月频的 +4.4% 到 +8.0%，几何年化每年少 2.9 个点（月频 1.8）；十条降风险规则在 2011–2021 年都没有以每年少不到 1 个点的代价改善左尾。失败标签「有效果但代价太高」加「软泄漏可疑」，Baker 2026-10-21 同意；经典趋势家族保持关闭，按预注册实现层到此为止，第 2 期剩 P1，见 `families.md`。
 - 旧的研究代码、文档、配置和测试按 GOV-009（`owner_decision:GOV-009:2026-10-12:research_cleanup`）分批删除。删除前的完整内容保存在 tag `research-archive-2026-10-12`。
 
 ## 文件
 
 | 文件 | 内容 |
 |---|---|
-| `ledger.md` | 26 条研究线的台账：结论、评级、证据、去向、重开条件 |
+| `ledger.md` | 27 条研究线的台账：结论、评级、证据、去向、重开条件 |
 | `negative_results.md` | 负结果清单：已证伪、未测成、工程上不可执行。研究 brief 必读 |
 | `families.md` | 机制家族台账：每个家族试过几个变体、最好结果、家族价、状态、重开条件；失败标签的定义 |
 | `scorecard.md` | 记分表：预注册写的预期对结题结果（正式题）、假设卡写的方向对筛选结果（筛选层）；每行的偏差原因和下次怎么避免，以及流程的四个分数（2026-10-20 起） |
@@ -43,7 +44,7 @@
 | `QQQ-Q2/` | 第二题（已结束）：结论 `decision.md`；预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |
 | `QQQ-Q3/` | 第三题（已结束）：结论 `decision.md`；预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |
 | `QQQ-Q4/` | 第四题（已结束，试跑 T0004 转正式题）：结论 `decision.md`；预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |
-| `QQQ-Q5/` | 第五题（进行中，QQQ-Q3 的 fast_slow 改每周调仓，没有试跑计划）：预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |
+| `QQQ-Q5/` | 第五题（已结束，QQQ-Q3 的 fast_slow 改每周调仓，没有试跑计划）：结论 `decision.md`；预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |
 
 研究进展页面（TRADING-2568）由 `python -m ai_trading_system.research_site --out <目录>` 从这里的记录生成：只读，不另存事实。main 上的研究记录更新后，GitHub Actions 的 Research site 自动重建并发布到 GitHub Pages：https://ai-trading-collaboration.github.io/AITradingSystem/
 

@@ -220,9 +220,16 @@ README_Q4_ROW = (
     "eads.jsonl` |"
 )
 README_ROW = (
-    "| `QQQ-Q5/` | 第五题（进行中，QQQ-Q3 的 fast_slow 改每周调仓，没有试跑计划）：预注册 `prereg."
-    "yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `win"
-    "dow_reads.jsonl` |"
+    "| `QQQ-Q5/` | 第五题（已结束，QQQ-Q3 的 fast_slow 改每周调仓，没有试跑计划）：结论 `decision.m"
+    "d`；预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的"
+    "读取记录在 `window_reads.jsonl` |"
+)
+README_BULLET = (
+    "- 第五题 `QQQ-Q5/` 已结束（2026-10-21）：QQQ-Q3 的 fast_slow 改每周调仓，证据不足，评级 B（软"
+    "泄漏，降一档），见 `QQQ-Q5/decision.md`。左尾改善从月频的 +4.4% 到 +8.0%，几何年化每年少 2.9 "
+    "个点（月频 1.8）；十条降风险规则在 2011–2021 年都没有以每年少不到 1 个点的代价改善左尾。失败标"
+    "签「有效果但代价太高」加「软泄漏可疑」，Baker 2026-10-21 同意；经典趋势家族保持关闭，按预注册"
+    "实现层到此为止，第 2 期剩 P1，见 `families.md`。"
 )
 NOTES_TAIL = (
     "；2026-10-21：Baker 选研究自动循环第 2 期第一批卡 H14（QQQ-Q3 的 fast_slow 改每周调仓）开题为"
@@ -231,28 +238,35 @@ NOTES_TAIL = (
     "，TRADING-2567-37 开题，`research/QQQ-Q5/prereg.yaml` 和 `strategy.py` 进 main。production_ef"
     "fect=none；broker_action=none"
 )
-NEXT_OWNER = "Claude（第五题 QQQ-Q5：核对开发运行，然后读一次验证窗口）"
+NOTES_CLOSE = (
+    "；2026-10-21：QQQ-Q5 结题（读取 QQQ-Q5-w0001）：fast_slow_weekly 证据不足（左尾 +8.0%，几何每"
+    "年少 2.9 个点），评级 B；Baker 同意结论和失败标签「有效果但代价太高；软泄漏可疑」，TRADING-256"
+    "7-38 记 decision.md、台账第 27 条、families 和 scorecard。production_effect=none；broker_actio"
+    "n=none"
+)
+NEXT_OWNER = "Claude（研究自动循环第 2 期：P1 组合尺子；下一道正式题等候选过试跑门）"
 NEXT_STEP = (
-    "第五题 QQQ-Q5（周频 fast_slow）已开题：研究会话在开发窗口跑 fast_slow_weekly（带证伪，应和 Q"
-    "QQ-Q3 的敏感性变体相同），Claude 核对实现后按开题批准读一次验证窗口，只查方向（owner_decisio"
-    "n:TRADING-2567:2026-10-21:qqq_q5_prereg）。详见 `docs/requirements/TRADING-2567_QQQ_Research"
-    "_Program_1999_Window.md`"
+    "第五题 QQQ-Q5 已结束：fast_slow_weekly 证据不足（`research/QQQ-Q5/decision.md`，台账第 27 条）"
+    "，失败标签「有效果但代价太高」加「软泄漏可疑」，经典趋势家族保持关闭（`research/families.md`）"
+    "。第 2 期接着做 P1 组合尺子（TRADING-2565）；下一道正式题等研究自动循环有候选过试跑门再问 Bake"
+    "r。详见 `docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md`"
 )
 
 
 def test_the_research_readme_lists_the_fifth_question() -> None:
     lines = README.read_text(encoding="utf-8").splitlines()
-    assert lines.count(README_ROW) == 1
+    assert lines.count(README_ROW) == 1 and lines.count(README_BULLET) == 1
     assert lines.index(README_ROW) == lines.index(README_Q4_ROW) + 1
+    assert lines[lines.index(README_BULLET) - 1].startswith("- 第四题 `QQQ-Q4/` 已结束")
 
 
 def test_the_task_card_notes_are_only_appended() -> None:
     card = yaml.safe_load(CARD.read_text(encoding="utf-8"))
-    assert card["notes"].count(NOTES_TAIL) == 1
-    assert card["notes"].endswith(NOTES_TAIL)
+    assert card["notes"].count(NOTES_TAIL) == 1 and card["notes"].count(NOTES_CLOSE) == 1
+    assert card["notes"].endswith(NOTES_TAIL + NOTES_CLOSE)
     assert card["notes"].split(NOTES_TAIL)[0].endswith("broker_action=none")
     assert "qqq_q4_prereg" in card["notes"].split(NOTES_TAIL)[0]
     assert (card["next_owner"], card["next_step"]) == (NEXT_OWNER, NEXT_STEP)
     assert card["status"] == "IN_PROGRESS"
     register = REGISTER.read_text(encoding="utf-8")
-    assert NOTES_TAIL in register and NEXT_STEP in register
+    assert NOTES_TAIL in register and NOTES_CLOSE in register and NEXT_STEP in register
