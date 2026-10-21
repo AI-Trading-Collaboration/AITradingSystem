@@ -17,6 +17,7 @@
 - 查尺子的结果补注到第一到三题（2026-10-18，各题 `decision.md` 和 `ledger.md` 第 23–25 节）：「证据不足」不作负结果读；第二、三题的方向定于上一题的验证读取之后，记为软泄漏。
 - 下一道题定为组合层面 P1（2026-10-18，`owner_decision:TRADING-2567:2026-10-18:portfolio_p1`）：QQQ 加合成 10 年期国债按固定比例，和平均敞口相同的 QQQ 加现金比；先按两段尺子试跑（计划 `_trials/T0002.yaml` 随评估台改造一批加入），主配置过门才开题。研究自动循环降为后台，只做筛选。
 - 研究自动循环 2026-10-21 起按第 2 期章程 `_loop/charter_p2.md`（到 2026-11-04）：转实现层和 P1，第一段加慢熊段回撤判据；第 1 期 `_loop/charter_p1.md` 结束。
+- 研究自动循环第 3 期（2026-10-21 签，`_loop/charter_p3.md`，到 2026-11-04）：给日报定一个有证据的仓位方案并用前瞻记录验证它，不再找新的择时信号；先在 1871–1928 的慢熊段上样本外核对趋势覆盖，再出决定表请 Baker 定方案，之后上前瞻记录台；假设卡停；第 2 期 `_loop/charter_p2.md` 结束。
 - 慢熊段回撤判据不上线（2026-10-21）：探针量出慢熊轨的误放率超线（漏的是前视的种下规则），Baker 选「停加只读两条」（`owner_decision:TRADING-2565:2026-10-21:slow_bear_readonly`）：试跑报告加只读的慢熊段表和长牛段表，趋势类配置记慢熊型前瞻记录 `_loop/forward_records.md`，见 `_loop/charter_p2.md` 第 13、14 节。
 - 研究自动循环出卡按事件（2026-10-21，`owner_decision:TRADING-2565:2026-10-21:event_driven_cards`）：上一批读完就出下一批，不等周一，周一保底。第 2 期第一批卡当天出，只出周频 fast_slow 一张，Baker 选开题为第五题 QQQ-Q5（`owner_decision:TRADING-2567:2026-10-21:qqq_q5_prereg`，预注册另作一批）。
 - 2026-10-18 起结题打失败标签、开题读失败条款，见 `families.md`、`scorecard.md`、`_loop/charter_p1.md` 第 12 节；第一到三题和 T0001 的 10 个失败已回填标签，Baker 同意。
@@ -37,7 +38,7 @@
 | `scorecard.md` | 记分表：预注册写的预期对结题结果（正式题）、假设卡写的方向对筛选结果（筛选层）；每行的偏差原因和下次怎么避免，以及流程的四个分数（2026-10-20 起） |
 | `assets.md` | 可以复用的代码、检验和记录，以及它们在哪里 |
 | `_template/` | 一个研究问题的样例：`prereg.yaml`（逐项说明）和 `strategy.py`（策略接口）；`brief.md` 是 pi 研究运行的 brief 模板 |
-| `_loop/` | 研究自动循环：各期章程 `charter_p1.md`、`charter_p2.md`；前瞻记录 `forward_records.md`（2026-10-21 起，规则见第 2 期章程第 14 节） |
+| `_loop/` | 研究自动循环：各期章程 `charter_p1.md`、`charter_p2.md`、`charter_p3.md`；前瞻记录 `forward_records.md`（2026-10-21 起，规则见第 2 期章程第 14 节） |
 | `_trials/` | 试跑：门 `prereg.yaml`（C 区）、每个候选一份试跑计划（`T0001.yaml` 等）、试跑记录 `runs/`；见 `_trials/README.md` |
 | `signal_names.yaml`、`<问题ID>/zh.yaml` | 研究进展页面用的中文名和中文说明（TRADING-2568）：信号的中文名；每题的中文标题、一句话摘要、判定摘要和每个策略的名字与角色。只给页面显示用，不进评估台、不影响任何运行；格式见 `_template/zh.yaml` |
 | `QQQ-Q1/` | 第一题（已结束）：结论 `decision.md`；预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |
