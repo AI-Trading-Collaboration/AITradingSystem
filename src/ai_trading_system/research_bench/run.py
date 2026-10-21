@@ -31,6 +31,7 @@ from ai_trading_system.research_bench.data import BenchData, strategy_returns
 from ai_trading_system.research_bench.events import derisk_events
 from ai_trading_system.research_bench.falsify import FalsificationInputs, falsify
 from ai_trading_system.research_bench.metrics import compare, exposure_gap, summarize
+from ai_trading_system.research_bench.portfolio import portfolio_section
 from ai_trading_system.research_bench.screen_settings import (
     LoadedScreenSettings,
     load_screen_settings,
@@ -107,6 +108,7 @@ class RunResult:
     events: dict[str, Any] | None = None
     diagnostics: dict[str, Any] | None = None
     segments: dict[str, Any] | None = None
+    portfolio: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -140,14 +142,23 @@ def run_strategy(
     episodes: Sequence[EpisodeSpec] | None = None,
     slow_bears: Sequence[EpisodeSpec] = (),
     long_bulls: Sequence[EpisodeSpec] = (),
+    declines: Sequence[EpisodeSpec] = (),
+    portfolio_weight: float | None = None,
 ) -> RunResult:
     """Evaluate one strategy; with ``falsification_confidence`` also run the standard
     falsification at that confidence (it is not part of the fingerprint).
     ``episodes`` 是减仓事件表的固定下跌段，不给时用评估台设置里的。
     ``slow_bears``、``long_bulls`` 是只读段表的固定段（``research_bench.segments``），
     不进指纹、不进规则，两样都不给时结果的 ``segments`` 为 None。
+    给了 ``portfolio_weight``（固定比例配置的 QQQ 权重）时储备不能是现金，``declines``
+    是窗口的 10% 下跌段，结果加 ``portfolio`` 一节、不进指纹；不给时为 None。
     """
 
+    if portfolio_weight is not None:
+        if spec.reserve == "cash":
+            raise ValueError("the portfolio ruler needs a reserve other than cash")
+        if not declines:
+            raise ValueError("the portfolio ruler needs the window's declines")
     loaded = loaded or load_settings()
     window = open_window(loaded, spec.question_type, spec.window_role, permit)
     params = _json_params(spec.params)
@@ -274,6 +285,19 @@ def run_strategy(
         },
         segments=segment_section(
             sim, benchmark_sims[PRIMARY_BENCHMARK], tuple(slow_bears), tuple(long_bulls)
+        ),
+        portfolio=None
+        if portfolio_weight is None
+        else portfolio_section(
+            sim,
+            benchmark_sims[PRIMARY_BENCHMARK],
+            strategy_summary,
+            benchmarks[PRIMARY_BENCHMARK],
+            data.returns,
+            traded["cash"],
+            float(portfolio_weight),
+            tuple(declines),
+            loaded.settings.trading_days_per_year,
         ),
     )
 

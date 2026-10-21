@@ -4,6 +4,10 @@
 owner_decision:TRADING-2565:2026-10-21:slow_bear_readonly：月末累计水平跌至少 20%，
 高点到谷底至少 6 个月为慢熊，否则为快跌；下跌段外超过 36 个月为长牛。
 门按开发窗口列段，运行报告策略及其同平均敞口基准的段内表现；不进指纹、不进规则。
+
+下跌段（decline）用同一算法把开段线改成 10%，不设最少月数，是 P1 组合尺子的单元。
+依据 owner_decision:TRADING-2565:2026-10-21:p1_portfolio_ruler，TRADING-2565-38 探针原样；
+组合尺子怎么用它们见 ``research_bench.portfolio``。
 """
 
 from __future__ import annotations
@@ -21,6 +25,8 @@ from ai_trading_system.research_bench.simulate import Simulation
 
 # Descriptive probe rules, preserved by the owner decision above; never acceptance thresholds.
 DROP = 0.20
+# owner_decision:TRADING-2565:2026-10-21:p1_portfolio_ruler，TRADING-2565-38 探针原样。
+DECLINE_LINE = 0.10
 SLOW_MONTHS = 6
 LONG_BULL_MONTHS = 36
 
@@ -57,10 +63,9 @@ def monthly_level(daily: pd.Series) -> pd.Series:
     return (1.0 + daily).groupby(pd.DatetimeIndex(daily.index).to_period("M")).prod().cumprod()
 
 
-def drop_segments(level: pd.Series) -> list[Segment]:
-    out: list[Segment] = []
+def _drops(level: pd.Series, line: float) -> list[tuple[int, int]]:
+    out: list[tuple[int, int]] = []
     values = level.to_numpy(dtype=float)
-    months = pd.PeriodIndex(level.index, freq="M")
     begin = 0
     while begin < len(level):
         peak = begin
@@ -68,7 +73,7 @@ def drop_segments(level: pd.Series) -> list[Segment]:
         for pos in range(begin + 1, len(level)):
             if values[pos] >= values[peak]:
                 peak = pos
-            elif values[pos] <= values[peak] * (1.0 - DROP):
+            elif values[pos] <= values[peak] * (1.0 - line):
                 crossed = True
                 break
         if not crossed:
@@ -77,22 +82,49 @@ def drop_segments(level: pd.Series) -> list[Segment]:
             (i for i in range(peak + 1, len(level)) if values[i] >= values[peak]), len(level)
         )
         trough = peak + 1 + int(np.argmin(values[peak + 1 : recovery]))
-        duration = months[trough].ordinal - months[peak].ordinal
-        kind = "slow_bear" if duration >= SLOW_MONTHS else "fast_drop"
-        out.append(
-            Segment(
-                f"{kind}_{months[peak].strftime('%Y%m')}",
-                kind,
-                str(months[peak] + 1),
-                str(months[trough]),
-                str(months[peak]),
-                str(months[trough]),
-                duration,
-                float(values[trough] / values[peak] - 1.0),
-            )
-        )
+        out.append((peak, trough))
         begin = trough + 1
     return out
+
+
+def _segment(level: pd.Series, kind: str, peak: int, trough: int) -> Segment:
+    values = level.to_numpy(dtype=float)
+    months = pd.PeriodIndex(level.index, freq="M")
+    return Segment(
+        f"{kind}_{months[peak].strftime('%Y%m')}",
+        kind,
+        str(months[peak] + 1),
+        str(months[trough]),
+        str(months[peak]),
+        str(months[trough]),
+        months[trough].ordinal - months[peak].ordinal,
+        float(values[trough] / values[peak] - 1.0),
+    )
+
+
+def drop_segments(
+    level: pd.Series, line: float = DROP, slow_months: int = SLOW_MONTHS
+) -> list[Segment]:
+    months = pd.PeriodIndex(level.index, freq="M")
+    return [
+        _segment(
+            level,
+            "slow_bear"
+            if months[trough].ordinal - months[peak].ordinal >= slow_months
+            else "fast_drop",
+            peak,
+            trough,
+        )
+        for peak, trough in _drops(level, line)
+    ]
+
+
+def decline_segments(level: pd.Series, line: float = DECLINE_LINE) -> list[Segment]:
+    return [_segment(level, "decline", peak, trough) for peak, trough in _drops(level, line)]
+
+
+def declines(daily: pd.Series) -> list[Segment]:
+    return decline_segments(monthly_level(daily))
 
 
 def long_bull_segments(level: pd.Series, drops: Sequence[Segment]) -> list[Segment]:
@@ -260,6 +292,20 @@ def segment_section(
     section["slow_bear_summary"] = slow_bear_summary(measured)
     section["long_bull_summary"] = long_bull_summary(measured)
     return section
+
+
+def decline_problems(found: Sequence[Segment], specs: Sequence[EpisodeSpec]) -> list[str]:
+    expected = [(s.id, s.start, s.end) for s in specs]
+    recomputed = [(s.id, s.start, s.end) for s in found if s.kind == "decline"]
+    return [
+        f"listed {id_} {start}..{end} is not recomputed"
+        for id_, start, end in expected
+        if (id_, start, end) not in recomputed
+    ] + [
+        f"recomputed {id_} {start}..{end} is not listed"
+        for id_, start, end in recomputed
+        if (id_, start, end) not in expected
+    ]
 
 
 def list_problems(

@@ -9,6 +9,11 @@ Once a run starts, failures and errors are recorded too. Every planned configura
 as a trial. Only the primary configuration decides: its first successful run on either market
 failing the gate means fail; both markets holding means pass; otherwise it is incomplete.
 Trials never read the validation window, and passing is not investment or broker approval.
+
+持有现金以外储备的固定比例配置按组合尺子判（``research_bench.portfolio``，
+owner_decision:TRADING-2565:2026-10-21:p1_portfolio_ruler）：门的 ``portfolio_rules``
+判它点名的窗口，择时规则只读；门没点名的开发窗口上记 ``no_ruler``：
+照印尺子的数，不算过也不算没过，这个配置过不了。
 """
 
 from __future__ import annotations
@@ -76,7 +81,15 @@ TRIAL_ID_PATTERN = r"^T[0-9]{4}$"
 PLAN_NAME = re.compile(r"^T[0-9]{4}\.yaml$")
 MARKETS: tuple[str, ...] = ("qqq", "us_market")
 MARKET_NAMES = {"qqq": "QQQ", "us_market": "美股大盘"}
-VERDICT_NAMES = {"pass": "过门", "fail": "没过", "incomplete": "未完成"}
+VERDICT_NAMES = {
+    "pass": "过门",
+    "fail": "没过",
+    "incomplete": "未完成",
+    "no_ruler": "没有尺子（不算过，也不算没过）",
+}
+PORTFOLIO_FUNCTION = "fixed_exposure"
+PORTFOLIO_RULE_SET = "portfolio"
+NO_RULER = "no_ruler"
 # The two-stage ruler (owner_decision:TRADING-2565:2026-10-17:ruler_40y): an opened question's
 # validation read is stage 2 and only checks the direction, with the gate's QQQ rules. The research
 # loop charter still allows one validation read per period; this display never grants that read.
@@ -101,6 +114,31 @@ class _Strict(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
+def _segment_list_problems(window_id: str, items: tuple[EpisodeSpec, ...]) -> str | None:
+    ordered = sorted(items, key=lambda item: item.start)
+    if len({item.id for item in ordered}) != len(ordered):
+        return f"{window_id}: segment ids repeat"
+    for item in ordered:
+        if item.end < item.start:
+            return f"segment {item.id} ends before it starts"
+    for a, b in zip(ordered, ordered[1:], strict=False):
+        if b.start <= a.end:
+            return f"{window_id}: segments {a.id} and {b.id} overlap"
+    return None
+
+
+class PortfolioGate(_Strict):
+    windows: tuple[Annotated[str, Field(min_length=1)], ...] = Field(min_length=1)
+    rules: tuple[Rule, ...] = Field(min_length=1)
+
+    @field_validator("windows")
+    @classmethod
+    def _unique_windows(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        if len(set(value)) != len(value):
+            raise ValueError("portfolio rule windows must be unique")
+        return value
+
+
 class MarketGate(_Strict):
     question_type: str = Field(min_length=1)
     qqq_series: Literal["proxy", "actual"] | None = None
@@ -111,6 +149,10 @@ class MarketGate(_Strict):
     # owner_decision:TRADING-2565:2026-10-21:slow_bear_readonly.
     slow_bear_episodes: dict[str, tuple[EpisodeSpec, ...]] | None = None
     long_bull_episodes: dict[str, tuple[EpisodeSpec, ...]] | None = None
+    # owner_decision:TRADING-2565:2026-10-21:p1_portfolio_ruler：储备配置的规则和
+    # 每个开发窗口的 10% 下跌段（描述性）。
+    portfolio_rules: PortfolioGate | None = None
+    decline_episodes: dict[str, tuple[EpisodeSpec, ...]] | None = None
 
     @field_validator("reserve_question_types")
     @classmethod
@@ -143,6 +185,14 @@ class MarketGate(_Strict):
             dict.fromkeys((*(self.slow_bear_episodes or {}), *(self.long_bull_episodes or {})))
         )
 
+    def decline_list(self, window_id: str) -> tuple[EpisodeSpec, ...]:
+        return (self.decline_episodes or {}).get(window_id, ())
+
+    def portfolio_rules_for(self, window_id: str) -> tuple[Rule, ...] | None:
+        if self.portfolio_rules is not None and window_id in self.portfolio_rules.windows:
+            return self.portfolio_rules.rules
+        return None
+
     @model_validator(mode="after")
     def _episodes(self) -> MarketGate:
         for episode in self.event_episodes or ():
@@ -150,15 +200,13 @@ class MarketGate(_Strict):
                 raise ValueError(f"episode {episode.id} ends before it starts")
         for window_id in self.segment_windows():
             slow, long = self.segment_lists(window_id)
-            items = sorted((*slow, *long), key=lambda item: item.start)
-            if len({item.id for item in items}) != len(items):
-                raise ValueError(f"{window_id}: segment ids repeat")
-            for item in items:
-                if item.end < item.start:
-                    raise ValueError(f"segment {item.id} ends before it starts")
-            for a, b in zip(items, items[1:], strict=False):
-                if b.start <= a.end:
-                    raise ValueError(f"{window_id}: segments {a.id} and {b.id} overlap")
+            problem = _segment_list_problems(window_id, (*slow, *long))
+            if problem is not None:
+                raise ValueError(problem)
+        for window_id, items in (self.decline_episodes or {}).items():
+            problem = _segment_list_problems(window_id, items)
+            if problem is not None:
+                raise ValueError(problem)
         return self
 
 
@@ -220,6 +268,10 @@ class TrialConfig(StrategyEntry):
         if value not in RESERVES:
             raise ValueError(f"unknown reserve {value}")
         return value
+
+
+def uses_portfolio_ruler(config: TrialConfig) -> bool:
+    return config.function == PORTFOLIO_FUNCTION and config.reserve != "cash"
 
 
 class TrialPlan(_Strict):
@@ -343,7 +395,7 @@ def gate_problems(gate: TrialGate, loaded: LoadedSettings) -> list[str]:
     sections = rule_sections(loaded.settings)
     problems = []
     for market, entry in gate.markets.items():
-        for rule in entry.rules:
+        for rule in (*entry.rules, *(entry.portfolio_rules.rules if entry.portfolio_rules else ())):
             section, _, name = rule.metric.partition(".")
             if name not in sections.get(section, ()):
                 problems.append(f"{market}: no metric {rule.metric}")
@@ -360,6 +412,23 @@ def gate_problems(gate: TrialGate, loaded: LoadedSettings) -> list[str]:
                 f"{market}: segments listed for {window_id}, not a development window here"
                 for window_id in entry.segment_windows()
                 if window_id not in windows
+            )
+            problems.extend(
+                f"{market}: declines listed for {window_id}, not a development window here"
+                for window_id in entry.decline_episodes or {}
+                if window_id not in windows
+            )
+            if entry.portfolio_rules is not None:
+                problems.extend(
+                    f"{market}: portfolio rules for {window_id}, not a development window here"
+                    for window_id in entry.portfolio_rules.windows
+                    if window_id not in windows
+                )
+        if entry.portfolio_rules is not None:
+            problems.extend(
+                f"{market}: portfolio rules for {window_id}, which lists no declines"
+                for window_id in entry.portfolio_rules.windows
+                if not entry.decline_list(window_id)
             )
     return problems
 
@@ -560,7 +629,10 @@ def segment_check(
     plan: TrialPlan,
     datasets: Mapping[Market, BenchData],
     loaded: LoadedSettings,
+    *,
+    declines: bool = False,
 ) -> list[dict[str, Any]]:
+    """重算只读段表；``declines`` 为真时改为核对组合尺子的 10% 下跌段。"""
     problems = gate_problems(gate, loaded)
     for market in SEGMENT_MARKETS:
         problems.extend(
@@ -578,8 +650,15 @@ def segment_check(
             if window.window_id in seen:
                 continue
             seen.add(window.window_id)
-            found = seg.segments(seg.window_returns(datasets[market].returns["qqq"], window))
-            listed = window.window_id in entry.segment_windows()
+            daily = seg.window_returns(datasets[market].returns["qqq"], window)
+            if declines:
+                found = seg.declines(daily)
+                listed = window.window_id in (entry.decline_episodes or {})
+                differences = seg.decline_problems(found, entry.decline_list(window.window_id))
+            else:
+                found = seg.segments(daily)
+                listed = window.window_id in entry.segment_windows()
+                differences = seg.list_problems(found, *entry.segment_lists(window.window_id))
             rows.append(
                 {
                     "market": market,
@@ -588,9 +667,7 @@ def segment_check(
                     "end": None if window.end is None else window.end.isoformat(),
                     "segments": [asdict(s) for s in found],
                     "listed": listed,
-                    "problems": seg.list_problems(found, *entry.segment_lists(window.window_id))
-                    if listed
-                    else [],
+                    "problems": differences if listed else [],
                 }
             )
     return rows
@@ -650,6 +727,12 @@ def run_trial(
     question_type = entry.question_type_for(config.reserve)
     window = resolve_window(loaded, question_type, "development")
     slow_bears, long_bulls = entry.segment_lists(window.window_id)
+    portfolio = uses_portfolio_ruler(config)
+    declines = entry.decline_list(window.window_id) if portfolio else ()
+    if portfolio and not declines:
+        raise TrialError(
+            f"{window.window_id}: the gate lists no declines here; the portfolio ruler needs them"
+        )
     if config.reserve != "cash":
         try:
             traded = strategy_returns(data, config.reserve)
@@ -708,6 +791,8 @@ def run_trial(
             episodes=entry.event_episodes,
             slow_bears=slow_bears,
             long_bulls=long_bulls,
+            declines=declines,
+            portfolio_weight=float(config.params["exposure"]) if portfolio else None,
         )
     except BenchCheckError as exc:
         return _append(root_dir, {**body, "status": "check_failed", "problems": exc.problems})
@@ -715,7 +800,17 @@ def run_trial(
         error = f"{type(exc).__name__}: {exc}".splitlines()[0][: lg.ERROR_TEXT_LIMIT]
         return _append(root_dir, {**body, "status": "error", "error": error})
     outcome = result.to_dict()
-    rows = evaluate_rules(entry.rules, {**(outcome.get("falsification") or {}), **outcome})
+    values = {**(outcome.get("falsification") or {}), **outcome}
+    rows = evaluate_rules(entry.rules, values)
+    extra: dict[str, Any] = {}
+    if portfolio:
+        rules = entry.portfolio_rules_for(window.window_id)
+        extra = {"rule_set": PORTFOLIO_RULE_SET, "gate_readonly": rows}
+        rows = evaluate_rules(rules, values) if rules is not None else []
+        extra["gate_holds"] = all(row["holds"] for row in rows) if rules is not None else None
+        extra["gate_outcome"] = (
+            ("pass" if extra["gate_holds"] else "fail") if rules is not None else NO_RULER
+        )
     return _append(
         root_dir,
         {
@@ -735,15 +830,18 @@ def run_trial(
                     "diagnostics",
                     "segments",
                 )
+                + (("portfolio",) if portfolio else ())
             },
             "gate": rows,
             "gate_holds": all(row["holds"] for row in rows),
+            **extra,
         },
     )
 
 
 def primary_verdict(records: list[dict[str, Any]], trial_id: str, primary: str) -> str:
-    first: dict[str, bool] = {}
+    """只看主配置每个市场第一条成功记录；没有尺子既不算过也不算没过。"""
+    first: dict[str, bool | None] = {}
     for record in records:
         if (
             record.get("trial_id") == trial_id
@@ -751,9 +849,14 @@ def primary_verdict(records: list[dict[str, Any]], trial_id: str, primary: str) 
             and record.get("status") == "ok"
             and record.get("market") in MARKETS
         ):
-            first.setdefault(record["market"], bool(record.get("gate_holds")))
-    if any(not holds for holds in first.values()):
+            first.setdefault(
+                record["market"],
+                None if record.get("gate_outcome") == NO_RULER else bool(record.get("gate_holds")),
+            )
+    if any(holds is False for holds in first.values()):
         return "fail"
+    if any(holds is None for holds in first.values()):
+        return NO_RULER
     return "pass" if all(market in first for market in MARKETS) else "incomplete"
 
 
@@ -781,7 +884,14 @@ def trial_ledger_summary(root_dir: Path) -> dict[str, Any]:
                 {
                     **{
                         key: record.get(key)
-                        for key in ("run_id", "config", "market", "status", "gate_holds")
+                        for key in (
+                            "run_id",
+                            "config",
+                            "market",
+                            "status",
+                            "gate_holds",
+                            "gate_outcome",
+                        )
                     },
                     "rules_held": sum(bool(row["holds"]) for row in rows),
                     "rules": len(rows),
@@ -886,10 +996,16 @@ def trial_summary(root_dir: Path, trial_id: str, loaded: LoadedSettings) -> dict
                         "status",
                         "gate_holds",
                         "gate",
+                        "rule_set",
+                        "gate_outcome",
+                        "gate_readonly",
                         "problems",
                         "error",
                     )
                 },
+                "function": record.get("strategy", {}).get("function"),
+                "window_id": record.get("window", {}).get("window_id"),
+                "portfolio": (record.get("result") or {}).get("portfolio"),
                 "reserve": record.get("spec", {}).get("reserve", "cash"),
                 "comparison": (record.get("result") or {}).get("comparison"),
                 "diagnostics": (record.get("result") or {}).get("diagnostics"),
@@ -1016,6 +1132,69 @@ def segment_lines(market: str, primary: str, section: dict[str, Any]) -> list[st
     return lines
 
 
+def rule_lines(rows: list[dict[str, Any]]) -> list[str]:
+    lines = ["| 规则 | 阈值 | 实际 | 成立 |", "|---|---|---|---|"]
+    for row in rows:
+        lines.append(
+            f"| {row['metric']} | {row['op']} {_number(row['value'], 'g')} | "
+            f"{_number(row['observed'], '.4f')} | {'是' if row['holds'] else '否'} |"
+        )
+    return lines
+
+
+def portfolio_lines(run: dict[str, Any]) -> list[str]:
+    section = run["portfolio"] or {}
+    lines = [
+        "组合尺子（储备配置按它判；owner_decision:TRADING-2565:2026-10-21:p1_portfolio_ruler）",
+        "",
+    ]
+    if run["gate_outcome"] == NO_RULER:
+        lines.append(
+            f"- 判定：没有尺子。门的组合尺子没有 {run['window_id']} 这个窗口的门槛，"
+            "不算过，也不算没过，这个配置过不了；下面的数照印。"
+        )
+    else:
+        lines.extend(rule_lines(run["gate"]))
+    days = _number(section.get("quiet_days"))
+    quiet_note = (
+        f"（段外 {days} 天，不到一半，用全窗口超额）"
+        if section.get("quiet_fallback")
+        else f"（段外 {days} 天）"
+    )
+    excluded = "、".join(section.get("excluded") or []) or "无"
+    lines.extend(
+        [
+            "",
+            f"- 分解：几何差 {_number(section.get('geometric_difference'), '+.2f', 100)} 点 = "
+            f"储备自身超额（全窗口）{_number(section.get('reserve_excess'), '+.2f', 100)} 点 + "
+            f"再平衡收益 {_number(section.get('rebalance_return'), '+.2f', 100)} 点"
+            f"（QQQ 权重 {_number(section.get('weight'), '.2f')}）",
+            f"- 储备对现金：全窗口超额 {_number(section.get('excess_annual'), '+.2f', 100)} 点/年；"
+            f"平时超额（段外）{_number(section.get('quiet_excess'), '+.2f', 100)} 点/年"
+            f"{quiet_note}",
+            f"- 下跌段计入 {_number(section.get('segment_count'))} 段："
+            f"r 中位 {_number(section.get('median_ratio'), '+.3f')}，"
+            f"r > 0 的 {_number(section.get('positive_count'))} 段"
+            f"（{_percent(section.get('positive_share'))}），"
+            f"最小 {_number(section.get('min_ratio'), '+.3f')}；"
+            f"不计入（B 段内跌不到 2%）：{excluded}",
+            "",
+            "| 段 | 月份 | 月数 | B 段内 | A 段内 | ΔD（点） | C（点） | r | 储备段内超额 |",
+            "|---|---|---|---|---|---|---|---|---|",
+        ]
+    )
+    for row in section.get("segments") or []:
+        lines.append(
+            f"| {row['id']} | {row['start']}..{row['end']} | {_number(row['months'])} | "
+            f"{_percent(row['benchmark_return'])} | {_percent(row['strategy_return'])} | "
+            f"{_number(row['difference'], '+.1f', 100)} | "
+            f"{_number(row['cushion'], '+.1f', 100)} | {_number(row['ratio'], '+.3f')} | "
+            f"{_percent(row['reserve_excess'])} |"
+        )
+    lines.extend(["", "择时尺子（只读，不进判定）", "", *rule_lines(run["gate_readonly"] or [])])
+    return lines
+
+
 def trial_report(root_dir: Path, trial_id: str, loaded: LoadedSettings) -> list[str]:
     item = trial_summary(root_dir, trial_id, loaded)
     validation = item["validation"]
@@ -1057,12 +1236,12 @@ def trial_report(root_dir: Path, trial_id: str, loaded: LoadedSettings) -> list[
         elif run["status"] == "error":
             lines.append(f"出错：{run['error']}")
         else:
-            lines.extend(["| 规则 | 阈值 | 实际 | 成立 |", "|---|---|---|---|"])
-            for row in run["gate"]:
-                lines.append(
-                    f"| {row['metric']} | {row['op']} {_number(row['value'], 'g')} | "
-                    f"{_number(row['observed'], '.4f')} | {'是' if row['holds'] else '否'} |"
-                )
+            if run["rule_set"] == PORTFOLIO_RULE_SET:
+                lines.extend(portfolio_lines(run))
+            else:
+                lines.extend(rule_lines(run["gate"]))
+                if run["function"] == PORTFOLIO_FUNCTION and run["reserve"] != "cash":
+                    lines.append("- 这次运行早于组合尺子，按当时的门判；没有组合尺子的数，不重算。")
             lines.extend(
                 [
                     "",

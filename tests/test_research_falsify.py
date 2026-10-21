@@ -169,7 +169,8 @@ def test_the_falsification_has_every_rule_section_with_its_fields() -> None:
     result = falsify(_inputs(_momentum()), LOADED, 0.9)
     sections = rule_sections(LOADED.settings)
     for section, fields in sections.items():
-        if section in ("strategy", "comparison", "exposure_gap"):
+        # The portfolio ruler (TRADING-2565-39) is computed by trial runs, never by falsify.
+        if section in ("strategy", "comparison", "exposure_gap", "portfolio"):
             continue
         assert set(result[section]) == set(fields), section
     assert set(result) - set(sections) == {"settings", "leave_year", "leave_episode"}

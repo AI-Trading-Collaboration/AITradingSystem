@@ -37,8 +37,24 @@
 # gap of more than 36 months between drops is a long bull. A slow bear runs from the month after
 # the high to the trough; ids name the high's month (slow bears) or the first month (long bulls).
 # `research_bench trial-segments <trial> --check` recomputes them on a plan's data.
+#
+# portfolio_rules judge a fixed mix that holds a reserve other than cash (P1), approved by Baker
+# with owner_decision:TRADING-2565:2026-10-21:p1_portfolio_ruler: the portfolio ruler
+# (research_bench.portfolio) compares the mix with the matched-exposure mix holding cash on its
+# geometric return, its cushion in the market's 10% declines after the reserve's quiet-period excess
+# (ratio r to the cash mix's loss; a decline where the cash mix loses less than 2% is not counted),
+# and its rebalancing return. The ruler probe (TRADING-2565-38) chose t = 0.10 and q = 0.75 on
+# us_market_1929_2010: zero-effect reserves passed 1 of 450 (95% upper bound 1.2%), a reserve
+# returning 30% of each decline passed 92.0%. On us_market_1962_2010 it found no threshold
+# (t = 0.10 and q = 0.75 passed 5 of 450, upper bound 2.6%), so that window is not named: a reserve
+# configuration there records no_ruler, prints the ruler and cannot pass. QQQ's development window
+# checks the direction only (stage 2). The timing rules above stay word for word for every other
+# configuration and are printed read-only for these. decline_episodes list each development
+# window's 10% declines (the bench's drop rule at 10%, no minimum length; a decline runs from the
+# month after the high to the trough), descriptive like the segment lists;
+# `research_bench trial-segments <trial> --declines --check` recomputes them.
 schema_version: research_trial_gate.v1
-owner_decision: owner_decision:TRADING-2565:2026-10-19:tail_floor10
+owner_decision: owner_decision:TRADING-2565:2026-10-21:p1_portfolio_ruler
 max_configs_per_trial: 8            # research loop charter, period 1, section 5: every configuration counts
 confidence: 0.95                    # bootstrap interval of every trial run
 markets:
@@ -55,12 +71,26 @@ markets:
     long_bull_episodes:
       qqq_long_history_development:
         - {id: long_bull_200210, start: "2002-10", end: "2007-10"}
+    portfolio_rules:                # stage 2 for reserve configurations: the direction only
+      windows: [qqq_long_history_development]
+      rules:
+        - {metric: comparison.geometric_annual_return, op: ">=", value: -0.010, note: gives up at most 1.0 point a year}
+        - {metric: portfolio.median_ratio, op: ">", value: 0.0, note: the median decline is cushioned}
+        - {metric: portfolio.rebalance_return, op: ">=", value: 0.0, note: rebalancing does not lose}
+    decline_episodes:
+      qqq_long_history_development:
+        - {id: decline_200003, start: "2000-04", end: "2002-09"}
+        - {id: decline_200211, start: "2002-12", end: "2002-12"}
+        - {id: decline_200412, start: "2005-01", end: "2005-04"}
+        - {id: decline_200601, start: "2006-02", end: "2006-07"}
+        - {id: decline_200710, start: "2007-11", end: "2009-02"}
+        - {id: decline_201004, start: "2010-05", end: "2010-06"}
   us_market:
     question_type: us_market_trial  # development window us_market_1929_2010, 1929-01-02..2010-12-31 (Ken French)
     # A configuration that holds the synthetic ten-year Treasury in place of cash runs on this type
-    # (window us_market_1962_2010, 49 years: DGS10 starts in 1962), with the same rules
-    # (TRADING-2567 P1, owner_decision:TRADING-2567:2026-10-18:portfolio_p1). QQQ needs none: its
-    # window starts in 1999.
+    # (window us_market_1962_2010, 49 years: DGS10 starts in 1962; TRADING-2567 P1,
+    # owner_decision:TRADING-2567:2026-10-18:portfolio_p1). A fixed mix is judged there by the
+    # portfolio rules below, which do not name that window. QQQ needs none: its window starts in 1999.
     reserve_question_types: {treasury_10y: us_market_bond_trial}
     rules:                          # stage 1 (core four at 0.95 and the 10% floor) on 82 years, at least the 40 the ruler needs
       - {metric: ci_low.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: the interval excludes no left-tail improvement}
@@ -109,5 +139,59 @@ markets:
         - {id: long_bull_197410, start: "1974-10", end: "1987-08"}
         - {id: long_bull_198712, start: "1987-12", end: "2000-03"}
         - {id: long_bull_200210, start: "2002-10", end: "2007-10"}
+    portfolio_rules:                # stage 1 for reserve configurations (t = 0.10, q = 0.75, n >= 4)
+      # us_market_1962_2010 is not named: TRADING-2565-38 found no threshold there
+      # (t = 0.10 and q = 0.75 passed 5 of 450 zero-effect reserves).
+      windows: [us_market_1929_2010]
+      rules:
+        - {metric: comparison.geometric_annual_return, op: ">=", value: -0.010, note: gives up at most 1.0 point a year}
+        - {metric: cost_25.geometric_annual_return, op: ">=", value: -0.010, note: the cost condition holds at 25 bps}
+        - {metric: portfolio.segment_count, op: ">=", value: 4, note: at least four counted declines}
+        - {metric: portfolio.median_ratio, op: ">=", value: 0.10, note: the median decline is cushioned by at least 10% of the cash mix's loss}
+        - {metric: portfolio.positive_share, op: ">=", value: 0.75, note: at least three quarters of the counted declines are cushioned}
+        - {metric: portfolio.rebalance_return, op: ">=", value: 0.0, note: rebalancing does not lose}
+    decline_episodes:
+      us_market_1929_2010:
+        - {id: decline_192908, start: "1929-09", end: "1932-06"}
+        - {id: decline_193208, start: "1932-09", end: "1933-02"}
+        - {id: decline_193308, start: "1933-09", end: "1933-10"}
+        - {id: decline_193401, start: "1934-02", end: "1934-07"}
+        - {id: decline_193702, start: "1937-03", end: "1938-03"}
+        - {id: decline_193812, start: "1939-01", end: "1939-04"}
+        - {id: decline_193909, start: "1939-10", end: "1942-04"}
+        - {id: decline_194605, start: "1946-06", end: "1947-05"}
+        - {id: decline_194805, start: "1948-06", end: "1949-05"}
+        - {id: decline_195707, start: "1957-08", end: "1957-12"}
+        - {id: decline_196112, start: "1962-01", end: "1962-06"}
+        - {id: decline_196601, start: "1966-02", end: "1966-09"}
+        - {id: decline_196811, start: "1968-12", end: "1970-06"}
+        - {id: decline_197212, start: "1973-01", end: "1974-09"}
+        - {id: decline_197506, start: "1975-07", end: "1975-09"}
+        - {id: decline_197808, start: "1978-09", end: "1978-10"}
+        - {id: decline_198001, start: "1980-02", end: "1980-03"}
+        - {id: decline_198011, start: "1980-12", end: "1982-07"}
+        - {id: decline_198306, start: "1983-07", end: "1984-05"}
+        - {id: decline_198708, start: "1987-09", end: "1987-11"}
+        - {id: decline_199005, start: "1990-06", end: "1990-10"}
+        - {id: decline_199806, start: "1998-07", end: "1998-08"}
+        - {id: decline_200003, start: "2000-04", end: "2002-09"}
+        - {id: decline_200710, start: "2007-11", end: "2009-02"}
+        - {id: decline_201004, start: "2010-05", end: "2010-06"}
+      us_market_1962_2010:
+        - {id: decline_196202, start: "1962-03", end: "1962-06"}
+        - {id: decline_196601, start: "1966-02", end: "1966-09"}
+        - {id: decline_196811, start: "1968-12", end: "1970-06"}
+        - {id: decline_197212, start: "1973-01", end: "1974-09"}
+        - {id: decline_197506, start: "1975-07", end: "1975-09"}
+        - {id: decline_197808, start: "1978-09", end: "1978-10"}
+        - {id: decline_198001, start: "1980-02", end: "1980-03"}
+        - {id: decline_198011, start: "1980-12", end: "1982-07"}
+        - {id: decline_198306, start: "1983-07", end: "1984-05"}
+        - {id: decline_198708, start: "1987-09", end: "1987-11"}
+        - {id: decline_199005, start: "1990-06", end: "1990-10"}
+        - {id: decline_199806, start: "1998-07", end: "1998-08"}
+        - {id: decline_200003, start: "2000-04", end: "2002-09"}
+        - {id: decline_200710, start: "2007-11", end: "2009-02"}
+        - {id: decline_201004, start: "2010-05", end: "2010-06"}
 production_effect: none
 broker_action: none

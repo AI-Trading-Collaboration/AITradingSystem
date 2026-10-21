@@ -20,8 +20,10 @@ import numpy as np
 import pandas as pd
 import pytest
 import yaml
+from typer.testing import CliRunner
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.research_bench import __main__ as cli
 from ai_trading_system.research_bench import ledger as lg
 from ai_trading_system.research_bench import run as rn
 from ai_trading_system.research_bench import trial as tr
@@ -64,7 +66,7 @@ LOADED = replace(
     ),
 )
 DECISION = "owner_decision:TRADING-2567:2026-10-18:portfolio_p1"
-GATE_DECISION = "owner_decision:TRADING-2565:2026-10-19:tail_floor10"
+GATE_DECISION = "owner_decision:TRADING-2565:2026-10-21:p1_portfolio_ruler"
 GATE_FILE = PROJECT_ROOT / "research/_trials/prereg.yaml"
 PLAN_FILE = PROJECT_ROOT / "research/_trials/T0002.yaml"
 SIG = "sig-0123456789ab"
@@ -678,7 +680,7 @@ def _repo(
     _git(top, "init", "-q", "-b", "main")
     _git(top, "config", "user.email", "test@example.com")
     _git(top, "config", "user.name", "test")
-    lines = [f"- {GATE_DECISION}: two-stage ruler with the tail floor."]
+    lines = [f"- {GATE_DECISION}: two-stage ruler, tail floor and portfolio ruler."]
     if decision:
         lines.append(f"- {DECISION}: P1.")
     top.joinpath("docs", "requirements", "TRADING-2567.md").write_text(
@@ -763,6 +765,46 @@ def test_the_us_market_run_with_the_treasury_uses_the_1962_window(trial: dict[st
     assert [row["id"] for row in segments["long_bull"]] == [e.id for e in long]
     listed = run_strategy(US, fixed_exposure, spec, LOADED, slow_bears=slow, long_bulls=long)
     assert segments == lg._plain(listed.segments)
+    # The fixed mix is judged by the portfolio ruler, whose rules do not name the 1962 window
+    # (owner_decision:TRADING-2565:2026-10-21:p1_portfolio_ruler): the ruler is printed on the
+    # window's 15 declines, and the run neither passes nor fails.
+    gate = tr.load_gate(GATE_FILE).markets["us_market"]
+    declines = gate.decline_list("us_market_1962_2010")
+    assert len(declines) == 15
+    assert (record["rule_set"], record["gate"], record["gate_holds"], record["gate_outcome"]) == (
+        "portfolio",
+        [],
+        None,
+        "no_ruler",
+    )
+    values = {**(record["result"]["falsification"] or {}), **record["result"]}
+    assert record["gate_readonly"] == tr.evaluate_rules(gate.rules, values)
+    ruled = run_strategy(US, fixed_exposure, spec, LOADED, declines=declines, portfolio_weight=0.6)
+    assert record["result"]["portfolio"] == lg._plain(ruled.portfolio)
+    assert [row["id"] for row in record["result"]["portfolio"]["segments"]] == [
+        item.id for item in declines
+    ]
+    # A stage-2 failure on QQQ still fails; otherwise the missing ruler decides.
+    verdict = "fail" if trial["records"][0]["gate_holds"] is False else "no_ruler"
+    assert tr.primary_verdict(trial["records"], "T0002", "mix60") == verdict
+
+
+def test_a_reserve_mix_on_a_window_without_declines_is_refused(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    path = root.joinpath("_trials", "prereg.yaml")
+    gate = yaml.safe_load(path.read_text(encoding="utf-8"))
+    del gate["markets"]["us_market"]["decline_episodes"]["us_market_1962_2010"]
+    _write(path, gate)
+    _git(root.parent, "commit", "-q", "-am", "gate without the 1962 declines")
+    with pytest.raises(tr.TrialError, match="the gate lists no declines here"):
+        tr.run_trial(root, "T0002", "mix60", "us_market", US, loaded=LOADED)
+    assert _runs(root) == []
+
+
+def test_each_fixed_mix_is_ruled_at_its_own_weight(tmp_path: Path) -> None:
+    record = tr.run_trial(_repo(tmp_path), "T0002", "mix50", "qqq", QQQ, loaded=LOADED)
+    assert record["status"] == "ok"
+    assert record["result"]["portfolio"]["weight"] == 0.5
 
 
 def test_the_qqq_run_with_the_treasury_uses_the_qqq_window(trial: dict[str, Any]) -> None:
@@ -790,9 +832,36 @@ def test_the_qqq_run_with_the_treasury_uses_the_qqq_window(trial: dict[str, Any]
         "events",
         "diagnostics",
         "segments",
+        "portfolio",
     }
     direct = run_strategy(QQQ, fixed_exposure, spec, LOADED, falsification_confidence=0.95)
     assert record["result"]["fingerprint"] == direct.fingerprint
+    # Stage 2 of the portfolio ruler: its three direction rules on the QQQ window's declines.
+    gate = tr.load_gate(GATE_FILE).markets["qqq"]
+    declines = gate.decline_list("qqq_long_history_development")
+    ruled = run_strategy(
+        QQQ,
+        fixed_exposure,
+        spec,
+        LOADED,
+        falsification_confidence=0.95,
+        declines=declines,
+        portfolio_weight=0.6,
+    )
+    assert ruled.fingerprint == direct.fingerprint
+    assert record["result"]["portfolio"] == lg._plain(ruled.portfolio)
+    values = {**(record["result"]["falsification"] or {}), **record["result"]}
+    rows = tr.evaluate_rules(gate.portfolio_rules.rules, values)
+    assert [row["metric"] for row in rows] == [
+        "comparison.geometric_annual_return",
+        "portfolio.median_ratio",
+        "portfolio.rebalance_return",
+    ]
+    assert record["rule_set"] == "portfolio"
+    assert record["gate"] == rows
+    assert record["gate_holds"] is all(row["holds"] for row in rows)
+    assert record["gate_outcome"] == ("pass" if record["gate_holds"] else "fail")
+    assert record["gate_readonly"] == tr.evaluate_rules(gate.rules, values)
 
 
 def test_a_reserve_the_data_lack_refuses_the_trial(tmp_path: Path) -> None:
@@ -826,10 +895,64 @@ def test_the_report_shows_the_design_the_reserve_and_the_two_lines(trial: dict[s
     assert not any(line.startswith("- 信号：") for line in lines)
     assert "## mix60 · QQQ · 储备 10 年期国债（trial-r0001，ok）" in lines
     assert "## mix60 · 美股大盘 · 储备 10 年期国债（trial-r0002，ok）" in lines
+    assert lines.count("择时尺子（只读，不进判定）") == 2
+    assert any(
+        line.startswith("- 判定：没有尺子。") and "us_market_1962_2010" in line for line in lines
+    )
+    verdict = "fail" if trial["records"][0]["gate_holds"] is False else "no_ruler"
+    assert f"- 判定（主配置 mix60）：{tr.VERDICT_NAMES[verdict]}" in lines
     for record in trial["records"]:
         result = record["result"]
         assert tr.cost_benefit_line(result["comparison"]) in lines
         assert tr.matched_volatility_line(result["diagnostics"]) in lines
+
+
+def test_cli_prints_the_portfolio_outcome(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    root = _repo(tmp_path)
+    monkeypatch.setattr(lg, "research_root", lambda loaded: root)
+    monkeypatch.setattr(cli, "load_settings", lambda: LOADED)
+    monkeypatch.setattr(
+        tr, "market_data", lambda market, *args, **kwargs: QQQ if market == "qqq" else US
+    )
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli.app, ["trial-run", "T0002", "--config", "mix60", "--market", "us_market"]
+    )
+    assert result.exit_code == 0, result.output
+    assert result.output.splitlines() == [
+        "记录 trial-r0001；T0002 mix60 us_market；状态 ok；"
+        "us_market_1962_2010 没有组合尺子门槛：没有尺子，不算过也不算没过"
+    ]
+    result = runner.invoke(cli.app, ["trial-run", "T0002", "--config", "mix60", "--market", "qqq"])
+    assert result.exit_code == 0, result.output
+    record = json.loads(_runs(root)[-1].read_bytes())
+    held = sum(row["holds"] for row in record["gate"])
+    line = result.output.splitlines()[0]
+    assert line.startswith(f"记录 trial-r0002；T0002 mix60 qqq；状态 ok；组合尺子 {held}/3 条成立")
+
+    result = runner.invoke(cli.app, ["trial-ledger"])
+    lines = result.output.splitlines()
+    assert result.exit_code == 0, result.output
+    assert "  trial-r0001 mix60 us_market ok 没有尺子" in lines
+    assert f"  trial-r0002 mix60 qqq ok 门 {held}/3" in lines
+
+
+def test_an_old_fixed_mix_record_is_judged_by_the_gate_of_its_day(
+    trial: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    records = json.loads(json.dumps(tr.trial_records(trial["root"])))
+    for record in records:
+        for key in ("rule_set", "gate_outcome", "gate_readonly"):
+            record.pop(key)
+        record["result"].pop("portfolio")
+        record["gate_holds"] = False
+    monkeypatch.setattr(tr, "trial_records", lambda root_dir: records)
+    lines = tr.trial_report(trial["root"], "T0002", LOADED)
+
+    assert lines.count("- 这次运行早于组合尺子，按当时的门判；没有组合尺子的数，不重算。") == 2
+    assert not any(line.startswith("组合尺子") for line in lines)
+    assert f"- 判定（主配置 mix60）：{tr.VERDICT_NAMES['fail']}" in lines
 
 
 def test_cost_benefit_line() -> None:

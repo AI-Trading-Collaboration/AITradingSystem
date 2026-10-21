@@ -176,13 +176,20 @@ def test_the_trial_gate_adds_only_the_tail_floor_to_the_measured_gate() -> None:
     # After the probe's reading, owner_decision:TRADING-2565:2026-10-19:tail_floor10 adds one
     # stage 1 rule, a left-tail point improvement of at least 10%; the rest is the measured gate.
     # The read-only segment lists (owner_decision:TRADING-2565:2026-10-21:slow_bear_readonly)
-    # are descriptive and are set aside here.
+    # are descriptive and are set aside here, and so are the portfolio rules and declines of
+    # owner_decision:TRADING-2565:2026-10-21:p1_portfolio_ruler, which judge only reserve
+    # configurations and leave these rules word for word.
     current = tr.load_gate(PREREG)
     current = current.model_copy(
         update={
             "markets": {
                 market: entry.model_copy(
-                    update={"slow_bear_episodes": None, "long_bull_episodes": None}
+                    update={
+                        "slow_bear_episodes": None,
+                        "long_bull_episodes": None,
+                        "portfolio_rules": None,
+                        "decline_episodes": None,
+                    }
                 )
                 for market, entry in current.markets.items()
             }
@@ -191,7 +198,7 @@ def test_the_trial_gate_adds_only_the_tail_floor_to_the_measured_gate() -> None:
     measured_us = GATE.markets["us_market"]
     current_rules = current.markets["us_market"].rules
 
-    assert current.owner_decision == "owner_decision:TRADING-2565:2026-10-19:tail_floor10"
+    assert current.owner_decision == "owner_decision:TRADING-2565:2026-10-21:p1_portfolio_ruler"
     assert current_rules[:-1] == measured_us.rules
     floor = current_rules[-1]
     assert (floor.metric, floor.op, floor.value) == (

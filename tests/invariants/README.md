@@ -19,6 +19,7 @@ caught, or a recorded mutation of the guarded code that makes the test fail.
 | G1/G2 signal intake | 发布滞后和缺失年龄、Ken French 首块和单位、本机内容地址、检查后才能读且拒绝漂移、汇总不泄露数据值、严格来源规格与原配置不变（TRADING-2565 S4a，不变量 28–33） | `test_research_sources_invariants.py` |
 | G3 read-only segment tables | The slow-bear and long-bull tables of trial runs: holding the market itself loses nothing inside a segment, D is the compounded return difference inside the segment's months, the tables never touch a fingerprint, a metric or a gate rule, the gate's lists are the fixed rule's segments of each development window, and the plans and the probes' gate copies stay byte for byte (TRADING-2565-36, invariants 48–52) | `test_research_segment_invariants.py` |
 | G1/G2 monthly long-history sources | A monthly value is used only once its month is known: month M is published on the first trading day on or after the first of month M + 1 + the release lag, used after the known lag and carried over at most one missing month, checked by hand, day by day and against later changes; specs stay strict; the bench inputs, the screen, the trial and both commands align by the rule; Shiller's sheet is read by its header cells and y.1 is October; snapshots carry the monthly sources and the check reads them by month; the seven approved sources, their lags and the US market base are fixed (TRADING-2565-37, invariants 53–58) | `test_research_monthly_sources_invariants.py` |
+| G3 P1 portfolio ruler | A fixed mix holding a reserve other than cash is judged by the portfolio ruler: a cash reserve gives every number zero, the geometric difference is exactly the reserve's own excess plus the rebalancing return, rebalancing earns on an independent reserve and loses on a correlated one, the quiet-period excess removes a constant carry and nothing else, the declines are the fixed 10% rule's of each development window, the gate changes only for reserve configurations (the timing rules stay word for word, a window the ruler does not name records no_ruler), and the plans, the probes' gate copies and the verdicts of earlier records stay as they were (TRADING-2565-39, invariants 59–63) | `test_research_portfolio_invariants.py` |
 
 Existing tests that already guard the same guarantees and stay in the suite (not duplicated here):
 
@@ -228,3 +229,19 @@ and bench tests were run (`tests/invariants/test_research_falsify_invariants.py`
 | 配置里股息的发布滞后写成 3 个月 | `test_the_approved_monthly_sources_are_in_the_settings_file` | 1 failed |
 
 第一轮有 3 项没被抓到（问题数据命令只传天数、字符串 "y.1"、空行之后继续读），补了问题数据命令里一月份观测那条和 `test_the_shiller_rows_end_at_the_first_row_without_a_month` 以后都抓到。变异脚本和逐项结果在项目文件 `knowledge/claude/qqq-options/auto-loop/build/ref-TRADING-2565-37/`。这些是数据入口正确性证据，不是投资结论。
+
+## TRADING-2565-39 变异证据（2026-10-21）
+
+不变量 59–63 在 `test_research_portfolio_invariants.py`；验收单测在 `tests/test_research_portfolio.py` 和 `tests/test_research_reserve.py`、`test_research_trial.py` 里标着组合尺子的几条。每项只在参考实现的副本上临时变异，先跑 `test_research_portfolio.py` 和这个不变量文件，没抓到再跑 `test_research_reserve.py`、`test_research_trial.py`、`test_research_gate_false_pass.py`、`test_research_falsify.py`（`pytest -x -n 4`），随后还原；验收文件未改。53 项里 52 项被抓到，剩下 1 项是等价变异。
+
+| 变异 | 失败的验收测试（举例） | 结果 |
+|---|---|---|
+| 计入线改成 −3%；平时超额退回线改成 60%；从不退回或总是退回；平时日子漏掉段的首月或末月；平时超额按自然日年化或用简单收益 | `test_a_decline_counts_when_the_cash_mix_loses_more_than_two_percent`、`test_the_fallback_line_is_half_the_return_days`、和探针逐项相等那条、`test_a_constant_carry_is_removed_and_cushions_nothing` | 各 1–2 failed |
+| 腿按 365 天年化；市场腿用现金；整窗超额用差不用比；几何差反号；储备自身超额乘 w；再平衡的 B 用储备 | 和探针逐项相等那条、`test_the_geometric_difference_is_own_excess_plus_rebalancing` | 各 1–4 failed |
+| 缓冲多扣一个月或扣整份储备；r 除以策略的损失；段内现金组合的损失取策略的；r = 0 算有缓冲；中位换均值、最小换最大；不计入名单列成计入的 | 和探针逐项相等那条、`test_a_decline_with_no_cushion_is_not_cushioned`、`test_a_decline_where_the_cash_mix_loses_little_is_listed_not_counted` | 各 1–2 failed |
+| 尺子不查空的下跌段清单（`portfolio_section` 自己也要拒绝）；对照用基准的现金 | `test_the_ruler_needs_a_reserve_and_the_declines`、`test_the_fallback_line_is_half_the_return_days` | 各 1–2 failed |
+| 开段线 12%；正好跌到线上不开段；下跌段用 20% 的线；核对不分种类；核对漏报清单外的段；慢熊要 7 个月 | `test_the_declines_are_the_probe_declines`、`test_a_fall_of_exactly_the_line_opens_a_decline`、`test_the_decline_check_compares_declines_only`、`test_recomputing_the_declines_agrees_and_names_any_difference`、`test_the_split_keeps_the_six_month_line_of_the_drops` | 各 1 failed |
+| 现金的固定比例也用尺子；尺子判每个窗口；没有尺子算没过、算过、排在没过之前；权重固定 0.6；择时规则不只读；门的清单检查漏三种；相接的两段不算重叠；重复的窗口名放过；核对读慢熊清单；没有清单照跑 | `test_only_a_fixed_mix_with_a_reserve_uses_the_ruler`、`test_no_ruler_is_neither_a_pass_nor_a_failure`、`test_each_fixed_mix_is_ruled_at_its_own_weight`、`test_malformed_portfolio_fields_are_refused`、`test_a_reserve_mix_on_a_window_without_declines_is_refused` 等 | 各 1 failed |
+| 报告对调 A、B；老记录不注；账本漏 `gate_outcome`；现金储备也算尺子；正式题能引用 `portfolio.*`；缺节时报错；`trial-run` 不印没有尺子；`trial-segments` 不认 `--declines` | 报告、账本和命令的那几条，`test_a_question_cannot_rule_on_the_portfolio_yet`、`test_a_missing_section_fails_a_rule_without_an_error` | 各 1–2 failed |
+
+第一轮跑了 51 项（第 53 项超时没跑，第 30 项的锚点对上两处没跑成），13 项没被抓到：一项是下面的等价变异，一项（第 23 项）乘的是 0、等于没变，改成「段内现金组合的损失取策略的」。补了 10 条测试后重跑，其余 11 项和改过的第 23 项、第 30 项、第 53 项都抓到。补的测试：2% 计入线两侧、平时超额退回线两侧（并和探针的平时超额逐数相等）、r = 0 不算有缓冲、`portfolio_section` 自己拒绝空清单、正好跌到 10% 开段、清单核对只比下跌段、拆出循环后慢熊仍是 6 个月、相接的两段算重叠、各配置按自己的权重、门里没有清单的窗口拒绝运行。剩下的等价变异：「−2% 正好计入」（段内收益算不出正好 −0.02：1 − 0.02 − 1 是比 −0.02 略小的浮点数）。变异脚本和逐项结果在项目文件 `knowledge/claude/qqq-options/auto-loop/build/ref-TRADING-2565-39/`。这些是评估台正确性证据，不是投资结论。

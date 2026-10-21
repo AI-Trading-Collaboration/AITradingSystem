@@ -60,7 +60,9 @@ LOADED = replace(
         }
     ),
 )
-DECISION = "owner_decision:TRADING-2565:2026-10-19:tail_floor10"
+# The gate's decision: the portfolio ruler added rules for reserve configurations and left the
+# timing rules below word for word (tail_floor10 before it).
+DECISION = "owner_decision:TRADING-2565:2026-10-21:p1_portfolio_ruler"
 GATE_FILE = PROJECT_ROOT / "research/_trials/prereg.yaml"
 PLAN_FILE = PROJECT_ROOT / "research/_trials/T0001.yaml"
 SIG = "sig-0123456789ab"
@@ -1457,6 +1459,82 @@ def test_cli_trial_segments_refuses_the_wrong_data(
 
     assert result.exit_code == 1
     assert result.output.splitlines() == [f"段清单拒绝：qqq: long-history snapshot is not {QLH}"]
+
+
+def _decline_gate(root: Path, shift: str | None = None, drop: str | None = None) -> None:
+    """Write the gate with 10% decline lists recomputed by the rule on the synthetic data."""
+
+    gate = _yaml(GATE_FILE)
+    for market, data in (("us_market", US), ("qqq", QQQ)):
+        entry = gate["markets"][market]
+        entry["decline_episodes"] = {}
+        model = tr.MarketGate.model_validate(entry)
+        for question_type in model.question_types():
+            window = resolve_window(FULL, question_type, "development")
+            if window.window_id == drop:
+                continue
+            found = seg.declines(seg.window_returns(data.returns["qqq"], window))
+            specs = [{"id": s.id, "start": s.start, "end": s.end} for s in found]
+            if window.window_id == shift:
+                specs[0]["end"] = str(pd.Period(specs[0]["end"], freq="M") + 1)
+            entry["decline_episodes"][window.window_id] = specs
+    _write(root.joinpath("_trials", "prereg.yaml"), gate)
+
+
+def test_cli_trial_segments_recomputes_and_checks_the_declines(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = _repo(tmp_path)
+    _decline_gate(root)
+    result = _segments_cli(root, monkeypatch, "--declines", "--check")
+    lines = result.output.splitlines()
+
+    assert result.exit_code == 0, result.output
+    assert lines[0] == "试跑下跌段清单（10% 线，组合尺子的单元）：数据为 T0001 的快照"
+    headers = [line for line in lines if not line.startswith("  ")][1:-1]
+    windows = [
+        ("美股大盘", US, "us_market_trial"),
+        ("美股大盘", US, "us_market_bond_trial"),
+        ("QQQ", QQQ, "qqq_direction"),
+    ]
+    assert len(headers) == len(windows)
+    for header, (name, data, question_type) in zip(headers, windows, strict=True):
+        window = resolve_window(FULL, question_type, "development")
+        found = seg.declines(seg.window_returns(data.returns["qqq"], window))
+        assert header == (
+            f"{name} {window.window_id} {window.start}..{window.end}：下跌 {len(found)} 段"
+        )
+        for s in found:
+            assert (f"  {s.id} 下跌 {s.start}..{s.end} {s.months} 个月 {s.change:+.1%}") in lines
+    assert lines.count("  门里的清单：一致") == 3
+    assert lines[-1] == "核对：一致"
+    # Without --declines the slow-bear lists are checked, as before.
+    monkeypatch.undo()
+    result = _segments_cli(root, monkeypatch)
+    assert result.output.splitlines()[0] == "试跑段清单（只读，不进判定）：数据为 T0001 的快照"
+
+
+def test_cli_trial_segments_names_a_decline_difference_and_a_missing_list(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = _repo(tmp_path)
+    _decline_gate(root, shift="us_market_1929_2010", drop="us_market_1962_2010")
+    result = _segments_cli(root, monkeypatch, "--declines", "--check")
+    lines = result.output.splitlines()
+    window = resolve_window(FULL, "us_market_trial", "development")
+    first = seg.declines(seg.window_returns(US.returns["qqq"], window))[0]
+    late = str(pd.Period(first.end, freq="M") + 1)
+
+    assert result.exit_code == 1
+    assert (
+        f"  门里的清单：不一致：listed {first.id} {first.start}..{late} is not recomputed; "
+        f"recomputed {first.id} {first.start}..{first.end} is not listed"
+    ) in lines
+    assert lines.count("  门里的清单：没有") == 1
+    assert lines.count("  门里的清单：一致") == 1
+    assert lines[-1] == "核对：不一致"
+    monkeypatch.undo()
+    assert _segments_cli(root, monkeypatch, "--declines").exit_code == 0
 
 
 # Market data -------------------------------------------------------------------------------------

@@ -29,6 +29,7 @@ from ai_trading_system.research_bench.metrics import (
     comparison_fields,
     summary_fields,
 )
+from ai_trading_system.research_bench.portfolio import PORTFOLIO_FIELDS
 from ai_trading_system.research_bench.settings import BenchSettings
 from ai_trading_system.research_bench.simulate import Rebalance, Schedule
 from ai_trading_system.yaml_loader import safe_load_yaml_path
@@ -38,7 +39,8 @@ QUESTION_ID_PATTERN = r"^[A-Z][A-Z0-9]*-[A-Z0-9]+$"
 OWNER_DECISION_PATTERN = r"^owner_decision:[A-Z]+-[0-9]+:[0-9]{4}-[0-9]{2}-[0-9]{2}:[a-z0-9_]+$"
 # Rule metrics are read from these parts of a run result, and from the falsification sections
 # (``research_bench.falsify``); which cost and delay sections exist depends on the bench settings.
-RULE_SECTIONS = ("strategy", "comparison", "exposure_gap", *PAIRED_SECTIONS)
+# P1 的组合尺子，只有试跑算它。
+RULE_SECTIONS = ("strategy", "comparison", "exposure_gap", "portfolio", *PAIRED_SECTIONS)
 _RULE_SECTION = re.compile(rf"^(?:{'|'.join(RULE_SECTIONS)}|cost_[0-9]+(?:p[0-9]+)?|delay_[0-9]+)$")
 
 
@@ -188,6 +190,7 @@ def rule_sections(settings: BenchSettings) -> dict[str, tuple[str, ...]]:
         "strategy": summary_fields(settings),
         "comparison": compared,
         "exposure_gap": EXPOSURE_GAP_FIELDS,
+        "portfolio": PORTFOLIO_FIELDS,
     }
     sections.update({section: paired_fields(settings) for section in PAIRED_SECTIONS})
     falsification = settings.falsification
@@ -205,7 +208,10 @@ def rule_problems(prereg: Prereg, settings: BenchSettings) -> list[str]:
     for strategy_id, rules in prereg.validation.rules.items():
         for rule in rules:
             section, _, name = rule.metric.partition(".")
-            if name not in sections.get(section, ()):
+            # 正式题的运行不持有储备，从不算组合尺子。
+            if section == "portfolio":
+                problems.append(f"{strategy_id}: {rule.metric} is computed only in trials")
+            elif name not in sections.get(section, ()):
                 problems.append(f"{strategy_id}: no metric {rule.metric}")
     return problems
 
@@ -216,7 +222,7 @@ def evaluate_rules(rules: tuple[Rule, ...], result: dict[str, Any]) -> list[dict
     out = []
     for rule in rules:
         section, _, name = rule.metric.partition(".")
-        observed = result.get(section, {}).get(name)
+        observed = (result.get(section) or {}).get(name)
         holds = False
         if isinstance(observed, int | float) and observed == observed:
             value = float(observed)

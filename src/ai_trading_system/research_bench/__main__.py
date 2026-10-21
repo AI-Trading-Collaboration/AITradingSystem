@@ -364,11 +364,16 @@ def trial_run_command(
         raise typer.Exit(code=1) from None
     text = f"记录 {record['run_id']}；{trial_id} {config} {market}；状态 {record['status']}"
     if record["status"] == "ok":
-        rows = record["gate"]
-        text += f"；门 {sum(row['holds'] for row in rows)}/{len(rows)} 条成立"
-        failed = [row["metric"] for row in rows if not row["holds"]]
-        if failed:
-            text += f"；没过：{', '.join(failed)}"
+        if record.get("gate_outcome") == tr.NO_RULER:
+            window_id = record["window"]["window_id"]
+            text += f"；{window_id} 没有组合尺子门槛：没有尺子，不算过也不算没过"
+        else:
+            rows = record["gate"]
+            ruler = "组合尺子" if record.get("rule_set") == tr.PORTFOLIO_RULE_SET else "门"
+            text += f"；{ruler} {sum(row['holds'] for row in rows)}/{len(rows)} 条成立"
+            failed = [row["metric"] for row in rows if not row["holds"]]
+            if failed:
+                text += f"；没过：{', '.join(failed)}"
     elif record["status"] == "check_failed":
         text += f"；问题：{'; '.join(record['problems'])}"
     elif record["status"] == "error":
@@ -397,10 +402,12 @@ def trial_ledger_command() -> None:
             f"{tr.VERDICT_NAMES[item['verdict']]}"
         )
         for run in item["runs"]:
-            typer.echo(
-                f"  {run['run_id']} {run['config']} {run['market']} {run['status']} "
-                f"门 {run['rules_held']}/{run['rules']}"
+            ruler = (
+                "没有尺子"
+                if run.get("gate_outcome") == tr.NO_RULER
+                else f"门 {run['rules_held']}/{run['rules']}"
             )
+            typer.echo(f"  {run['run_id']} {run['config']} {run['market']} {run['status']} {ruler}")
     if summary["problems"]:
         raise typer.Exit(code=1)
 
@@ -426,9 +433,18 @@ def trial_segments_command(
     check: Annotated[
         bool, typer.Option("--check", help="和门里的段清单核对；不一致或没有清单时退出码 1。")
     ] = False,
+    declines: Annotated[
+        bool,
+        typer.Option(
+            "--declines", help="改为重算组合尺子的 10% 下跌段，和门里的 decline_episodes 核对。"
+        ),
+    ] = False,
     root: SnapshotRootOption = qlh.DEFAULT_SNAPSHOT_ROOT,
 ) -> None:
-    """按写死的规则在各市场的开发窗口重算慢熊、快跌和长牛段，只打印段的起止、月数和深度。"""
+    """按写死的规则在各市场的开发窗口重算慢熊、快跌和长牛段，只打印段的起止、月数和深度。
+
+    带 ``--declines`` 时改为重算并核对组合尺子的 10% 下跌段。
+    """
     try:
         loaded = load_settings()
         root_dir = lg.research_root(loaded)
@@ -439,19 +455,32 @@ def trial_segments_command(
             )
             for market in tr.SEGMENT_MARKETS
         }
-        rows = tr.segment_check(gate, plan, datasets, loaded)
+        rows = tr.segment_check(gate, plan, datasets, loaded, declines=declines)
     except (tr.TrialError, OSError, ValueError, KeyError) as exc:
         typer.echo(f"段清单拒绝：{str(exc).splitlines()[0]}")
         raise typer.Exit(code=1) from None
-    typer.echo(f"试跑段清单（只读，不进判定）：数据为 {trial_id} 的快照")
-    kinds = {"slow_bear": "慢熊", "fast_drop": "快跌", "long_bull": "长牛"}
+    typer.echo(
+        f"试跑下跌段清单（10% 线，组合尺子的单元）：数据为 {trial_id} 的快照"
+        if declines
+        else f"试跑段清单（只读，不进判定）：数据为 {trial_id} 的快照"
+    )
+    kinds = (
+        {"decline": "下跌"}
+        if declines
+        else {"slow_bear": "慢熊", "fast_drop": "快跌", "long_bull": "长牛"}
+    )
     consistent = True
     for row in rows:
         counts = {kind: sum(s["kind"] == kind for s in row["segments"]) for kind in kinds}
+        count_text = (
+            f"下跌 {counts['decline']} 段"
+            if declines
+            else f"慢熊 {counts['slow_bear']} 段，快跌 {counts['fast_drop']} 段，"
+            f"长牛 {counts['long_bull']} 段"
+        )
         typer.echo(
             f"{tr.MARKET_NAMES[row['market']]} {row['window_id']} {row['start']}..{row['end']}："
-            f"慢熊 {counts['slow_bear']} 段，快跌 {counts['fast_drop']} 段，"
-            f"长牛 {counts['long_bull']} 段"
+            f"{count_text}"
         )
         for s in row["segments"]:
             typer.echo(
