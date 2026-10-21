@@ -14,6 +14,7 @@ python -m ai_trading_system.research_bench trial-run TRIAL --config ID --market 
     [--root PATH]
 python -m ai_trading_system.research_bench trial-ledger
 python -m ai_trading_system.research_bench trial-report TRIAL
+python -m ai_trading_system.research_bench trial-segments TRIAL [--check] [--root PATH]
 
 Screens are recorded in research/_screens/ledger/; only development data is evaluated.
 Every run is recorded under research/<QUESTION>/ (see ``research_bench.ledger``).
@@ -417,6 +418,58 @@ def trial_report_command(
         raise typer.Exit(code=1) from None
     for line in lines:
         typer.echo(line)
+
+
+@app.command("trial-segments")
+def trial_segments_command(
+    trial_id: Annotated[str, typer.Argument(help="数据用哪份试跑计划的快照，例如 T0007。")],
+    check: Annotated[
+        bool, typer.Option("--check", help="和门里的段清单核对；不一致或没有清单时退出码 1。")
+    ] = False,
+    root: SnapshotRootOption = qlh.DEFAULT_SNAPSHOT_ROOT,
+) -> None:
+    """按写死的规则在各市场的开发窗口重算慢熊、快跌和长牛段，只打印段的起止、月数和深度。"""
+    try:
+        loaded = load_settings()
+        root_dir = lg.research_root(loaded)
+        gate, plan = tr.load_trial(root_dir, trial_id)
+        datasets = {
+            market: tr.market_data(
+                market, gate, plan, snapshot_root=root, project_root=PROJECT_ROOT
+            )
+            for market in tr.SEGMENT_MARKETS
+        }
+        rows = tr.segment_check(gate, plan, datasets, loaded)
+    except (tr.TrialError, OSError, ValueError, KeyError) as exc:
+        typer.echo(f"段清单拒绝：{str(exc).splitlines()[0]}")
+        raise typer.Exit(code=1) from None
+    typer.echo(f"试跑段清单（只读，不进判定）：数据为 {trial_id} 的快照")
+    kinds = {"slow_bear": "慢熊", "fast_drop": "快跌", "long_bull": "长牛"}
+    consistent = True
+    for row in rows:
+        counts = {kind: sum(s["kind"] == kind for s in row["segments"]) for kind in kinds}
+        typer.echo(
+            f"{tr.MARKET_NAMES[row['market']]} {row['window_id']} {row['start']}..{row['end']}："
+            f"慢熊 {counts['slow_bear']} 段，快跌 {counts['fast_drop']} 段，"
+            f"长牛 {counts['long_bull']} 段"
+        )
+        for s in row["segments"]:
+            typer.echo(
+                f"  {s['id']} {kinds[s['kind']]} {s['start']}..{s['end']} "
+                f"{s['months']} 个月 {s['change']:+.1%}"
+            )
+        if not row["listed"]:
+            status = "没有"
+            consistent = False
+        elif row["problems"]:
+            status = "不一致：" + "; ".join(row["problems"])
+            consistent = False
+        else:
+            status = "一致"
+        typer.echo(f"  门里的清单：{status}")
+    typer.echo("核对：" + ("一致" if consistent else "不一致"))
+    if check and not consistent:
+        raise typer.Exit(code=1)
 
 
 def _verdict_text(verdict: str | None) -> str:

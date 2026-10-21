@@ -751,6 +751,18 @@ def test_the_us_market_run_with_the_treasury_uses_the_1962_window(trial: dict[st
     direct = run_strategy(US, fixed_exposure, spec, LOADED, falsification_confidence=0.95)
     assert record["result"]["fingerprint"] == direct.fingerprint
     assert record["result"]["diagnostics"] == lg._plain(direct.diagnostics)
+    # The read-only segment tables use the lists of the 1962 window (slow_bear_readonly).
+    slow, long = tr.load_gate(GATE_FILE).markets["us_market"].segment_lists("us_market_1962_2010")
+    segments = record["result"]["segments"]
+    assert [row["id"] for row in segments["slow_bear"]] == [
+        "slow_bear_196811",
+        "slow_bear_197212",
+        "slow_bear_200003",
+        "slow_bear_200710",
+    ]
+    assert [row["id"] for row in segments["long_bull"]] == [e.id for e in long]
+    listed = run_strategy(US, fixed_exposure, spec, LOADED, slow_bears=slow, long_bulls=long)
+    assert segments == lg._plain(listed.segments)
 
 
 def test_the_qqq_run_with_the_treasury_uses_the_qqq_window(trial: dict[str, Any]) -> None:
@@ -777,6 +789,7 @@ def test_the_qqq_run_with_the_treasury_uses_the_qqq_window(trial: dict[str, Any]
         "falsification",
         "events",
         "diagnostics",
+        "segments",
     }
     direct = run_strategy(QQQ, fixed_exposure, spec, LOADED, falsification_confidence=0.95)
     assert record["result"]["fingerprint"] == direct.fingerprint

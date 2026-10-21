@@ -35,6 +35,7 @@ from ai_trading_system.research_bench.screen_settings import (
     LoadedScreenSettings,
     load_screen_settings,
 )
+from ai_trading_system.research_bench.segments import segment_section
 from ai_trading_system.research_bench.settings import (
     EpisodeSpec,
     LoadedSettings,
@@ -105,6 +106,7 @@ class RunResult:
     falsification: dict[str, Any] | None = None
     events: dict[str, Any] | None = None
     diagnostics: dict[str, Any] | None = None
+    segments: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -136,10 +138,14 @@ def run_strategy(
     falsification_confidence: float | None = None,
     screen: LoadedScreenSettings | None = None,
     episodes: Sequence[EpisodeSpec] | None = None,
+    slow_bears: Sequence[EpisodeSpec] = (),
+    long_bulls: Sequence[EpisodeSpec] = (),
 ) -> RunResult:
     """Evaluate one strategy; with ``falsification_confidence`` also run the standard
     falsification at that confidence (it is not part of the fingerprint).
     ``episodes`` 是减仓事件表的固定下跌段，不给时用评估台设置里的。
+    ``slow_bears``、``long_bulls`` 是只读段表的固定段（``research_bench.segments``），
+    不进指纹、不进规则，两样都不给时结果的 ``segments`` 为 None。
     """
 
     loaded = loaded or load_settings()
@@ -266,6 +272,9 @@ def run_strategy(
                 loaded=loaded,
             )
         },
+        segments=segment_section(
+            sim, benchmark_sims[PRIMARY_BENCHMARK], tuple(slow_bears), tuple(long_bulls)
+        ),
     )
 
 

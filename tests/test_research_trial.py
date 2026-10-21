@@ -25,6 +25,7 @@ from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.research_bench import BenchCheckError, RunSpec, load_settings, run_strategy
 from ai_trading_system.research_bench import __main__ as cli
 from ai_trading_system.research_bench import ledger as lg
+from ai_trading_system.research_bench import segments as seg
 from ai_trading_system.research_bench import trial as tr
 from ai_trading_system.research_bench.data import (
     BenchData,
@@ -36,6 +37,7 @@ from ai_trading_system.research_bench.prereg import Rule, evaluate_rules
 from ai_trading_system.research_bench.run import spec_record
 from ai_trading_system.research_bench.screen import load_signal
 from ai_trading_system.research_bench.screen_ledger import append_screen_record
+from ai_trading_system.research_bench.settings import resolve_window
 from ai_trading_system.research_bench.signal_strategy import signal_exposure
 from ai_trading_system.research_bench.simulate import Rebalance
 from ai_trading_system.research_bench.sources import SourceSpec
@@ -666,6 +668,7 @@ def test_a_trial_run_record_carries_the_plan_the_gate_and_the_result(trial: dict
         "falsification",
         "events",
         "diagnostics",
+        "segments",
     }
     assert isinstance(record["recorded_at"], str) and record["recorded_at"].endswith("Z")
 
@@ -1061,6 +1064,7 @@ def test_the_report_shows_failed_runs(tmp_path: Path, monkeypatch: pytest.Monkey
     second = lines.index("## half · QQQ（trial-r0002，check_failed）")
     assert lines[second + 2] == "检查未通过：look-ahead on 2001-01-02"
     assert not any(line.startswith("## 美股大盘快跌段") for line in lines)
+    assert not any("慢熊段" in line or "长牛段" in line for line in lines)
 
 
 # Commands ----------------------------------------------------------------------------------------
@@ -1179,6 +1183,280 @@ def test_cli_trial_ledger_reports_a_broken_chain(
         "试跑账链状态：BROKEN",
         "  问题：runs/notes.txt is not a trial run record",
     ]
+
+
+# Read-only segment tables (owner_decision:TRADING-2565:2026-10-21:slow_bear_readonly) -----------
+
+
+def test_the_runs_carry_the_read_only_segments_of_their_window(trial: dict[str, Any]) -> None:
+    gate = tr.load_gate(GATE_FILE)
+    for record, market, data in (
+        (trial["records"][0], "qqq", QQQ),
+        (trial["records"][1], "us_market", US),
+    ):
+        window_id = record["window"]["window_id"]
+        slow, long = gate.markets[market].segment_lists(window_id)
+        section = record["result"]["segments"]
+        assert [row["id"] for row in section["slow_bear"]] == [e.id for e in slow]
+        assert [row["id"] for row in section["long_bull"]] == [e.id for e in long]
+        assert set(section) == {"slow_bear", "long_bull", "slow_bear_summary", "long_bull_summary"}
+        for row in section["slow_bear"]:
+            assert set(row) == {
+                "id",
+                "kind",
+                "start",
+                "end",
+                "months",
+                "days",
+                "strategy_return",
+                "benchmark_return",
+                "difference",
+                "average_exposure",
+            }
+            assert row["days"] > 0
+        for row in section["long_bull"]:
+            assert {"strategy_annual", "benchmark_annual", "annual_difference"} <= set(row)
+        direct = run_strategy(
+            data,
+            signal_exposure,
+            _spec("primary", market),
+            LOADED,
+            falsification_confidence=0.95,
+            slow_bears=slow,
+            long_bulls=long,
+        )
+        assert lg._plain(direct.segments) == section
+        assert direct.fingerprint == record["result"]["fingerprint"]
+    assert len(trial["records"][1]["result"]["segments"]["slow_bear"]) == 10
+    assert len(trial["records"][1]["result"]["segments"]["long_bull"]) == 7
+    assert len(trial["records"][0]["result"]["segments"]["slow_bear"]) == 2
+    assert len(trial["records"][0]["result"]["segments"]["long_bull"]) == 1
+
+
+def _pct(value: float | None) -> str:
+    return "-" if value is None else f"{value * 100:.1f}%"
+
+
+def _pts(value: float | None) -> str:
+    return "-" if value is None else f"{value * 100:+.1f}"
+
+
+def _segment_block(market: str, record: dict[str, Any]) -> list[str]:
+    section = record["result"]["segments"]
+    where = f"primary，{record['run_id']}，{record['window']['window_id']}"
+    lines = [
+        f"## {market}慢熊段（只读，不进判定；{where}）",
+        "",
+        "基准是同平均敞口的固定敞口；D 是策略段内收益减基准段内收益（点）。",
+        "",
+        "| 段 | 月份 | 月数 | 策略段内 | 基准段内 | D（点） | 段内平均敞口 |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for row in section["slow_bear"]:
+        lines.append(
+            f"| {row['id']} | {row['start']}..{row['end']} | {row['months']} | "
+            f"{_pct(row['strategy_return'])} | {_pct(row['benchmark_return'])} | "
+            f"{_pts(row['difference'])} | {row['average_exposure']:.2f} |"
+        )
+    slow = section["slow_bear_summary"]
+    lines += [
+        "",
+        f"- 慢熊段 {slow['count']} 段：D 中位 {_pts(slow['median_difference'])} 点，"
+        f"为正 {slow['count'] - slow['nonpositive']} 段，最小 {_pts(slow['min_difference'])} 点。",
+        "",
+        f"## {market}长牛段（只读，不进判定；{where}）",
+        "",
+        "| 段 | 月份 | 月数 | 策略年化几何 | 基准年化几何 | 差（点） | 段内平均敞口 |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for row in section["long_bull"]:
+        lines.append(
+            f"| {row['id']} | {row['start']}..{row['end']} | {row['months']} | "
+            f"{_pct(row['strategy_annual'])} | {_pct(row['benchmark_annual'])} | "
+            f"{_pts(row['annual_difference'])} | {row['average_exposure']:.2f} |"
+        )
+    long = section["long_bull_summary"]
+    lines += [
+        "",
+        f"- 长牛段 {long['count']} 段：差的平均 {_pts(long['mean_annual_difference'])} 点，"
+        f"最差 {_pts(long['worst_annual_difference'])} 点。",
+    ]
+    return lines
+
+
+def test_the_report_shows_the_read_only_segment_tables(trial: dict[str, Any]) -> None:
+    lines = tr.trial_report(trial["root"], "T0001", LOADED)
+    us = _segment_block("美股大盘", trial["records"][1])
+    qqq = _segment_block("QQQ", trial["records"][0])
+    events = lines.index("## 美股大盘快跌段（primary，trial-r0002）")
+    first = lines.index(us[0])
+
+    assert first > events
+    assert lines[first : first + len(us)] == us
+    assert lines[first + len(us)] == ""
+    assert lines[first + len(us) + 1 : first + len(us) + 1 + len(qqq)] == qqq
+    assert len(lines) == first + len(us) + 1 + len(qqq)
+    # The half configuration is sensitivity: no table of its own.
+    assert sum(line.startswith("## ") and "慢熊段" in line for line in lines) == 2
+
+
+def test_the_tables_come_from_the_primary_configuration(
+    trial: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # The half configuration ran on QQQ too; listed first, it still gets no table.
+    records = list(reversed(copy.deepcopy(tr.trial_records(trial["root"]))))
+    monkeypatch.setattr(tr, "trial_records", lambda root_dir: records)
+    summary = tr.trial_summary(trial["root"], "T0001", LOADED)
+    lines = tr.trial_report(trial["root"], "T0001", LOADED)
+    qqq = _segment_block("QQQ", trial["records"][0])
+    first = lines.index(qqq[0])
+
+    assert records[0]["config"] == "half"
+    assert summary["segments"]["qqq"]["run_id"] == trial["records"][0]["run_id"]
+    assert lines[first : first + len(qqq)] == qqq
+
+
+def test_the_summary_line_counts_the_segments_with_a_positive_difference(
+    trial: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    records = copy.deepcopy(tr.trial_records(trial["root"]))
+    summary = records[1]["result"]["segments"]["slow_bear_summary"]
+    summary["nonpositive"] = summary["count"] - 3
+    monkeypatch.setattr(tr, "trial_records", lambda root_dir: records)
+    lines = tr.trial_report(trial["root"], "T0001", LOADED)
+
+    assert summary["count"] == 10
+    assert sum("慢熊段 10 段" in line and "为正 3 段" in line for line in lines) == 1
+
+
+def test_runs_recorded_before_the_tables_show_none(
+    trial: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    records = copy.deepcopy(tr.trial_records(trial["root"]))
+    for record in records:
+        record["result"].pop("segments")
+    monkeypatch.setattr(tr, "trial_records", lambda root_dir: records)
+    lines = tr.trial_report(trial["root"], "T0001", LOADED)
+
+    assert "## 美股大盘快跌段（primary，trial-r0002）" in lines
+    assert not any("慢熊段" in line or "长牛段" in line for line in lines)
+
+
+def _segment_gate(root: Path, drop: str | None = None, shift: str | None = None) -> None:
+    """Write the gate with lists recomputed by the rule on the synthetic data."""
+
+    gate = _yaml(GATE_FILE)
+    for market, data in (("us_market", US), ("qqq", QQQ)):
+        entry = gate["markets"][market]
+        for kind in ("slow_bear_episodes", "long_bull_episodes"):
+            entry[kind] = {}
+        model = tr.MarketGate.model_validate(entry)
+        for question_type in model.question_types():
+            window = resolve_window(FULL, question_type, "development")
+            found = seg.segments(seg.window_returns(data.returns["qqq"], window))
+            for kind in ("slow_bear", "long_bull"):
+                specs = [
+                    {"id": s.id, "start": s.start, "end": s.end} for s in found if s.kind == kind
+                ]
+                if window.window_id == shift and kind == "slow_bear":
+                    specs[0]["end"] = str(pd.Period(specs[0]["end"], freq="M") - 1)
+                entry[f"{kind}_episodes"][window.window_id] = specs
+        if market == drop:
+            del entry["slow_bear_episodes"], entry["long_bull_episodes"]
+    _write(root.joinpath("_trials", "prereg.yaml"), gate)
+
+
+def _segments_cli(
+    root: Path, monkeypatch: pytest.MonkeyPatch, *args: str, data: BenchData | None = None
+) -> Any:
+    monkeypatch.setattr(lg, "research_root", lambda loaded: root)
+    monkeypatch.setattr(cli, "load_settings", lambda: FULL)
+    monkeypatch.setattr(
+        tr,
+        "market_data",
+        lambda market, gate, plan, **_: (data or QQQ) if market == "qqq" else US,
+    )
+    return CliRunner().invoke(cli.app, ["trial-segments", "T0001", *args])
+
+
+def test_cli_trial_segments_recomputes_and_checks_the_lists(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = _repo(tmp_path)
+    _segment_gate(root)
+    result = _segments_cli(root, monkeypatch, "--check")
+    lines = result.output.splitlines()
+
+    assert result.exit_code == 0, result.output
+    assert lines[0] == "试跑段清单（只读，不进判定）：数据为 T0001 的快照"
+    headers = [line for line in lines if not line.startswith("  ")][1:-1]
+    windows = [
+        ("美股大盘", US, "us_market_trial"),
+        ("美股大盘", US, "us_market_bond_trial"),
+        ("QQQ", QQQ, "qqq_direction"),
+    ]
+    assert len(headers) == len(windows)
+    for header, (name, data, question_type) in zip(headers, windows, strict=True):
+        window = resolve_window(FULL, question_type, "development")
+        found = seg.segments(seg.window_returns(data.returns["qqq"], window))
+        counts = [
+            sum(s.kind == kind for s in found) for kind in ("slow_bear", "fast_drop", "long_bull")
+        ]
+        assert header == (
+            f"{name} {window.window_id} {window.start}..{window.end}："
+            f"慢熊 {counts[0]} 段，快跌 {counts[1]} 段，长牛 {counts[2]} 段"
+        )
+        first = found[0]
+        kind = {"slow_bear": "慢熊", "fast_drop": "快跌", "long_bull": "长牛"}[first.kind]
+        assert (
+            f"  {first.id} {kind} {first.start}..{first.end} {first.months} 个月 "
+            f"{first.change:+.1%}"
+        ) in lines
+    assert lines.count("  门里的清单：一致") == 3
+    assert lines[-1] == "核对：一致"
+
+
+def test_cli_trial_segments_names_a_difference_and_a_missing_list(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = _repo(tmp_path)
+    _segment_gate(root, shift="us_market_1929_2010")
+    result = _segments_cli(root, monkeypatch, "--check")
+    lines = result.output.splitlines()
+    window = resolve_window(FULL, "us_market_trial", "development")
+    first = next(
+        s
+        for s in seg.segments(seg.window_returns(US.returns["qqq"], window))
+        if s.kind == "slow_bear"
+    )
+    early = str(pd.Period(first.end, freq="M") - 1)
+
+    assert result.exit_code == 1
+    assert (
+        f"  门里的清单：不一致：listed {first.id} {first.start}..{early} is not recomputed; "
+        f"recomputed {first.id} {first.start}..{first.end} is not listed"
+    ) in lines
+    assert lines.count("  门里的清单：一致") == 2
+    assert lines[-1] == "核对：不一致"
+    monkeypatch.undo()
+    assert _segments_cli(root, monkeypatch).exit_code == 0
+
+    monkeypatch.undo()
+    _segment_gate(root, drop="qqq")
+    result = _segments_cli(root, monkeypatch, "--check")
+    assert result.exit_code == 1
+    assert result.output.splitlines().count("  门里的清单：没有") == 1
+
+
+def test_cli_trial_segments_refuses_the_wrong_data(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = _repo(tmp_path)
+    _segment_gate(root)
+    result = _segments_cli(root, monkeypatch, "--check", data=_qqq_data(snapshot="qlh-other"))
+
+    assert result.exit_code == 1
+    assert result.output.splitlines() == [f"段清单拒绝：qqq: long-history snapshot is not {QLH}"]
 
 
 # Market data -------------------------------------------------------------------------------------

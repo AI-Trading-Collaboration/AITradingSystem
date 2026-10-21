@@ -16,6 +16,8 @@ from __future__ import annotations
 import json
 import math
 import re
+from collections.abc import Mapping
+from dataclasses import asdict
 from numbers import Real
 from pathlib import Path
 from typing import Annotated, Any, Literal
@@ -25,6 +27,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator, 
 from ai_trading_system.core.provenance import git_output, git_provenance
 from ai_trading_system.research_bench import ledger as lg
 from ai_trading_system.research_bench import screen as sc
+from ai_trading_system.research_bench import segments as seg
 from ai_trading_system.research_bench.checks import Strategy
 from ai_trading_system.research_bench.data import (
     RESERVES,
@@ -86,6 +89,8 @@ RESERVE_NAMES = {"cash": "现金", "treasury_10y": "10 年期国债"}
 # Display-only unit boundary: less than 0.1 percentage point is described as no return given up.
 COST_BENEFIT_RETURN_TOLERANCE = 0.001
 Market = Literal["qqq", "us_market"]
+# Read-only segment table order: stage 1 first, never a rule or promotion boundary.
+SEGMENT_MARKETS: tuple[Market, ...] = ("us_market", "qqq")
 
 
 class TrialError(RuntimeError):
@@ -102,6 +107,10 @@ class MarketGate(_Strict):
     rules: tuple[Rule, ...] = Field(min_length=1)
     event_episodes: tuple[EpisodeSpec, ...] | None = None
     reserve_question_types: dict[str, Annotated[str, Field(min_length=1)]] | None = None
+    # Like event_episodes, descriptive lists by window id, never rules:
+    # owner_decision:TRADING-2565:2026-10-21:slow_bear_readonly.
+    slow_bear_episodes: dict[str, tuple[EpisodeSpec, ...]] | None = None
+    long_bull_episodes: dict[str, tuple[EpisodeSpec, ...]] | None = None
 
     @field_validator("reserve_question_types")
     @classmethod
@@ -116,11 +125,40 @@ class MarketGate(_Strict):
     def question_type_for(self, reserve: str) -> str:
         return (self.reserve_question_types or {}).get(reserve, self.question_type)
 
+    def question_types(self) -> tuple[str, ...]:
+        return tuple(
+            dict.fromkeys((self.question_type, *(self.reserve_question_types or {}).values()))
+        )
+
+    def segment_lists(
+        self, window_id: str
+    ) -> tuple[tuple[EpisodeSpec, ...], tuple[EpisodeSpec, ...]]:
+        return (
+            (self.slow_bear_episodes or {}).get(window_id, ()),
+            (self.long_bull_episodes or {}).get(window_id, ()),
+        )
+
+    def segment_windows(self) -> tuple[str, ...]:
+        return tuple(
+            dict.fromkeys((*(self.slow_bear_episodes or {}), *(self.long_bull_episodes or {})))
+        )
+
     @model_validator(mode="after")
     def _episodes(self) -> MarketGate:
         for episode in self.event_episodes or ():
             if episode.end < episode.start:
                 raise ValueError(f"episode {episode.id} ends before it starts")
+        for window_id in self.segment_windows():
+            slow, long = self.segment_lists(window_id)
+            items = sorted((*slow, *long), key=lambda item: item.start)
+            if len({item.id for item in items}) != len(items):
+                raise ValueError(f"{window_id}: segment ids repeat")
+            for item in items:
+                if item.end < item.start:
+                    raise ValueError(f"segment {item.id} ends before it starts")
+            for a, b in zip(items, items[1:], strict=False):
+                if b.start <= a.end:
+                    raise ValueError(f"{window_id}: segments {a.id} and {b.id} overlap")
         return self
 
 
@@ -309,11 +347,20 @@ def gate_problems(gate: TrialGate, loaded: LoadedSettings) -> list[str]:
             section, _, name = rule.metric.partition(".")
             if name not in sections.get(section, ()):
                 problems.append(f"{market}: no metric {rule.metric}")
-        for question_type in (entry.question_type, *(entry.reserve_question_types or {}).values()):
+        windows = set()
+        resolved = True
+        for question_type in entry.question_types():
             try:
-                resolve_window(loaded, question_type, "development")
+                windows.add(resolve_window(loaded, question_type, "development").window_id)
             except KeyError as exc:
                 problems.append(f"{market}: {str(exc).strip(chr(39))}")
+                resolved = False
+        if resolved:
+            problems.extend(
+                f"{market}: segments listed for {window_id}, not a development window here"
+                for window_id in entry.segment_windows()
+                if window_id not in windows
+            )
     return problems
 
 
@@ -508,6 +555,47 @@ def _data_problems(market: Market, gate: TrialGate, plan: TrialPlan, data: Bench
     return problems
 
 
+def segment_check(
+    gate: TrialGate,
+    plan: TrialPlan,
+    datasets: Mapping[Market, BenchData],
+    loaded: LoadedSettings,
+) -> list[dict[str, Any]]:
+    problems = gate_problems(gate, loaded)
+    for market in SEGMENT_MARKETS:
+        problems.extend(
+            f"{market}: {problem}"
+            for problem in _data_problems(market, gate, plan, datasets[market])
+        )
+    if problems:
+        raise TrialError("; ".join(problems))
+    rows = []
+    for market in SEGMENT_MARKETS:
+        entry = gate.markets[market]
+        seen = set()
+        for question_type in entry.question_types():
+            window = resolve_window(loaded, question_type, "development")
+            if window.window_id in seen:
+                continue
+            seen.add(window.window_id)
+            found = seg.segments(seg.window_returns(datasets[market].returns["qqq"], window))
+            listed = window.window_id in entry.segment_windows()
+            rows.append(
+                {
+                    "market": market,
+                    "window_id": window.window_id,
+                    "start": window.start.isoformat(),
+                    "end": None if window.end is None else window.end.isoformat(),
+                    "segments": [asdict(s) for s in found],
+                    "listed": listed,
+                    "problems": seg.list_problems(found, *entry.segment_lists(window.window_id))
+                    if listed
+                    else [],
+                }
+            )
+    return rows
+
+
 def run_trial(
     root_dir: Path,
     trial_id: str,
@@ -561,6 +649,7 @@ def run_trial(
     entry = gate.markets[market_key]
     question_type = entry.question_type_for(config.reserve)
     window = resolve_window(loaded, question_type, "development")
+    slow_bears, long_bulls = entry.segment_lists(window.window_id)
     if config.reserve != "cash":
         try:
             traded = strategy_returns(data, config.reserve)
@@ -617,6 +706,8 @@ def run_trial(
             falsification_confidence=gate.confidence,
             screen=screen,
             episodes=entry.event_episodes,
+            slow_bears=slow_bears,
+            long_bulls=long_bulls,
         )
     except BenchCheckError as exc:
         return _append(root_dir, {**body, "status": "check_failed", "problems": exc.problems})
@@ -642,6 +733,7 @@ def run_trial(
                     "falsification",
                     "events",
                     "diagnostics",
+                    "segments",
                 )
             },
             "gate": rows,
@@ -751,6 +843,22 @@ def trial_summary(root_dir: Path, trial_id: str, loaded: LoadedSettings) -> dict
                 "episodes": (record.get("result", {}).get("events") or {}).get("episodes", {}),
             }
             break
+    segments = {}
+    for market in SEGMENT_MARKETS:
+        for record in records:
+            if (
+                record.get("config") == plan.primary
+                and record.get("market") == market
+                and record.get("status") == "ok"
+            ):
+                section = (record.get("result") or {}).get("segments")
+                if section is not None:
+                    segments[market] = {
+                        "run_id": record["run_id"],
+                        "window_id": record["window"]["window_id"],
+                        **section,
+                    }
+                break
     window = resolve_window(loaded, gate.markets["qqq"].question_type, "validation")
     reads = validation_reads(root_dir, window.window_id)
     ledger = trial_ledger_summary(root_dir)
@@ -789,6 +897,7 @@ def trial_summary(root_dir: Path, trial_id: str, loaded: LoadedSettings) -> dict
             for record in records
         ],
         "events": events,
+        "segments": segments,
         "validation": {
             "window_id": window.window_id,
             "reads": reads,
@@ -852,6 +961,59 @@ def matched_volatility_line(diagnostics: dict[str, Any] | None) -> str:
         f"- 同波动率对照（QQQ 加现金，固定敞口 {exposure}）：几何年化 {geometric} 个点，"
         f"回撤浅 {drawdown} 个点，左尾改善 {tail}"
     )
+
+
+def segment_lines(market: str, primary: str, section: dict[str, Any]) -> list[str]:
+    where = f"{primary}，{section['run_id']}，{section['window_id']}"
+    lines = [
+        "",
+        f"## {market}慢熊段（只读，不进判定；{where}）",
+        "",
+        "基准是同平均敞口的固定敞口；D 是策略段内收益减基准段内收益（点）。",
+        "",
+        "| 段 | 月份 | 月数 | 策略段内 | 基准段内 | D（点） | 段内平均敞口 |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for row in section["slow_bear"]:
+        lines.append(
+            f"| {row['id']} | {row['start']}..{row['end']} | {_number(row['months'])} | "
+            f"{_percent(row['strategy_return'])} | {_percent(row['benchmark_return'])} | "
+            f"{_number(row['difference'], '+.1f', 100)} | "
+            f"{_number(row['average_exposure'], '.2f')} |"
+        )
+    slow = section["slow_bear_summary"]
+    positive = None if slow["nonpositive"] is None else slow["count"] - slow["nonpositive"]
+    lines.extend(
+        [
+            "",
+            f"- 慢熊段 {slow['count']} 段：D 中位 "
+            f"{_number(slow['median_difference'], '+.1f', 100)} 点，"
+            f"为正 {_number(positive)} 段，最小 "
+            f"{_number(slow['min_difference'], '+.1f', 100)} 点。",
+            "",
+            f"## {market}长牛段（只读，不进判定；{where}）",
+            "",
+            "| 段 | 月份 | 月数 | 策略年化几何 | 基准年化几何 | 差（点） | 段内平均敞口 |",
+            "|---|---|---|---|---|---|---|",
+        ]
+    )
+    for row in section["long_bull"]:
+        lines.append(
+            f"| {row['id']} | {row['start']}..{row['end']} | {_number(row['months'])} | "
+            f"{_percent(row['strategy_annual'])} | {_percent(row['benchmark_annual'])} | "
+            f"{_number(row['annual_difference'], '+.1f', 100)} | "
+            f"{_number(row['average_exposure'], '.2f')} |"
+        )
+    long = section["long_bull_summary"]
+    lines.extend(
+        [
+            "",
+            f"- 长牛段 {long['count']} 段：差的平均 "
+            f"{_number(long['mean_annual_difference'], '+.1f', 100)} 点，"
+            f"最差 {_number(long['worst_annual_difference'], '+.1f', 100)} 点。",
+        ]
+    )
+    return lines
 
 
 def trial_report(root_dir: Path, trial_id: str, loaded: LoadedSettings) -> list[str]:
@@ -929,4 +1091,6 @@ def trial_report(root_dir: Path, trial_id: str, loaded: LoadedSettings) -> list[
                 _number(row["reentry_lag_days"]),
             ]
             lines.append("| " + " | ".join(cells) + " |")
+    for market, section in item["segments"].items():
+        lines.extend(segment_lines(MARKET_NAMES[market], item["primary"], section))
     return lines

@@ -21,7 +21,6 @@ from datetime import date
 from pathlib import Path
 from typing import Annotated, Any, cast
 
-import numpy as np
 import pandas as pd
 import typer
 
@@ -37,9 +36,24 @@ from ai_trading_system.research_bench.falsify import (
     bootstrap_interval,
     cost_section,
 )
-from ai_trading_system.research_bench.metrics import DAYS_PER_YEAR, compare, summarize
+from ai_trading_system.research_bench.metrics import compare, summarize
 from ai_trading_system.research_bench.prereg import Rule, evaluate_rules
 from ai_trading_system.research_bench.run import PRIMARY_BENCHMARK, benchmark_simulations
+from ai_trading_system.research_bench.segments import DROP as DROP
+from ai_trading_system.research_bench.segments import LONG_BULL_MONTHS as LONG_BULL_MONTHS
+from ai_trading_system.research_bench.segments import SLOW_MONTHS as SLOW_MONTHS
+from ai_trading_system.research_bench.segments import Segment as Segment
+from ai_trading_system.research_bench.segments import _inside as _inside
+from ai_trading_system.research_bench.segments import annual_return as annual_return
+from ai_trading_system.research_bench.segments import drop_segments as drop_segments
+from ai_trading_system.research_bench.segments import long_bull_segments as long_bull_segments
+from ai_trading_system.research_bench.segments import long_bull_summary as long_bull_summary
+from ai_trading_system.research_bench.segments import monthly_level as monthly_level
+from ai_trading_system.research_bench.segments import segment_return as segment_return
+from ai_trading_system.research_bench.segments import segment_rows as segment_rows
+from ai_trading_system.research_bench.segments import segments as segments
+from ai_trading_system.research_bench.segments import slow_bear_summary as slow_bear_summary
+from ai_trading_system.research_bench.segments import window_returns as window_returns
 from ai_trading_system.research_bench.settings import (
     LoadedSettings,
     Window,
@@ -54,10 +68,7 @@ from ai_trading_system.research_probes import gate_power as gp
 
 RUN_ID = "TRADING-2565-34"
 OWNER_DECISION = "owner_decision:TRADING-2565:2026-10-21:research_loop_p2"
-# Review-thread requirements: fixed segmentation and standard/tight sets, before any run.
-DROP = 0.20
-SLOW_MONTHS = 6
-LONG_BULL_MONTHS = 36
+# Segmentation rules are in research_bench.segments (TRADING-2565-36, moved unchanged).
 MIN_MEDIAN_SEGMENTS = 4
 SB1 = 0.10
 SB2 = 0.75
@@ -103,114 +114,6 @@ RESULT_MD = "slow_bear_result.md"
 app = typer.Typer(help="慢熊判据探针：只量开发窗口，不改门、不写研究账本。")
 
 
-@dataclass(frozen=True)
-class Segment:
-    id: str
-    kind: str
-    start: str
-    end: str
-    peak: str | None
-    trough: str | None
-    months: int
-    change: float
-
-
-def window_returns(returns: pd.Series, window: Window) -> pd.Series:
-    dates = pd.DatetimeIndex(returns.index)
-    inside = returns.loc[
-        (dates >= pd.Timestamp(window.start))
-        & (True if window.end is None else dates <= pd.Timestamp(window.end))
-    ]
-    if len(inside) < 2:
-        raise ValueError(f"{window.window_id}: no return dates inside window")
-    # simulate's first available date is the initial holding date, not a return date.
-    daily = inside.iloc[1:]
-    if daily.isna().any():
-        when = pd.Timestamp(daily.index[daily.isna()][0]).date()
-        raise ValueError(f"missing return on {when}")
-    return daily
-
-
-def monthly_level(daily: pd.Series) -> pd.Series:
-    return (1.0 + daily).groupby(pd.DatetimeIndex(daily.index).to_period("M")).prod().cumprod()
-
-
-def drop_segments(level: pd.Series) -> list[Segment]:
-    out: list[Segment] = []
-    values = level.to_numpy(dtype=float)
-    months = pd.PeriodIndex(level.index, freq="M")
-    begin = 0
-    while begin < len(level):
-        peak = begin
-        crossed = False
-        for pos in range(begin + 1, len(level)):
-            if values[pos] >= values[peak]:
-                peak = pos
-            elif values[pos] <= values[peak] * (1.0 - DROP):
-                crossed = True
-                break
-        if not crossed:
-            break
-        recovery = next(
-            (i for i in range(peak + 1, len(level)) if values[i] >= values[peak]), len(level)
-        )
-        trough = peak + 1 + int(np.argmin(values[peak + 1 : recovery]))
-        duration = months[trough].ordinal - months[peak].ordinal
-        kind = "slow_bear" if duration >= SLOW_MONTHS else "fast_drop"
-        out.append(
-            Segment(
-                f"{kind}_{months[peak].strftime('%Y%m')}",
-                kind,
-                str(months[peak] + 1),
-                str(months[trough]),
-                str(months[peak]),
-                str(months[trough]),
-                duration,
-                float(values[trough] / values[peak] - 1.0),
-            )
-        )
-        begin = trough + 1
-    return out
-
-
-def long_bull_segments(level: pd.Series, drops: Sequence[Segment]) -> list[Segment]:
-    if level.empty:
-        return []
-    months = pd.PeriodIndex(level.index, freq="M")
-    begin = months[0]
-    gaps: list[tuple[pd.Period, pd.Period]] = []
-    for drop in drops:
-        gaps.append((begin, pd.Period(drop.peak, freq="M")))
-        begin = pd.Period(drop.trough, freq="M") + 1
-    gaps.append((begin, months[-1]))
-    out = []
-    for first, last in gaps:
-        duration = last.ordinal - first.ordinal + 1
-        if duration <= LONG_BULL_MONTHS:
-            continue
-        prior = level.loc[months < first]
-        base = 1.0 if prior.empty else float(prior.iloc[-1])
-        out.append(
-            Segment(
-                f"long_bull_{first.strftime('%Y%m')}",
-                "long_bull",
-                str(first),
-                str(last),
-                None,
-                None,
-                duration,
-                float(level.loc[str(last)]) / base - 1.0,
-            )
-        )
-    return out
-
-
-def segments(daily: pd.Series) -> list[Segment]:
-    level = monthly_level(daily)
-    drops = drop_segments(level)
-    return sorted([*drops, *long_bull_segments(level, drops)], key=lambda item: item.start)
-
-
 def compare_inferred(
     found: Sequence[Segment], inferred: Sequence[tuple[str, str]]
 ) -> list[dict[str, Any]]:
@@ -238,79 +141,6 @@ def compare_inferred(
         {"inferred": None, "found": s.id, "match": "extra"} for s in slow if s.id not in used
     )
     return rows
-
-
-def _inside(returns: pd.Series, segment: Segment) -> pd.Series:
-    months = pd.DatetimeIndex(returns.index).to_period("M")
-    return returns.loc[
-        (months >= pd.Period(segment.start, freq="M"))
-        & (months <= pd.Period(segment.end, freq="M"))
-    ]
-
-
-def segment_return(returns: pd.Series, segment: Segment) -> float:
-    daily = _inside(returns, segment)
-    if daily.empty:
-        raise ValueError(f"{segment.id}: no return days")
-    return float(np.prod(1.0 + daily.to_numpy(dtype=float))) - 1.0
-
-
-def annual_return(returns: pd.Series, segment: Segment, start: pd.Timestamp) -> float:
-    daily = _inside(returns, segment)
-    total = segment_return(returns, segment)
-    prior = returns.loc[returns.index < daily.index[0]]
-    begin = start if prior.empty else pd.Timestamp(prior.index[-1])
-    years = (pd.Timestamp(daily.index[-1]) - begin).days / DAYS_PER_YEAR
-    if years <= 0:
-        raise ValueError(f"{segment.id}: no positive calendar span")
-    return float((1.0 + total) ** (1.0 / years) - 1.0)
-
-
-def segment_rows(
-    strategy: Simulation, benchmark: Simulation, items: Sequence[Segment]
-) -> list[dict[str, Any]]:
-    rows = []
-    for item in items:
-        own = segment_return(strategy.returns, item)
-        reference = segment_return(benchmark.returns, item)
-        row = {
-            "id": item.id,
-            "kind": item.kind,
-            "strategy_return": own,
-            "benchmark_return": reference,
-            "difference": own - reference,
-            "average_exposure": float(_inside(strategy.exposure, item).mean()),
-        }
-        if item.kind == "long_bull":
-            own_annual = annual_return(strategy.returns, item, strategy.start)
-            reference_annual = annual_return(benchmark.returns, item, benchmark.start)
-            row.update(
-                strategy_annual=own_annual,
-                benchmark_annual=reference_annual,
-                annual_difference=own_annual - reference_annual,
-            )
-        rows.append(row)
-    return rows
-
-
-def slow_bear_summary(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
-    values = [r["difference"] for r in rows if r["kind"] == "slow_bear"]
-    return {
-        "count": len(values),
-        "median_difference": float(np.median(values)) if values else None,
-        "positive_share": sum(v > 0 for v in values) / len(values) if values else None,
-        "min_difference": min(values) if values else None,
-        "nonpositive": sum(v <= 0 for v in values) if values else None,
-    }
-
-
-def long_bull_summary(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
-    values = [r["annual_difference"] for r in rows if r["kind"] == "long_bull"]
-    return {
-        "count": len(values),
-        "mean_annual_difference": float(np.mean(values)) if values else None,
-        "worst_annual_difference": min(values) if values else None,
-    }
 
 
 @dataclass(frozen=True)

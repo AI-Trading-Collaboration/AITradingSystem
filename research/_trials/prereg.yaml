@@ -24,6 +24,19 @@
 # The gate before the two-stage ruler is kept, byte for byte, as
 # src/ai_trading_system/research_probes/trial_gate_v1.yaml (the gate power and ruler probes
 # measured it); the gate before the floor as trial_gate_v2.yaml (the false-pass probe measured it).
+#
+# slow_bear_episodes and long_bull_episodes list, per development window, the segments of the
+# read-only slow-bear and long-bull tables in trial-report, approved by Baker with
+# owner_decision:TRADING-2565:2026-10-21:slow_bear_readonly (the slow-bear criterion itself was not
+# adopted: the slow-bear probe, TRADING-2565-34, found its false-pass rate over the line). Like
+# event_episodes they are descriptive and never ruled on. They are the probe's segments
+# (research_bench.segments, a fixed rule): compound the market's daily total return into a
+# month-end level; a segment opens when the level falls to 80% of its running high; the trough is
+# the lowest month before the level regains that high; at least 6 months from high to trough is a
+# slow bear, otherwise a fast drop (not listed); the running high restarts after each trough; a
+# gap of more than 36 months between drops is a long bull. A slow bear runs from the month after
+# the high to the trough; ids name the high's month (slow bears) or the first month (long bulls).
+# `research_bench trial-segments <trial> --check` recomputes them on a plan's data.
 schema_version: research_trial_gate.v1
 owner_decision: owner_decision:TRADING-2565:2026-10-19:tail_floor10
 max_configs_per_trial: 8            # research loop charter, period 1, section 5: every configuration counts
@@ -35,6 +48,13 @@ markets:
     rules:                          # stage 2 (S3): the direction only
       - {metric: ci_high.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: the left tail is not clearly worse (95% interval upper bound above 0)}
       - {metric: comparison.geometric_annual_return, op: ">=", value: -0.010, note: gives up at most 1.0 point a year}
+    slow_bear_episodes:
+      qqq_long_history_development:
+        - {id: slow_bear_200003, start: "2000-04", end: "2002-09"}
+        - {id: slow_bear_200710, start: "2007-11", end: "2009-02"}
+    long_bull_episodes:
+      qqq_long_history_development:
+        - {id: long_bull_200210, start: "2002-10", end: "2007-10"}
   us_market:
     question_type: us_market_trial  # development window us_market_1929_2010, 1929-01-02..2010-12-31 (Ken French)
     # A configuration that holds the synthetic ten-year Treasury in place of cash runs on this type
@@ -57,5 +77,37 @@ markets:
       - {id: ltcm_1998, start: "1998-08", end: "1998-10"}
       - {id: dotcom_bear, start: "2000-03", end: "2002-10"}
       - {id: global_financial_crisis, start: "2007-10", end: "2009-03"}
+    # The 1962 window starts with a fast drop (1962-02..1962-06), so it has no 1961 slow bear.
+    slow_bear_episodes:
+      us_market_1929_2010:
+        - {id: slow_bear_192908, start: "1929-09", end: "1932-06"}
+        - {id: slow_bear_193208, start: "1932-09", end: "1933-02"}
+        - {id: slow_bear_193702, start: "1937-03", end: "1938-03"}
+        - {id: slow_bear_193909, start: "1939-10", end: "1942-04"}
+        - {id: slow_bear_194605, start: "1946-06", end: "1947-05"}
+        - {id: slow_bear_196112, start: "1962-01", end: "1962-06"}
+        - {id: slow_bear_196811, start: "1968-12", end: "1970-06"}
+        - {id: slow_bear_197212, start: "1973-01", end: "1974-09"}
+        - {id: slow_bear_200003, start: "2000-04", end: "2002-09"}
+        - {id: slow_bear_200710, start: "2007-11", end: "2009-02"}
+      us_market_1962_2010:
+        - {id: slow_bear_196811, start: "1968-12", end: "1970-06"}
+        - {id: slow_bear_197212, start: "1973-01", end: "1974-09"}
+        - {id: slow_bear_200003, start: "2000-04", end: "2002-09"}
+        - {id: slow_bear_200710, start: "2007-11", end: "2009-02"}
+    long_bull_episodes:
+      us_market_1929_2010:
+        - {id: long_bull_193303, start: "1933-03", end: "1937-02"}
+        - {id: long_bull_194205, start: "1942-05", end: "1946-05"}
+        - {id: long_bull_194706, start: "1947-06", end: "1961-12"}
+        - {id: long_bull_196207, start: "1962-07", end: "1968-11"}
+        - {id: long_bull_197410, start: "1974-10", end: "1987-08"}
+        - {id: long_bull_198712, start: "1987-12", end: "2000-03"}
+        - {id: long_bull_200210, start: "2002-10", end: "2007-10"}
+      us_market_1962_2010:
+        - {id: long_bull_196207, start: "1962-07", end: "1968-11"}
+        - {id: long_bull_197410, start: "1974-10", end: "1987-08"}
+        - {id: long_bull_198712, start: "1987-12", end: "2000-03"}
+        - {id: long_bull_200210, start: "2002-10", end: "2007-10"}
 production_effect: none
 broker_action: none
