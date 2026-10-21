@@ -33,6 +33,8 @@ from ai_trading_system.research_bench.checks import (
 )
 from ai_trading_system.research_bench.data import (
     RESERVES,
+    SHILLER_TREASURY_RESERVE,
+    SHILLER_TREASURY_SOURCE,
     TREASURY_RESERVE,
     TREASURY_SOURCE,
     BenchData,
@@ -209,7 +211,8 @@ def test_bench_data_has_no_reserve_until_one_is_added() -> None:
     assert dict(plain.reserves) == {}
     assert dict(from_us_market({"ff_factors_daily": _factors()}, snapshot_id=SIG).reserves) == {}
     assert with_reserves(plain, {"ff_factors_daily": _factors()}).reserves == plain.reserves
-    assert RESERVES == ("cash", "treasury_10y")
+    # TRADING-2565-40 added the Shiller Treasury after these two.
+    assert RESERVES[:2] == ("cash", "treasury_10y")
 
 
 def test_with_reserves_adds_the_treasury_on_the_bench_calendar() -> None:
@@ -807,6 +810,43 @@ def test_each_fixed_mix_is_ruled_at_its_own_weight(tmp_path: Path) -> None:
     assert record["result"]["portfolio"]["weight"] == 0.5
 
 
+def test_a_mix_with_the_shiller_treasury_is_ruled_on_the_first_stage_window(tmp_path: Path) -> None:
+    # treasury_1929 (TRADING-2565-40): the gate maps only treasury_10y to the 1962 window, so a mix
+    # holding the Treasury priced from Shiller's monthly rate runs on the market's own question
+    # type: us_market_trial, 1929-2010, the window the portfolio ruler's first stage names.
+    steps = np.random.default_rng(13).normal(0.0, 0.2, 1026)
+    shiller = pd.DataFrame(
+        {"value": np.clip(4.0 + np.cumsum(steps), 0.5, 15.0)},
+        index=pd.date_range("1926-01-01", periods=1026, freq="MS"),
+    )
+    plan = _plan(configs=[_fixed("mix60", 0.6, reserve=SHILLER_TREASURY_RESERVE)])
+    root = _repo(tmp_path, plan=plan)
+    gate = tr.load_gate(GATE_FILE)
+    for market, data, window_id in (
+        ("us_market", US, "us_market_1929_2010"),
+        ("qqq", QQQ, "qqq_long_history_development"),
+    ):
+        both = with_reserves(data, {SHILLER_TREASURY_SOURCE: shiller})
+        record = tr.run_trial(root, "T0002", "mix60", market, both, loaded=LOADED)
+        entry = gate.markets[market]
+        assert record["status"] == "ok"
+        assert record["window"]["window_id"] == window_id
+        assert record["spec"]["reserve"] == SHILLER_TREASURY_RESERVE
+        rules = entry.portfolio_rules_for(window_id)
+        assert rules is not None
+        values = {**(record["result"]["falsification"] or {}), **record["result"]}
+        assert record["rule_set"] == "portfolio"
+        assert record["gate"] == tr.evaluate_rules(rules, values)
+        assert record["gate_outcome"] == ("pass" if record["gate_holds"] else "fail")
+        assert [row["id"] for row in record["result"]["portfolio"]["segments"]] == [
+            item.id for item in entry.decline_list(window_id)
+        ]
+    lines = tr.trial_report(root, "T0002", LOADED)
+    name = "储备 10 年期国债（Shiller 长期利率按月合成）"
+    assert f"## mix60 · 美股大盘 · {name}（trial-r0001，ok）" in lines
+    assert f"## mix60 · QQQ · {name}（trial-r0002，ok）" in lines
+
+
 def test_the_qqq_run_with_the_treasury_uses_the_qqq_window(trial: dict[str, Any]) -> None:
     record = trial["records"][0]
     spec = RunSpec(
@@ -994,5 +1034,11 @@ def test_matched_volatility_line() -> None:
 
 
 def test_reserve_names() -> None:
-    # Runs that hold cash (every run before this change) keep the old header.
-    assert tr.RESERVE_NAMES == {"cash": "现金", "treasury_10y": "10 年期国债"}
+    # Runs that hold cash (every run before this change) keep the old header; every reserve the
+    # bench knows has a name (TRADING-2565-40 added the Shiller Treasury).
+    assert tr.RESERVE_NAMES == {
+        "cash": "现金",
+        "treasury_10y": "10 年期国债",
+        "treasury_10y_shiller": "10 年期国债（Shiller 长期利率按月合成）",
+    }
+    assert set(tr.RESERVE_NAMES) == set(RESERVES)

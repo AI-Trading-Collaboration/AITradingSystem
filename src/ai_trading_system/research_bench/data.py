@@ -31,9 +31,13 @@ from ai_trading_system.research_bench.sources import (
 from ai_trading_system.research_data import qqq_long_history as qlh
 
 ASSETS: tuple[str, ...] = ("qqq", "cash", "lev2", "lev3")
-RESERVES = ("cash", "treasury_10y")
+RESERVES = ("cash", "treasury_10y", "treasury_10y_shiller")
 TREASURY_RESERVE = "treasury_10y"
 TREASURY_SOURCE = "dgs10"
+# The same ten-year par bond, priced monthly from Shiller's long rate, available since 1871.
+# owner_decision:TRADING-2565:2026-10-21:treasury_1929
+SHILLER_TREASURY_RESERVE = "treasury_10y_shiller"
+SHILLER_TREASURY_SOURCE = "shiller_gs10"
 # Ten years of semiannual payments: an instrument-definition invariant.
 TREASURY_PERIODS = 20
 # Percent-unit checks, not investment thresholds; reject decimal yields and implausible units.
@@ -66,38 +70,79 @@ class BenchData:
     reserves: Mapping[str, pd.Series] = field(default_factory=dict)
 
 
-def treasury_returns(yields: pd.Series, calendar: pd.DatetimeIndex) -> pd.Series:
-    """Realized constant-ten-year par-bond returns from percent yields, without signal lag."""
-
+def _check_percent(yields: pd.Series) -> None:
     observations = yields.dropna()
     if (
         (observations < TREASURY_MIN_YIELD_PERCENT) | (observations > TREASURY_MAX_YIELD_PERCENT)
     ).any():
         raise ValueError("Treasury yields must be percent")
+
+
+def par_bond_price(coupon: Any, rate: Any) -> Any:
+    """Price of a ten-year par bond with decimal coupon ``coupon`` and yield ``rate``."""
+
+    discount = (1 + rate / 2) ** -TREASURY_PERIODS
+    return coupon / rate * (1 - discount) + discount
+
+
+def treasury_returns(yields: pd.Series, calendar: pd.DatetimeIndex) -> pd.Series:
+    """Realized constant-ten-year par-bond returns from percent yields, without signal lag."""
+
+    _check_percent(yields)
     y = known_at(yields / 100, calendar, 0, DEFAULT_MAX_STALE_DAYS)
     coupon = y.shift(1).to_numpy(dtype=float)
     rates = y.to_numpy(dtype=float)
     days = np.full(len(calendar), np.nan)
     days[1:] = (calendar[1:] - calendar[:-1]).days
-    discount = (1 + rates / 2) ** -TREASURY_PERIODS
-    price = coupon / rates * (1 - discount) + discount
+    price = par_bond_price(coupon, rates)
     return pd.Series(price - 1 + coupon * days / 365, index=calendar, name=TREASURY_RESERVE)
 
 
-def with_reserves(data: BenchData, frames: Mapping[str, pd.DataFrame]) -> BenchData:
-    """Attach the realized Treasury reserve without changing inputs or benchmark returns."""
+def monthly_treasury_returns(yields: pd.Series, calendar: pd.DatetimeIndex) -> pd.Series:
+    """Month M returns P(y[M-1], y[M]) - 1 + y[M-1]/12, evenly over calendar dates.
 
-    if TREASURY_SOURCE not in frames:
+    Every date in a month receives the same daily return, compounding to the monthly return.
+    Without either month's yield the whole month is empty. Only M-1 and M are read, so no date
+    sees a later month. Shiller's monthly averages smooth intramonth moves, lagging about half
+    a month; these are realized reserve returns, not a signal available within the month.
+    """
+
+    _check_percent(yields)
+    observations = yields.dropna()
+    months = pd.DatetimeIndex(observations.index).to_period("M")
+    if not (months.is_monotonic_increasing and months.is_unique):
+        raise ValueError("Treasury yields must have increasing, unique months")
+    rates = pd.Series(observations.to_numpy(dtype=float) / 100, index=months)
+    period = calendar.to_period("M")
+    current = rates.reindex(period).to_numpy(dtype=float)
+    previous = rates.reindex(period - 1).to_numpy(dtype=float)
+    monthly = par_bond_price(previous, current) - 1 + previous / 12
+    counts = pd.Series(1, index=period).groupby(level=0).transform("sum").to_numpy(dtype=float)
+    daily = (1 + monthly) ** (1 / counts) - 1
+    return pd.Series(daily, index=calendar, name=SHILLER_TREASURY_RESERVE)
+
+
+def with_reserves(data: BenchData, frames: Mapping[str, pd.DataFrame]) -> BenchData:
+    """Attach each Treasury whose source is in frames, without changing inputs or benchmarks."""
+
+    reserves = {}
+    for source, reserve, calculate in (
+        (TREASURY_SOURCE, TREASURY_RESERVE, treasury_returns),
+        (SHILLER_TREASURY_SOURCE, SHILLER_TREASURY_RESERVE, monthly_treasury_returns),
+    ):
+        if source not in frames:
+            continue
+        frame = frames[source]
+        if "value" not in frame.columns:
+            raise ValueError(f"{source} frame needs a value column")
+        reserves[reserve] = calculate(frame["value"], pd.DatetimeIndex(data.returns.index))
+    if not reserves:
         return data
-    frame = frames[TREASURY_SOURCE]
-    if "value" not in frame.columns:
-        raise ValueError(f"{TREASURY_SOURCE} frame needs a value column")
-    reserve = treasury_returns(frame["value"], pd.DatetimeIndex(data.returns.index))
     return BenchData(
         returns=data.returns,
         inputs=data.inputs,
         source=data.source,
-        reserves={**data.reserves, TREASURY_RESERVE: reserve},
+        reserves={**data.reserves, **reserves},
     )
 
 

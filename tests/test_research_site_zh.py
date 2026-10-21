@@ -2115,6 +2115,102 @@ def test_trials(repo: Path) -> None:
     ]
 
 
+RULER_GATE = TRIAL_GATE.replace(
+    """      - {metric: comparison.max_drawdown, op: ">=", value: 0.05}
+production_effect""",
+    """      - {metric: comparison.max_drawdown, op: ">=", value: 0.05}
+    portfolio_rules:
+      windows: [us_market_1929_2010]
+      rules:
+        - {metric: portfolio.median_ratio, op: ">=", value: 0.10}
+    decline_episodes:
+      us_market_1929_2010:
+        - {id: decline_192909, start: "1929-10", end: "1932-06"}
+production_effect""",
+)
+
+PLAN_T0008 = """schema_version: research_trial_plan.v1
+trial_id: T0008
+owner_decision: owner_decision:TRADING-2565:2026-10-21:treasury_fixture
+hypothesis_card: card-fixture-shiller
+from_validation_window: true
+data: {snapshot_id: qlh-fixture, signal_snapshot_id: sig-0123456789ab}
+primary: mix
+configs:
+  - id: mix
+    function: fixed_exposure
+    reserve: treasury_10y_shiller
+    params: {exposure: 0.6}
+    rebalance: {schedule: month_end, band: 0.0}
+production_effect: none
+broker_action: none
+"""
+
+
+def test_a_reserve_mix_is_shown_by_the_portfolio_ruler(tmp_path: Path) -> None:
+    # TRADING-2565-40: a fixed mix holding a reserve is judged by the gate's portfolio rules of
+    # its window, and a window the rules do not name has no ruler.
+    repo = _repo(tmp_path)
+    trials = repo.joinpath("research", "_trials")
+    trials.joinpath("prereg.yaml").write_text(RULER_GATE, encoding="utf-8")
+    trials.joinpath("T0008.yaml").write_text(PLAN_T0008, encoding="utf-8")
+    runs = trials.joinpath("runs")
+    for path in runs.glob("*.json"):
+        path.unlink()
+    runs.rmdir()
+    ruler = _gate_rows(("portfolio.median_ratio", ">=", 0.10, 0.04, False))
+    _trial_runs(
+        repo,
+        [
+            {
+                "trial_id": "T0008",
+                "config": "mix",
+                "market": "us_market",
+                "status": "ok",
+                "window": {"window_id": "us_market_1929_2010"},
+                "rule_set": "portfolio",
+                "gate": ruler,
+                "gate_holds": False,
+                "gate_outcome": "fail",
+            },
+            {
+                "trial_id": "T0008",
+                "config": "mix",
+                "market": "qqq",
+                "status": "ok",
+                "window": {"window_id": "qqq_long_history_development"},
+                "rule_set": "portfolio",
+                "gate": [],
+                "gate_holds": None,
+                "gate_outcome": "no_ruler",
+            },
+        ],
+    )
+    model = collect(repo)
+    plan = next(p for p in model["trials"]["plans"] if p["trial_id"] == "T0008")
+    us, qqq = plan["markets"]
+    assert (us["market"], us["holds"], us["outcome"], us["current_gate"]) == (
+        "us_market",
+        False,
+        "fail",
+        True,
+    )
+    assert [r["holds"] for r in us["rules"]] == [False]
+    assert (qqq["market"], qqq["holds"], qqq["outcome"]) == ("qqq", None, "no_ruler")
+    assert _lines(plan["card"])[0] == (
+        "仓位",
+        "固定持有 60% 的 QQQ，其余 40% 是 10 年期国债（用 Shiller 长期利率按月合成）；不看任何信号",
+    )
+    page = render(model)
+    assert "<strong>美股大盘长历史（第一段，主检验）</strong> · 没过</p>" in page
+    assert (
+        "<strong>QQQ 开发期（第二段，只查方向）</strong> · 没有尺子（不算过，也不算没过）" in page
+    )
+    # A timing record keeps being compared with the timing rules.
+    other = next(p for p in model["trials"]["plans"] if p["trial_id"] == "T0001")
+    assert all(m["outcome"] is None for m in other["markets"])
+
+
 def test_without_trials_or_settings_nothing_is_invented(tmp_path: Path) -> None:
     repo = tmp_path.joinpath("bare")
     repo.joinpath("research").mkdir(parents=True)

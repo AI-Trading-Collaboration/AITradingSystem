@@ -402,6 +402,13 @@ def _trials(trials: Mapping[str, Any]) -> str:
             + "</div>"
         )
         for market in plan["markets"]:
+            if market.get("outcome") == "no_ruler":
+                out.append(
+                    "<p><strong>"
+                    + _e(market["name"])
+                    + "</strong> · 没有尺子（不算过，也不算没过）</p>"
+                )
+                continue
             if market["holds"] is None:
                 continue
             out.append(

@@ -486,7 +486,8 @@ def test_the_plans_the_gate_copies_and_the_reserves_are_unchanged() -> None:
         assert lg.chain_digest(path.read_bytes()) == digest, name
         for entry in tr.load_gate(path).markets.values():
             assert entry.portfolio_rules is None and entry.decline_episodes is None
-    assert RESERVES == ("cash", "treasury_10y")
+    # owner_decision:TRADING-2565:2026-10-21:treasury_1929 adds treasury_10y_shiller after them.
+    assert RESERVES[:2] == ("cash", "treasury_10y")
 
 
 def _old_verdict(first: dict[str, bool]) -> str:

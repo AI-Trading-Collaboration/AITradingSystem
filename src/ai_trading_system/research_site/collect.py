@@ -517,6 +517,22 @@ _MARKETS: dict[Literal["us_market", "qqq"], str] = {
 }
 
 
+def _current_rules(
+    gate: trial.TrialGate,
+    market: trial.Market,
+    outcome: Any,
+    record: Mapping[str, Any] | None,
+) -> tuple[Any, ...]:
+    """现行门对这条记录的规则；带 gate_outcome 的储备配置用组合尺子，其余用择时规则。"""
+
+    if outcome is None or record is None:
+        return gate.markets[market].rules
+    window_id = record.get("window", {}).get("window_id")
+    if isinstance(window_id, str):
+        return gate.markets[market].portfolio_rules_for(window_id) or ()
+    return ()
+
+
 def _trials(
     repo: Path,
     names: Mapping[str, Any],
@@ -588,7 +604,12 @@ def _trials(
                     None,
                 )
                 rules = record.get("gate") or [] if record else []
-                expected = [r.model_dump() for r in gate.markets[market].rules] if gate else []
+                outcome = record.get("gate_outcome") if record else None
+                expected = (
+                    [r.model_dump() for r in _current_rules(gate, market, outcome, record)]
+                    if gate
+                    else []
+                )
                 keys = ("metric", "op", "value")
                 current = [{k: r[k] for k in keys} for r in rules] == [
                     {k: r[k] for k in keys} for r in expected
@@ -598,6 +619,7 @@ def _trials(
                         "market": market,
                         "name": name,
                         "holds": record.get("gate_holds") if record else None,
+                        "outcome": outcome,
                         "current_gate": current,
                         "rules": zh.rule_rows(rules, gate.confidence if gate else None),
                     }

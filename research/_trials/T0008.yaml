@@ -1,0 +1,101 @@
+# Trial plan T0008 (TRADING-2567 P1 again; format in src/ai_trading_system/research_bench/trial.py).
+#
+# Not a screened candidate: Baker chose to renew period 2 early and measure a Treasury from 1929
+# (owner_decision:TRADING-2565:2026-10-21:treasury_1929, recorded in
+# docs/requirements/TRADING-2565_Research_Bench.md). Written before any trial of it ran; judged by
+# the gate in prereg.yaml, whose portfolio ruler judges a fixed mix holding a reserve
+# (owner_decision:TRADING-2565:2026-10-21:p1_portfolio_ruler). A configuration thought of after
+# reading results is a new hypothesis and needs a new plan.
+#
+# T0002's mixes with the Treasury priced month by month from Shiller's long-term rate
+# (treasury_10y_shiller, one source for the whole window) instead of DGS10, so the US market runs
+# on us_market_trial, 1929-2010, the window the ruler's first stage names: the gate maps only
+# treasury_10y to the 1962 window. On QQQ it runs on the QQQ development window (the ruler's
+# direction-only stage). Benchmarks hold cash.
+#
+# Expected before running: the card's expectation (Baker's card, 2026-10-21 16:39 JST): the first
+# stage fails, with a pass chance of about 0.02; the point is a decline-by-decline record for P1.
+# The table below is copied as written from the loop's batch 06 file
+# (knowledge/claude/qqq-options/auto-loop/hypotheses-batch-06-2026-10-21.md, card H17), before any
+# run of T0008 or of the stand-in check:
+#
+# ### 按单元的依据（第一段：24 个计入的 10% 下跌段，P-2 读每段的 r）
+#
+# r = 垫底 C ÷ |B 段内|，C = A 段内 − B 段内 − 0.4 × 国债平时超额 × 月数/12。国债平时超额（段外）没有记录，按 T0002 分解（几何差 +0.8 点、储备自身超额约 +0.7 点，需求第 6 节）推断约 1.5–1.75%/年。触发条件：国债在这一段里比平时多给，即段内收益率下行。引的数只有 T0002 的慢熊段表（DGS10、1962 窗口，D = A 段内 − B 段内，点），其余都是「无」。
+#
+# | 段（1929 窗口） | 月份 | 触发条件成不成立（推断） | 引的数 | r（推断） |
+# |---|---|---|---|---|
+# | decline_192908 | 1929-09..1932-06 | 不定：长期利率 3.6% 上下，1931 年底英镑脱金后上行，整段近平；1953 年前是年度插值，段内价格变动被抹平 | 无 | 近 0 |
+# | decline_193208 | 1932-09..1933-02 | 成立：收益率下行 | 无 | 小正 |
+# | decline_193308 | 1933-09..1933-10 | 不定 | 无 | 近 0 |
+# | decline_193401 | 1934-02..1934-07 | 成立：收益率下行 | 无 | 小正 |
+# | decline_193702 | 1937-03..1938-03 | 不定：1937 年初上行，之后回落 | 无 | 近 0 |
+# | decline_193812 | 1939-01..1939-04 | 成立 | 无 | 小正 |
+# | decline_193909 | 1939-10..1942-04 | 成立一半：1940 年下行，1942 年起钉住 2.5% | 无 | 小正 |
+# | decline_194605 | 1946-06..1947-05 | 不成立：钉住期，国债只有利息，减掉平时超额为负 | 无 | 小负 |
+# | decline_194805 | 1948-06..1949-05 | 不定：钉住期，略下行 | 无 | 近 0 |
+# | decline_195707 | 1957-08..1957-12 | 成立：10 月见顶后 12 月大降 | 无 | 正 |
+# | decline_196112 | 1962-01..1962-06 | 不定：略下行，减掉平时超额近 0 | 无（1962 窗口的 fast_drop_196202 是 1962-03..06，D +0.1，段不同） | 近 0 |
+# | decline_196601 | 1966-02..1966-09 | 不成立：收益率上行约 0.6 点 | 无 | 负 |
+# | decline_196811 | 1968-12..1970-06 | 不成立：升息 | D −4.3（−22.2% / −17.8%） | 约 −0.29 |
+# | decline_197212 | 1973-01..1974-09 | 不成立：升息 | D −3.2（−30.1% / −26.9%） | 约 −0.16 |
+# | decline_197506 | 1975-07..1975-09 | 不成立：收益率上行 | 无 | 负 |
+# | decline_197808 | 1978-09..1978-10 | 不成立：收益率上行 | 无 | 负 |
+# | decline_198001 | 1980-02..1980-03 | 不成立：收益率急升 1.5 点 | 无 | 负 |
+# | decline_198011 | 1980-12..1982-07 | 不成立：收益率上行，国债收益低于短期利率 | 无 | 负 |
+# | decline_198306 | 1983-07..1984-05 | 不成立：收益率上行约 2 点 | 无 | 负 |
+# | decline_198708 | 1987-09..1987-11 | 不定：10-19 前上行，之后大降，整段近平 | D +0.6（−17.4% / −17.9%） | 约 +0.03 |
+# | decline_199005 | 1990-06..1990-10 | 不成立：收益率略上行 | 无 | 小负 |
+# | decline_199806 | 1998-07..1998-08 | 成立：避险，收益率下行 | 无 | 正 |
+# | decline_200003 | 2000-04..2002-09 | 成立：降息 | D +7.3（−18.9% / −26.1%） | 约 +0.22 |
+# | decline_200710 | 2007-11..2009-02 | 成立：降息、避险 | D +4.2（−28.2% / −32.4%） | 约 +0.10 |
+# | decline_201004 | 2010-05..2010-06 | 成立：收益率下行近 1 点 | 无 | 正 |
+#
+# （25 段里有 1 段不计入，探针汇报只给了计数；改门批上线后 `trial-segments --declines` 会印出来。）
+#
+# 25 段里有记录的 5 段，「无」过半，概率最高 0.6。1962 年以后 15 段里约 9 段 r 为负（2 段有记录、7 段推断），占比那条最多容 6 段为负，所以不管 1929–1961 的 10 段怎样，P-2 都过不了。
+#
+# ### 预期（跑之前写死）
+#
+# - P-2 占比（r > 0 的段 ≥ 18/24）：成立 0.03。
+# - P-2 中位（r 中位 ≥ 0.10）：成立 0.1。
+# - P-1 几何不亏：成立 0.9（国债对现金有正的期限溢价，T0002 的几何差 +0.8）。
+# - P-3 再平衡收益不为负：成立 0.6（1970 年代股债正相关，近似式里 ρ 跨周期平均约 0.1–0.2，推断）。
+# - 第一段过：约 0.02。
+# - `after_failure`：不过，P1 配债券按组合尺子记「机制不存在」，24 段的 r 表就是以后任何 P1 储备要越过的记录（国债只在通缩和降息的下跌里垫底，升息期反过来，没有跨周期的垫底）；过了（不太可能），第 3 期开 P1 的题。
+#
+# TRADING-2565-40's stand-in check runs before T0008 and decides how a failure is tagged: if the
+# Shiller Treasury does not match the DGS10 one on 1962-2010 (calendar-year correlation below 0.90
+# or fewer than 12 of the 15 declines agreeing), as 流程或测量问题（国债代理和 DGS10 对不上）;
+# otherwise as 机制不存在（按组合尺子）. Either tag goes to Baker on the card that closes the trial.
+#
+# from_validation_window is true, as T0002: the P1 idea came after QQQ-Q1 to QQQ-Q3, whose authors
+# had read QQQ's validation window once each.
+schema_version: research_trial_plan.v1
+trial_id: T0008
+owner_decision: owner_decision:TRADING-2565:2026-10-21:treasury_1929
+hypothesis_card: docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md, decision portfolio_p1 (2026-10-18); TRADING-2565 decision treasury_1929 (2026-10-21)
+from_validation_window: true
+data:
+  snapshot_id: qlh-20261013-0b0df53cb1a2   # long-history snapshot for the QQQ market, as T0002
+  signal_snapshot_id: sig-ed9e988ffe7c     # US market, DGS10 and Shiller's monthly sources (TRADING-2565-37)
+primary: qqq60_t10s40
+configs:
+  - id: qqq60_t10s40
+    function: fixed_exposure
+    params: {exposure: 0.6}
+    reserve: treasury_10y_shiller
+    rebalance: {schedule: month_end, band: 0.0}
+  # Sensitivity, never deciding: half and half, and 70/30, as T0002.
+  - id: qqq50_t10s50
+    function: fixed_exposure
+    params: {exposure: 0.5}
+    reserve: treasury_10y_shiller
+    rebalance: {schedule: month_end, band: 0.0}
+  - id: qqq70_t10s30
+    function: fixed_exposure
+    params: {exposure: 0.7}
+    reserve: treasury_10y_shiller
+    rebalance: {schedule: month_end, band: 0.0}
+production_effect: none
+broker_action: none

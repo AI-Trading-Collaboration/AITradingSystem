@@ -223,11 +223,10 @@ def strategy_card(
     if function == "fixed_exposure" and "exposure" in params:
         card.update(kind="fixed_exposure", source="generated")
         exposure = params["exposure"]
-        reserve = (
-            " 10 年期国债（用 FRED DGS10 合成）"
-            if entry.get("reserve") == "treasury_10y"
-            else "现金"
-        )
+        reserve = {
+            "treasury_10y": " 10 年期国债（用 FRED DGS10 合成）",
+            "treasury_10y_shiller": " 10 年期国债（用 Shiller 长期利率按月合成）",
+        }.get(entry.get("reserve", "cash"), "现金")
         lines = [
             (
                 "仓位",

@@ -98,7 +98,11 @@ STRATEGY_FUNCTIONS: dict[str, Strategy] = {
     "signal_exposure": signal_exposure,
     "fixed_exposure": fixed_exposure,
 }
-RESERVE_NAMES = {"cash": "现金", "treasury_10y": "10 年期国债"}
+RESERVE_NAMES = {
+    "cash": "现金",
+    "treasury_10y": "10 年期国债",
+    "treasury_10y_shiller": "10 年期国债（Shiller 长期利率按月合成）",
+}
 # Display-only unit boundary: less than 0.1 percentage point is described as no return given up.
 COST_BENEFIT_RETURN_TOLERANCE = 0.001
 Market = Literal["qqq", "us_market"]
