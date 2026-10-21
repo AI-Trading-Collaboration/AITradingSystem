@@ -321,13 +321,14 @@ NOTES_TAIL = (
     "；2026-10-15：S4e 第一批真实筛选已跑完并发布为记录 S0001 到 S0004（main 71f00bc1）；"
     "S4f（TRADING-2565-11）第二题用的经典趋势信号"
 )
-# The card's current owner and step (TRADING-2567-37), checked against the register.
+# The card's current owner and step (TRADING-2565-45), checked against the register.
 NEXT_OWNER = "Claude（研究自动循环）"
 NEXT_STEP = (
-    "研究自动循环第 2 期（`research/_loop/charter_p2.md`，到 2026-11-04）：第一批卡只出周频 "
-    "fast_slow，开题为 QQQ-Q5（owner_decision:TRADING-2567:2026-10-21:qqq_q5_prereg）；出卡按事"
-    "件（owner_decision:TRADING-2565:2026-10-21:event_driven_cards）：Q5 读完验证、pi 队列里没有"
-    "这一循环的包就出下一批，周一保底；周五摘要照旧"
+    "研究自动循环第 3 期（`research/_loop/charter_p3.md`，到 2026-11-04）：前瞻记录台"
+    "（TRADING-2565-45，owner_decision:TRADING-2565:2026-10-22:daily_policy、"
+    "owner_decision:TRADING-2565:2026-10-22:read_daily_outputs）发布后，研究会话第一次追加"
+    "（从 2026-10-12 回填），之后每周五和周五摘要同一次追加；QQQ 下一个完整慢熊段或长牛段时"
+    "核对 F0001、F0005；11-04 前续期卡；假设卡停，这期不新筛信号"
 )
 
 
