@@ -255,7 +255,7 @@ def screen_command(
             if market_id in markets:
                 raise ScreenCheckError([f"duplicate industry id {market_id}"])
             markets[market_id] = ScreenMarket(market_id, industries[name], settings.long_eval_start)
-        lags = {spec.source_id: spec.known_lag_trading_days for spec in snapshot.specs}
+        lags = {spec.source_id: spec for spec in snapshot.specs}
         results = screen_signal(loaded, markets, snapshot.frames, lags, settings)
         latest = {family_key(record): record for record in records}
         # Reruns on different data replace this member's latest result, not its family identity.
@@ -580,7 +580,7 @@ def _data(item: lg.Question, root: Path) -> BenchData:
     if wanted.signal_snapshot_id is None:
         return data
     snapshot = signal_sources.load_snapshot(PROJECT_ROOT, wanted.signal_snapshot_id)
-    lags = {spec.source_id: spec.known_lag_trading_days for spec in snapshot.specs}
+    lags = {spec.source_id: spec for spec in snapshot.specs}
     return with_signal_sources(data, snapshot.frames, lags, snapshot_id=wanted.signal_snapshot_id)
 
 

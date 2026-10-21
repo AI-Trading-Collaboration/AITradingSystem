@@ -27,6 +27,7 @@ brokers = [
 ]
 data = [
   "pypdf>=4.2",
+  "xlrd>=2.0.1",
   "yfinance>=0.2.40",
 ]
 dashboard = [

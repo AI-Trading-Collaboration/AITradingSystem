@@ -17,6 +17,9 @@ no test reads a real snapshot.
 33. Source specs are strict, the approved sources are the ones in the settings file, and
     ``config/research/research_bench.yaml`` is unchanged.
 
+The monthly sources (TRADING-2565-37) have their own invariants in
+``test_research_monthly_sources_invariants.py``; here the fakes only learn to serve them.
+
 The edge cases at the end (stale limit, off-calendar dates, bad downloads, the id, every check
 status, value leaks, loaded frames, strict specs, the gap length) were added after mutation checks
 on a throwaway reference.
@@ -185,7 +188,25 @@ def _fred_series(seed: int = 0) -> dict[str, pd.Series]:
         name: pd.Series(np.round(rng.normal(centre, 0.2, len(dates)), 2), index=dates)
         for name, centre in (("VIXCLS", 20.0), ("VXNCLS", 25.0), ("DGS10", 7.5), ("DTB3", 6.0))
     }
-    return {"BAA10Y": baa, "T10Y3M": t10y3m, **loop}
+    # The monthly long-history sources (TRADING-2565-37): drawn last, so nothing above changes.
+    months = pd.date_range("1985-10-01", "1986-03-01", freq="MS")
+    monthly = {
+        name: pd.Series(np.round(rng.normal(centre, 0.3, len(months)), 2), index=months)
+        for name, centre in (("BAA", 9.0), ("AAA", 8.0))
+    }
+    return {"BAA10Y": baa, "T10Y3M": t10y3m, **loop, **monthly}
+
+
+def _shiller() -> pd.DataFrame:
+    months = pd.date_range("1985-10-01", "1986-03-01", freq="MS", name="date")
+    rng = np.random.default_rng(11)
+    return pd.DataFrame(
+        {
+            name: np.round(rng.normal(10.0, 1.0, len(months)), 2)
+            for name in ("CPI", "D", "E", "GS10", "P")
+        },
+        index=months,
+    )
 
 
 def _ken_french() -> Callable[[str], bytes]:
@@ -202,6 +223,7 @@ def _fetch(root: Path, fred: dict[str, pd.Series] | None = None) -> str:
         root,
         fred_fetch=_fred(fred or _fred_series()),
         ken_french_fetch=_ken_french(),
+        shiller_fetch=_shiller,
     )
 
 
@@ -303,6 +325,13 @@ def test_the_approved_sources_are_in_the_settings_file() -> None:
         "vxncls",
         "dgs10",
         "dtb3",
+        "baa_monthly",
+        "aaa_monthly",
+        "shiller_price",
+        "shiller_dividend",
+        "shiller_earnings",
+        "shiller_cpi",
+        "shiller_gs10",
     }
     assert (sources["baa10y"].provider, sources["baa10y"].dataset) == ("fred", "BAA10Y")
     assert (sources["t10y3m"].provider, sources["t10y3m"].dataset) == ("fred", "T10Y3M")

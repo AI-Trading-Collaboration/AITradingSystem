@@ -64,6 +64,62 @@ sources:
     frequency: daily
     known_lag_trading_days: 1
     description: 3-month Treasury bill secondary market rate
+  # Monthly long history (owner_decision:TRADING-2565:2026-10-21:monthly_long_history, TRADING-2565-37):
+  # free, no API key. Month M is published on the first day of month M + 1 + release_lag_months and
+  # used known_lag_trading_days trading days later. FRED dates a monthly average at the start of its
+  # month; five trading days cover the weekly release after the month ends (inferred). Shiller's
+  # dividends, earnings, CPI and long rate are interpolated from annual or quarterly figures in early
+  # years (inferred), so a value is used fifteen months after its month: January's value from an
+  # annual figure is known only when the year's report is out, about fourteen months later.
+  - source_id: baa_monthly
+    provider: fred
+    dataset: BAA
+    frequency: monthly
+    release_lag_months: 0
+    known_lag_trading_days: 5
+    description: Moody's seasoned Baa corporate bond yield, monthly average, from 1919
+  - source_id: aaa_monthly
+    provider: fred
+    dataset: AAA
+    frequency: monthly
+    release_lag_months: 0
+    known_lag_trading_days: 5
+    description: Moody's seasoned Aaa corporate bond yield, monthly average, from 1919
+  - source_id: shiller_price
+    provider: shiller
+    dataset: P
+    frequency: monthly
+    release_lag_months: 0
+    known_lag_trading_days: 0
+    description: Shiller S&P composite price, monthly average of daily closes, from 1871
+  - source_id: shiller_dividend
+    provider: shiller
+    dataset: D
+    frequency: monthly
+    release_lag_months: 15
+    known_lag_trading_days: 0
+    description: Shiller S&P composite dividends per share, twelve-month total, from 1871
+  - source_id: shiller_earnings
+    provider: shiller
+    dataset: E
+    frequency: monthly
+    release_lag_months: 15
+    known_lag_trading_days: 0
+    description: Shiller S&P composite earnings per share, twelve-month total, from 1871
+  - source_id: shiller_cpi
+    provider: shiller
+    dataset: CPI
+    frequency: monthly
+    release_lag_months: 15
+    known_lag_trading_days: 0
+    description: Shiller consumer price index, from 1871
+  - source_id: shiller_gs10
+    provider: shiller
+    dataset: GS10
+    frequency: monthly
+    release_lag_months: 15
+    known_lag_trading_days: 0
+    description: Shiller long-term interest rate (GS10, earlier government bond yields), from 1871
 # Signal screening (S4b). Every market is cut at screen_end: the US market and the industries move
 # with QQQ after 2010, so reading them later would read QQQ's validation window. The screen has no
 # option to read past screen_end; moving it needs a change to this zone C file.

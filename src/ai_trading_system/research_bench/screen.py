@@ -22,7 +22,7 @@ from ai_trading_system.research_bench import checks
 from ai_trading_system.research_bench.falsify import stationary_bootstrap_indices
 from ai_trading_system.research_bench.ledger import chain_digest
 from ai_trading_system.research_bench.screen_settings import ScreenRules, _Strict
-from ai_trading_system.research_bench.sources import known_at
+from ai_trading_system.research_bench.sources import SourceSpec, align_source
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SIGNALS_DIR = PROJECT_ROOT / "src" / "ai_trading_system" / "research_screens" / "signals"
@@ -367,7 +367,7 @@ def screen_signal(
     loaded: LoadedSignal,
     markets: Mapping[str, ScreenMarket],
     sources: Mapping[str, pd.DataFrame],
-    source_lags: Mapping[str, int],
+    source_lags: Mapping[str, int | SourceSpec],
     settings: ScreenRules,
 ) -> dict[str, Any]:
     only = loaded.spec.markets == "qqq"
@@ -391,7 +391,7 @@ def screen_signal(
                 table = sources[name].loc[sources[name].index <= pd.Timestamp(settings.screen_end)]
                 aligned[name] = pd.DataFrame(
                     {
-                        col: known_at(
+                        col: align_source(
                             table[col], pd.DatetimeIndex(returns.index), source_lags[name]
                         )
                         for col in table.columns

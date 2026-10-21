@@ -19,6 +19,7 @@ from ai_trading_system.research_bench import signal_strategy as gs
 from ai_trading_system.research_bench.data import BenchData, with_signal_sources
 from ai_trading_system.research_bench.prereg import load_prereg
 from ai_trading_system.research_bench.settings import load_settings
+from ai_trading_system.research_bench.sources import SourceSpec
 
 SIGNAL_SNAPSHOT = "sig-0123456789ab"
 REF = {"id": "ident", "module_sha256": "a" * 64, "spec_sha256": "b" * 64, "score": "sign"}
@@ -202,8 +203,16 @@ def test_cli_data_uses_the_snapshot_recorded_lag(
         seen.append((root, snapshot_id))
         return SimpleNamespace(
             frames={"spread": frame},
+            # A real spec (TRADING-2565-37): the bench aligns each source by its spec's frequency.
             specs=[
-                SimpleNamespace(source_id="spread", known_lag_trading_days=2),
+                SourceSpec(
+                    source_id="spread",
+                    provider="fred",
+                    dataset="SPREAD",
+                    frequency="daily",
+                    known_lag_trading_days=2,
+                    description="spread",
+                ),
             ],
         )
 
@@ -219,6 +228,50 @@ def test_cli_data_uses_the_snapshot_recorded_lag(
     pd.testing.assert_frame_equal(got.inputs, expected.inputs)
     assert got.returns is data.returns and got.source == expected.source
     assert seen == [(PROJECT_ROOT, SIGNAL_SNAPSHOT)]
+
+
+def test_cli_data_aligns_a_monthly_source_from_the_day_its_month_is_known(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """TRADING-2565-37: December 1999 is known on the first trading day of 2000, used a day later.
+
+    January 2000 is known only in February, after these four days. Read as daily sources, both
+    dates fall before the calendar and January would be used from the second day.
+    """
+
+    question = _question(
+        tmp_path,
+        data={
+            "snapshot_id": "bench-1",
+            "qqq_series": "proxy",
+            "signal_snapshot_id": SIGNAL_SNAPSHOT,
+        },
+    )
+    data = _data()
+    frame = pd.DataFrame(
+        {"value": [7.0, 8.0]}, index=pd.DatetimeIndex(["1999-12-01", "2000-01-01"], name="date")
+    )
+    spec = SourceSpec(
+        source_id="baa_monthly",
+        provider="fred",
+        dataset="BAA",
+        frequency="monthly",
+        known_lag_trading_days=1,
+        description="baa",
+    )
+    monkeypatch.setattr(
+        cli.qlh, "resolve_snapshot_dir", lambda root, snapshot_id: root / snapshot_id
+    )
+    monkeypatch.setattr(cli, "from_snapshot", lambda *args, **kwargs: data)
+    monkeypatch.setattr(
+        cli.signal_sources,
+        "load_snapshot",
+        lambda root, snapshot_id: SimpleNamespace(frames={"baa_monthly": frame}, specs=[spec]),
+    )
+    column = cli._data(question, tmp_path).inputs["source:baa_monthly:value"]
+    assert column.isna().tolist() == [True, False, False, False]
+    assert column.iloc[1:].tolist() == [7.0, 7.0, 7.0]
 
 
 @pytest.mark.parametrize(

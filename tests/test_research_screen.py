@@ -36,6 +36,7 @@ from ai_trading_system.research_bench.screen_ledger import (
     verify_screen_ledger,
 )
 from ai_trading_system.research_bench.screen_settings import ScreenRules, load_screen_settings
+from ai_trading_system.research_bench.sources import SourceSpec
 
 RULES = load_screen_settings().settings.screen
 
@@ -416,3 +417,47 @@ def test_cli_success_records_synthetic_inputs_and_check_failure_does_not(
     result = runner.invoke(cli.app, args)
     assert result.exit_code == 1 and "检查未通过" in result.stdout
     assert len(screen_records(tmp_path)) == 1
+
+
+def test_cli_screen_aligns_each_source_by_its_spec(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """TRADING-2565-37: the screen gets each source's spec, so a monthly source is read by month."""
+
+    _cli_setup(tmp_path, monkeypatch)
+    r = _markets()["qqq"].returns
+    spec = SourceSpec(
+        source_id="shiller_price",
+        provider="shiller",
+        dataset="P",
+        frequency="monthly",
+        known_lag_trading_days=0,
+        description="price",
+    )
+    snapshot = SimpleNamespace(
+        frames={
+            "ff_factors_daily": pd.DataFrame({"Mkt-RF": r, "RF": r * 0}),
+            "ff_49_industries_daily": pd.DataFrame({"Food & Drink": r}),
+            "shiller_price": pd.DataFrame(
+                {"value": [1.0]}, index=pd.DatetimeIndex(["2008-01-01"], name="date")
+            ),
+        },
+        specs=(spec,),
+    )
+    monkeypatch.setattr(cli.signal_sources, "load_snapshot", lambda *args: snapshot)
+    monkeypatch.setattr(
+        cli, "from_snapshot", lambda *args, **kwargs: SimpleNamespace(inputs={"ndx_return": r})
+    )
+    seen: list[dict[str, Any]] = []
+
+    def stop(loaded: Any, markets: Any, sources: Any, lags: Any, settings: Any) -> Any:
+        seen.append(dict(lags))
+        raise ScreenCheckError(["stopped after the source rules"])
+
+    monkeypatch.setattr(cli, "screen_signal", stop)
+    args = ["screen", "test_signal", "--signal-snapshot", "sig-synthetic"]
+    result = CliRunner().invoke(cli.app, [*args, "--bench-snapshot", "qlh-synthetic"])
+    assert result.exit_code == 1 and "检查未通过" in result.stdout
+    assert seen == [{"shiller_price": spec}]
+    assert seen[0]["shiller_price"] is spec
+    assert screen_records(tmp_path) == []

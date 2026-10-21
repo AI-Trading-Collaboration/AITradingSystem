@@ -517,7 +517,7 @@ def market_data(
     project_root: Path,
 ) -> BenchData:
     snapshot = signal_sources.load_snapshot(project_root, plan.data.signal_snapshot_id)
-    lags = {spec.source_id: spec.known_lag_trading_days for spec in snapshot.specs}
+    lags = {spec.source_id: spec for spec in snapshot.specs}
     if market == "qqq":
         series = gate.markets["qqq"].qqq_series
         assert series is not None  # TrialGate requires a QQQ series.

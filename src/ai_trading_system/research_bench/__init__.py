@@ -14,6 +14,8 @@ runs always face the standard falsification (``falsify``): cost and delay reruns
 same-exposure random timing and a block bootstrap; ``report`` shows the first screen (S3c).
 """
 
+from __future__ import annotations
+
 from ai_trading_system.research_bench.checks import Strategy
 from ai_trading_system.research_bench.data import BenchData, from_daily_frame, from_snapshot
 from ai_trading_system.research_bench.ledger import (
@@ -40,7 +42,12 @@ from ai_trading_system.research_bench.simulate import (
     simulate,
     simulate_many,
 )
-from ai_trading_system.research_bench.sources import SourceSpec, known_at
+from ai_trading_system.research_bench.sources import (
+    SourceSpec,
+    align_source,
+    known_at,
+    monthly_known_at,
+)
 
 __all__ = [
     "BenchCheckError",
@@ -56,12 +63,14 @@ __all__ = [
     "TrialCapError",
     "WindowNotOpenError",
     "WindowPermit",
+    "align_source",
     "benchmark_summaries",
     "from_daily_frame",
     "from_snapshot",
     "known_at",
     "load_question",
     "load_settings",
+    "monthly_known_at",
     "register_read",
     "resolve_window",
     "run_and_record",

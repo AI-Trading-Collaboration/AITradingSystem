@@ -18,6 +18,7 @@ caught, or a recorded mutation of the guarded code that makes the test fail.
 | G2/G3 vectorization and event accounting | Batch simulation preserves scalar results, random timing order and costs; losses stop the batch; descriptive events and episode lags follow hand-checked definitions; S4 settings are separate from the original fingerprint (TRADING-2565 S4c, invariants 23–27) | `test_research_vector_events_invariants.py` |
 | G1/G2 signal intake | 发布滞后和缺失年龄、Ken French 首块和单位、本机内容地址、检查后才能读且拒绝漂移、汇总不泄露数据值、严格来源规格与原配置不变（TRADING-2565 S4a，不变量 28–33） | `test_research_sources_invariants.py` |
 | G3 read-only segment tables | The slow-bear and long-bull tables of trial runs: holding the market itself loses nothing inside a segment, D is the compounded return difference inside the segment's months, the tables never touch a fingerprint, a metric or a gate rule, the gate's lists are the fixed rule's segments of each development window, and the plans and the probes' gate copies stay byte for byte (TRADING-2565-36, invariants 48–52) | `test_research_segment_invariants.py` |
+| G1/G2 monthly long-history sources | A monthly value is used only once its month is known: month M is published on the first trading day on or after the first of month M + 1 + the release lag, used after the known lag and carried over at most one missing month, checked by hand, day by day and against later changes; specs stay strict; the bench inputs, the screen, the trial and both commands align by the rule; Shiller's sheet is read by its header cells and y.1 is October; snapshots carry the monthly sources and the check reads them by month; the seven approved sources, their lags and the US market base are fixed (TRADING-2565-37, invariants 53–58) | `test_research_monthly_sources_invariants.py` |
 
 Existing tests that already guard the same guarantees and stay in the suite (not duplicated here):
 
@@ -209,3 +210,21 @@ and bench tests were run (`tests/invariants/test_research_falsify_invariants.py`
 | sign 在零点给 1 而不是 0.5 | `test_sign_scores_need_no_warm_up_and_average_across_signals` | 1 failed，4.38s |
 
 日志在运行目录 `TRADING-2565-08/mutation-*.log`。这是工程正确性证据，不是候选、paper-shadow 或生产批准；production_effect=none；broker_action=none。
+
+## TRADING-2565-37 变异证据（2026-10-21）
+
+不变量 53–58 在 `test_research_monthly_sources_invariants.py`；另有两条命令的单测（`tests/test_research_signal_strategy.py`、`tests/test_research_screen.py` 里标着 TRADING-2565-37 的）。每项只在参考实现的副本上临时变异，用 `pytest -n 4 --dist loadfile` 跑上面这个文件、`test_research_sources_invariants.py` 和这两个测试文件（144 项），随后还原；验收文件未改。29 项全部被抓到。
+
+| 变异 | 失败的验收测试（举例） | 结果 |
+|---|---|---|
+| 不加发布滞后月数；不加已知滞后天数；发布日取 1 日之后的交易日；月份 M 从它自己的 1 日起用 | `test_a_month_is_used_from_the_day_it_is_known`、逐日对照 `[seed]`、问题数据命令那条 | 5–9 failed |
+| 不过期；连缺两个月仍带着 | `test_a_second_missing_month_empties_the_source`、逐日对照 `[2]`、`[5]` | 3 failed |
+| 不去掉 NaN；同一个月两条也收 | 逐日对照；`test_the_monthly_rule_refuses_bad_inputs` | 7 failed；1 failed |
+| `align_source` 把月度当日度；评估台来源列、筛选、试跑、筛选命令、问题数据命令各自只传天数 | `test_align_source_chooses_the_rule_by_frequency`、`test_bench_inputs_take_monthly_sources_by_their_rule`、`test_the_screen_reads_monthly_sources_by_their_rule`、`test_the_trial_reads_monthly_sources_by_their_rule`、`test_cli_screen_aligns_each_source_by_its_spec`、`test_cli_data_aligns_a_monthly_source_from_the_day_its_month_is_known` | 每项 1–5 failed |
+| Shiller 允许日度；Ken French 允许月度；日度来源带发布滞后 | `test_monthly_specs_are_strict` 对应的一组 | 各 1 failed |
+| 数字 y.1 读成 1 月；字符串 "y.1" 读成 1 月；空行之后继续读；重复表头取第一个；表头行不认 "Date"；重复月份也收 | `test_the_shiller_sheet_is_read_by_its_headers`、`test_the_shiller_rows_end_at_the_first_row_without_a_month`、`test_a_shiller_sheet_without_its_headers_or_rows_is_refused` | 各 1–2 failed |
+| 每个 Shiller 来源各下载一次；`fetch.json` 写成 Ken French 的地址 | `test_a_snapshot_carries_the_monthly_sources` | 各 1 failed |
+| 检查对月度来源用工作日缺口；不在月初也不判 FAIL；缺一个月不算缺口 | `test_the_check_reads_monthly_dates_by_month` 等 | 1–4 failed |
+| 配置里股息的发布滞后写成 3 个月 | `test_the_approved_monthly_sources_are_in_the_settings_file` | 1 failed |
+
+第一轮有 3 项没被抓到（问题数据命令只传天数、字符串 "y.1"、空行之后继续读），补了问题数据命令里一月份观测那条和 `test_the_shiller_rows_end_at_the_first_row_without_a_month` 以后都抓到。变异脚本和逐项结果在项目文件 `knowledge/claude/qqq-options/auto-loop/build/ref-TRADING-2565-37/`。这些是数据入口正确性证据，不是投资结论。

@@ -2,6 +2,9 @@
 
 Never print rows or send snapshots to external models. Research consumers must use load_snapshot,
 which verifies the content address, each CSV checksum and the local quality check.
+
+Monthly sources are FRED's monthly series dated at month start in its own convention and
+Robert Shiller's monthly stock-market data, one column per source, dated at month start.
 """
 
 from __future__ import annotations
@@ -15,6 +18,7 @@ import zipfile
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
+from numbers import Real
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -31,12 +35,20 @@ from ai_trading_system.research_bench.screen_settings import (
     LoadedScreenSettings,
     load_screen_settings,
 )
-from ai_trading_system.research_bench.sources import SourceSpec
+from ai_trading_system.research_bench.sources import SHILLER_COLUMNS, SourceSpec
 
 # S4a's fixed data-quality contract: a gap requires MORE than five missing weekdays. Weekday
 # counting (not an exchange calendar) is deliberate and never determines signal eligibility.
 MAX_MISSING_BUSINESS_DAYS = 5
 KEN_FRENCH_URL = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/{dataset}_CSV.zip"
+# Use fetch --shiller-url when the site lists a new workbook address.
+SHILLER_URL = (
+    "https://img1.wsimg.com/blobby/go/e5e77e0b-59d1-44d9-ab25-4763ac982e53/downloads/"
+    "1449043e-a1ed-4e2e-8e9c-7b9a2a064493/ie_data.xls?ver=1791297298731"
+)
+SHILLER_SHEET = "Data"
+# Column headers in the row beginning with "Date".
+SHILLER_HEADERS = {"P": "P", "D": "D", "E": "E", "CPI": "CPI", "GS10": "Rate GS10"}
 # Download history, not an evaluation window: all approved FRED sources begin after 1900.
 FRED_HISTORY_START = date(1900, 1, 1)
 
@@ -75,6 +87,89 @@ def parse_ken_french_csv(text: str) -> pd.DataFrame:
         raise ValueError("Ken French CSV has invalid dates or numbers") from None
     frame.index.name = "date"
     return frame.replace([-99.99, -999], np.nan) / 100
+
+
+def _shiller_month(cell: object) -> pd.Timestamp | None:
+    """Read Shiller's y.mm month notation: y.1 (including numeric y.10) is October."""
+
+    if isinstance(cell, bool):
+        return None
+    if isinstance(cell, Real):
+        try:
+            number = float(cell)
+        except (ValueError, OverflowError):
+            return None
+        if not np.isfinite(number):
+            return None
+        text = f"{number:.2f}"
+    elif isinstance(cell, str):
+        text = cell.strip()
+    else:
+        return None
+    if re.fullmatch(r"\d{4}\.\d{1,2}", text) is None:
+        return None
+    year, fraction = text.split(".")
+    month = int(fraction.ljust(2, "0"))
+    if not 1 <= month <= 12:
+        return None
+    try:
+        return pd.Timestamp(year=int(year), month=month, day=1)
+    except ValueError:
+        return None
+
+
+def parse_shiller_table(raw: pd.DataFrame) -> pd.DataFrame:
+    """Read the first monthly block of a headerless Shiller Data sheet by exact headers."""
+
+    header_position = next(
+        (i for i in range(len(raw)) if len(raw.columns) and str(raw.iat[i, 0]).strip() == "Date"),
+        None,
+    )
+    if header_position is None:
+        raise ValueError("Shiller sheet has no Date header")
+    headers = raw.iloc[header_position].tolist()
+    columns = sorted(SHILLER_COLUMNS)
+    positions: list[int] = []
+    for column in columns:
+        matches = [
+            i
+            for i, cell in enumerate(headers)
+            if isinstance(cell, str) and cell == SHILLER_HEADERS[column]
+        ]
+        if len(matches) != 1:
+            raise ValueError(
+                f"Shiller sheet needs exactly one {SHILLER_HEADERS[column]}: {headers}"
+            )
+        positions.append(matches[0])
+    dates: list[pd.Timestamp] = []
+    rows: list[list[Any]] = []
+    for i in range(header_position + 1, len(raw)):
+        month = _shiller_month(raw.iat[i, 0])
+        if month is None:
+            if dates:
+                break
+            continue
+        dates.append(month)
+        rows.append(raw.iloc[i, positions].tolist())
+    index = pd.DatetimeIndex(dates, name="date")
+    if not len(index) or not index.is_monotonic_increasing or not index.is_unique:
+        raise ValueError("Shiller sheet needs increasing, unique monthly rows")
+    frame = pd.DataFrame(rows, index=index, columns=columns)
+    for column in columns:
+        frame[column] = pd.to_numeric(frame[column], errors="coerce").astype(float)
+    return frame
+
+
+def _shiller_fetch(url: str = SHILLER_URL) -> pd.DataFrame:
+    response = requests.get(url, timeout=60)
+    response.raise_for_status()
+    try:
+        raw = pd.read_excel(io.BytesIO(response.content), sheet_name=SHILLER_SHEET, header=None)
+    except ImportError as exc:
+        raise ValueError(
+            f"reading Shiller's workbook needs xlrd (.xls) or openpyxl (.xlsx): {exc}"
+        ) from None
+    return parse_shiller_table(raw)
 
 
 def extract_csv(data: bytes) -> str:
@@ -126,14 +221,28 @@ def fetch_snapshot(
     *,
     fred_fetch: Callable[[str], pd.Series],
     ken_french_fetch: Callable[[str], bytes],
+    shiller_fetch: Callable[[], pd.DataFrame] | None = None,
+    shiller_url: str = SHILLER_URL,
 ) -> str:
-    """Preserve returned row order, duplicates and missing values; only check judges quality."""
+    """Preserve returned row order, duplicates and missing values; only check judges quality.
+
+    Download Shiller's workbook once per snapshot, with each Shiller source taking one column.
+    """
 
     sources: list[dict[str, Any]] = []
     payloads: dict[str, bytes] = {}
+    shiller_table: pd.DataFrame | None = None
     for spec in settings.settings.sources:
         if spec.provider == "fred":
             frame = fred_fetch(spec.dataset).to_frame(name="value")
+        elif spec.provider == "shiller":
+            if shiller_table is None:
+                if shiller_fetch is None:
+                    raise ValueError("Shiller sources need a Shiller fetch")
+                shiller_table = shiller_fetch()
+            if spec.dataset not in shiller_table.columns:
+                raise ValueError(f"Shiller table is missing column {spec.dataset}")
+            frame = shiller_table[spec.dataset].to_frame(name="value")
         else:
             frame = parse_ken_french_csv(extract_csv(ken_french_fetch(spec.dataset)))
         dates = pd.DatetimeIndex(frame.index)
@@ -172,6 +281,8 @@ def fetch_snapshot(
                         "source_class": "public-convenience",
                         "endpoint": FredRateProvider.base_url
                         if spec.provider == "fred"
+                        else shiller_url
+                        if spec.provider == "shiller"
                         else KEN_FRENCH_URL.format(dataset=spec.dataset),
                         "request_parameters": {"dataset": spec.dataset},
                     }
@@ -258,14 +369,21 @@ def check_snapshot(root: Path, snapshot_id: str) -> dict[str, Any]:
         }
         invalid_numeric = int((frame.notna() & numeric.isna()).to_numpy().sum())
         gaps = 0
+        monthly = source["spec"]["frequency"] == "monthly"
+        if monthly:
+            record["off_month_start_count"] = int(np.count_nonzero(dates.day != 1))
         if not dates.hasnans:
-            gaps = sum(
-                bool(
-                    np.busday_count(previous.date(), following.date()) - 1
-                    > MAX_MISSING_BUSINESS_DAYS
+            if monthly:
+                months = dates.to_period("M").astype("int64").to_numpy()
+                gaps = int(np.count_nonzero(np.diff(months) > 1))
+            else:
+                gaps = sum(
+                    bool(
+                        np.busday_count(previous.date(), following.date()) - 1
+                        > MAX_MISSING_BUSINESS_DAYS
+                    )
+                    for previous, following in zip(dates[:-1], dates[1:], strict=True)
                 )
-                for previous, following in zip(dates[:-1], dates[1:], strict=True)
-            )
         record.update(
             row_count=len(frame),
             **_date_range(dates),
@@ -291,6 +409,7 @@ def check_snapshot(root: Path, snapshot_id: str) -> dict[str, Any]:
             or not ratios
             or any(ratio == 0 for ratio in ratios.values())
             or invalid_numeric
+            or record.get("off_month_start_count", 0)
         )
         warned |= gaps > 0
     report = {
@@ -357,12 +476,20 @@ RootOption = Annotated[Path, typer.Option(help="代码根目录；状态路径�
 
 
 @app.command("fetch")
-def fetch_command(root: RootOption = PROJECT_ROOT) -> None:
+def fetch_command(
+    root: RootOption = PROJECT_ROOT,
+    shiller_url: Annotated[str, typer.Option(help="Shiller 月度数据的下载地址。")] = SHILLER_URL,
+) -> None:
     """下载全部批准来源为本机快照；不打印数据行。"""
 
     try:
         fetch_snapshot(
-            load_screen_settings(), root, fred_fetch=_fred_fetch, ken_french_fetch=_ken_french_fetch
+            load_screen_settings(),
+            root,
+            fred_fetch=_fred_fetch,
+            ken_french_fetch=_ken_french_fetch,
+            shiller_fetch=lambda: _shiller_fetch(shiller_url),
+            shiller_url=shiller_url,
         )
     except Exception as exc:
         typer.echo(f"下载失败：{_safe_error_text(exc)}")

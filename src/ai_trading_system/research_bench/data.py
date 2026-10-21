@@ -22,7 +22,12 @@ from typing import Any, Literal
 import numpy as np
 import pandas as pd
 
-from ai_trading_system.research_bench.sources import DEFAULT_MAX_STALE_DAYS, known_at
+from ai_trading_system.research_bench.sources import (
+    DEFAULT_MAX_STALE_DAYS,
+    SourceSpec,
+    align_source,
+    known_at,
+)
 from ai_trading_system.research_data import qqq_long_history as qlh
 
 ASSETS: tuple[str, ...] = ("qqq", "cash", "lev2", "lev3")
@@ -113,11 +118,15 @@ def strategy_returns(data: BenchData, reserve: str) -> pd.DataFrame:
 def with_signal_sources(
     data: BenchData,
     frames: Mapping[str, pd.DataFrame],
-    lags: Mapping[str, int],
+    lags: Mapping[str, int | SourceSpec],
     *,
     snapshot_id: str,
 ) -> BenchData:
-    """Append source columns on the bench calendar, after applying their publication lag."""
+    """Append source columns on the bench calendar, after applying their publication lag.
+
+    Integers are daily-source lags; specs align by frequency, with monthly sources starting
+    on the day their month becomes known.
+    """
 
     inputs = data.inputs.copy()
     calendar = pd.DatetimeIndex(inputs.index)
@@ -126,7 +135,7 @@ def with_signal_sources(
             name = f"source:{source}:{column}"
             if name in inputs.columns:
                 raise ValueError(f"duplicate signal source column {name}")
-            inputs[name] = known_at(frame.iloc[:, position], calendar, lags[source])
+            inputs[name] = align_source(frame.iloc[:, position], calendar, lags[source])
     return BenchData(
         returns=data.returns,
         inputs=inputs,
