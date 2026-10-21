@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import http.client
 import json
 import re
 import ssl
@@ -149,6 +150,7 @@ class UrllibOfficialPolicyHttpClient:
                 ConnectionError,
                 ssl.SSLError,
                 urllib.error.URLError,
+                http.client.IncompleteRead,
             ) as exc:
                 if not _is_retryable_transport_error(exc):
                     raise
@@ -1359,7 +1361,13 @@ def _is_retryable_transport_error(exception: BaseException) -> bool:
         return False
     return isinstance(
         exception,
-        (TimeoutError, ConnectionError, ssl.SSLError, urllib.error.URLError),
+        (
+            TimeoutError,
+            ConnectionError,
+            ssl.SSLError,
+            urllib.error.URLError,
+            http.client.IncompleteRead,
+        ),
     )
 
 
