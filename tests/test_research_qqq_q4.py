@@ -264,6 +264,8 @@ NOTES_CLOSE = (
     "高」，TRADING-2567-32 记 decision.md、台账第 26 条、families 和 scorecard。production_effect=n"
     "one；broker_action=none"
 )
+# The card's next owner and next step when QQQ-Q4 closed; a later question has taken the card over
+# since (TRADING-2567-37), so the test only checks that they are no longer current.
 NEXT_OWNER = "Claude（研究自动循环；下一道正式题等候选过试跑门）"
 NEXT_STEP = (
     "第四题 QQQ-Q4 已结束：dispersion 和参照 rv21 都是证据不足（`research/QQQ-Q4/decision.md`，台账"
@@ -283,10 +285,11 @@ def test_the_research_readme_lists_the_fourth_question() -> None:
 def test_the_task_card_notes_are_only_appended() -> None:
     card = yaml.safe_load(CARD.read_text(encoding="utf-8"))
     assert card["notes"].count(NOTES_TAIL) == 1 and card["notes"].count(NOTES_CLOSE) == 1
-    assert card["notes"].endswith(NOTES_TAIL + NOTES_CLOSE)
+    assert NOTES_TAIL + NOTES_CLOSE in card["notes"]
+    assert card["notes"].split(NOTES_CLOSE)[1].startswith("；")
     assert card["notes"].split(NOTES_TAIL)[0].endswith("broker_action=none")
     assert "portfolio_p1" in card["notes"].split(NOTES_TAIL)[0]
-    assert (card["next_owner"], card["next_step"]) == (NEXT_OWNER, NEXT_STEP)
+    assert (card["next_owner"], card["next_step"]) != (NEXT_OWNER, NEXT_STEP)
     assert card["status"] == "IN_PROGRESS"
     register = REGISTER.read_text(encoding="utf-8")
-    assert NOTES_TAIL in register and NOTES_CLOSE in register and NEXT_STEP in register
+    assert NOTES_TAIL in register and NOTES_CLOSE in register and NEXT_STEP not in register

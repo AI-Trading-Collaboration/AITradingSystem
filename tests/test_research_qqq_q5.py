@@ -1,0 +1,258 @@
+"""QQQ-Q5 (TRADING-2567): the preregistration is complete, its rules are the trial gate's direction
+rules, its one strategy is QQQ-Q3's weekly sensitivity variant unchanged (QQQ-Q3's fast_slow with
+the weekly schedule), its signals are the pinned files, it runs on the development window with every
+parameter read and gives the same result as the QQQ-Q3 variant. Synthetic data only."""
+
+from __future__ import annotations
+
+import json
+import shutil
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+import pandas as pd
+import yaml
+
+from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.research_bench import ledger as lg
+from ai_trading_system.research_bench import load_settings, run_and_record, screen
+from ai_trading_system.research_bench.data import BenchData, from_daily_frame
+from ai_trading_system.research_bench.prereg import rule_problems
+
+LOADED = load_settings()
+QUESTION_DIR = PROJECT_ROOT.joinpath("research", "QQQ-Q5")
+QUESTION = lg.load_question(QUESTION_DIR)
+PREREG = QUESTION.prereg
+Q3_DIR = PROJECT_ROOT.joinpath("research", "QQQ-Q3")
+Q3 = lg.load_question(Q3_DIR)
+QQQ_START = pd.Timestamp("1999-03-10")
+DECISION = "owner_decision:TRADING-2567:2026-10-21:qqq_q5_prereg"
+MAIN = ("fast_slow_weekly",)
+
+
+def _yaml(*parts: str) -> dict[str, Any]:
+    loaded: dict[str, Any] = yaml.safe_load(
+        PROJECT_ROOT.joinpath(*parts).read_text(encoding="utf-8")
+    )
+    return loaded
+
+
+def _data() -> BenchData:
+    """Price index from 1986 and the QQQ series from its first trading day: the shapes of the
+    snapshot, with synthetic numbers. The trend signals need no outside source."""
+
+    index = pd.bdate_range("1986-01-02", "2011-06-30", name="date")
+    rng = np.random.default_rng(7)
+    regime = np.where((index.year >= 2000) & (index.year <= 2002), 0.03, 0.012)
+    r = rng.normal(0.0004, 1.0, len(index)) * regime
+    level = 1000.0 * np.cumprod(1.0 + r)
+    daily = pd.DataFrame(
+        {
+            "etf_reference_return": np.where(index > QQQ_START, r, np.nan),
+            "cash_return": 0.0001,
+            "lev2_return": 2 * r,
+            "lev3_return": 3 * r,
+            "ndx_price": level,
+            "ndx_tr": level,
+            "vix": 20.0,
+            "vxn": 25.0,
+            "vxo": 21.0,
+            "cash_rate_annual": 0.03,
+        },
+        index=index,
+    )
+    return from_daily_frame(
+        daily, qqq_series="actual", source={"snapshot_id": PREREG.data.snapshot_id}
+    )
+
+
+DATA = _data()
+
+
+def test_the_preregistration_is_complete_and_its_rules_can_be_met() -> None:
+    assert PREREG.question_id == "QQQ-Q5" and PREREG.question_type == "qqq_direction"
+    assert PREREG.owner_decision == DECISION
+    assert PREREG.data.snapshot_id == "qlh-20261013-0b0df53cb1a2"
+    assert PREREG.data.qqq_series == "actual"
+    assert PREREG.data.signal_snapshot_id is None
+    # Classic trend signals are fixed baselines, not screened: no screening record is cited.
+    assert PREREG.screens == () and PREREG.screen_family_size == 17
+    assert PREREG.validation.strategies == MAIN
+    assert PREREG.validation.confidence == 0.95
+    assert rule_problems(PREREG, LOADED.settings) == []
+    assert tuple(entry.id for entry in PREREG.strategies) == MAIN
+    assert PREREG.trial_cap == 2 and PREREG.sensitivity == ()
+    assert PREREG.sample_floor.min_return_days == 2000
+    assert PREREG.prior_expectation.sources
+    for entry in PREREG.strategies:
+        assert callable(lg.load_strategy(QUESTION, entry.id))
+        assert entry.leveraged_benchmarks is False, entry.id
+
+
+def test_the_validated_strategy_faces_the_trial_gates_two_direction_rules() -> None:
+    gate = _yaml("research", "_trials", "prereg.yaml")
+    expected = [
+        (rule["metric"], rule["op"], rule["value"]) for rule in gate["markets"]["qqq"]["rules"]
+    ]
+    assert expected == [
+        ("ci_high.cvar_5pct_relative_improvement", ">", 0.0),
+        ("comparison.geometric_annual_return", ">=", -0.010),
+    ]
+    assert gate["confidence"] == PREREG.validation.confidence
+    rules = PREREG.validation.rules["fast_slow_weekly"]
+    assert [(rule.metric, rule.op, rule.value) for rule in rules] == expected
+    q4 = lg.load_question(PROJECT_ROOT.joinpath("research", "QQQ-Q4")).prereg
+    assert rules == q4.validation.rules["dispersion"]
+
+
+def test_the_pinned_signals_are_the_files_on_disk() -> None:
+    for entry in PREREG.strategies:
+        for ref in entry.params["signals"]:
+            loaded = screen.load_signal(ref["id"], directory=screen.SIGNALS_DIR)
+            assert (loaded.module_sha256, loaded.spec_sha256) == (
+                ref["module_sha256"],
+                ref["spec_sha256"],
+            ), (entry.id, ref["id"])
+
+
+def test_the_strategy_is_qqq_q3s_weekly_variant_unchanged() -> None:
+    weekly = PREREG.strategy("fast_slow_weekly")
+    assert weekly == Q3.prereg.strategy("fast_slow_weekly")
+    monthly = Q3.prereg.strategy("fast_slow")
+    assert weekly.function == monthly.function == "signal_exposure"
+    assert weekly.params == monthly.params
+    assert [(ref["id"], ref["score"]) for ref in weekly.params["signals"]] == [
+        ("tsmom_21", "sign"),
+        ("tsmom_252", "sign"),
+    ]
+    assert (weekly.params["mapping"], weekly.params["low"], weekly.params["high"]) == (
+        "linear",
+        0,
+        1,
+    )
+    assert (weekly.rebalance.schedule, monthly.rebalance.schedule) == ("week_end", "month_end")
+    assert weekly.rebalance.band == monthly.rebalance.band == 0.0
+    assert weekly.delay_days == monthly.delay_days == 0
+    # The strategy module is the same generic adapter as QQQ-Q3's.
+    assert lg.load_strategy(QUESTION, "fast_slow_weekly") is lg.load_strategy(Q3, "fast_slow")
+
+
+def test_the_monthly_reference_is_not_run_again() -> None:
+    # QQQ-Q3's validation window is used up for the monthly rule: Q5 cites its published result.
+    assert "fast_slow" not in {entry.id for entry in PREREG.strategies}
+    decision = Q3_DIR.joinpath("decision.md").read_text(encoding="utf-8")
+    assert "`QQQ-Q3-r0008`" in decision and "+4.4%（−6.5..+14.3）" in decision
+
+
+def test_the_decision_is_in_the_requirements() -> None:
+    text = PROJECT_ROOT.joinpath(
+        "docs", "requirements", "TRADING-2567_QQQ_Research_Program_1999_Window.md"
+    ).read_text(encoding="utf-8")
+    assert f"- `{DECISION}`" in text
+
+
+def test_the_trials_readme_says_why_there_is_no_trial_plan() -> None:
+    text = PROJECT_ROOT.joinpath("research", "_trials", "README.md").read_text(encoding="utf-8")
+    assert "## 不走试跑的正式题（QQQ-Q5）" in text and DECISION in text
+    plans = sorted(
+        path.name for path in PROJECT_ROOT.joinpath("research", "_trials").glob("T*.yaml")
+    )
+    for name in plans:
+        assert "qqq_q5_prereg" not in _yaml("research", "_trials", name).get("owner_decision", "")
+
+
+def test_the_strategy_runs_on_the_development_window_like_the_qqq_q3_variant(
+    tmp_path: Path,
+) -> None:
+    directory = tmp_path.joinpath("QQQ-Q5")
+    shutil.copytree(QUESTION_DIR, directory)
+    question = lg.load_question(directory)
+    recorded = run_and_record(question, DATA, "fast_slow_weekly", loaded=LOADED)
+    assert recorded.record["status"] == "ok"
+    result = recorded.record["result"]
+    assert sorted(result["checks"]["parameters_unchecked"]) == ["mapping", "signals"]
+    assert 0.0 < result["strategy"]["average_exposure"] <= 1.0
+    q3_directory = tmp_path.joinpath("QQQ-Q3")
+    shutil.copytree(Q3_DIR, q3_directory, ignore=shutil.ignore_patterns("runs", "*.jsonl"))
+    reference = run_and_record(
+        lg.load_question(q3_directory), DATA, "fast_slow_weekly", loaded=LOADED
+    ).record["result"]
+    # The same configuration as QQQ-Q3's variant: the same numbers and the same fingerprint.
+    for section in ("strategy", "benchmarks", "comparison", "exposure_gap", "events"):
+        same = json.dumps(result[section], sort_keys=True) == json.dumps(
+            reference[section], sort_keys=True
+        )
+        assert same, section
+    assert result["fingerprint"] == reference["fingerprint"]
+
+
+def test_the_exposures_are_the_mapping_of_the_scores() -> None:
+    inputs = DATA.inputs
+    params = PREREG.strategy("fast_slow_weekly").params
+    exposure = lg.load_strategy(QUESTION, "fast_slow_weekly")(inputs, params)
+    valid = exposure.dropna()
+    assert len(valid) > 5000
+    assert {round(float(value), 12) for value in np.unique(valid)} == {0.0, 0.5, 1.0}
+    # Daily targets are the mean of the two sign scores; only the schedule differs from monthly.
+    returns = inputs["ndx_return"]
+    scores = []
+    for window in (21, 252):
+        growth = np.log1p(returns).rolling(window, min_periods=window).sum()
+        scores.append(
+            pd.Series(
+                np.where(growth > 0, 1.0, np.where(growth < 0, 0.0, 0.5)), index=inputs.index
+            ).mask(growth.isna())
+        )
+    expected = pd.concat(scores, axis=1).mean(axis=1, skipna=False).ffill()
+    both = expected.notna() & exposure.notna()
+    assert both.sum() > 5000
+    np.testing.assert_array_equal(exposure[both].to_numpy(), expected[both].to_numpy())
+
+
+# The record lines are appended, never edited: earlier sentences stay where they are.
+README = PROJECT_ROOT / "research/README.md"
+CARD = PROJECT_ROOT / "tasks/TRADING-2567.yaml"
+REGISTER = PROJECT_ROOT / "docs/task_register.md"
+README_Q4_ROW = (
+    "| `QQQ-Q4/` | 第四题（已结束，试跑 T0004 转正式题）：结论 `decision.md`；预注册 `prereg.yaml` "
+    "和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_r"
+    "eads.jsonl` |"
+)
+README_ROW = (
+    "| `QQQ-Q5/` | 第五题（进行中，QQQ-Q3 的 fast_slow 改每周调仓，没有试跑计划）：预注册 `prereg."
+    "yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `win"
+    "dow_reads.jsonl` |"
+)
+NOTES_TAIL = (
+    "；2026-10-21：Baker 选研究自动循环第 2 期第一批卡 H14（QQQ-Q3 的 fast_slow 改每周调仓）开题为"
+    "第五题 QQQ-Q5（owner_decision:TRADING-2567:2026-10-21:qqq_q5_prereg）：只有 fast_slow_weekly "
+    "一个配置，月频 fast_slow 用已发布的验证读取数作参照，验证窗口只查方向；TRADING-2567-36 记决定"
+    "，TRADING-2567-37 开题，`research/QQQ-Q5/prereg.yaml` 和 `strategy.py` 进 main。production_ef"
+    "fect=none；broker_action=none"
+)
+NEXT_OWNER = "Claude（第五题 QQQ-Q5：核对开发运行，然后读一次验证窗口）"
+NEXT_STEP = (
+    "第五题 QQQ-Q5（周频 fast_slow）已开题：研究会话在开发窗口跑 fast_slow_weekly（带证伪，应和 Q"
+    "QQ-Q3 的敏感性变体相同），Claude 核对实现后按开题批准读一次验证窗口，只查方向（owner_decisio"
+    "n:TRADING-2567:2026-10-21:qqq_q5_prereg）。详见 `docs/requirements/TRADING-2567_QQQ_Research"
+    "_Program_1999_Window.md`"
+)
+
+
+def test_the_research_readme_lists_the_fifth_question() -> None:
+    lines = README.read_text(encoding="utf-8").splitlines()
+    assert lines.count(README_ROW) == 1
+    assert lines.index(README_ROW) == lines.index(README_Q4_ROW) + 1
+
+
+def test_the_task_card_notes_are_only_appended() -> None:
+    card = yaml.safe_load(CARD.read_text(encoding="utf-8"))
+    assert card["notes"].count(NOTES_TAIL) == 1
+    assert card["notes"].endswith(NOTES_TAIL)
+    assert card["notes"].split(NOTES_TAIL)[0].endswith("broker_action=none")
+    assert "qqq_q4_prereg" in card["notes"].split(NOTES_TAIL)[0]
+    assert (card["next_owner"], card["next_step"]) == (NEXT_OWNER, NEXT_STEP)
+    assert card["status"] == "IN_PROGRESS"
+    register = REGISTER.read_text(encoding="utf-8")
+    assert NOTES_TAIL in register and NEXT_STEP in register

@@ -1,0 +1,14 @@
+# Chinese wording of QQQ-Q5 for the research progress page (TRADING-2568). Display text only: the
+# preregistration (prereg.yaml) decides everything; this file never feeds a run.
+schema_version: research_zh.v1
+title: 快慢趋势分歧减半改成每周调仓，左尾不变差、代价每年不超过 1 个点吗？
+summary: >-
+  规则和第三题的 fast_slow 相同：看 QQQ 最近 21 个交易日（约 1 个月）和 252 个交易日（约 12 个月）的收益是正是负，
+  两个都为正满仓，两个都为负空仓，一正一负半仓；只把每月最后一个交易日调整改成每周最后一个交易日调整，不加杠杆。
+  月度版本在验证期已经读过（QQQ-Q3-r0008），只作参照，不重跑。
+verdict: >-
+  验证期只查方向（试跑门槛的第二段）。保留：两条门槛都成立，之后再用同样两条读一致性窗口。拒绝：左尾改善的 95% 区间上限不高于 0（这种构造下机制不存在）。证据不足：左尾成立，但每年少赚超过 1 个点（有效果但代价太高）。想法是在第三题读过验证期之后才提的，结论降一级看。
+strategies:
+  fast_slow_weekly:
+    name: 快慢趋势分歧减半·每周调仓
+    role: 正式策略

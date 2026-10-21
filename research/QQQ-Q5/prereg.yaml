@@ -1,0 +1,173 @@
+# QQQ-Q5 preregistration (TRADING-2567; format in src/ai_trading_system/research_bench/prereg.py).
+#
+# Written before any result of this question exists. Approved by Baker with the owner decision below,
+# recorded in docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md. The question is
+# card H14 of the research loop's period-2 first batch (project file
+# knowledge/claude/qqq-options/auto-loop/hypotheses-batch-05-2026-10-21.md): QQQ-Q3's fast_slow rule
+# with a weekly instead of a monthly rebalance, an implementation-layer variant of the closed classic
+# trend family (research/families.md: the tag "effect but too costly" allows a new implementation as
+# a new question; research/QQQ-Q3/decision.md reopens with "for example a weekly rebalance" as a new
+# question). The signals are the fixed classic trend modules QQQ-Q3 pinned, with the same SHA-256 of
+# module and specification. Any change to this file, to strategy.py or to a pinned signal closes the
+# validation window until a new owner decision approves it.
+#
+# No trial plan and no T number (research/_trials/README.md): both stages of the trial gate were read
+# for this rule before the question was opened, so a trial would only register them, and a trial
+# plan's signal_exposure needs a screened candidate, which the fixed trend signals do not have.
+#   stage 1, US market 1929-01-02..2010-12-31: backfill check TRADING-2567-33 (the same ruler, a probe
+#     reading): left tail 10.4% milder (interval low +3.6%), drawdown 33.6 points shallower, geometric
+#     +1.5 points a year (+0.3 at 25 bps), 5 of 5 rules.
+#   stage 2, QQQ development window 1999-2010: QQQ-Q3's development sensitivity run fast_slow_weekly
+#     (research/QQQ-Q3/decision.md): left tail +3.2%, drawdown 28.0 points shallower, geometric +4.7;
+#     the interval of the left tail was not recorded. This question's development run is run with the
+#     falsification and registers both stage-2 numbers, the interval included, before the validation
+#     read; this file is not changed after it.
+#
+# Soft leak: the weekly variant was proposed after QQQ-Q3's validation read (QQQ-Q3-w0001). Under the
+# period-1 charter section 4 (research/_loop/charter_p1.md) such an idea is read at a discount and a
+# forward record is the default. Baker chose the validation read; the default was stated to him after
+# the card, with a forward record open to him until the opening batch is published. At closing the
+# conclusion is lowered one grade and the tag "soft leak suspected" is added.
+#
+# Validation read k = 5: the fifth read of qqq_long_history_validation. The 0.05/k level of the
+# period-1 charter section 5 was replaced when the two-stage ruler went live (charter_p1.md section 5
+# as amended under owner_decision:TRADING-2565:2026-10-17:ruler_40y): the validation window is read
+# with stage 2's two QQQ rules at 95%, the level the false-pass probe measured; QQQ-Q4 (k = 4) did the
+# same, and the period-2 charter section 5 keeps it.
+#
+# Expected before any result (period-2 charter section 4, research/_loop/charter_p2.md: the evidence
+# per unit the ruler reads, with the record each number comes from; "none" where there is no number;
+# more than half "none" caps each probability at 0.6). The read checks two rules on
+# 2011-01-04..2021-02-19: the left tail (the worst 5% of days, concentrated in a few sharp falls; the
+# de-risk event table fixes four) and the geometric return over the whole window. The weekly rule has
+# no number on this window; the numbers cited are the monthly fast_slow's (QQQ-Q3-r0008, research/
+# QQQ-Q3/decision.md). Whether the weekly trigger holds in a unit is inferred, not computed.
+#
+#   2011 US downgrade (August): holds; the 21-day return turns negative by the first Friday of
+#     August, so exposure halves; the 252-day return stays positive, so not out.
+#     monthly: de-risked on 49.4% of the days, QQQ on the other days -5.8%. weekly: none.
+#   2015 China and oil (August): half; the fall came on 20-24 August and the 21-day return turned
+#     negative on Friday 21 August, so only the 24th is halved.
+#     monthly: 56.6%, -13.2%. weekly: none.
+#   2018 fourth quarter: holds from the second week of October, but the monthly rule was already
+#     down from the end of September, so weekly adds little.
+#     monthly: 98.4%, +0.2%. weekly: none.
+#   Covid fall (2020-02-20..2020-03-23): holds; the 21-day return is negative on Friday 28 February,
+#     half invested from 2 March; possibly out around mid-March when the 252-day return turns.
+#     monthly: 51.2%, -1.2%. weekly: none.
+#   other sharp falls (early 2016, February 2018, September 2020): uncertain; falls of a few days,
+#     which a weekly check also misses. monthly: none (not in the event table). weekly: none.
+#   geometric return, whole window: the cost side. On the US market 1929-2010 (TRADING-2567-33) the
+#     weekly rule had 335 de-risk events against the monthly's 146, fewer false alarms (14 against
+#     18), the extra ones neutral moves that pay turnover (5.4 against 3.0 a year); its geometric
+#     return was 0.2 points a year above the monthly's (0.3 below at 25 bps), and 3.3 above on QQQ
+#     1999-2010. monthly on this window: -1.8 points a year (10 false alarms gave up +111.7%).
+#     weekly: none.
+#
+#   Six units, all "none" for the weekly rule, so each probability is at most 0.6.
+#   - Left-tail rule (95% upper bound above 0): 0.6, capped; 0.85 before the cap, because the monthly
+#     rule's upper bound is already +14.3% and the weekly rule should de-risk earlier in three of the
+#     four fixed events.
+#   - Geometric rule (at most 1 point a year given up): 0.35. For: the weekly rule exits sooner and
+#     also re-enters sooner, and it made fewer false alarms than the monthly on 1929-2010. Against:
+#     it turns over almost twice as much, and the development gains (+3.3 on QQQ) come from two long
+#     bear markets that 2011-2021 does not have.
+#   - Both rules (the direction holds): 0.3.
+#
+# After failure (direction_changes_either_way: true): if both rules hold, the implementation layer of
+# the classic trend family stands, and the consistency window (2021-02-22 on, with the 2022 slow
+# bear) is read next with the same two rules. If the left tail holds and more than 1 point a year is
+# given up, a weekly check cannot pay the cost either: the classic trend implementation layer ends
+# here and period 2 is left with P1 (tag "effect but too costly"). If the left-tail rule fails, a
+# weekly check cannot catch the sharp falls of a long bull market either, and the lead of the first
+# horizontal read (section 2.4: a faster check is how a slow signal reaches the crash days) is dropped
+# for this family. Each outcome changes the direction.
+schema_version: research_prereg.v1
+question_id: QQQ-Q5
+question: >-
+  Does halving exposure when a fast and a slow trend signal disagree, checked every week instead of
+  every month, keep a left tail no worse than a constant exposure with the same average while giving
+  up at most 1 point a year of geometric return? Q5: QQQ-Q3's fast_slow rule unchanged (the sign of
+  the trailing 21-day and 252-day returns; both positive fully invested, both negative out, a
+  disagreement half invested), set on the last trading day of each week, no leverage. The monthly
+  rule's published validation result (QQQ-Q3-r0008) is the reference.
+question_type: qqq_direction
+owner_decision: owner_decision:TRADING-2567:2026-10-21:qqq_q5_prereg
+data:
+  snapshot_id: qlh-20261013-0b0df53cb1a2
+  qqq_series: actual                # the real QQQ (FMP adjusted close) from 1999-03-10
+  signal_snapshot_id: null          # the trend signals need no outside source
+screens: []                         # classic trend signals are fixed baselines, not screened (research_screens/signals/README.md)
+screen_family_size: 17              # screened signals in the global ledger when this was written (S0001-S0017)
+strategy_module: strategy.py        # imports the bench's signal_exposure; the signals are pinned by hash below
+# Score "sign": 1 when the oriented signal is positive, 0 when negative. Equal weights: the mean of the
+# scores. Mapping "linear" low 0, high 1: exposure = mean score (0, 0.5 or 1 with two signals).
+strategies:
+  - id: fast_slow_weekly
+    function: signal_exposure
+    params:
+      signals:
+        - {id: tsmom_21, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: b3a7d3e36f3a418f614ce08ace10d8e7cbf800ebad026ea9d40249289e757934, score: sign}
+        - {id: tsmom_252, module_sha256: c67c764c9befff0a87a5d5e79fbb291dae269de9698c13907567378f3566f1a2, spec_sha256: e1e85a47a3cf93dd72ba8d27232d3d8cc5c0fb53545b667cd577a3751cf4e62a, score: sign}
+      mapping: linear
+      low: 0
+      high: 1
+    rebalance: {schedule: week_end, band: 0.0}
+    delay_days: 0
+validation:
+  # fast_slow_weekly decides Q5. It is compared with the constant exposure with the same average,
+  # rebalanced the same way (every week). The monthly fast_slow is not run again: QQQ-Q3's validation
+  # window is used up for it, so its published result (QQQ-Q3-r0008) is shown beside Q5's and never
+  # changes the verdict, as QQQ-Q3 did with Q2's trend4. The validation window checks the direction
+  # only, as stage 2 of the trial gate (owner_decision:TRADING-2565:2026-10-17:ruler_40y): the 95%
+  # interval upper bound of the left-tail improvement above 0, and at most 1 point a year of geometric
+  # return given up. Kept when both hold; the consistency window is then read with the same two
+  # rules. Rejected when the upper bound is not above 0 (failure tag mechanism absent; this
+  # construction only). Evidence insufficient when the left tail holds and more than 1 point a year is
+  # given up (failure tag effect but too costly). Development results only check the implementation;
+  # no parameter changes after reading them except recorded bug fixes. The de-risk event table is
+  # printed with every run and is read, not ruled on.
+  strategies: [fast_slow_weekly]
+  rules:
+    fast_slow_weekly:
+      - {metric: ci_high.cvar_5pct_relative_improvement, op: ">", value: 0.0, note: the left tail is not clearly worse (95% interval upper bound above 0)}
+      - {metric: comparison.geometric_annual_return, op: ">=", value: -0.010, note: gives up at most 1.0 point a year}
+  confidence: 0.95                  # stage 2 of the trial gate; the probe measured the ruler at this level
+sensitivity: []                     # none: one configuration, QQQ-Q3's fast_slow with the weekly rebalance
+prior_expectation:
+  effect: >-
+    The mechanism is QQQ-Q3's: the slow signal keeps exposure down in slow declines, and the fast
+    signal halves it after a bad month inside an up-trend. Checking every week instead of every month
+    reaches more of the worst days. On the US market 1929-2010 (backfill check TRADING-2567-33, the
+    trial gate's stage 1) the weekly rule was de-risked on 90.7% of the days of the 1929 crash
+    episode (monthly 65.1%) and its exit lag in the 2008 episode was 16 days (monthly 86); its left
+    tail was 10.4% milder (interval low +3.6%), its drawdown 33.6 points shallower and its geometric
+    return 1.5 points a year higher, all five rules holding. On QQQ 1999-2010 (QQQ-Q3's development
+    sensitivity) the left tail was 3.2% milder, the drawdown 28.0 points shallower and the geometric
+    return 4.7 points higher. On 2011-2021 the monthly rule's left tail was 4.4% milder with 1.8
+    points a year given up; the weekly rule is expected to keep the left tail at least as good and
+    give up less.
+  fails_when: >-
+    2011-2021 is one long rise with V-shaped falls (2015-08, 2018-12, 2020-03): a weekly rule exits
+    sooner but turns over almost twice as often (5.4 against 3.0 times a year on the US market), and
+    a half position after a bad week gives up the rebound, so the cost may stay above 1 point a year.
+    The development gains come from two long bear markets that the validation window does not have.
+    In the 1987 crash episode the weekly rule was de-risked on fewer days than the monthly (31.8%
+    against 72.7%). The rule is QQQ-Q3's fast_slow with another rebalance and a subset of Q2's
+    trend4, so its result is not independent of theirs. Differs from the falsified scope in
+    research/negative_results.md: no leverage, no realized-volatility signal, no credit spread.
+  sources:
+    - Garg, Goulding, Harvey and Mazzoleni (2021), Momentum Turning Points, Journal of Financial Economics 142(1)
+    - Moskowitz, Ooi and Pedersen (2012), Time Series Momentum
+    - Levine and Pedersen (2016), Which Trend Is Your Friend?
+    - Daniel and Moskowitz (2016), Momentum Crashes, Journal of Financial Economics 122(2)
+    - Jegadeesh (1990), Evidence of Predictable Behavior of Security Returns
+sample_floor:
+  min_return_days: 2000             # the validation window has about 2,550; CVaR 5% uses about 128
+trial_cap: 2                        # 1 configuration, and once more after a recorded bug fix
+stop_conditions:
+  - the bench's invariant tests fail
+  - the snapshot check is FAIL
+  - after reading development results, no parameter changes except recorded bug fixes; each rerun counts as a trial
+production_effect: none
+broker_action: none
