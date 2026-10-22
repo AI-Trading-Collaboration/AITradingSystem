@@ -8,7 +8,7 @@ from typing import Any
 
 from . import zh
 from .collect import WORDS
-from .markdown import markdown_to_html
+from .markdown import inline, markdown_to_html
 
 CSS = """:root{
   --bg:#f4f6f7; --surface:#ffffff; --fg:#16212a; --muted:#5a6a77; --line:#d8e0e5;
@@ -143,6 +143,8 @@ details>summary:focus-visible,a:focus-visible{outline:2px solid var(--accent);
 .wrap{overflow-x:auto;margin-top:8px}
 table.narrow{max-width:520px}
 table{border-collapse:collapse;width:100%;font-size:14px}
+#forward th{white-space:normal}
+#forward td:nth-child(-n+2),#forward td:last-child{white-space:nowrap}
 th{text-align:left; color:var(--muted); font-weight:600; padding:6px 10px 6px 0;
   border-bottom:1px solid var(--line); white-space:nowrap}
 td{padding:7px 10px 7px 0; border-bottom:1px solid var(--line); vertical-align:top;
@@ -927,7 +929,14 @@ def _families(families: Mapping[str, Any]) -> str:
         out.append("<p>还没有家族台账：research/families.md</p>")
     else:
         if families["counter"]:
-            out.append("<p>" + _e(families["counter"]) + "</p>")
+            first, stop, rest = families["counter"].partition("。")
+            out.append("<p>" + inline(first + stop) + "</p>")
+            if rest.strip():
+                out.append(
+                    '<details class="grp"><summary>横读怎么计</summary><p>'
+                    + inline(rest.strip())
+                    + "</p></details>"
+                )
         if families["rows"]:
             out.append(
                 "<p>"
@@ -937,7 +946,45 @@ def _families(families: Mapping[str, Any]) -> str:
                 )
                 + "</p>"
             )
-            out.append(markdown_to_html(families["table"]))
+            out.append(
+                _table(
+                    (
+                        "家族",
+                        "状态",
+                        "家族价",
+                        "已试变体（筛选 / 正式）",
+                        "最好的验证结果",
+                        "标签分布",
+                        "线",
+                    ),
+                    [
+                        [
+                            inline(row[key])
+                            for key in (
+                                "family",
+                                "status",
+                                "price",
+                                "variants",
+                                "best",
+                                "tags",
+                                "line",
+                            )
+                        ]
+                        for row in families["rows"]
+                    ],
+                )
+            )
+            for row in families["rows"]:
+                if row["reopen"] not in ("", "—"):
+                    out.append(
+                        '<details class="grp"><summary>重开条件：'
+                        + _e(row["family"])
+                        + "（"
+                        + _e(row["status"])
+                        + "）</summary><p>"
+                        + inline(row["reopen"])
+                        + "</p></details>"
+                    )
         if families["notes"]:
             out.append(
                 '<details class="grp"><summary>家族价和状态怎么算</summary>'

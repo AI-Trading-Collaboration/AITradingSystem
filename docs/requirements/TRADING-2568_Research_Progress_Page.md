@@ -391,6 +391,48 @@ owner 2026-10-22 的决定（第 2 节）。`SCHEMA_VERSION` 不变；5.2 和 5.
 
 `tasks/TRADING-2568_RESEARCH_PROGRESS_PAGE.yaml`：`status` 仍是 `BASELINE_DONE`，`next_step` 开头加「运行 06（按主次重排）随本提交发布到 main；」（提交里写不进它自己发布后的 sha，真实 sha 由下一批研究记录补），其余不动。`research/README.md` 在研究进展页那一行加上新读的四个文件；`docs/system_flow.md` 的「展示」一条同样加上。
 
+### 5.9 运行 07：家族表和前瞻表的排版修正（只改 render.py、markdown.py 的一处）
+
+模型不变：`SCHEMA_VERSION` 不变，`collect()` 一字不改，`site.json` 逐字节不变。只改页面。
+
+#### 5.9.1 家族台账块（`<section id="families">`）
+
+块内顺序：lead 段（不变）→ 横读计数首句 → 「横读怎么计」折叠 → 状态计数行（不变）→ 7 列表 → 每个家族一条「重开条件」折叠 → 「家族价和状态怎么算」折叠（不变）。
+
+- **横读计数**：`families.counter` 按第一个 `。` 切成首句和其余。首句（含那个 `。`）印成 `<p>…</p>`，行内 markdown 照 5.9.3 的 `inline` 处理（反引号成 `<code>`）；其余非空时印成 `<details class="grp"><summary>横读怎么计</summary><p>…</p></details>`，其余为空时不印这个折叠。`counter` 为空时两者都不印。
+- **7 列表**：用 render.py 已有的 `_table`（`table.stack`，`data-label` 照列名），列和顺序固定为 家族、状态、家族价、已试变体（筛选 / 正式）、最好的验证结果、标签分布、线，取自 `families.rows` 的 `family`、`status`、`price`、`variants`、`best`、`tags`、`line`；每格经 `inline`。不印「重开条件」列。只在 `rows` 非空时印表（和状态计数行同一个条件，不变）。
+- **重开条件折叠**：表后按 `rows` 顺序，每个 `reopen` 不是空串也不是 `—` 的家族一条：`<details class="grp"><summary>重开条件：{家族}（{状态}）</summary><p>{reopen 经 inline}</p></details>`。`reopen` 为 `—` 或空的家族不印。
+- 原 5.8.2 里「家族表原样 `markdown_to_html(families["table"])`」作废；`families.table` 键保留在模型里不动。
+
+#### 5.9.2 前瞻记录表：表头可折行，编号、日期和核对不折行
+
+页面 CSS 在 `table{border-collapse:collapse;width:100%;font-size:14px}` 之后加两行，原文：
+
+```
+#forward th{white-space:normal}
+#forward td:nth-child(-n+2),#forward td:last-child{white-space:nowrap}
+```
+
+只作用于前瞻记录块里的表。全局 `th` 是 `white-space:nowrap`，这个块的表头「慢熊段汇总（美股大盘：……）」太长，不让它折行时整张表撑出容器；所以这里表头可折行，编号、写下两列和最后的核对列不折行。在 1500 像素宽的浏览器里核过：表不出容器，`F0001`、`2026-10-21`、`待核` 各一行。
+
+#### 5.9.3 markdown.py 加一个公开函数
+
+```python
+def inline(text: str) -> str:
+    """One cell or line of markdown: code and bold rendered, everything else escaped."""
+    return _inline(text)
+```
+
+放在 `markdown_to_html` 之前；`_inline` 本身不动。render.py 改为 `from .markdown import inline, markdown_to_html`。
+
+#### 5.9.4 验收
+
+`tests/test_research_site_layout.py` 43 条、`tests/test_research_site_zh.py`、`tests/test_research_site.py` 全过；ruff check、ruff format --check、mypy 干净。真实仓库上生成的页面：`site.json` 和运行 06 逐字节相同；`index.html` 的家族台账块表头恰好 7 个 `<th>`，没有 `<th>重开条件</th>`，有 `重开条件：经典趋势（关闭）` 等折叠；CSS 含 5.9.2 的两行。
+
+#### 5.9.5 任务卡和说明文件
+
+`tasks/TRADING-2568_RESEARCH_PROGRESS_PAGE.yaml` 的 `next_step` 把「运行 06（按主次重排）随本提交发布到 main；」改成「运行 07（家族表和前瞻表排版修正）随本提交发布到 main；运行 06 已发布（main 98b9d860）；」；`docs/task_register.md` 同句同改。`research/README.md`、`docs/system_flow.md` 不改（读的文件没变）。
+
 ## 6. 步骤
 
 | 运行 | 区 | 内容 | 验收 |
@@ -400,6 +442,7 @@ owner 2026-10-22 的决定（第 2 节）。`SCHEMA_VERSION` 不变；5.2 和 5.
 | TRADING-2568-03 | A、B | 2026-10-19 owner 的要求（第 2 节、5.7）：`research_site/zh.py`、`collect.py` 和 `render.py` 的改动、样式、`tests/test_research_site_zh.py`（Claude 写）、说明文件 `research/signal_names.yaml` 和 `research/QQQ-Q1..Q4/zh.yaml`（Claude 写）、`research/_template/zh.yaml`、`research/README.md`、`docs/system_flow.md`、本文档 | 验收测试 `test_research_site_zh.py` 和 `test_research_site.py` 全过；`ruff`、`mypy --strict` 干净；`ship.py --dry-run` 为 zone B；发布后 Pages 重建，真实页面里能看到每个策略的买卖规则、淘汰标准和试跑 |
 | TRADING-2568-04（待写） | B | 接 TRADING-2569 的快筛面板和判断对账面板（公开页只放状态、样本进度、还差几个事件和最小可检出效应） | 等 TRADING-2569 J3、J4 的记录出现再写需求和测试 |
 | TRADING-2568-06 | A、B | 2026-10-22 owner 的决定（第 2 节、5.8）：`collect.py`、`render.py`、`markdown.py` 的改动、`tests/test_research_site_layout.py`（Claude 写）、`tests/test_research_site_zh.py` 的两处断言（5.8.3）、`research/README.md` 和 `docs/system_flow.md` 加上新读的文件、本文档 | `test_research_site_layout.py`、`test_research_site_zh.py`、`test_research_site.py` 全过；`ruff`、`mypy --strict` 干净；`ship.py --dry-run` 为 zone B；发布后 Pages 重建，真实页面顶部是现状、保险账、前瞻记录、当期题、家族台账，信号表有去向列 |
+| TRADING-2568-07 | A、B | 家族台账改 7 短列、重开条件按家族折叠、横读计数只露首句，前瞻记录表表头可折行、编号、日期和核对不折行（5.9）。只改 `render.py` 和 `markdown.py`，模型不变。文件：`render.py`、`markdown.py`、`tests/test_research_site_layout.py`（Claude 写）、本文档、任务卡 | `test_research_site_layout.py`（43 条）、`test_research_site_zh.py`、`test_research_site.py` 全过；`ruff`、`mypy --strict` 干净；`ship.py --dry-run` 为 zone B；`site.json` 和运行 06 逐字节相同；发布后 Pages 重建，真实页面的家族台账是 7 列表加每个家族一条重开条件折叠 |
 
 ## 7. 进展
 
@@ -410,3 +453,4 @@ owner 2026-10-22 的决定（第 2 节）。`SCHEMA_VERSION` 不变；5.2 和 5.
 - 2026-10-19：owner 要页面把策略的买入、卖出、调仓规则和淘汰标准写具体、用中文（第 2 节）。运行 03 写成需求（5.7）和验收测试；原来的运行 03 内容（快筛、判断对账面板）顺延为运行 04。核对时发现页面写的累计试验漏了试跑配置（27 → 50），一并改正。
 - 2026-10-20：运行 03 发布到 main 12af29a9（pi 写代码，门禁整套 5142 条过），线上页面核对过：页面含「策略怎么买卖」「怎么筛、凭什么淘汰」，累计试验 55（题目 32 + 试跑 23）。pi 的实现和 Claude 的参考实现在同一份仓库内容上逐项对照，只有不拦发布的差别：多信号符号打分的情形表写「3/4 个信号有利」（需求写的是“有利信号的个数”）；秩相关写三位小数；情形表没有用 `narrow` 样式类（样式表里有这条规则，页面上两列小表在桌面宽度下占满行宽）。以后动这些句子要连测试一起改。任务卡改为 BASELINE_DONE，剩运行 04。
 - 2026-10-22：owner 看了页面说信号展示主次不清（第 2 节），在卡上选「按提案重排」。运行 06 写成需求（5.8）和验收测试 `tests/test_research_site_layout.py`；现有两份测试只改 5.8.3 的两处断言。核对时发现提案里的「开题 1」应是 2（QQQ-Q2 也由筛选候选 S0002 开题）。
+- 2026-10-22：owner 18:07 JST 看线上页面的家族台账，问「这个排版是预期内的吗」；不是，是运行 06 把 8 列表原样印出造成的。运行 07 写成需求（5.9）和 `test_research_site_layout.py` 的三处改动；整页在浏览器里渲染核对过，其余块正常。

@@ -775,12 +775,55 @@ def test_families_block(repo: Path) -> None:
         "上次横读 2026-10-22。</p>" in block
     )
     assert "<p>开放 1 · 停车 2 · 关闭 1</p>" in block
+    # Run 07: seven short columns; the reopen condition is a fold under the table, one per family.
     assert (
-        '<td data-label="家族">经典趋势</td>' in block
-        and '<td data-label="状态">关闭</td>' in block
+        "<thead><tr><th>家族</th><th>状态</th><th>家族价</th><th>已试变体（筛选 / 正式）</th>"
+        "<th>最好的验证结果</th><th>标签分布</th><th>线</th></tr></thead>"
+    ) in block
+    table = block[block.index("<table") : block.index("</table>")]
+    assert "重开条件" not in table and "新机制" not in table
+    assert (
+        '<td data-label="家族">经典趋势</td><td data-label="状态">关闭</td>'
+        '<td data-label="家族价">2.4%/点</td>' in block
     )
+    assert '<td data-label="线">S0002、S0004</td>' in block
+    assert block.count("<tr>") == 1 + 4
+    folds = re.findall(r"<summary>重开条件：([^<]*)</summary><p>([^<]*)</p>", block)
+    assert folds == [
+        ("经典趋势（关闭）", "新机制"),
+        ("波动（停车）", "说明机制"),
+        ("卖波动（停车）", "见清单"),
+    ]
+    assert block.index("</table>") < block.index("重开条件：经典趋势")
     assert '<details class="grp"><summary>家族价和状态怎么算</summary><ul><li>家族价：' in block
+    assert block.index("重开条件：卖波动") < block.index("家族价和状态怎么算")
+    assert "横读怎么计" not in block
     assert "失败标签" not in block
+
+
+def test_families_counter_shows_its_first_sentence_and_folds_the_rest(repo: Path) -> None:
+    _write(
+        repo,
+        "research/families.md",
+        FAMILIES.replace(
+            "上次横读 2026-10-22。",
+            "上次横读 2026-10-22（`owner_decision:X:2026-10-22:y`）。结题的 Claude 更新这一行；"
+            "第 4 期的两题是探针。",
+        ),
+    )
+    block = _block(render(collect(repo)), "families")
+    assert (
+        "<p>距下次横读：正式题 0/3、试跑失败 0/3、信号 0/20、前瞻核对 0/1，上次横读 2026-10-22"
+        "（<code>owner_decision:X:2026-10-22:y</code>）。</p>"
+        '<details class="grp"><summary>横读怎么计</summary><p>结题的 Claude 更新这一行；'
+        "第 4 期的两题是探针。</p></details><p>开放 1 · 停车 2 · 关闭 1</p>"
+    ) in block
+
+
+def test_forward_record_ids_and_dates_do_not_wrap(repo: Path) -> None:
+    page = render(collect(repo))
+    assert "\n#forward th{white-space:normal}\n" in page
+    assert "\n#forward td:nth-child(-n+2),#forward td:last-child{white-space:nowrap}\n" in page
 
 
 def test_families_block_without_the_file(bare: Path) -> None:

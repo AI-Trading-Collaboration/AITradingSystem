@@ -22,6 +22,11 @@ def _inline(text: str) -> str:
     )
 
 
+def inline(text: str) -> str:
+    """One cell or line of markdown: code and bold rendered, everything else escaped."""
+    return _inline(text)
+
+
 def markdown_to_html(text: str) -> str:
     """Render headings, lists, tables, quotes, paragraphs, code and bold."""
     lines = text.splitlines()
