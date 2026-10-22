@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import re
 import xml.etree.ElementTree as ET
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -302,4 +303,227 @@ def test_spec_checks(tmp_path: Path) -> None:
     )
     with pytest.raises(ValueError, match="return dates"):
         pr.figures(pr.FigureSpec(**{**spec.__dict__, "rules": [unmatched]}), tmp_path)
+    assert not list(tmp_path.iterdir())
+
+
+# TRADING-2565-51: the H-B reserve leg (1 = Treasury, 0 = cash) and 10% decline segments.
+
+
+DECLINES = ("decline_200003", "decline_200710", "decline_201004")
+
+
+def _reserve_spec(
+    asset: pd.Series | None = None, closeups: tuple[str, ...] = DECLINES, step: int = 63
+) -> pr.FigureSpec:
+    index = pd.bdate_range("1999-03-11", "2010-12-31") if asset is None else asset.index
+    if asset is None:
+        rng = np.random.default_rng(11)
+        asset = pd.Series(rng.normal(0.0003, 0.015, len(index)), index=index)
+    months = pd.Series(np.arange(len(index)) // step % 2, index=index).astype(float)
+    exposure = pd.Series(0.6, index=index)
+    rules = [
+        pr.RuleSeries(
+            "T0008",
+            "base",
+            exposure,
+            0.6 * asset,
+            pd.DataFrame({"reserve": 1.0}, index=index),
+            0.6 * asset,
+        ),
+        pr.RuleSeries(
+            "H-B",
+            "compared",
+            exposure,
+            0.6 * asset,
+            pd.DataFrame({"reserve": months}, index=index),
+            0.6 * asset,
+        ),
+    ]
+    segments = [
+        pr.SegmentBand("decline_200003", "decline", "2000-04", "2002-09"),
+        pr.SegmentBand("decline_200710", "decline", "2007-11", "2009-02"),
+        pr.SegmentBand("decline_201004", "decline", "2010-05", "2010-06"),
+    ]
+    readings = {
+        "decline_200003": {
+            "base": pr.SegmentReading(-0.004, ratio=-0.03, held_months=30, months=30),
+            "compared": pr.SegmentReading(0.002, ratio=0.014, held_months=12, months=30),
+        },
+        "decline_200710": {
+            "base": pr.SegmentReading(0.02, ratio=0.132, held_months=16, months=16),
+            "compared": pr.SegmentReading(-0.04, ratio=-0.281, held_months=0, months=16),
+        },
+    }
+    return pr.FigureSpec(
+        step="run",
+        market="us_market",
+        title="合成",
+        window_id="us_market_1929_2010",
+        asset_returns=asset,
+        segments=segments,
+        rules=rules,
+        readings=readings,
+        footer=["脚注"],
+        closeups=closeups,
+    )
+
+
+def _texts(root: ET.Element) -> list[ET.Element]:
+    return list(root.iter(f"{{{NS['s']}}}text"))
+
+
+def test_reserve_leg_stems_legend_and_step_line(tmp_path: Path) -> None:
+    # step 62 switches to the Treasury once more than to cash, so the legend's two counts differ.
+    spec = _reserve_spec(step=62)
+    record = pr.figures(spec, tmp_path)[0]
+    root = _root(tmp_path / record.name)
+    compared = spec.rules[1]
+    expected = pr.count_moves(pr.leg_moves(compared.legs), legs=("reserve",))
+    assert expected["reserve"]["entry"] > expected["reserve"]["exit"] > 0
+    assert record.counts["window"] == {
+        "base": {"reserve": {"exit": 0, "entry": 0}},
+        "compared": expected,
+    }
+    groups = _stems(root)
+    assert {g.get("data-leg") for g in groups} == {"reserve"}
+    for group in groups:
+        lines = group.findall("s:line", NS)
+        role, kind = group.get("data-rule"), group.get("data-kind")
+        assert len(lines) == expected["reserve"][kind] if role == "compared" else not lines
+        for line in lines:
+            y1, y2 = float(line.get("y1")), float(line.get("y2"))
+            # Entries (to Treasury) point down, exits (to cash) up.
+            assert (y2 > y1) if kind == "entry" else (y2 < y1)
+    text = [t.text or "" for t in _texts(root)]
+    assert "T0008 国债腿：转国债 0 次，转现金 0 次" in text
+    assert (
+        f"H-B 国债腿：转国债 {expected['reserve']['entry']} 次，"
+        f"转现金 {expected['reserve']['exit']} 次"
+    ) in text
+    assert "竖线朝下 ▲ 转持国债，朝上 ▼ 转持现金；落在生效日（t+2）的价格上" in text
+    assert "H-B 国债腿（1 = 国债，0 = 现金）" in text
+    assert not any("T0008 国债腿（" in t for t in text)
+    steps = [p for p in root.iter(f"{{{NS['s']}}}polyline") if p.get("class") == "reserve"]
+    assert [p.get("stroke") for p in steps] == ["#1f77b4"]
+    svg = (tmp_path / record.name).read_text(encoding="utf-8")
+    assert set(re.findall(r'class="band" data-kind="([a-z_]+)"', svg)) == {"decline"}
+    assert "下跌 10%" in text and "慢熊" not in text and "长牛" not in text
+
+
+def test_legend_band_text_is_dark_and_line_text_takes_the_rule_colour(tmp_path: Path) -> None:
+    for spec in (_spec(), _reserve_spec()):
+        record = pr.figures(spec, tmp_path / spec.market)[0]
+        root = _root(tmp_path / spec.market / record.name)
+        names = set(pr.SHADE_TEXT.values())
+        bands = [t for t in _texts(root) if (t.text or "").split("（")[0] in names]
+        assert bands and all(t.get("fill") == pr.LEGEND_TEXT for t in bands)
+        rules = [t for t in _texts(root) if (t.text or "").startswith(spec.rules[1].name + " ")]
+        assert rules and all(t.get("fill") == "#1f77b4" for t in rules)
+
+
+def test_decline_labels_carry_each_rules_ratio(tmp_path: Path) -> None:
+    record = pr.figures(_reserve_spec(), tmp_path)[2]
+    labels = _labels(_root(tmp_path / record.name))
+    values = {sid: [(t.text, t.get("fill")) for t in texts] for sid, texts in labels.items()}
+    assert values["decline_200003"] == [
+        ("下跌 10% 2000-04", "#333"),
+        ("r -0.03", "#8c8c8c"),
+        ("r +0.01", "#1f77b4"),
+    ]
+    assert values["decline_200710"][1:] == [("r +0.13", "#8c8c8c"), ("r -0.28", "#1f77b4")]
+    assert values["decline_201004"][1:] == [("—", "#8c8c8c"), ("—", "#1f77b4")]
+
+
+def test_a_reading_names_its_ratio_in_the_label_and_the_closeup(tmp_path: Path) -> None:
+    spec = _reserve_spec()
+    readings = {
+        sid: {
+            role: replace(reading, ratio_name="r′") if role == "compared" else reading
+            for role, reading in pair.items()
+        }
+        for sid, pair in spec.readings.items()
+    }
+    spec = replace(spec, readings=readings)
+    records = pr.figures(spec, tmp_path)
+    labels = _labels(_root(tmp_path / records[2].name))
+    assert [t.text for t in labels["decline_200003"]][1:] == ["r -0.03", "r′ +0.01"]
+    text = [t.text or "" for t in _texts(_root(tmp_path / records[1].name))]
+    assert "H-B：r′ -0.281，段内持国债 0/16 月" in text
+    assert "T0008：r +0.132，段内持国债 16/16 月" in text
+
+
+def test_closeups_follow_the_given_order_with_ratio_and_months(tmp_path: Path) -> None:
+    spec = _reserve_spec(closeups=("decline_200710", "decline_200003", "decline_201004"))
+    record = pr.figures(spec, tmp_path)[1]
+    root = _root(tmp_path / record.name)
+    assert list(record.counts["panels"]) == ["decline_200710", "decline_200003", "decline_201004"]
+    assert len(_areas(root)) == 3
+    text = [t.text or "" for t in _texts(root)]
+    assert text[0].startswith("图 B 下跌 10%段放大：")
+    assert "T0008：r +0.132，段内持国债 16/16 月" in text
+    assert "H-B：r -0.281，段内持国债 0/16 月" in text
+    assert "H-B：r +0.014，段内持国债 12/30 月" in text
+    assert text.count("H-B：—") == 1
+    in_segment = record.counts["panels"]["decline_200710"]["in_segment"]["compared"]
+    assert in_segment == pr.count_moves(
+        pr.leg_moves(spec.rules[1].legs), "2007-11", "2009-02", ("reserve",)
+    )
+    with pytest.raises(ValueError, match="figure B has no segment decline_199001"):
+        pr.figures(
+            pr.FigureSpec(**{**spec.__dict__, "closeups": ("decline_199001",)}), tmp_path / "x"
+        )
+
+
+def _outside(root: ET.Element) -> list[tuple[float, float]]:
+    """Stem ends and arrow points above or below the plot area the stem starts in."""
+
+    areas = _areas(root)
+    found = []
+    for group in _stems(root):
+        lines = group.findall("s:line", NS)
+        polygons = group.findall("s:polygon", NS)
+        assert len(lines) == len(polygons)
+        for line, polygon in zip(lines, polygons, strict=True):
+            x, y1 = float(line.get("x1")), float(line.get("y1"))
+            # The panel is the one the stem starts in: its foot sits on the price line.
+            (area,) = [
+                a
+                for a in areas
+                if a[0] - 0.01 <= x <= a[0] + a[2] + 0.01 and a[1] <= y1 <= a[1] + a[3]
+            ]
+            ys = [y1, float(line.get("y2"))]
+            ys += [float(pair.split(",")[1]) for pair in (polygon.get("points") or "").split()]
+            found += [(x, y) for y in ys if not area[1] - 0.01 <= y <= area[1] + area[3] + 0.01]
+    return found
+
+
+@pytest.mark.parametrize("part", [0, 1])
+def test_stems_and_arrows_stay_inside_their_plot_area(tmp_path: Path, part: int) -> None:
+    rising = pd.Series(0.0004, index=pd.bdate_range("1999-03-11", "2010-12-31"))
+    for k, spec in enumerate((_spec(), _reserve_spec(), _reserve_spec(rising, step=1))):
+        record = pr.figures(spec, tmp_path / str(k))[part]
+        root = _root(tmp_path / str(k) / record.name)
+        assert _stems(root)
+        assert not _outside(root), record.name
+
+
+def test_the_overview_keeps_room_for_a_stem_at_the_lowest_price(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A steady climb with a switch every day puts an entry next to the lowest price: with the
+    # ratio panel's padding the longest stems would run out of figure A's price panel.
+    rising = pd.Series(0.0004, index=pd.bdate_range("1999-03-11", "2010-12-31"))
+    monkeypatch.setattr(pr, "STEM_PAD", pr.PAD)
+    record = pr.figures(_reserve_spec(rising, step=1), tmp_path)[0]
+    assert _outside(_root(tmp_path / record.name))
+
+
+def test_reserve_and_timing_legs_cannot_mix(tmp_path: Path) -> None:
+    spec = _reserve_spec()
+    rule = spec.rules[1]
+    for columns in (["reserve", "fast"], ["slow", "fast"], ["treasury"]):
+        legs = pd.DataFrame({c: rule.legs["reserve"] for c in columns})
+        mixed = pr.RuleSeries(rule.name, rule.role, rule.exposure, rule.returns, legs, rule.matched)
+        with pytest.raises(ValueError, match="legs need fast and slow, or reserve"):
+            pr.figures(pr.FigureSpec(**{**spec.__dict__, "rules": [mixed]}), tmp_path)
     assert not list(tmp_path.iterdir())

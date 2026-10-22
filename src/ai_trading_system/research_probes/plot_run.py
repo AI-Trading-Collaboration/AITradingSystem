@@ -3,6 +3,7 @@
 只处理传入序列，不读市场数据，不选择研究窗口、不判策略或授权任何动作。
 A 总览、B 慢熊放大、C 同平均敞口累计比值共用同一套生效日出入计数。
 标签、图例和刻度都在绘图区外；输出确定、可校验，不覆盖已有图。
+腿是择时的快慢两腿（H-A），或储备腿（H-B，1 = 国债、0 = 现金）；竖线连箭头都在绘图区里。
 """
 
 from __future__ import annotations
@@ -20,23 +21,36 @@ import pandas as pd
 
 Role = Literal["base", "compared"]
 LEGS = ("slow", "fast")
-LEG_TEXT = {"slow": "慢腿 252 日", "fast": "快腿 21 日"}
+ALL_LEGS = (*LEGS, "reserve")
+LEG_SETS = (["fast", "slow"], ["reserve"])
+LEG_TEXT = {"slow": "慢腿 252 日", "fast": "快腿 21 日", "reserve": "国债腿"}
 KINDS = ("exit", "entry")
 COLORS = {"base": "#8c8c8c", "compared": "#1f77b4"}
-SHADES = {"slow_bear": "#cfe2f3", "fast_drop": "#fde2c8", "long_bull": "#edf7ee"}
-SHADE_TEXT = {"slow_bear": "慢熊", "fast_drop": "快跌", "long_bull": "长牛"}
+SHADES = {
+    "slow_bear": "#cfe2f3",
+    "fast_drop": "#fde2c8",
+    "long_bull": "#edf7ee",
+    "decline": "#e6dff2",
+}
+SHADE_TEXT = {"slow_bear": "慢熊", "fast_drop": "快跌", "long_bull": "长牛", "decline": "下跌 10%"}
 STEM = {
     ("base", "slow"): 0.12,
     ("base", "fast"): 0.07,
     ("compared", "slow"): 0.095,
     ("compared", "fast"): 0.05,
+    ("base", "reserve"): 0.12,
+    ("compared", "reserve"): 0.095,
 }
-STEM_WIDTH = {"slow": 1.3, "fast": 0.9}
+STEM_WIDTH = {"slow": 1.3, "fast": 0.9, "reserve": 1.3}
+LEGEND_TEXT = "#333"
+# 有竖线的对数面板上下各留 0.2 倍跨度，最长的竖线连箭头都在绘图区里。
+STEM_PAD = 0.2
+PAD = 0.12
 CLOSE_UP_SCALE = 0.6
 BEFORE_MONTHS = 3
 AFTER_MONTHS = 6
 FONT = "Microsoft YaHei, WenQuanYi Zen Hei, sans-serif"
-LABELLED = ("slow_bear", "long_bull")
+LABELLED = ("slow_bear", "long_bull", "decline")
 LABEL_SIZE = 9.5
 LABEL_LINE = 12.0
 
@@ -64,6 +78,10 @@ class SegmentReading:
     difference: float | None
     exit_lag_days: int | None = None
     reentry_lag_days: int | None = None
+    ratio: float | None = None
+    held_months: int | None = None
+    months: int | None = None
+    ratio_name: str = "r"  # 比值在图上叫什么。
 
 
 @dataclass(frozen=True)
@@ -77,6 +95,7 @@ class FigureSpec:
     rules: Sequence[RuleSeries]
     readings: Mapping[str, Mapping[str, SegmentReading]] = field(default_factory=dict)
     footer: Sequence[str] = ()
+    closeups: Sequence[str] = ()
 
 
 @dataclass(frozen=True)
@@ -159,9 +178,13 @@ class Svg:
         return ("\n".join([*self.parts, "</svg>"]) + "\n").encode("utf-8")
 
 
+def rule_legs(legs: pd.DataFrame) -> tuple[str, ...]:
+    return tuple(leg for leg in ALL_LEGS if leg in legs.columns)
+
+
 def leg_moves(legs: pd.DataFrame) -> pd.DataFrame:
     rows = []
-    for leg in LEGS:
+    for leg in rule_legs(legs):
         for when, change in legs[leg].diff().items():
             value = float(change)
             if math.isfinite(value) and value != 0:
@@ -172,7 +195,10 @@ def leg_moves(legs: pd.DataFrame) -> pd.DataFrame:
 
 
 def count_moves(
-    moves: pd.DataFrame, start: str | None = None, end: str | None = None
+    moves: pd.DataFrame,
+    start: str | None = None,
+    end: str | None = None,
+    legs: Sequence[str] = LEGS,
 ) -> dict[str, dict[str, int]]:
     months = pd.DatetimeIndex(moves["date"]).to_period("M")
     inside = np.ones(len(moves), dtype=bool)
@@ -183,7 +209,7 @@ def count_moves(
     part = moves.loc[inside]
     return {
         leg: {kind: int(((part["leg"] == leg) & (part["kind"] == kind)).sum()) for kind in KINDS}
-        for leg in LEGS
+        for leg in legs
     }
 
 
@@ -212,10 +238,17 @@ def label_blocks(
         lines = [(f"{SHADE_TEXT[segment.kind]} {segment.start}", "#333")]
         for rule in rules:
             reading = (readings or {}).get(segment.id, {}).get(rule.role)
-            value = None if reading is None else reading.difference
-            text = "—" if value is None else f"{value * 100:+.1f}"
-            if value is not None and segment.kind == "long_bull":
-                text += "/年"
+            if segment.kind == "decline":
+                text = (
+                    "—"
+                    if reading is None or reading.ratio is None
+                    else f"{reading.ratio_name} {reading.ratio:+.2f}"
+                )
+            else:
+                value = None if reading is None else reading.difference
+                text = "—" if value is None else f"{value * 100:+.1f}"
+                if value is not None and segment.kind == "long_bull":
+                    text += "/年"
             lines.append((text, COLORS[rule.role]))
         blocks.append(
             LabelBlock(
@@ -275,12 +308,13 @@ def plot_area(svg: Svg, panel: Panel) -> None:
 
 def log_bounds(
     values: Sequence[float] | np.ndarray[Any, Any] | pd.Series,
+    pad: float = PAD,
 ) -> tuple[float, float]:
     valid = [math.log10(float(v)) for v in values if math.isfinite(float(v)) and v > 0]
     if not valid:
         raise ValueError("a log panel needs positive finite values")
     low, high = min(valid), max(valid)
-    padding = max(high - low, 0.1) * 0.12
+    padding = max(high - low, 0.1) * pad
     return low - padding, high + padding
 
 
@@ -352,7 +386,7 @@ def legend(svg: Svg, x: float, y: float, items: Sequence[tuple[str, str, float, 
                 f'<line x1="{fmt(x)}" y1="{fmt(y - 4)}" x2="{fmt(x + 16)}" '
                 f'y2="{fmt(y - 4)}" stroke="{color}" stroke-width="{fmt(width)}"/>'
             )
-        svg.text(x + 21, y, text, color=color)
+        svg.text(x + 21, y, text, color=LEGEND_TEXT if mark == "band" else color)
         x += 21 + text_width(text, 11) + 20
 
 
@@ -377,8 +411,8 @@ def _stems(
         moves = leg_moves(rule.legs)
         dates = pd.DatetimeIndex(moves["date"])
         moves = moves.loc[(dates >= panel.first) & (dates <= panel.last)]
-        drawn[rule.role] = count_moves(moves)
-        for leg in LEGS:
+        drawn[rule.role] = count_moves(moves, legs=rule_legs(rule.legs))
+        for leg in rule_legs(rule.legs):
             for kind in KINDS:
                 color = COLORS[rule.role]
                 svg.add(
@@ -413,6 +447,12 @@ def _years(svg: Svg, panel: Panel) -> None:
         svg.text(panel.px(when), panel.y + panel.height + 17, str(year), size=10, anchor="middle")
 
 
+def _move_text(leg: str, counts: Mapping[str, int]) -> str:
+    if leg == "reserve":
+        return f"转国债 {counts['entry']} 次，转现金 {counts['exit']} 次"
+    return f"出 {counts['exit']} 入 {counts['entry']}"
+
+
 def _common_legend(svg: Svg, spec: FigureSpec) -> None:
     legend(
         svg,
@@ -421,26 +461,32 @@ def _common_legend(svg: Svg, spec: FigureSpec) -> None:
         [
             (SHADE_TEXT[k] + ("（只上底色，不标名）" if k == "fast_drop" else ""), color, 1, "band")
             for k, color in SHADES.items()
+            if (k == "decline") == any(s.kind == "decline" for s in spec.segments)
         ],
     )
     for i, rule in enumerate(spec.rules):
-        counts = count_moves(leg_moves(rule.legs))
+        counts = count_moves(leg_moves(rule.legs), legs=rule_legs(rule.legs))
         legend(
             svg,
             80,
             77 + 22 * i,
             [
                 (
-                    f"{rule.name} {LEG_TEXT[leg]}："
-                    f"出 {counts[leg]['exit']} 入 {counts[leg]['entry']}",
+                    f"{rule.name} {LEG_TEXT[leg]}：{_move_text(leg, counts[leg])}",
                     COLORS[rule.role],
                     STEM_WIDTH[leg],
                     "stem",
                 )
-                for leg in LEGS
+                for leg in rule_legs(rule.legs)
             ],
         )
-    svg.text(80, 125, "竖线朝上 ▼ 出场，朝下 ▲ 入场；落在生效日（t+2）的价格上")
+    svg.text(
+        80,
+        125,
+        "竖线朝下 ▲ 转持国债，朝上 ▼ 转持现金；落在生效日（t+2）的价格上"
+        if any("reserve" in r.legs for r in spec.rules)
+        else "竖线朝上 ▼ 出场，朝下 ▲ 入场；落在生效日（t+2）的价格上",
+    )
 
 
 def _footer(svg: Svg, spec: FigureSpec, y: float) -> None:
@@ -456,6 +502,9 @@ def _exposure(svg: Svg, panel: Panel, spec: FigureSpec, mean: bool) -> None:
         color = COLORS[rule.role]
         step_line(svg, panel, rule.exposure, color, "exposure")
         items.append((f"{rule.name} 持有敞口", color, 1.3, "line"))
+        if "reserve" in rule.legs and rule.legs["reserve"].dropna().nunique() > 1:
+            step_line(svg, panel, rule.legs["reserve"], color, "reserve")
+            items.append((f"{rule.name} 国债腿（1 = 国债，0 = 现金）", color, 1.3, "line"))
         if mean:
             average = float(rule.exposure.mean())
             y = panel.py(average)
@@ -475,7 +524,7 @@ def _overview(spec: FigureSpec, ratio: bool) -> tuple[bytes, dict[str, Any]]:
     dates = pd.DatetimeIndex(price.index)
     ratios = {r.role: (1 + r.returns).cumprod() / (1 + r.matched).cumprod() for r in spec.rules}
     values = np.concatenate([s.to_numpy(dtype=float) for s in ratios.values()]) if ratio else price
-    low, high = log_bounds(values)
+    low, high = log_bounds(values, PAD if ratio else STEM_PAD)
     width = max(1400, 30 * (dates[-1].year - dates[0].year + 1)) + 140
     top = Panel(80, 0, width - 140, 420 if ratio else 520, dates[0], dates[-1], low, high, True)
     blocks = label_blocks(top, spec.segments, spec.rules if ratio else (), spec.readings)
@@ -522,7 +571,9 @@ def _overview(spec: FigureSpec, ratio: bool) -> tuple[bytes, dict[str, Any]]:
     else:
         line(svg, top, price, "#222", 1.2, "price")
         counts = {
-            "window": {r.role: count_moves(leg_moves(r.legs)) for r in spec.rules},
+            "window": {
+                r.role: count_moves(leg_moves(r.legs), legs=rule_legs(r.legs)) for r in spec.rules
+            },
             "drawn": _stems(svg, top, spec, price, 1),
         }
     _years(svg, top)
@@ -533,7 +584,14 @@ def _overview(spec: FigureSpec, ratio: bool) -> tuple[bytes, dict[str, Any]]:
 
 
 def _closeups(spec: FigureSpec) -> tuple[bytes, dict[str, Any]]:
-    bears = [s for s in spec.segments if s.kind == "slow_bear"]
+    if spec.closeups:
+        by_id = {s.id: s for s in spec.segments}
+        for sid in spec.closeups:
+            if sid not in by_id:
+                raise ValueError(f"figure B has no segment {sid}")
+        bears = [by_id[sid] for sid in spec.closeups]
+    else:
+        bears = [s for s in spec.segments if s.kind == "slow_bear"]
     if not bears:
         raise ValueError("figure B needs a slow bear segment")
     price = (1 + spec.asset_returns).cumprod()
@@ -542,14 +600,15 @@ def _closeups(spec: FigureSpec) -> tuple[bytes, dict[str, Any]]:
     rows = math.ceil(len(bears) / cols)
     foot = 150 + rows * 430 + 20
     svg = Svg(max(1540, 80 + cols * 600), foot + len(spec.footer) * 18 + 20)
-    svg.text(80, 28, f"图 B 慢熊段放大：{spec.title}", size=16, weight="bold")
+    kinds = "、".join(dict.fromkeys(SHADE_TEXT[s.kind] for s in bears))
+    svg.text(80, 28, f"图 B {kinds}段放大：{spec.title}", size=16, weight="bold")
     _common_legend(svg, spec)
     panels = {}
     for i, bear in enumerate(bears):
         first = max(dates[0], (pd.Period(bear.start, "M") - BEFORE_MONTHS).start_time)
         last = min(dates[-1], (pd.Period(bear.end, "M") + AFTER_MONTHS).end_time.normalize())
         inside = price.loc[(price.index >= first) & (price.index <= last)]
-        low, high = log_bounds(inside)
+        low, high = log_bounds(inside, STEM_PAD)
         x, y = 80 + (i % cols) * 600, 150 + (i // cols) * 430
         panel = Panel(x, y + 80, 500, 300, first, last, low, high, True)
         svg.text(x, y, f"{bear.id}（{bear.start}..{bear.end}）", weight="bold")
@@ -557,6 +616,11 @@ def _closeups(spec: FigureSpec) -> tuple[bytes, dict[str, Any]]:
             reading = spec.readings.get(bear.id, {}).get(rule.role)
             if reading is None:
                 text = "—"
+            elif bear.kind == "decline":
+                r = "—" if reading.ratio is None else f"{reading.ratio:+.3f}"
+                held = "—" if reading.held_months is None else str(reading.held_months)
+                months = "—" if reading.months is None else str(reading.months)
+                text = f"{reading.ratio_name} {r}，段内持国债 {held}/{months} 月"
             else:
                 d = "—" if reading.difference is None else f"{reading.difference * 100:+.1f} 点"
                 n = "—" if reading.exit_lag_days is None else f"{reading.exit_lag_days} 天"
@@ -569,7 +633,8 @@ def _closeups(spec: FigureSpec) -> tuple[bytes, dict[str, Any]]:
         panels[bear.id] = {
             "drawn": _stems(svg, panel, spec, price, CLOSE_UP_SCALE),
             "in_segment": {
-                r.role: count_moves(leg_moves(r.legs), bear.start, bear.end) for r in spec.rules
+                r.role: count_moves(leg_moves(r.legs), bear.start, bear.end, rule_legs(r.legs))
+                for r in spec.rules
             },
         }
         _years(svg, panel)
@@ -589,11 +654,13 @@ def figures(spec: FigureSpec, out_dir: Path) -> list[FigureRecord]:
             for s in (rule.exposure, rule.returns, rule.matched)
         ):
             raise ValueError(f"{rule.name}: series must be on the asset's return dates")
-        if not rule.legs.index.equals(spec.asset_returns.index) or list(rule.legs.columns) != [
-            "fast",
-            "slow",
-        ]:
-            raise ValueError(f"{rule.name}: legs need fast and slow on the asset's return dates")
+        if (
+            not rule.legs.index.equals(spec.asset_returns.index)
+            or list(rule.legs.columns) not in LEG_SETS
+        ):
+            raise ValueError(
+                f"{rule.name}: legs need fast and slow, or reserve, on the asset's return dates"
+            )
     names = [f"{spec.step}-{spec.market}-{part}.svg" for part in "ABC"]
     for name in names:
         if (out_dir / name).exists():

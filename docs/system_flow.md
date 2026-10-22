@@ -93,9 +93,11 @@ ad hoc 的 SEC PIT 回填/评估与缓存回放。
 
 H-A 不对称再入探针（TRADING-2565-48，`owner_decision:TRADING-2565:2026-10-22:research_loop_p4`）：`python -m ai_trading_system.research_probes.asymmetric_reentry check`、`reference --out <目录>`、`run --out <目录> --reference <reference.json>` 读日报方案决定表（TRADING-2565-42）用的长历史快照，只取美股大盘 1929–2010 和 QQQ 1999–2010 两个开发窗口（截到 2010-12-31）；两条腿是评估台的 tsmom_21 和 tsmom_252，在给定的成交日上照评估台的 simulate 模拟，并逐日核对能复现月频、周频 fast_slow；同一次运行的 fast_slow 和决定表差超过 0.05 个点就停下。`reference` 只读月频 fast_slow，把长牛段的代价拆成假退出和再入迟，印第 4 期章程第 3 行按份额应写的概率；`run` 印章程判法表第 1 到 6 行的机械比较和门的条件。结果 JSON、中文报告和图写进 `--out`；不判、不计数、不改门、不写研究账本，不读验证窗口。
 
-出入场示意图（TRADING-2565-48）：`research_probes/plot_run.py` 用标准库写 SVG，每个窗口三张（A 总览、B 慢熊段放大、C 对同均值固定敞口的累计比）；每条腿每次出入一根竖线，落在 t+2 持有生效日的指数上（出场朝上、入场朝下，慢腿长、快腿短），段的标签在绘图区上方的标签带里，绘图区里没有文字。图留在运行目录的 `figures/`，不入库。
+出入场示意图（TRADING-2565-48，TRADING-2565-51 加储备腿）：`research_probes/plot_run.py` 用标准库写 SVG，每个窗口三张（A 总览、B 段放大（默认慢熊段，或调用方点名的段）、C 对同均值固定敞口的累计比）；腿是择时的快慢两腿，或 H-B 的储备腿（1 = 国债、0 = 现金）；每条腿每次出入一根竖线，落在 t+2 持有生效日的指数上（出场或转现金朝上、入场或转国债朝下，慢腿长、快腿短），竖线连箭头都在绘图区里，段的标签在绘图区上方的标签带里，绘图区里没有文字。图留在运行目录的 `figures/`，不入库。
 
 前瞻账本图（TRADING-2565-48）：`python -m ai_trading_system.research_probes.forward_figure draw` 只读 `research/_forward/ledger.jsonl`，把 QQQ 累计和三条敞口（日报持有、固定 0.8、F0001 覆盖）画成 `research/_forward/figures/ledger.svg`，内容不变就不重写；第 4 期结束前不进周五流程。
+
+H-B 条件化储备探针（TRADING-2565-51，`owner_decision:TRADING-2565:2026-10-22:research_loop_p4`）：`python -m ai_trading_system.research_probes.conditional_reserve check`、`run --out <目录>` 读 T0008 试跑计划的长历史快照，只取美股大盘 1929–2010 和 QQQ 1999–2010 两个开发窗口（截到 2010-12-31）；QQQ 60%、储备 40%，储备在穆迪 Aaa 收益率比 6 个月底之前低时持合成 10 年期国债（Shiller），否则持现金，月底定、照评估台的时点成交，换储备按换手收成本。先核同一次运行的 T0008 主配置和它已发布的记录、模拟器在储备不变时和评估台逐日相同、状态没有偷看，任何一条不过就停下；`run` 印每个下跌 10% 段的 ΔD、尺子扣的和按实际持有扣的平时超额、C、r、r′ 和段内持国债的月数、交易日数，第 4 期章程第 3.2 节判法表第 1 到 4 行的机械比较（第 1 行按 Baker 选的「按实际持有扣」读 r′：平时超额只按段内实际持国债的交易日扣，`owner_decision:TRADING-2565:2026-10-22:hb_row1_held_deduction`；尺子本身和第 2 到 4 行照旧读 r），QQQ 只查方向，另印用 Ken French RF 当状态的对照。结果 JSON、中文报告和图写进 `--out`；不判、不计数、不改门、不写研究账本，不读验证窗口。
 
 ```mermaid
 flowchart LR
