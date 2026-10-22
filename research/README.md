@@ -19,6 +19,7 @@
 - 研究自动循环 2026-10-21 起按第 2 期章程 `_loop/charter_p2.md`（到 2026-11-04）：转实现层和 P1，第一段加慢熊段回撤判据；第 1 期 `_loop/charter_p1.md` 结束。
 - 研究自动循环第 3 期（2026-10-21 签，`_loop/charter_p3.md`，到 2026-11-04）：给日报定一个有证据的仓位方案并用前瞻记录验证它，不再找新的择时信号；先在 1871–1928 的慢熊段上样本外核对趋势覆盖，再出决定表请 Baker 定方案，之后上前瞻记录台；假设卡停；第 2 期 `_loop/charter_p2.md` 结束。
 - 日报方案（2026-10-22，`owner_decision:TRADING-2565:2026-10-22:daily_policy`）：Baker 据决定表选固定敞口 0.8 加 F0001（QQQ-Q3 的 fast_slow）覆盖；不进生产、不改日报的模型，只进前瞻记录台 `_forward/`（只读日报的决策快照和当天的价格捕获，`owner_decision:TRADING-2565:2026-10-22:read_daily_outputs`），每周五追加，日报模型的预期是 `_loop/forward_records.md` 的 F0005；同一配置连续两次慢熊段核对为对才算证据，见 `_loop/charter_p3.md` 第 14 节。
+- 第二次横读（2026-10-22，`owner_decision:TRADING-2565:2026-10-22:horizontal_read_2`）：10 条改过的模型、四条跨家族的结构（收益只在慢熊里、代价来自 V 型里的假退出和再入迟、对冲资产的方向随状态变、预期的错多半借了别的窗口或口径），偏差原因六条细化记在 `scorecard.md`；Baker 选第 4 期只开导出的两题（`owner_decision:TRADING-2565:2026-10-22:period4_two_questions`）：H-A 不对称再入（经典趋势换实现）先，H-B 条件化国债（P1 换实现）后，预注册进第 4 期章程草稿另签，见 `_loop/charter_p3.md` 第 15 节。
 - 慢熊段回撤判据不上线（2026-10-21）：探针量出慢熊轨的误放率超线（漏的是前视的种下规则），Baker 选「停加只读两条」（`owner_decision:TRADING-2565:2026-10-21:slow_bear_readonly`）：试跑报告加只读的慢熊段表和长牛段表，趋势类配置记慢熊型前瞻记录 `_loop/forward_records.md`，见 `_loop/charter_p2.md` 第 13、14 节。
 - 研究自动循环出卡按事件（2026-10-21，`owner_decision:TRADING-2565:2026-10-21:event_driven_cards`）：上一批读完就出下一批，不等周一，周一保底。第 2 期第一批卡当天出，只出周频 fast_slow 一张，Baker 选开题为第五题 QQQ-Q5（`owner_decision:TRADING-2567:2026-10-21:qqq_q5_prereg`，预注册另作一批）。
 - 2026-10-18 起结题打失败标签、开题读失败条款，见 `families.md`、`scorecard.md`、`_loop/charter_p1.md` 第 12 节；第一到三题和 T0001 的 10 个失败已回填标签，Baker 同意。
