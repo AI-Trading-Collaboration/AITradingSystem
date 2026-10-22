@@ -66,6 +66,8 @@ OWNER_DECISION = "owner_decision:TRADING-2565:2026-10-22:research_loop_p4"
 DIRECTION = "owner_decision:TRADING-2565:2026-10-22:period4_two_questions"
 # Baker 2026-10-22 选「按实际持有扣」，第 1 行读 r′，尺子、门和第 2 到 4 行照旧读 r。
 HELD_DEDUCTION = "owner_decision:TRADING-2565:2026-10-22:hb_row1_held_deduction"
+# Baker 选「记 0，不数」：段内持国债 0 月的段，第 1 行的 r′ 记 0，不算正也不算负。
+CASH_ZERO = "owner_decision:TRADING-2565:2026-10-22:hb_row1_cash_zero"
 PLAN_ID = "T0008"
 PRIMARY = "qqq60_t10s40"
 RESERVE = "treasury_10y_shiller"
@@ -449,6 +451,8 @@ def reserve_path(
         fallback,
         loaded.settings.trading_days_per_year,
     )
+    for held, row in zip(values["held"]["segments"], values["portfolio"]["segments"], strict=True):
+        held["held_months"] = months_held(state, row["start"], row["end"])[0]
     return ReservePath(state, sim, benchmark, reserve, values)
 
 
@@ -653,15 +657,20 @@ def segment_table(path: ReservePath, base: Mapping[str, Any] | None = None) -> l
 def row_readings(
     us: Mapping[str, Any], base: Mapping[str, Any], rules: tuple[Rule, ...]
 ) -> list[dict[str, Any]]:
+    """段内持国债 0 月的段 r′ 记 0（CASH_ZERO）。"""
     rows = us["portfolio"]["segments"]
     base_rows = {r["id"]: r for r in base["portfolio"]["segments"]}
-    held = {r["id"]: r["ratio"] for r in us["held"]["segments"]}
-    base_held = {r["id"]: r["ratio"] for r in base["held"]["segments"]}
+    held = {r["id"]: r for r in us["held"]["segments"]}
+    base_held = {r["id"]: r for r in base["held"]["segments"]}
     selected = [r for r in rows if r["counted"] and _in_span(r["start"], ROW1_SPAN)]
     base_selected = [
         r for r in base_rows.values() if r["counted"] and _in_span(r["start"], ROW1_SPAN)
     ]
-    ratios = {r["id"]: held[r["id"]] for r in selected}
+    cash_zero = [r["id"] for r in selected if held[r["id"]]["held_months"] == 0]
+    ratios = {
+        r["id"]: 0.0 if held[r["id"]]["held_months"] == 0 else held[r["id"]]["ratio"]
+        for r in selected
+    }
     positive = sum(r > 0 for r in ratios.values())
     below = [sid for sid, r in ratios.items() if r < ROW1_FLOOR]
     pairs, skipped = [], []
@@ -694,9 +703,13 @@ def row_readings(
             "fallback": us["held"]["fallback"],
             "segments": list(ratios),
             "ratios": ratios,
+            "cash_zero": cash_zero,
             "count": len(selected),
             "base_count": len(base_selected),
-            "base_positive": sum(base_held[r["id"]] > 0 for r in base_selected),
+            "base_positive": sum(
+                (0.0 if base_held[r["id"]]["held_months"] == 0 else base_held[r["id"]]["ratio"]) > 0
+                for r in base_selected
+            ),
             "positive": positive,
             "min_ratio": min(ratios.values()) if ratios else None,
             "below_floor": below,
@@ -1058,7 +1071,10 @@ def render(result: Mapping[str, Any]) -> str:
         f"- 提交：{result['provenance']['commit']}。",
         f"- 第 1 行读 r′，按实际持有扣（{HELD_DEDUCTION}，Baker 选「按实际持有扣」）；"
         "尺子、门和第 2 到 4 行照旧读 r。",
-        "只读开发窗口；不判、不写研究账本、不开题、不改门；production_effect=none；broker_action=none。",
+        f"- 第 1 行里段内持国债 0 月的段 r′ 记 0，不算正也不算负（{CASH_ZERO}，"
+        "Baker 选「记 0，不数」）；段表照旧印算出来的 r′。",
+        "- 只读开发窗口；不判、不写研究账本、不开题、不改门；"
+        "production_effect=none；broker_action=none。",
     ]
     for market in MARKETS:
         w, source = result["windows"][market], result["sources"][market]
@@ -1109,12 +1125,19 @@ def render(result: Mapping[str, Any]) -> str:
         f"（T0008 同样扣：计入 {one['base_count']} 段、r′ > 0 的 "
         f"{one['base_positive']} 段），最小 r′ {_number(one['min_ratio'])}；r′ < −0.05 的段："
         + ("、".join(one["below_floor"]) or "无")
+        + "；持国债 0 月、记 0 的段："
+        + ("、".join(one["cash_zero"]) or "无")
     )
     _table(
         lines,
         ["行", "读数", "门槛", "按判法"],
         [
-            [1, row1, "r′ > 0 的段 3 到 5，且没有一段 r′ < −0.05", _holds(one["holds"])],
+            [
+                1,
+                row1,
+                "r′ > 0 的段 3 到 5，且没有一段 r′ < −0.05（持国债 0 月的段记 0）",
+                _holds(one["holds"]),
+            ],
             [
                 2,
                 f"判 {len(two['pairs'])} 段；超出的段：{'、'.join(two['outside']) or '无'}；"
@@ -1223,7 +1246,8 @@ def render(result: Mapping[str, Any]) -> str:
             f"- 持国债 {rf['summary']['held_months']}/{rf['summary']['months']} 月，"
             f"换储备 {rf['summary']['switches']} 次；四行："
             + "、".join(_holds(r["holds"]) for r in rf["readings"]),
-            f"- 第 1 行 r′：计入 {rf1['count']} 段，r′ > 0 的 {rf1['positive']} 段，"
+            f"- 第 1 行 r′：计入 {rf1['count']} 段，r′ > 0 的 {rf1['positive']} 段"
+            f"（持国债 0 月、记 0 的 {len(rf1['cash_zero'])} 段），"
             f"最小 {_number(rf1['min_ratio'])}；"
             f"e_T {_excess(rf1['excess'], rf1['excess_days'], rf1['fallback'])}。",
         ]

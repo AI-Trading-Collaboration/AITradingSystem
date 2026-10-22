@@ -680,9 +680,10 @@ def _values(
     ratios: dict[str, float | None],
     geometric: float = 0.0,
     held: dict[str, float | None] | None = None,
+    cash: tuple[str, ...] = (),
     **portfolio: float,
 ) -> dict[str, Any]:
-    """r′ (held) is r unless given."""
+    """r′ (held) is r unless given; the segments in cash hold the Treasury 0 months, the rest 1."""
 
     segments = [_segment(k, v) for k, v in ratios.items()]
     counted = [v for v in ratios.values() if v is not None]
@@ -691,7 +692,10 @@ def _values(
             "excess": 0.01,
             "days": 100,
             "fallback": False,
-            "segments": [{"id": k, "ratio": v} for k, v in (held or ratios).items()],
+            "segments": [
+                {"id": k, "ratio": v, "held_months": 0 if k in cash else 1}
+                for k, v in (held or ratios).items()
+            ],
         },
         "comparison": {"geometric_annual_return": geometric},
         "cost_25": {"geometric_annual_return": geometric - 0.001},
@@ -775,6 +779,47 @@ def test_row_one_reads_r_prime_and_row_two_keeps_r() -> None:
     assert (row1["base_count"], row1["base_positive"]) == (9, 1)
     assert (row1["excess"], row1["excess_days"], row1["fallback"]) == (0.01, 100, False)
     assert [p["ratio"] for p in row2["pairs"]] == [-0.1, 0.1] and row2["holds"]
+
+
+def test_row_one_counts_a_segment_that_never_held_the_treasury_as_zero() -> None:
+    # Two segments held the Treasury 0 months: a tiny positive and a value below the floor.
+    held = _with({sid: 0.02 for sid in ROW1[:3]})
+    held.update({ROW1[3]: 0.001, ROW1[4]: -0.06, ROW1[5]: 0.001})
+    cash = (ROW1[3], ROW1[4])
+    row1 = cr.row_readings(_values(BASE, held=held, cash=cash), _values(BASE), US_RULES)[0]
+    assert cr.CASH_ZERO == "owner_decision:TRADING-2565:2026-10-22:hb_row1_cash_zero"
+    assert row1["cash_zero"] == list(cash)
+    assert row1["ratios"][ROW1[3]] == 0.0 and row1["ratios"][ROW1[4]] == 0.0
+    # A segment that held the Treasury counts by its sign, however small.
+    assert row1["positive"] == 4 and row1["below_floor"] == [] and row1["min_ratio"] == -0.01
+    assert row1["holds"] and not row1["closes_p1"] and not row1["six_or_more"]
+    # Without the rule the same numbers read 5 positive and one below the floor.
+    plain = cr.row_readings(_values(BASE, held=held), _values(BASE), US_RULES)[0]
+    assert plain["cash_zero"] == [] and plain["positive"] == 5
+    assert plain["below_floor"] == [ROW1[4]] and plain["closes_p1"]
+    # Six counted as positive only through the zeroed segments stays at three.
+    six = _with({sid: 0.02 for sid in ROW1[:6]})
+    row1 = cr.row_readings(_values(BASE, held=six, cash=tuple(ROW1[3:6])), _values(BASE), US_RULES)[
+        0
+    ]
+    assert (row1["positive"], row1["six_or_more"], row1["holds"]) == (3, False, True)
+    # T0008's comparison counts follow the same rule.
+    base = _values(BASE, held=_with({ROW1[0]: 0.03, ROW1[1]: 0.03}), cash=(ROW1[1],))
+    assert cr.row_readings(_values(BASE), base, US_RULES)[0]["base_positive"] == 1
+
+
+def test_the_reserve_path_carries_each_segments_held_months_for_row_one() -> None:
+    data, window = DATA["qqq"], WINDOWS["qqq"]
+    segments = cr.declines(GATE, "qqq", window)
+    state = cr.reserve_state(data.inputs, cr.state_params())
+    path = cr.reserve_path(data, state, window, LOADED, segments, fallback=0.01)
+    found = [
+        (r["id"], r["held_months"], cr.months_held(path.state, s.start, s.end))
+        for r, s in zip(path.values["held"]["segments"], segments, strict=True)
+    ]
+    assert [sid for sid, _, _ in found] == [s.id for s in segments]
+    assert all(months == held for _, months, (held, _) in found)
+    assert any(0 < months < total for _, months, (_, total) in found)
 
 
 def test_row_two_compares_counted_pairs_before_1963_and_after_1997() -> None:
@@ -1027,14 +1072,26 @@ def test_the_readings_are_rows_one_to_four_of_the_us_values(run: dict[str, Any])
     result = run["result"]
     us, table = result["h_b"]["us_market"], result["segments"]["us_market"]
 
-    def values(name: str, column: str) -> dict[str, Any]:
-        held = [{"id": r["id"], "ratio": r[column]} for r in table]
+    def values(name: str, column: str, months: str) -> dict[str, Any]:
+        held = [{"id": r["id"], "ratio": r[column], "held_months": r[months]} for r in table]
         return {**us[name], "held": {**us[name]["held"], "segments": held}}
 
     # Row 1 reads the table's r′ columns; rows 2 to 4 the summary rows.
+    # T0008 holds the Treasury every month of every segment.
     expected = cr.row_readings(
-        values("h_b", "held_ratio"), values("t0008", "base_held_ratio"), US_RULES
+        values("h_b", "held_ratio", "held_months"),
+        values("t0008", "base_held_ratio", "months_counted"),
+        US_RULES,
     )
+    # The synthetic US market holds cash all through decline_197808.
+    zero = [
+        r["id"]
+        for r in table
+        if r["counted"] and "1966-01" <= r["start"] <= "1990-12" and r["held_months"] == 0
+    ]
+    assert result["readings"][0]["cash_zero"] == zero == ["decline_197808"]
+    assert result["readings"][0]["ratios"]["decline_197808"] == 0.0
+    assert next(r for r in table if r["id"] == "decline_197808")["held_ratio"] != 0.0
     assert json.loads(json.dumps(gp._clean(expected))) == result["readings"]
     assert [r["row"] for r in result["readings"]] == [1, 2, 3, 4]
     assert result["first_four"] == cr.first_four(result["readings"])
@@ -1131,7 +1188,12 @@ def test_the_report_carries_the_checks_rows_tables_and_figures(run: dict[str, An
         "- 第 1 行读 r′，按实际持有扣（owner_decision:TRADING-2565:2026-10-22:"
         "hb_row1_held_deduction，Baker 选「按实际持有扣」）；尺子、门和第 2 到 4 行照旧读 r。"
     ) in text
-    assert "r′ > 0 的段 3 到 5，且没有一段 r′ < −0.05" in text
+    assert "r′ > 0 的段 3 到 5，且没有一段 r′ < −0.05（持国债 0 月的段记 0）" in text
+    assert "；持国债 0 月、记 0 的段：decline_197808 |" in text
+    assert (
+        "- 第 1 行里段内持国债 0 月的段 r′ 记 0，不算正也不算负（owner_decision:TRADING-2565:"
+        "2026-10-22:hb_row1_cash_zero，Baker 选「记 0，不数」）；段表照旧印算出来的 r′。"
+    ) in text
     readings = run["result"]["readings"][0]
     assert readings["positive"] != readings["count"]
     low = "—" if readings["min_ratio"] is None else f"{readings['min_ratio']:+.3f}"
