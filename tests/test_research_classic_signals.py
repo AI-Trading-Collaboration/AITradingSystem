@@ -321,14 +321,15 @@ NOTES_TAIL = (
     "；2026-10-15：S4e 第一批真实筛选已跑完并发布为记录 S0001 到 S0004（main 71f00bc1）；"
     "S4f（TRADING-2565-11）第二题用的经典趋势信号"
 )
-# The card's current owner and step (TRADING-2565-45), checked against the register.
+# The card's current owner and step (TRADING-2565-48), checked against the register.
 NEXT_OWNER = "Claude（研究自动循环）"
 NEXT_STEP = (
-    "研究自动循环第 3 期（`research/_loop/charter_p3.md`，到 2026-11-04）：前瞻记录台"
-    "（TRADING-2565-45，owner_decision:TRADING-2565:2026-10-22:daily_policy、"
-    "owner_decision:TRADING-2565:2026-10-22:read_daily_outputs）发布后，研究会话第一次追加"
-    "（从 2026-10-12 回填），之后每周五和周五摘要同一次追加；QQQ 下一个完整慢熊段或长牛段时"
-    "核对 F0001、F0005；11-04 前续期卡；假设卡停，这期不新筛信号"
+    "研究自动循环第 4 期（`research/_loop/charter_p4.md`，到 2026-11-18；"
+    "owner_decision:TRADING-2565:2026-10-22:research_loop_p4、"
+    "owner_decision:TRADING-2565:2026-10-22:period4_two_questions）：H-A 探针（TRADING-2565-48）"
+    "发布后，研究会话先 `check`、`reference`，复盘线程按再入迟份额重写记分表第 3 行，H-A 预期表"
+    "记进 `research/scorecard.md` 第 3 节，再 `run`；然后 H-B；前瞻记录台每周五照记；"
+    "这期不新筛信号"
 )
 
 

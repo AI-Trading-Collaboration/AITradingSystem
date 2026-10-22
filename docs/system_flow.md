@@ -91,6 +91,12 @@ ad hoc 的 SEC PIT 回填/评估与缓存回放。
 
 误放率探针（TRADING-2565-22）：`python -m ai_trading_system.research_probes.gate_false_pass run --out <目录> --workers <进程数>` 读和查尺子相同的数据（截到 2010-12-31），在试跑门的两段开发窗口上评估三族零效果的假信号（各 150 个种子）和两族对照，按写定的读法看两段都过的比例的 95% Wilson 上限，把结果写成 `false_pass_result.json` 和 `false_pass_result.md`（运行中每个评估先写进 `false_pass_rows.jsonl`）；量的门固定为 `src/ai_trading_system/research_probes/trial_gate_v2.yaml`，即加左尾下限以前的两段尺子试跑门的原样；只量门，不改试跑门，不进任何账本，不是结论。2026-10-19 的读数是偏松，重读同一份结果后试跑门第一段加了左尾点估计至少改善 10%（见 TRADING-2565 需求文档）。
 
+H-A 不对称再入探针（TRADING-2565-48，`owner_decision:TRADING-2565:2026-10-22:research_loop_p4`）：`python -m ai_trading_system.research_probes.asymmetric_reentry check`、`reference --out <目录>`、`run --out <目录> --reference <reference.json>` 读日报方案决定表（TRADING-2565-42）用的长历史快照，只取美股大盘 1929–2010 和 QQQ 1999–2010 两个开发窗口（截到 2010-12-31）；两条腿是评估台的 tsmom_21 和 tsmom_252，在给定的成交日上照评估台的 simulate 模拟，并逐日核对能复现月频、周频 fast_slow；同一次运行的 fast_slow 和决定表差超过 0.05 个点就停下。`reference` 只读月频 fast_slow，把长牛段的代价拆成假退出和再入迟，印第 4 期章程第 3 行按份额应写的概率；`run` 印章程判法表第 1 到 6 行的机械比较和门的条件。结果 JSON、中文报告和图写进 `--out`；不判、不计数、不改门、不写研究账本，不读验证窗口。
+
+出入场示意图（TRADING-2565-48）：`research_probes/plot_run.py` 用标准库写 SVG，每个窗口三张（A 总览、B 慢熊段放大、C 对同均值固定敞口的累计比）；每条腿每次出入一根竖线，落在 t+2 持有生效日的指数上（出场朝上、入场朝下，慢腿长、快腿短），段的标签在绘图区上方的标签带里，绘图区里没有文字。图留在运行目录的 `figures/`，不入库。
+
+前瞻账本图（TRADING-2565-48）：`python -m ai_trading_system.research_probes.forward_figure draw` 只读 `research/_forward/ledger.jsonl`，把 QQQ 累计和三条敞口（日报持有、固定 0.8、F0001 覆盖）画成 `research/_forward/figures/ledger.svg`，内容不变就不重写；第 4 期结束前不进周五流程。
+
 ```mermaid
 flowchart LR
     Q["Owner 定问题（TRADING-2567）"] --> PRE["research/&lt;题号&gt;/prereg.yaml + strategy.py<br/>C 区：随 Owner-Decision ship 进 main"]
