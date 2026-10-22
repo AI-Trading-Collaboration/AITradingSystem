@@ -184,12 +184,14 @@ def _question(
         "zh": None,
         "strategy_cards": [],
         "gates": [],
+        "screens": [],
     }
     invalid = False
     try:
         prereg = load_prereg(directory / "prereg.yaml")
         question.update(
             question=prereg.question,
+            screens=list(prereg.screens),
             owner_decision=prereg.owner_decision,
             trial_cap=prereg.trial_cap,
             strategies=[strategy.id for strategy in prereg.strategies],
@@ -627,6 +629,7 @@ def _trials(
             view["plans"].append(
                 {
                     "trial_id": plan.trial_id,
+                    "screens": list(plan.candidate.screens) if plan.candidate else [],
                     "signals": [zh.signal_view(repo, key, names) for key in plan.candidate.signals]
                     if plan.candidate
                     else [],
@@ -651,6 +654,258 @@ def _trials(
         except Exception as exc:
             problems.append(f"试跑: {path.name}: {_error(exc)}")
     return view
+
+
+def _optional_text(path: Path) -> str | None:
+    """Optional display records that cannot be read are treated as absent."""
+    try:
+        return path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        return None
+
+
+def _tables(text: str) -> list[tuple[int, int, str]]:
+    """Pipe-table spans in splitlines coordinates, preserving their original text."""
+    lines = text.splitlines()
+    spans: list[tuple[int, int, str]] = []
+    index = 0
+    while index < len(lines):
+        if not lines[index].startswith("|"):
+            index += 1
+            continue
+        start = index
+        while index < len(lines) and lines[index].startswith("|"):
+            index += 1
+        spans.append((start, index, "\n".join(lines[start:index])))
+    return spans
+
+
+def _data_rows(table: str) -> list[list[str]]:
+    return [
+        row
+        for row in map(cells, table.splitlines()[1:])
+        if not all(re.fullmatch(r":?-{3,}:?", cell) for cell in row)
+    ]
+
+
+def _forward_records(research: Path, problems: list[str]) -> dict[str, Any]:
+    text = _optional_text(research / "_loop/forward_records.md")
+    sections: list[dict[str, Any]] = []
+    for section in _negative_sections(text):
+        spans = _tables(section["markdown"])
+        sections.append(
+            {
+                **section,
+                "tables": [table for _, _, table in spans],
+                "prose": "\n".join(
+                    line for line in section["markdown"].splitlines() if not line.startswith("|")
+                ).strip("\n"),
+            }
+        )
+    rows = []
+    # Include tables preceding the first section; their section title is empty.
+    lead: list[str] = []
+    for line in (text or "").splitlines():
+        if line.startswith("## "):
+            break
+        lead.append(line)
+    sources = [{"title": "", "markdown": "\n".join(lead)}, *sections]
+    for section in sources:
+        for _, _, table in _tables(section["markdown"]):
+            if cells(table.splitlines()[0])[0] != "编号":
+                continue
+            for row in _data_rows(table):
+                if len(row) >= 5 and row[0]:
+                    rows.append(
+                        {
+                            "id": row[0],
+                            "written": row[1],
+                            "config": row[2],
+                            "expected": row[-2],
+                            "check": row[-1],
+                            "section": section["title"],
+                        }
+                    )
+    if text is not None and not rows:
+        problems.append("research/_loop/forward_records.md: 没有找到编号数据行")
+    return {
+        "present": text is not None,
+        "markdown": text,
+        "sections": sections,
+        "rows": rows,
+        "count": len(rows),
+        "pending": sum(row["check"] == "待核" for row in rows),
+    }
+
+
+def _forward_ledger(research: Path) -> dict[str, Any]:
+    text = _optional_text(research / "_forward/weekly.md")
+    lead: list[str] = []
+    for line in (text or "").splitlines():
+        if line.startswith("## "):
+            break
+        if not line.startswith("# "):
+            lead.append(line)
+    match = re.search(r"账本 (\d+) 行，(\d{4}-\d{2}-\d{2})\.\.(\d{4}-\d{2}-\d{2})", text or "")
+    return {
+        "present": text is not None,
+        "markdown": text,
+        "lead": "\n".join(lead).strip("\n"),
+        "sections": _negative_sections(text),
+        "days": int(match[1]) if match else None,
+        "start": match[2] if match else None,
+        "end": match[3] if match else None,
+    }
+
+
+def _families(research: Path, screens: Mapping[str, Any], problems: list[str]) -> dict[str, Any]:
+    text = _optional_text(research / "families.md")
+    view: dict[str, Any] = {
+        "present": text is not None,
+        "markdown": text,
+        "counter": next(
+            (
+                line.strip()
+                for line in (text or "").splitlines()
+                if line.strip().startswith("距下次横读")
+            ),
+            None,
+        ),
+        "notes": "",
+        "table": None,
+        "rows": [],
+        "status_counts": dict.fromkeys(("开放", "停车", "关闭"), 0),
+        "by_signal": {},
+    }
+    section = next((s for s in _negative_sections(text) if s["title"] == "家族"), None)
+    if section:
+        for start, _, table in _tables(section["markdown"]):
+            if cells(table.splitlines()[0])[0] != "家族":
+                continue
+            view["table"] = table
+            view["notes"] = "\n".join(section["markdown"].splitlines()[:start]).strip("\n")
+            keys = ("family", "variants", "best", "price", "tags", "status", "reopen", "line")
+            view["rows"] = [
+                dict(zip(keys, row, strict=True)) for row in _data_rows(table) if len(row) == 8
+            ]
+            break
+    if text is not None and view["table"] is None:
+        problems.append("research/families.md: 没有找到家族表")
+    signals = {member["signal_id"] for member in screens["members"]}
+    for row in view["rows"]:
+        if row["status"] in view["status_counts"]:
+            view["status_counts"][row["status"]] += 1
+        for signal in re.findall(r"[a-z][a-z0-9_]*", row["variants"]):
+            if signal in signals:
+                view["by_signal"].setdefault(signal, row["family"])
+    return view
+
+
+def _first_paragraph(text: str) -> str | None:
+    paragraph: list[str] = []
+    for line in text.splitlines():
+        if line.startswith("#") or (paragraph and not line.strip()):
+            break
+        if line.strip():
+            paragraph.append(line)
+    return zh.clean("\n".join(paragraph)) if paragraph else None
+
+
+def _charter(research: Path) -> dict[str, Any]:
+    paths = [
+        (int(match[1]), path)
+        for path in (research / "_loop").glob("charter_p*.md")
+        if (match := re.fullmatch(r"charter_p(\d+)\.md", path.name))
+    ]
+    period, path = max(paths, key=lambda item: (item[0], item[1].name)) if paths else (None, None)
+    text = _optional_text(path) if path else None
+    view: dict[str, Any] = {
+        "present": text is not None,
+        "path": f"research/_loop/{path.name}" if path and text is not None else None,
+        "period": period if text is not None else None,
+        "markdown": text,
+        "term": None,
+        "direction": None,
+        "questions": [],
+    }
+    prereg_seen = False
+    for section in _negative_sections(text):
+        title, body = section["title"], section["markdown"]
+        if re.match(r"第\s*\d+\s*期的方向", title) and view["direction"] is None:
+            view["direction"] = _first_paragraph(body)
+        if re.match(r"1\.\s*期限", title) and view["term"] is None:
+            view["term"] = _first_paragraph(body)
+        if "预注册" not in title or prereg_seen:
+            continue
+        prereg_seen = True
+        matches = list(re.finditer(r"^### (.*)$", body, re.M))
+        for index, match in enumerate(matches):
+            end = matches[index + 1].start() if index + 1 < len(matches) else len(body)
+            markdown = body[match.end() : end].strip("\n")
+            quote = re.search(r"^> .*?(?=\n(?!> )|\Z)", markdown, re.M | re.S)
+            tables = _tables(markdown)
+            view["questions"].append(
+                {
+                    "title": re.sub(r"^(\d+(\.\d+)*\s+)?", "", match[1]).strip(),
+                    "rule": zh.clean("\n".join(line[2:] for line in quote[0].splitlines()))
+                    if quote
+                    else None,
+                    "table": tables[0][2] if tables else None,
+                    "markdown": markdown,
+                }
+            )
+    return view
+
+
+def _screen_fates(
+    screens: Mapping[str, Any],
+    details: Mapping[str, Any],
+    trials: Mapping[str, Any],
+    questions: list[dict[str, Any]],
+    families: Mapping[str, Any],
+) -> dict[str, Any]:
+    fates = {}
+    for member in screens["members"]:
+        key = str(member["number"])
+        screen_id = f"S{member['number']:04d}"
+        plans = [
+            {k: plan[k] for k in ("trial_id", "verdict", "verdict_name")}
+            for plan in trials["plans"]
+            if screen_id in plan["screens"]
+        ]
+        linked_questions = [
+            {
+                "question_id": q["question_id"],
+                "state": {"closed": "已结题", "error": "记录有问题"}.get(q["status"], "进行中"),
+            }
+            for q in questions
+            if screen_id in q["screens"]
+        ]
+        family_name = families["by_signal"].get(member["signal_id"])
+        family = next(
+            (
+                {"name": row["family"], "status": row["status"]}
+                for row in families["rows"]
+                if row["family"] == family_name
+            ),
+            None,
+        )
+        parts = [f"试跑 {p['trial_id']}：{p['verdict_name']}" for p in plans]
+        parts.extend(f"转 {q['question_id']}（{q['state']}）" for q in linked_questions)
+        if not parts:
+            verdict = details.get(key, {}).get("verdict_now") or member["verdict"]
+            if verdict == "candidate":
+                parts.append("没试跑")
+            if family:
+                parts.append(f"家族「{family['name']}」{family['status']}")
+        fates[key] = {
+            "screen_id": screen_id,
+            "trials": plans,
+            "questions": linked_questions,
+            "family": family,
+            "text": "；".join(parts) or "—",
+        }
+    return fates
 
 
 def collect(repo: Path, *, repo_url: str | None = None) -> dict[str, Any]:
@@ -706,6 +961,25 @@ def collect(repo: Path, *, repo_url: str | None = None) -> dict[str, Any]:
     negative = _text(research / "negative_results.md", problems, "research/negative_results.md")
     screens = _screens(research / "_screens" / "ledger", problems)
     screen_details = _screen_details(repo, screens, names, criteria, screen_current)
+    forward_records = _forward_records(research, problems)
+    forward_ledger = _forward_ledger(research)
+    families = _families(research, screens, problems)
+    charter = _charter(research)
+    screened_plans = [plan for plan in trials["plans"] if plan["screens"]]
+    screened_questions = [question for question in questions if question["screens"]]
+    funnel = {
+        "screened": screens["family_size"],
+        "candidates": screens["counts"]["candidate"],
+        "trials": len(screened_plans),
+        "passed": sum(plan["verdict"] == "pass" for plan in screened_plans),
+        "questions": len(screened_questions),
+        "kept": sum(
+            any(word["word"] == "保留" for word in (q["decision"] or {}).get("words", []))
+            for q in screened_questions
+        ),
+        "forward": forward_records["count"],
+    }
+    screen_fates = _screen_fates(screens, screen_details, trials, questions, families)
     tasks: list[dict[str, Any]] = []
     for path in sorted((repo / "tasks").glob("*.yaml")):
         try:
@@ -770,6 +1044,12 @@ def collect(repo: Path, *, repo_url: str | None = None) -> dict[str, Any]:
         "negative_sections": _negative_sections(negative),
         "screens": screens,
         "screen_details": screen_details,
+        "forward_records": forward_records,
+        "forward_ledger": forward_ledger,
+        "families": families,
+        "charter": charter,
+        "funnel": funnel,
+        "screen_fates": screen_fates,
         "screen_criteria": criteria,
         "bench": bench_view,
         "trials": trials,

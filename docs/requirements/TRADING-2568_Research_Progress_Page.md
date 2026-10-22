@@ -23,6 +23,15 @@ owner_decision:TRADING-2568:2026-10-19:page_rules_and_zh —— owner（Baker）
 
 范围：只改页面怎么写，不改任何研究记录、门槛、判定和设置。每张题卡写清每个策略怎么买、怎么卖、多久调一次仓和通过门槛；信号筛选写清按什么标准淘汰、为什么淘汰了这一个；试跑写清门槛和结果；除专业名词和代码名外用中文。涉及 B 区（`research_site` 包和验收测试）和 A 区（本文档、说明文件 `research/signal_names.yaml`、`research/<题号>/zh.yaml`、`docs/`）；不碰 `prereg.yaml`、`strategy.py`、`config/` 和 `.github/`（C 区）。期望结果见第 5.7 节和 `tests/test_research_site_zh.py`；符合它的改动不再问 owner。
 
+owner_decision:TRADING-2568:2026-10-22:page_relayout —— owner（Baker）2026-10-22 15:12 JST（06:12Z）在「研究流程评审与结果分析」线程的决定卡上作答：
+
+- 卡片问题：「按新主次重排研究进展页吗?」
+- 选择：「按提案重排」
+- 选项后果：「顶部加现状、保险账、前瞻记录、当期题、家族台账五块，路线图改成真实漏斗，信号表加去向列并按候选优先排序，题卡和试跑折叠；Claude 写需求和测试，pi 写代码。」
+- 他 15:10 JST 的原话：「我们现在研究进展的页面上，对于信号展示目前来看主次不太清晰，是否应该把有价值的信息做好排版梳理？」
+
+范围：只改页面读什么、怎么排，不改任何研究记录、读数、门槛和设置。新读的文件都是 main 上已有的 A 区记录：`research/_loop/forward_records.md`、`research/_forward/weekly.md`、`research/families.md`、`research/_loop/charter_p<N>.md`、`research/<题号>/prereg.yaml` 的 `screens`、`research/_trials/T*.yaml` 的 `candidate.screens`。`research/_forward/ledger.jsonl` 不读。
+
 ## 3. 原则
 
 1. 页面只把仓库里已有的研究记录排版出来：不重算结论、不另存一份事实，也不定义新的记录格式。规则、门槛和淘汰理由可以翻译成中文：译文由 `prereg.yaml`、信号规格和设置文件按固定句式生成，或来自作者写在 `research/signal_names.yaml`、`research/<题号>/zh.yaml` 里的说明文字（2026-10-19 起，5.7）；这些说明文件只是展示文字，不进任何运行，不影响结论，也不进 `ship.py` 的检查。
@@ -252,6 +261,136 @@ owner 2026-10-19 的要求（第 2 节）。`SCHEMA_VERSION` 不变；5.2 的键
 
 **不在本步**：思路快筛和判断对账面板（TRADING-2568-04）。`research/README.md` 说明新文件的位置和写法；`docs/system_flow.md` 的"展示"一条加上新读的文件。
 
+### 5.8 运行 06：按主次重排（`research_site.v1` 只加不改）
+
+owner 2026-10-22 的决定（第 2 节）。`SCHEMA_VERSION` 不变；5.2 和 5.7 的键和含义不变，只加键；`screens.members` 的每个成员仍然只有 5.2 的五个键（`test_screens_keep_their_shape_and_follow_the_current_verdict` 断言了键的集合），去向放在顶层 `screen_fates`。原则照第 3 节：页面只排版仓库里已有的记录，新块的每个数都读自某个记录文件；读不到的文件按「没有」处理，不算问题；坏掉的表加一条问题，页面照常生成；同样的仓库内容逐字节相同。
+
+#### 5.8.1 新读的文件和新增的模型键
+
+**前瞻记录** `forward_records`，来源 `research/_loop/forward_records.md`：
+
+```
+{"present": bool, "markdown": str|None,
+ "sections": [{"title": str, "markdown": str, "tables": [str, ...], "prose": str}, ...],
+ "rows": [{"id": str, "written": str, "config": str, "expected": str, "check": str, "section": str}, ...],
+ "count": int, "pending": int}
+```
+
+- `present` = 文件存在；不存在时 `markdown` 为 `None`、`sections` 和 `rows` 为空、`count` 和 `pending` 为 0，不算问题。
+- `sections`：按 `## ` 标题切分，和 `negative_sections` 的切法相同（`title` 是标题文字，`markdown` 是标题下的原文，首尾空行去掉）。`tables` 是这一节里每张管道表的原文（连续的以 `|` 开头的行，按出现顺序，各自首尾不留空行）；`prose` 是这一节去掉所有表格行以后的原文（首尾空行去掉）。
+- `rows`：文件里每一张表头第一格是 `编号` 的表（任何一节都算），表头以下每一行，去掉分隔行（每格都是 `---` 一类）和第一格为空的行：`id` = 第 1 格，`written` = 第 2 格，`config` = 第 3 格，`expected` = 倒数第 2 格，`check` = 最后一格，`section` = 所在节的标题（表在第一个 `## ` 之前时为空字符串）。格少于 5 个的行跳过。两张表的列数不同（慢熊型 7 列、日报模型 7 列但中间几列含义不同），所以只取首尾。
+- `count` = `rows` 的条数；`pending` = `check` 等于 `待核` 的条数。文件存在而 `rows` 为空时顶层 `problems` 加一条，含 `research/_loop/forward_records.md`。
+
+**前瞻账本周汇总** `forward_ledger`，来源 `research/_forward/weekly.md`（`ledger.jsonl` 从不读，页面上没有日收益行）：
+
+```
+{"present": bool, "markdown": str|None, "lead": str,
+ "sections": [{"title": str, "markdown": str}, ...],
+ "days": int|None, "start": str|None, "end": str|None}
+```
+
+- `lead` 是第一个 `## ` 之前的原文，去掉以 `# ` 开头的一级标题行，首尾空行去掉；`sections` 同上面的切法（不要 `tables`、`prose`）。
+- `days`、`start`、`end` 取原文里第一处匹配 `账本 (\d+) 行，(\d{4}-\d{2}-\d{2})\.\.(\d{4}-\d{2}-\d{2})` 的三个组（`days` 转成 `int`）；没有匹配时三项都是 `None`，不算问题。
+- 文件不存在时 `lead` 为空字符串，其余为 `None`、空列表，不算问题。
+
+**家族台账** `families`，来源 `research/families.md`：
+
+```
+{"present": bool, "markdown": str|None, "counter": str|None, "notes": str, "table": str|None,
+ "rows": [{"family","variants","best","price","tags","status","reopen","line"}, ...],
+ "status_counts": {"开放": int, "停车": int, "关闭": int},
+ "by_signal": {信号 id: 家族名, ...}}
+```
+
+- `counter`：原文里第一行以 `距下次横读` 开头的整行（去掉两端空白）；没有为 `None`。
+- `## 家族` 这一节：第一张表头第一格是 `家族` 的表是家族表，`table` 是它的原文；`notes` 是这一节在家族表之前的原文（首尾空行去掉）。没有 `## 家族` 节或节里没有家族表时 `table` 为 `None`、`notes` 为空字符串、`rows` 为空，顶层 `problems` 加一条，含 `research/families.md`（文件不存在时不加）。
+- `rows`：家族表表头以下每一行，去掉分隔行，恰有 8 格的行按顺序取 `family`、`variants`、`best`、`price`、`tags`、`status`、`reopen`、`line`（每格去掉两端空白）；格数不是 8 的行跳过。
+- `status_counts`：各行 `status` 等于三个词之一的计数；别的写法不计。
+- `by_signal`：对每一行，用 `[a-z][a-z0-9_]*` 在 `variants` 格里找出所有记号，和 `screens.members` 的 `signal_id` 相同的记进 `by_signal`，值是 `family`；同一个信号在几行出现时取第一行。
+
+**当期章程** `charter`，来源 `research/_loop/charter_p<N>.md`，取 `N` 最大的那个（`N` 是 `charter_p(\d+)\.md` 的整数）：
+
+```
+{"present": bool, "path": str|None, "period": int|None, "markdown": str|None,
+ "term": str|None, "direction": str|None,
+ "questions": [{"title": str, "rule": str|None, "table": str|None, "markdown": str}, ...]}
+```
+
+- `path` 是仓库内路径（`research/_loop/charter_p4.md`），`period` = `N`。没有这样的文件时 `present` 为假，其余 `None`、空列表，不算问题。
+- `direction`：标题匹配 `^## 第\s*\d+\s*期的方向` 的节里第一段（标题之后第一个非空行起，到下一个空行或下一个标题为止，行按 `\n` 连接后用 `zh.clean`）；没有为 `None`。`term`：标题匹配 `^## 1\.\s*期限` 的节里第一段，同样处理；没有为 `None`。
+- `questions`：第一个标题含 `预注册` 的 `## ` 节里，每个 `### ` 子节一项，按出现顺序。`title` 是 `### ` 之后的文字，去掉开头的编号（`^(\d+(\.\d+)*\s+)?`）；`markdown` 是子节标题行之后到下一个 `### ` 或 `## ` 标题之前的原文（首尾空行去掉）；`rule` 是子节里第一组连续的以 `> ` 开头的行，去掉 `> ` 后按 `\n` 连接再 `zh.clean`，没有为 `None`；`table` 是子节里第一张管道表的原文，没有为 `None`。没有含 `预注册` 的节时 `questions` 为空列表。
+
+**漏斗** `funnel`：
+
+```
+{"screened": int, "candidates": int, "trials": int, "passed": int, "questions": int, "kept": int, "forward": int}
+```
+
+- `screened` = `screens.family_size`；`candidates` = `screens.counts.candidate`（按当前裁决，和信号筛选一节的句子一致）。
+- `trials` = `trials.plans` 里 `screens` 非空的计划数；`passed` = 其中 `verdict` 为 `pass` 的计划数。按 owner 决定写的计划（T0002、T0008 一类）不算，它们不是筛选候选。
+- `questions` = `questions` 里 `screens` 非空的题数（不论状态）；`kept` = 其中 `decision.words` 里有 `保留` 的题数。
+- `forward` = `forward_records.count`。
+- 2026-10-22 main fcdee14a 上应得：17 → 7 → 6 → 1 → 2 → 0，前瞻 5。开题是 2 不是复盘线程提案里写的 1：QQQ-Q2 的预注册写了 `screens: [S0002]`（试跑模式上线以前直接开的题），QQQ-Q4 写了 `[S0013]`。
+
+**去向** `screen_fates`：`{str(编号): {...}}`，对应 `screens.members` 的每个成员（键和 `screen_details` 一样是 `str(number)`）：
+
+```
+{"screen_id": str, "trials": [{"trial_id": str, "verdict": str, "verdict_name": str}, ...],
+ "questions": [{"question_id": str, "state": str}, ...],
+ "family": {"name": str, "status": str}|None, "text": str}
+```
+
+- `screen_id` = `f"S{number:04d}"`。
+- `trials`：`trials.plans` 里 `screens` 含这个 `screen_id` 的计划，按计划顺序；`verdict`、`verdict_name` 照计划的。
+- `questions`：`questions` 里 `screens` 含这个 `screen_id` 的题，按 `question_id` 顺序；`state` 和题卡一样：`closed` 为 `已结题`，`error` 为 `记录有问题`，其余 `进行中`。
+- `family`：`families.by_signal` 里有这个成员的 `signal_id` 时，`name` 是家族名、`status` 是那一行的 `status`；否则 `None`。
+- `text`，按顺序拼：每个试跑一段 `试跑 {trial_id}：{verdict_name}`，每个题一段 `转 {question_id}（{state}）`，用 `；` 连接。一段都没有时：成员当前裁决是 `candidate`（`screen_details` 的 `verdict_now`，没有就用记录的 `verdict`）写 `没试跑`，有家族时再接 `；家族「{name}」{status}`；不是候选时有家族写 `家族「{name}」{status}`，没有写 `—`。
+
+**计划和题各加一个键**：`trials.plans[*]` 加 `"screens": [str, ...]`（`candidate.screens`，没有候选时空列表）；`questions[*]` 加 `"screens": [str, ...]`（预注册的 `screens`，读不出预注册时空列表）。
+
+**Markdown**：`markdown_to_html` 加一种块：连续的以 `> ` 开头的行是引文，输出 `<blockquote><p>…</p></blockquote>`，每行去掉 `> ` 后按 `\n` 连接，行内格式同段落。其余不变。
+
+#### 5.8.2 页面
+
+从上到下的顺序和 `id`（全部文字经 HTML 转义；不加脚本和外部资源；页面上所有 `href="#…"` 都有对应的 `id`）：
+
+1. 头部：标题、`meta`、`sum` 一行、四个结论词的 `legend`、`guide` 都不变。`<nav class="nav">` 改为按顺序链到：`now` 现状、`account` 保险账、`forward` 前瞻记录、`charter` 当期题、`families` 家族台账、`funnel` 漏斗、`screens` 信号筛选、`trials` 试跑、`questions` 研究问题、`board` 结论板、`route` 研究路线、`glossary` 名词解释。
+2. `<section id="problems">` 不变，只在有问题时出现。
+3. `<section id="now"><h2>现状</h2>` 三行 `<p>`，每行以 `<strong>` 开头：
+   - `<strong>结论：</strong>保留 a · 拒绝 b · 证据不足 c · 未测成 d（按子问题计）；筛选 s 个信号 → 候选 c → 试跑 t → 过门 p → 开题 q → 保留 k。` 四个词的数取 `ledger.counts`，后半句取 `funnel`。
+   - `<strong>前瞻：</strong>` 有前瞻记录时 `前瞻记录 n 条，待核 m 条；` 再接 `账本 d 个交易日（start 到 end）；`（`days` 为 `None` 时略去这一句）再接 `下一次核对要等 QQQ 划出一个完整的慢熊段或长牛段。`；没有前瞻记录（`present` 为假或 `count` 为 0）时整行写 `还没有前瞻记录。`
+   - `<strong>这期：</strong>` 有章程时 `第 N 期章程：{term 的第一句}{direction}`，第一句是 `term` 到第一个 `。` 为止（含句号；`term` 为 `None` 时略去）；`direction` 为 `None` 时略去；没有章程时写 `还没有章程。`
+4. `<section id="account"><h2>保险账（前瞻账本）</h2>`：`<p class="lead">每个交易日记三条线的敞口和收益，和同平均敞口的固定敞口比，每周五追加；只描述，不判，核对要等完整的慢熊段或长牛段。</p>`；有文件时先 `markdown_to_html(lead)`，再每一节：前两节 `<h3>标题</h3>` 加 `markdown_to_html(markdown)`，第三节起放进 `<details class="grp"><summary><strong>标题</strong></summary>…</details>`；没有文件时 `<p>还没有前瞻账本：research/_forward/weekly.md</p>`。
+5. `<section id="forward"><h2>前瞻记录</h2>`：`<p class="lead">写在核对之前、写下以后不改的预期；到期核对时在「核对」列追加结果。不计数、不进验证、不进组合。</p>`；有文件时 `<p>共 n 条，待核 m 条。</p>`，再每一节 `<h3>标题</h3>`、这一节的每张表 `markdown_to_html(表)`、有 `prose` 时 `<details class="grp"><summary>说明</summary>markdown_to_html(prose)</details>`；没有文件时 `<p>还没有前瞻记录：research/_loop/forward_records.md</p>`。
+6. `<section id="charter"><h2>当期题</h2>`：有章程时 `<p class="lead">第 N 期章程预注册的题：规则、预期和判法都在跑之前写下，读完填实际和对错。</p>`，每题一张 `<article class="card">`：`<h3>title</h3>`，有 `rule` 时 `<p class="verdict-rule"><strong>规则：</strong>rule</p>`，有 `table` 时 `markdown_to_html(table)`，再 `<details><summary>全文（预期、判法、失败淘汰什么）</summary>markdown_to_html(markdown)</details>`；`questions` 为空时 `<p>这期章程没有预注册的题。</p>`；`repo_url` 和 `source.commit` 都有时最后一行 `<p><a href="{repo_url}/blob/{commit}/{path}">charter_pN.md</a></p>`；没有章程时 `<p>还没有章程：research/_loop/charter_pN.md</p>`。
+7. `<section id="families"><h2>家族台账</h2>`：`<p class="lead">按机制家族累计失败：家族价和状态按台账里写下的规则机械算出，关闭的家族再开题必须写新机制。</p>`；有文件时：有 `counter` 时 `<p>counter</p>`；有 `rows` 时 `<p>开放 a · 停车 b · 关闭 c</p>` 和 `markdown_to_html(table)`；有 `notes` 时 `<details class="grp"><summary>家族价和状态怎么算</summary>markdown_to_html(notes)</details>`；没有文件时 `<p>还没有家族台账：research/families.md</p>`。
+8. `<section id="funnel"><h2>漏斗</h2>`：`<p class="lead">从筛选到可信的结论，每一格都读自仓库里的记录。</p>`，`<div class="funnel">` 里六格，格之间 `<span class="fa">→</span>`，每格 `<a href="#目标"><span class="big">数</span><span class="m">名</span></a>`，依次是 已筛信号（`#screens`）、候选（`#screens`）、试跑（`#trials`）、过门（`#trials`）、开题（`#questions`）、保留（`#board`）；下面 `<p class="m">另一条线：前瞻记录 n 条，不计数、只核对，见「前瞻记录」。</p>`。样式表里已有 `.funnel`、`.funnel .big`、`.funnel .fa`。
+9. `<section id="screens">` 信号筛选：已筛一句话不变；`<div class="criteria">` 的内容不变，整个放进 `<details class="grp"><summary><strong>筛选标准</strong></summary>…</details>`；成员表表头改为 `信号 / 裁决 / 去向 / 主市场 p（未校正） / 记录条数 / 依据`，去向格按 `screen_fates[编号].text` 的拼法，但试跑编号写成 `<a href="#trial-T0004">T0004</a>`、题号写成 `<a href="#q-QQQ-Q4">QQQ-Q4</a>`（有对应 `id` 时才加链接；没有时写纯文字），家族那段纯文字；行按 当前裁决 `candidate` → `inconclusive` → `eliminated` → 其他，同裁决按编号升序。
+10. `<section id="trials">` 试跑：说明、累计试验一行不变；试跑门槛的 `<div class="criteria">` 内容不变（含 `<h3>试跑门槛</h3>`），整个放进 `<details class="grp"><summary><strong>门槛</strong></summary>…</details>`；每份计划的 `<article class="card plan" id="trial-…">` 内容不变，整个放进 `<details class="grp"><summary>编号 · 信号名（或 配置 主配置）· 裁决徽章</summary>…</details>`。
+11. `<section id="questions">` 研究问题：`lead` 不变；排序不变（进行中在前）；每张 `<article class="card" id="q-…">` 内容不变，整个放进 `<details class="grp"><summary>题号 · 中文标题（没有时英文题目，超过 80 字截断加 …）· 状态</summary>…</details>`，进行中和记录有问题的题 `<details … open>`，已结题的不 `open`。
+12. `<section id="board">`、`<section id="negative">` 不变。
+13. `<section id="route">` 研究路线：标记不变（三条入口、研究问题、结论板、负结果清单，含 `quick`、`judgment` 的 idle 节点和「J4 上线后启用」「J3 上线后启用」），只是位置移到这里。
+14. `<section id="quick">`、`<section id="judgment">`、`<section id="work">`、`<section id="glossary">` 不变。
+
+样式：只用已有的类；新块不需要新规则。`.now p` 一类的小补充可以加在样式表末尾，不改已有规则。
+
+#### 5.8.3 对已有测试的改动（只这两处）
+
+`tests/test_research_site_zh.py`：
+
+- `test_every_in_page_link_has_a_target`：`nav` 的期望列表改为 `[("now", "现状"), ("account", "保险账"), ("forward", "前瞻记录"), ("charter", "当期题"), ("families", "家族台账"), ("funnel", "漏斗"), ("screens", "信号筛选"), ("trials", "试跑"), ("questions", "研究问题"), ("board", "结论板"), ("route", "研究路线"), ("glossary", "名词解释")]`。
+- `test_screens_table_names_signals_and_gives_the_reasons`：`headers` 的期望改为 `["信号", "裁决", "去向", "主市场 p（未校正）", "记录条数", "依据"]`。
+
+其余断言原样全过（题卡、试跑卡的 `_block` 按 `id` 取，折叠不影响；`<div class="criteria">` 里的文字不变）。`tests/test_research_site.py` 一字不改，全过（路线图的节点和占位节都还在）。
+
+#### 5.8.4 不在本步
+
+思路快筛和判断对账面板（运行 04）照旧；前瞻账本的图（续期卡后定）；记分表第 1、3 节的逐行读数不上页（文件太长、还在变），只在家族台账和当期题里引。
+
+#### 5.8.5 任务卡和说明文件
+
+`tasks/TRADING-2568_RESEARCH_PROGRESS_PAGE.yaml`：`status` 仍是 `BASELINE_DONE`，`next_step` 开头加「运行 06（按主次重排）随本提交发布到 main；」（提交里写不进它自己发布后的 sha，真实 sha 由下一批研究记录补），其余不动。`research/README.md` 在研究进展页那一行加上新读的四个文件；`docs/system_flow.md` 的「展示」一条同样加上。
+
 ## 6. 步骤
 
 | 运行 | 区 | 内容 | 验收 |
@@ -260,6 +399,7 @@ owner 2026-10-19 的要求（第 2 节）。`SCHEMA_VERSION` 不变；5.2 的键
 | TRADING-2568-02 | C | `.github/workflows/research-site.yml`，trailer 引本决定 | owner 按 tree 批准；发布后 workflow 成功，页面地址可打开 |
 | TRADING-2568-03 | A、B | 2026-10-19 owner 的要求（第 2 节、5.7）：`research_site/zh.py`、`collect.py` 和 `render.py` 的改动、样式、`tests/test_research_site_zh.py`（Claude 写）、说明文件 `research/signal_names.yaml` 和 `research/QQQ-Q1..Q4/zh.yaml`（Claude 写）、`research/_template/zh.yaml`、`research/README.md`、`docs/system_flow.md`、本文档 | 验收测试 `test_research_site_zh.py` 和 `test_research_site.py` 全过；`ruff`、`mypy --strict` 干净；`ship.py --dry-run` 为 zone B；发布后 Pages 重建，真实页面里能看到每个策略的买卖规则、淘汰标准和试跑 |
 | TRADING-2568-04（待写） | B | 接 TRADING-2569 的快筛面板和判断对账面板（公开页只放状态、样本进度、还差几个事件和最小可检出效应） | 等 TRADING-2569 J3、J4 的记录出现再写需求和测试 |
+| TRADING-2568-06 | A、B | 2026-10-22 owner 的决定（第 2 节、5.8）：`collect.py`、`render.py`、`markdown.py` 的改动、`tests/test_research_site_layout.py`（Claude 写）、`tests/test_research_site_zh.py` 的两处断言（5.8.3）、`research/README.md` 和 `docs/system_flow.md` 加上新读的文件、本文档 | `test_research_site_layout.py`、`test_research_site_zh.py`、`test_research_site.py` 全过；`ruff`、`mypy --strict` 干净；`ship.py --dry-run` 为 zone B；发布后 Pages 重建，真实页面顶部是现状、保险账、前瞻记录、当期题、家族台账，信号表有去向列 |
 
 ## 7. 进展
 
@@ -269,3 +409,4 @@ owner 2026-10-19 的要求（第 2 节）。`SCHEMA_VERSION` 不变；5.2 的键
 - 2026-10-15：运行 01（页面生成器）已发布；运行 02 加 GitHub Pages workflow，按 tree 批准。
 - 2026-10-19：owner 要页面把策略的买入、卖出、调仓规则和淘汰标准写具体、用中文（第 2 节）。运行 03 写成需求（5.7）和验收测试；原来的运行 03 内容（快筛、判断对账面板）顺延为运行 04。核对时发现页面写的累计试验漏了试跑配置（27 → 50），一并改正。
 - 2026-10-20：运行 03 发布到 main 12af29a9（pi 写代码，门禁整套 5142 条过），线上页面核对过：页面含「策略怎么买卖」「怎么筛、凭什么淘汰」，累计试验 55（题目 32 + 试跑 23）。pi 的实现和 Claude 的参考实现在同一份仓库内容上逐项对照，只有不拦发布的差别：多信号符号打分的情形表写「3/4 个信号有利」（需求写的是“有利信号的个数”）；秩相关写三位小数；情形表没有用 `narrow` 样式类（样式表里有这条规则，页面上两列小表在桌面宽度下占满行宽）。以后动这些句子要连测试一起改。任务卡改为 BASELINE_DONE，剩运行 04。
+- 2026-10-22：owner 看了页面说信号展示主次不清（第 2 节），在卡上选「按提案重排」。运行 06 写成需求（5.8）和验收测试 `tests/test_research_site_layout.py`；现有两份测试只改 5.8.3 的两处断言。核对时发现提案里的「开题 1」应是 2（QQQ-Q2 也由筛选候选 S0002 开题）。

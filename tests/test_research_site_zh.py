@@ -2263,11 +2263,17 @@ def test_every_in_page_link_has_a_target(repo: Path) -> None:
     nav = re.search(r'<nav class="nav">(.*?)</nav>', page, re.S)
     assert nav is not None
     assert re.findall(r'href="#(\w+)">([^<]+)<', nav.group(1)) == [
-        ("route", "研究路线"),
-        ("questions", "研究问题"),
-        ("board", "结论板"),
+        ("now", "现状"),
+        ("account", "保险账"),
+        ("forward", "前瞻记录"),
+        ("charter", "当期题"),
+        ("families", "家族台账"),
+        ("funnel", "漏斗"),
         ("screens", "信号筛选"),
         ("trials", "试跑"),
+        ("questions", "研究问题"),
+        ("board", "结论板"),
+        ("route", "研究路线"),
         ("glossary", "名词解释"),
     ]
 
@@ -2407,7 +2413,7 @@ def test_screens_table_names_signals_and_gives_the_reasons(repo: Path) -> None:
     section = _block(render(collect(repo)), "screens")
     assert "已筛 3 个信号（共 4 条记录）：淘汰 1 · 证据不足 1 · 候选 1" in section
     headers = re.findall(r"<th>([^<]*)</th>", section)
-    assert headers == ["信号", "裁决", "主市场 p（未校正）", "记录条数", "依据"]
+    assert headers == ["信号", "裁决", "去向", "主市场 p（未校正）", "记录条数", "依据"]
     assert (
         '<span class="sigcell"><strong>快线（21 日）</strong><span class="m">fast</span>'
         '<span class="m">预期：信号越高，之后收益越高</span></span>'

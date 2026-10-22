@@ -368,17 +368,28 @@ def _trials(trials: Mapping[str, Any]) -> str:
         f"+ 试跑配置 {_e(trials['trial_configs'])}</p>"
     )
     if trials.get("gate"):
-        out.append('<div class="criteria"><h3>试跑门槛</h3>')
+        out.append(
+            '<details class="grp"><summary><strong>门槛</strong></summary>'
+            '<div class="criteria"><h3>试跑门槛</h3>'
+        )
         for market in trials["gate"]["markets"]:
             out.append("<p><strong>" + _e(market["name"]) + '</strong></p><ul class="plain">')
             out.extend("<li>" + _e(rule["text"]) + "</li>" for rule in market["rules"])
             out.append("</ul>")
-        out.append('<p class="m">对照：平均仓位相同的固定仓位。</p></div>')
+        out.append('<p class="m">对照：平均仓位相同的固定仓位。</p></div></details>')
     for plan in trials.get("plans", []):
         name = "、".join(s["name"] for s in plan["signals"]) or "配置 " + plan["primary"]
         kind = {"pass": "pass", "fail": "miss"}.get(plan["verdict"], "unk")
         out.append(
-            f'<article class="card plan" id="trial-{_e(plan["trial_id"], quote=True)}">'
+            '<details class="grp"><summary>'
+            + _e(plan["trial_id"])
+            + " · "
+            + _e(name)
+            + " · "
+            + f'<span class="b {kind}">'
+            + _e(plan["verdict_name"])
+            + "</span></summary>"
+            + f'<article class="card plan" id="trial-{_e(plan["trial_id"], quote=True)}">'
             '<div class="card-h"><h3>'
             + _e(plan["trial_id"])
             + ' <span class="m">'
@@ -420,7 +431,7 @@ def _trials(trials: Mapping[str, Any]) -> str:
                 + "</p>"
             )
             out.append(_gate(market["rules"], measured=True))
-        out.append("</article>")
+        out.append("</article></details>")
     return "".join(out) + "</section>"
 
 
@@ -517,7 +528,15 @@ def _card(question: Mapping[str, Any]) -> str:
     title = text_zh["title"] if text_zh else question["question"]
     short = title[:80] + "…" if title and len(title) > 80 else title
     state = {"closed": "已结题", "error": "记录有问题"}.get(question["status"], "进行中")
+    opened = " open" if question["status"] != "closed" else ""
     out = [
+        f'<details class="grp"{opened}><summary>'
+        + _e(question["question_id"])
+        + " · "
+        + _e(short)
+        + " · "
+        + _e(state)
+        + "</summary>",
         f'<article class="card" id="q-{_e(question["question_id"], quote=True)}">',
         f'<div class="card-h"><div><h3>{_e(question["question_id"])} '
         f'<span class="m">{_e(short)}</span></h3>',
@@ -700,7 +719,7 @@ def _card(question: Mapping[str, Any]) -> str:
             filename = "prereg.yaml" if name == "prereg" else "decision.md"
             out.append(f'<p><a href="{_e(url, quote=True)}">{filename}</a></p>')
     out.extend(f'<p class="m">{_e(problem)}</p>' for problem in question["problems"])
-    return "".join(out) + "</article>"
+    return "".join(out) + "</article></details>"
 
 
 def _board(ledger: Mapping[str, Any]) -> str:
@@ -787,6 +806,226 @@ def _route(model: Mapping[str, Any]) -> str:
     )
 
 
+def _now(model: Mapping[str, Any]) -> str:
+    funnel, records = model["funnel"], model["forward_records"]
+    ledger, charter = model["forward_ledger"], model["charter"]
+    conclusion = " · ".join(f"{word} {model['ledger']['counts'][word]}" for word in WORDS)
+    conclusion += (
+        f"（按子问题计）；筛选 {funnel['screened']} 个信号 → 候选 {funnel['candidates']}"
+        f" → 试跑 {funnel['trials']} → 过门 {funnel['passed']}"
+        f" → 开题 {funnel['questions']} → 保留 {funnel['kept']}。"
+    )
+    forward = "还没有前瞻记录。"
+    if records["present"] and records["count"]:
+        forward = f"前瞻记录 {records['count']} 条，待核 {records['pending']} 条；"
+        if ledger["days"] is not None:
+            forward += f"账本 {ledger['days']} 个交易日（{ledger['start']} 到 {ledger['end']}）；"
+        forward += "下一次核对要等 QQQ 划出一个完整的慢熊段或长牛段。"
+    term = charter["term"] or ""
+    if "。" in term:
+        term = term.split("。", 1)[0] + "。"
+    period = (
+        f"第 {charter['period']} 期章程：{term}{charter['direction'] or ''}"
+        if charter["present"]
+        else "还没有章程。"
+    )
+    return (
+        '<section id="now"><h2>现状</h2>'
+        + "".join(
+            "<p><strong>" + label + "：</strong>" + _e(text) + "</p>"
+            for label, text in (("结论", conclusion), ("前瞻", forward), ("这期", period))
+        )
+        + "</section>"
+    )
+
+
+def _account(ledger: Mapping[str, Any]) -> str:
+    out = [
+        '<section id="account"><h2>保险账（前瞻账本）</h2><p class="lead">'
+        "每个交易日记三条线的敞口和收益，和同平均敞口的固定敞口比，每周五追加；"
+        "只描述，不判，核对要等完整的慢熊段或长牛段。</p>"
+    ]
+    if not ledger["present"]:
+        out.append("<p>还没有前瞻账本：research/_forward/weekly.md</p>")
+    else:
+        out.append(markdown_to_html(ledger["lead"]))
+        for index, section in enumerate(ledger["sections"]):
+            if index < 2:
+                out.append("<h3>" + _e(section["title"]) + "</h3>")
+            else:
+                out.append(
+                    '<details class="grp"><summary><strong>'
+                    + _e(section["title"])
+                    + "</strong></summary>"
+                )
+            out.append(markdown_to_html(section["markdown"]))
+            if index >= 2:
+                out.append("</details>")
+    return "".join(out) + "</section>"
+
+
+def _forward(records: Mapping[str, Any]) -> str:
+    out = [
+        '<section id="forward"><h2>前瞻记录</h2><p class="lead">'
+        "写在核对之前、写下以后不改的预期；到期核对时在「核对」列追加结果。"
+        "不计数、不进验证、不进组合。</p>"
+    ]
+    if not records["present"]:
+        out.append("<p>还没有前瞻记录：research/_loop/forward_records.md</p>")
+    else:
+        out.append(f"<p>共 {_e(records['count'])} 条，待核 {_e(records['pending'])} 条。</p>")
+        for section in records["sections"]:
+            out.append("<h3>" + _e(section["title"]) + "</h3>")
+            out.extend(markdown_to_html(table) for table in section["tables"])
+            if section["prose"]:
+                out.append(
+                    '<details class="grp"><summary>说明</summary>'
+                    + markdown_to_html(section["prose"])
+                    + "</details>"
+                )
+    return "".join(out) + "</section>"
+
+
+def _charter(charter: Mapping[str, Any], source: Mapping[str, Any]) -> str:
+    out = ['<section id="charter"><h2>当期题</h2>']
+    if not charter["present"]:
+        return "".join(out) + "<p>还没有章程：research/_loop/charter_pN.md</p></section>"
+    out.append(
+        f'<p class="lead">第 {_e(charter["period"])} 期章程预注册的题：'
+        "规则、预期和判法都在跑之前写下，读完填实际和对错。</p>"
+    )
+    for question in charter["questions"]:
+        out.append('<article class="card"><h3>' + _e(question["title"]) + "</h3>")
+        if question["rule"]:
+            out.append(
+                '<p class="verdict-rule"><strong>规则：</strong>' + _e(question["rule"]) + "</p>"
+            )
+        if question["table"]:
+            out.append(markdown_to_html(question["table"]))
+        out.append(
+            "<details><summary>全文（预期、判法、失败淘汰什么）</summary>"
+            + markdown_to_html(question["markdown"])
+            + "</details></article>"
+        )
+    if not charter["questions"]:
+        out.append("<p>这期章程没有预注册的题。</p>")
+    if source["repo_url"] and source["commit"]:
+        url = f"{source['repo_url']}/blob/{source['commit']}/{charter['path']}"
+        out.append(
+            f'<p><a href="{_e(url, quote=True)}">charter_p{_e(charter["period"])}.md</a></p>'
+        )
+    return "".join(out) + "</section>"
+
+
+def _families(families: Mapping[str, Any]) -> str:
+    out = [
+        '<section id="families"><h2>家族台账</h2><p class="lead">'
+        "按机制家族累计失败：家族价和状态按台账里写下的规则机械算出，"
+        "关闭的家族再开题必须写新机制。</p>"
+    ]
+    if not families["present"]:
+        out.append("<p>还没有家族台账：research/families.md</p>")
+    else:
+        if families["counter"]:
+            out.append("<p>" + _e(families["counter"]) + "</p>")
+        if families["rows"]:
+            out.append(
+                "<p>"
+                + " · ".join(
+                    f"{status} {_e(families['status_counts'][status])}"
+                    for status in ("开放", "停车", "关闭")
+                )
+                + "</p>"
+            )
+            out.append(markdown_to_html(families["table"]))
+        if families["notes"]:
+            out.append(
+                '<details class="grp"><summary>家族价和状态怎么算</summary>'
+                + markdown_to_html(families["notes"])
+                + "</details>"
+            )
+    return "".join(out) + "</section>"
+
+
+def _funnel(funnel: Mapping[str, Any]) -> str:
+    cells = [
+        f'<a href="#{target}"><span class="big">{_e(funnel[key])}</span>'
+        f'<span class="m">{label}</span></a>'
+        for target, key, label in (
+            ("screens", "screened", "已筛信号"),
+            ("screens", "candidates", "候选"),
+            ("trials", "trials", "试跑"),
+            ("trials", "passed", "过门"),
+            ("questions", "questions", "开题"),
+            ("board", "kept", "保留"),
+        )
+    ]
+    return (
+        '<section id="funnel"><h2>漏斗</h2>'
+        '<p class="lead">从筛选到可信的结论，每一格都读自仓库里的记录。</p>'
+        '<div class="funnel">' + '<span class="fa">→</span>'.join(cells) + "</div>"
+        f'<p class="m">另一条线：前瞻记录 {_e(funnel["forward"])} 条，'
+        "不计数、只核对，见「前瞻记录」。</p></section>"
+    )
+
+
+def _fate(fate: Mapping[str, Any], model: Mapping[str, Any]) -> str:
+    plans = {plan["trial_id"] for plan in model["trials"]["plans"]}
+    questions = {q["question_id"] for q in model["questions"]}
+
+    def link(value: str, prefix: str, targets: set[str]) -> str:
+        return (
+            f'<a href="#{prefix}{_e(value, quote=True)}">{_e(value)}</a>'
+            if value in targets
+            else _e(value)
+        )
+
+    parts = [
+        "试跑 " + link(p["trial_id"], "trial-", plans) + "：" + _e(p["verdict_name"])
+        for p in fate["trials"]
+    ]
+    parts.extend(
+        "转 " + link(q["question_id"], "q-", questions) + "（" + _e(q["state"]) + "）"
+        for q in fate["questions"]
+    )
+    return "；".join(parts) if parts else _e(fate["text"])
+
+
+def _questions(questions: Sequence[Mapping[str, Any]]) -> str:
+    out = [
+        '<section id="questions"><h2>研究问题</h2><p class="lead">'
+        "每张题卡先看一句话问题和「怎么判」，再看策略怎么买卖、通过门槛和验证期结果。</p>"
+    ]
+    out.extend(
+        _card(question)
+        for question in sorted(questions, key=lambda q: (q["status"] == "closed", q["question_id"]))
+    )
+    if not questions:
+        out.append("<p>还没有研究题。</p>")
+    return "".join(out) + "</section>"
+
+
+def _negative(model: Mapping[str, Any]) -> str:
+    out = [
+        '<section id="negative"><h2>负结果清单</h2><p class="lead">'
+        "每个研究 brief 和每个新想法开题之前必读。只由你审过之后更新，agent 只能提议。</p>"
+    ]
+    if model["negative_sections"]:
+        for section in model["negative_sections"]:
+            out.append(
+                '<details class="grp"><summary><strong>'
+                + _e(section["title"])
+                + "</strong></summary>"
+                + markdown_to_html(section["markdown"])
+                + "</details>"
+            )
+    elif model["negative_results"] is not None:
+        out.append(markdown_to_html(model["negative_results"]))
+    else:
+        out.append("<p>没有找到 research/negative_results.md。</p>")
+    return "".join(out) + "</section>"
+
+
 def render(model: Mapping[str, Any]) -> str:
     """Render collected facts, escaping all repository text."""
     source, summary = model["source"], model["summary"]
@@ -821,11 +1060,17 @@ def render(model: Mapping[str, Any]) -> str:
         + "".join(
             f'<a href="#{target}">{label}</a>'
             for target, label in (
-                ("route", "研究路线"),
-                ("questions", "研究问题"),
-                ("board", "结论板"),
+                ("now", "现状"),
+                ("account", "保险账"),
+                ("forward", "前瞻记录"),
+                ("charter", "当期题"),
+                ("families", "家族台账"),
+                ("funnel", "漏斗"),
                 ("screens", "信号筛选"),
                 ("trials", "试跑"),
+                ("questions", "研究问题"),
+                ("board", "结论板"),
+                ("route", "研究路线"),
                 ("glossary", "名词解释"),
             )
         )
@@ -837,37 +1082,15 @@ def render(model: Mapping[str, Any]) -> str:
         out.append("</ul></section>")
     out.extend(
         (
-            _route(model),
-            '<section id="questions"><h2>研究问题</h2><p class="lead">'
-            "每张题卡先看一句话问题和「怎么判」，再看策略怎么买卖、通过门槛和验证期结果。</p>",
+            _now(model),
+            _account(model["forward_ledger"]),
+            _forward(model["forward_records"]),
+            _charter(model["charter"], source),
+            _families(model["families"]),
+            _funnel(model["funnel"]),
+            '<section id="screens"><h2>信号筛选</h2>',
         )
     )
-    questions = sorted(
-        model["questions"],
-        key=lambda question: (question["status"] == "closed", question["question_id"]),
-    )
-    out.extend(_card(question) for question in questions)
-    if not questions:
-        out.append("<p>还没有研究题。</p>")
-    out.extend(("</section>", _board(model["ledger"])))
-    out.append(
-        '<section id="negative"><h2>负结果清单</h2><p class="lead">'
-        "每个研究 brief 和每个新想法开题之前必读。只由你审过之后更新，agent 只能提议。</p>"
-    )
-    if model["negative_sections"]:
-        for section in model["negative_sections"]:
-            out.append(
-                '<details class="grp"><summary><strong>'
-                + _e(section["title"])
-                + "</strong></summary>"
-                + markdown_to_html(section["markdown"])
-                + "</details>"
-            )
-    elif model["negative_results"] is not None:
-        out.append(markdown_to_html(model["negative_results"]))
-    else:
-        out.append("<p>没有找到 research/negative_results.md。</p>")
-    out.append('</section><section id="screens"><h2>信号筛选</h2>')
     screens = model["screens"]
     if not screens["present"]:
         out.append('<p class="m">S4b 上线后启用</p>')
@@ -880,15 +1103,29 @@ def render(model: Mapping[str, Any]) -> str:
             f"候选 {_e(counts['candidate'])}</p>"
         )
         if model.get("screen_criteria"):
-            out.append(_criteria(model["screen_criteria"], model.get("screen_details", {})))
+            out.append(
+                '<details class="grp"><summary><strong>筛选标准</strong></summary>'
+                + _criteria(model["screen_criteria"], model.get("screen_details", {}))
+                + "</details>"
+            )
         badges = {
             "candidate": ("cand", "候选"),
             "eliminated": ("out", "淘汰"),
             "inconclusive": ("unk", "证据不足"),
         }
         rows = []
-        for member in screens["members"]:
-            detail = model.get("screen_details", {}).get(str(member["number"]), {})
+        details = model.get("screen_details", {})
+        members = sorted(
+            screens["members"],
+            key=lambda m: (
+                {"candidate": 0, "inconclusive": 1, "eliminated": 2}.get(
+                    details.get(str(m["number"]), {}).get("verdict_now") or m["verdict"], 3
+                ),
+                m["number"],
+            ),
+        )
+        for member in members:
+            detail = details.get(str(member["number"]), {})
             verdict = detail.get("verdict_now") or member["verdict"]
             kind, label = badges.get(verdict, ("low", verdict))
             signal = (
@@ -917,15 +1154,20 @@ def render(model: Mapping[str, Any]) -> str:
                 (
                     signal,
                     f'<span class="b {kind}">{_e(label)}</span>',
+                    _fate(model["screen_fates"][str(member["number"])], model),
                     _number(member["primary_p_value"], "p"),
                     _e(member["records"]),
                     reasons,
                 )
             )
-        out.append(_table(("信号", "裁决", "主市场 p（未校正）", "记录条数", "依据"), rows))
+        out.append(_table(("信号", "裁决", "去向", "主市场 p（未校正）", "记录条数", "依据"), rows))
     out.extend(
         (
             "</section>" + _trials(model.get("trials", {})),
+            _questions(model["questions"]),
+            _board(model["ledger"]),
+            _negative(model),
+            _route(model),
             '<section id="quick" class="sec-idle"><h2>思路快筛</h2>'
             '<p class="m">TRADING-2569 J4 上线后启用</p></section>',
             '<section id="judgment" class="sec-idle"><h2>判断对账</h2>'

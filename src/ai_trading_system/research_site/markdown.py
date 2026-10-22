@@ -23,7 +23,7 @@ def _inline(text: str) -> str:
 
 
 def markdown_to_html(text: str) -> str:
-    """Render only headings, lists, pipe tables, paragraphs, code and bold."""
+    """Render headings, lists, tables, quotes, paragraphs, code and bold."""
     lines = text.splitlines()
     blocks: list[str] = []
     index = 0
@@ -57,6 +57,12 @@ def markdown_to_html(text: str) -> str:
                 index += 1
             table.append("</tbody></table></div>")
             blocks.append("".join(table))
+        elif line.startswith("> "):
+            quote = []
+            while index < len(lines) and lines[index].startswith("> "):
+                quote.append(lines[index][2:])
+                index += 1
+            blocks.append(f"<blockquote><p>{_inline(chr(10).join(quote))}</p></blockquote>")
         elif line.startswith("- "):
             items = ["<ul>"]
             while index < len(lines) and lines[index].startswith("- "):
@@ -70,7 +76,7 @@ def markdown_to_html(text: str) -> str:
             while (
                 index < len(lines)
                 and lines[index].strip()
-                and not lines[index].startswith(("|", "- "))
+                and not lines[index].startswith(("|", "- ", "> "))
                 and not re.match(r"^#{1,4} ", lines[index])
             ):
                 paragraph.append(lines[index])

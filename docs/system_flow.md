@@ -126,7 +126,9 @@ flowchart LR
   `decision.md`、台账、负结果清单、筛选账和研究任务卡）生成一个静态页面，不重算、不另存事实。每个策略的买入、卖出和调仓规则、
   每个信号的淘汰理由和试验次数，都是从预注册、信号规格、`research_screen.yaml`、`research_bench` 设置和试跑记录里按固定
   规则翻译成中文；中文名和中文摘要另读 `research/signal_names.yaml` 和 `research/<问题ID>/zh.yaml`（只管显示，和预注册有出入以
-  预注册为准）。页面不进门禁，生成失败不挡发布。
+  预注册为准）。运行 06 起页面顶部的现状、保险账、前瞻记录、当期题和家族台账另读 `research/_loop/forward_records.md`、
+  `research/_forward/weekly.md`、`research/families.md` 和编号最大的 `research/_loop/charter_p<N>.md`
+  （`research/_forward/ledger.jsonl` 不读，页面上没有日收益行）。页面不进门禁，生成失败不挡发布。
   main 上研究记录、任务卡、需求文档或这两个包更新后，`.github/workflows/research-site.yml` 在 GitHub Actions 上重建页面并发布到 GitHub Pages。
 - 验证 PASS 不代表候选有效、可进入 paper shadow 或获准用于 production/broker。
 
