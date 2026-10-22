@@ -2244,6 +2244,14 @@ flush/fsync 的 temp 上重试；其他错误立即失败，预算耗尽仍保�
 `ATOMIC_ARTIFACT_WRITE_FAILED`。external-request cache 删除外层重复 retry，因此总等待预算不叠加，
 cache bytes/path/schema、singleflight lease/fencing、owner-failure policy、DQ 与 provider 解释均不变。
 
+DATA-028（`owner_decision:DATA-028:2026-10-22:cache_failure_recovery`）修正上面 OPS-065 的 owner-failure 和 FRED 解析失败两处：
+lease 的 `FAILED` 终态只在 `waiter_timeout_seconds`（135 秒）内挡住同一 causal state 的 acquire，窗口过去后新的运行按 `ACQUIRED` 取新 lease
+（generation 加 1，hash 链延续）；`allow_waiter_retry_after_owner_failure` 仍为 false，策略文件和 `policy_version` 不变。以前这个标记不会过期，
+到期条目的一次联网失败会让之后每次运行都被 `OWNER_FAILURE_RETRY_DISABLED` 拒绝而不发请求。`FredRateProvider` 在响应解析失败（`csv_parse`、`schema`）时
+用已有的显式失效（actor `fred_rate_provider`，reference `DATA-028`）作废刚读到的 generation（body checksum 与当前 generation 一致才作废，作废失败不掩盖原错误），
+下一次调用重新联网，不再反复读到同一份坏响应。起因是 2026-10-22 12:00 JST 新入口第二个生产日（as_of 2026-10-21）：
+官方政策源被前一天的失败标记拒绝，FRED DGS2 的 898 字节非 CSV 响应被缓存后第二次尝试又读到它。
+
 ENG-VAL-010 为失败 formal Full 跨 clean worktree 的合法复验增加显式可移植导入，而不改写历史
 evidence。先把原 `test_runtime_summary.json` 与 fixed sibling `test_runtime_profile.json` 同字节放入
 当前 repository root 的 `outputs/validation_runtime/<run_id>/`，再执行

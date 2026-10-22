@@ -326,6 +326,9 @@ class ExternalRequestRevalidationCoordinator:
                 and head["state"] == "FAILED"
                 and head["causal_probe"]["causal_fingerprint"] == causal_probe.causal_fingerprint
                 and not self.policy.allow_waiter_retry_after_owner_failure
+                and instant
+                < _required_datetime(head, "occurred_at")
+                + timedelta(seconds=self.policy.waiter_timeout_seconds)
             ):
                 return RevalidationLeaseAcquisition(
                     status="OWNER_FAILURE_BLOCKED",

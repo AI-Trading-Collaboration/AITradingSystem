@@ -19,6 +19,7 @@ from ai_trading_system.external_request_cache import (
     CachedHttpResponse,
     cached_requests_get,
     default_external_request_cache_dir,
+    invalidate_external_request_cache,
     lookup_external_request_cache,
     record_external_request_cache_event,
     sanitize_diagnostic_text,
@@ -715,6 +716,7 @@ class FredRateProvider:
             )
             return self._parse_fred_response(
                 response=response,
+                request_cache_dir=request_cache_dir,
                 params=params,
                 series_id=series_id,
                 rows_before_failure=rows_before_failure,
@@ -723,6 +725,7 @@ class FredRateProvider:
         cached_params, cached_response = cached
         base_frame = self._parse_fred_response(
             response=cached_response,
+            request_cache_dir=request_cache_dir,
             params=cached_params,
             series_id=series_id,
             rows_before_failure=rows_before_failure,
@@ -754,6 +757,7 @@ class FredRateProvider:
             )
             tail_frame = self._parse_fred_response(
                 response=tail_response,
+                request_cache_dir=request_cache_dir,
                 params=tail_params,
                 series_id=series_id,
                 rows_before_failure=rows_before_failure,
@@ -828,6 +832,7 @@ class FredRateProvider:
         params: dict[str, str],
         series_id: str,
         rows_before_failure: int,
+        request_cache_dir: Path | str | None,
     ) -> pd.DataFrame:
         if not response.ok:
             diagnostic = _fred_diagnostic(
@@ -859,6 +864,12 @@ class FredRateProvider:
                 response=response,
                 exception=exc,
             )
+            self._invalidate_unusable_response(
+                response=response,
+                params=params,
+                request_cache_dir=request_cache_dir,
+                stage="csv_parse",
+            )
             raise ProviderDownloadError(
                 f"FRED response for {series_id} could not be parsed as CSV",
                 diagnostic,
@@ -874,11 +885,58 @@ class FredRateProvider:
                 row_count_before_failure=rows_before_failure,
                 response=response,
             )
+            self._invalidate_unusable_response(
+                response=response,
+                params=params,
+                request_cache_dir=request_cache_dir,
+                stage="schema",
+            )
             raise ProviderDownloadError(
                 f"FRED response for {series_id} has unexpected columns",
                 diagnostic,
             )
         return frame
+
+    def _invalidate_unusable_response(
+        self,
+        *,
+        response: CachedHttpResponse,
+        params: dict[str, str],
+        request_cache_dir: Path | str | None,
+        stage: str,
+    ) -> None:
+        if request_cache_dir is None:
+            return
+        cache_dir = Path(request_cache_dir)
+        try:
+            lookup = lookup_external_request_cache(
+                provider=FRED_PROVIDER_NAME,
+                api_family=FRED_API_FAMILY,
+                method="GET",
+                url=self.base_url,
+                params=params,
+                cache_dir=cache_dir,
+            )
+            if (
+                lookup.generation_id is None
+                or lookup.body_sha256 != sha256(response.content).hexdigest()
+            ):
+                return
+            invalidate_external_request_cache(
+                provider=FRED_PROVIDER_NAME,
+                api_family=FRED_API_FAMILY,
+                method="GET",
+                url=self.base_url,
+                params=params,
+                expected_generation_id=lookup.generation_id,
+                expected_body_sha256=lookup.body_sha256,
+                actor="fred_rate_provider",
+                reason=f"unusable_response_{stage}",
+                reference="DATA-028",
+                cache_dir=cache_dir,
+            )
+        except (OSError, ValueError):
+            return
 
 
 def _fred_request_params(series_id: str, start: date, end: date) -> dict[str, str]:
