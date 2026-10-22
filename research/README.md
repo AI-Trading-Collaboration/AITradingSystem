@@ -19,6 +19,7 @@
 - 研究自动循环 2026-10-21 起按第 2 期章程 `_loop/charter_p2.md`（到 2026-11-04）：转实现层和 P1，第一段加慢熊段回撤判据；第 1 期 `_loop/charter_p1.md` 结束。
 - 研究自动循环第 3 期（2026-10-21 签，`_loop/charter_p3.md`，到 2026-11-04）：给日报定一个有证据的仓位方案并用前瞻记录验证它，不再找新的择时信号；先在 1871–1928 的慢熊段上样本外核对趋势覆盖，再出决定表请 Baker 定方案，之后上前瞻记录台；假设卡停；第 2 期 `_loop/charter_p2.md` 结束。
 - 研究自动循环第 4 期（2026-10-22 签，`_loop/charter_p4.md`，现在起，到 2026-11-18）：只做第二次横读导出的两题，H-A 不对称再入（经典趋势，退出照月频 fast_slow、再入每周核）先，H-B 条件化储备（P1，穆迪 Aaa 六个月变化为负才持国债）后，都是 B 区探针；不新筛信号，前瞻账本照记；每次读数的跑出一套出入场图，不入库；第 3 期 `_loop/charter_p3.md` 结束。
+- 研究自动循环第 5 期（2026-10-23 签，`_loop/charter_p5.md`，现在起，到 2026-11-18）：经典趋势的实现层只剩一题，慢腿的回来条件（慢腿只在 21 日和 252 日收益都 < 0 时出，和月频 fast_slow 只差反弹月那一格），一次 `run`，预期签字时就写进 `scorecard.md`；加一张只印的状态表（估值、利差水平、利差变化对慢熊段的时序），不开题；两项是一个 B 区探针包；不新筛信号，前瞻账本照记；第 4 期 `_loop/charter_p4.md` 结束。
 - 日报方案（2026-10-22，`owner_decision:TRADING-2565:2026-10-22:daily_policy`）：Baker 据决定表选固定敞口 0.8 加 F0001（QQQ-Q3 的 fast_slow）覆盖；不进生产、不改日报的模型，只进前瞻记录台 `_forward/`（只读日报的决策快照和当天的价格捕获，`owner_decision:TRADING-2565:2026-10-22:read_daily_outputs`），每周五追加，日报模型的预期是 `_loop/forward_records.md` 的 F0005；同一配置连续两次慢熊段核对为对才算证据，见 `_loop/charter_p3.md` 第 14 节。
 - 第二次横读（2026-10-22，`owner_decision:TRADING-2565:2026-10-22:horizontal_read_2`）：10 条改过的模型、四条跨家族的结构（收益只在慢熊里、代价来自 V 型里的假退出和再入迟、对冲资产的方向随状态变、预期的错多半借了别的窗口或口径），偏差原因六条细化记在 `scorecard.md`；Baker 选第 4 期只开导出的两题（`owner_decision:TRADING-2565:2026-10-22:period4_two_questions`）：H-A 不对称再入（经典趋势换实现）先，H-B 条件化国债（P1 换实现）后，预注册进第 4 期章程草稿另签，见 `_loop/charter_p3.md` 第 15 节。
 - 慢熊段回撤判据不上线（2026-10-21）：探针量出慢熊轨的误放率超线（漏的是前视的种下规则），Baker 选「停加只读两条」（`owner_decision:TRADING-2565:2026-10-21:slow_bear_readonly`）：试跑报告加只读的慢熊段表和长牛段表，趋势类配置记慢熊型前瞻记录 `_loop/forward_records.md`，见 `_loop/charter_p2.md` 第 13、14 节。
@@ -41,7 +42,7 @@
 | `scorecard.md` | 记分表：预注册写的预期对结题结果（正式题）、假设卡写的方向对筛选结果（筛选层）；每行的偏差原因和下次怎么避免，以及流程的四个分数（2026-10-20 起） |
 | `assets.md` | 可以复用的代码、检验和记录，以及它们在哪里 |
 | `_template/` | 一个研究问题的样例：`prereg.yaml`（逐项说明）和 `strategy.py`（策略接口）；`brief.md` 是 pi 研究运行的 brief 模板 |
-| `_loop/` | 研究自动循环：各期章程 `charter_p1.md`、`charter_p2.md`、`charter_p3.md`、`charter_p4.md`；预期模板 `expected_template.md`（第 4 期起）；前瞻记录 `forward_records.md`（2026-10-21 起，规则见第 2 期章程第 14 节） |
+| `_loop/` | 研究自动循环：各期章程 `charter_p1.md`、`charter_p2.md`、`charter_p3.md`、`charter_p4.md`、`charter_p5.md`；预期模板 `expected_template.md`（第 4 期起）；前瞻记录 `forward_records.md`（2026-10-21 起，规则见第 2 期章程第 14 节） |
 | `_forward/` | 前瞻记录台（as_of 2026-10-21 起前瞻，10-12 到 10-20 回填）：每个交易日一行 `ledger.jsonl`（日报模型、固定敞口 0.8、F0001 三条线），周汇总 `weekly.md`，字段和规则见 `README.md` |
 | `_trials/` | 试跑：门 `prereg.yaml`（C 区）、每个候选一份试跑计划（`T0001.yaml` 等）、试跑记录 `runs/`；见 `_trials/README.md` |
 | `signal_names.yaml`、`<问题ID>/zh.yaml` | 研究进展页面用的中文名和中文说明（TRADING-2568）：信号的中文名；每题的中文标题、一句话摘要、判定摘要和每个策略的名字与角色。只给页面显示用，不进评估台、不影响任何运行；格式见 `_template/zh.yaml` |
