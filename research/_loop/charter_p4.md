@@ -223,4 +223,12 @@ Baker 2026-10-22 14:08 JST（2026-10-22T05:08:48Z）在「研究自动生成和�
 
 已签：Baker 在签字卡上选「签,现在起」（`owner_decision:TRADING-2565:2026-10-22:research_loop_p4`，见开头）。这份由 TRADING-2565-47 发布（A 区记录批，不用 approve.ps1）；`period4_two_questions` 和这条一起记在 `docs/requirements/TRADING-2565_Research_Bench.md` 的 Owner decision 一节。同一批：`research/_loop/charter_p3.md` 加第 16 节（第 3 期结束）；`research/_loop/expected_template.md`（第 6 节的预期模板，A 区）；`research/families.md` 顶部的横读计数写明两题各计 1，经典趋势和 P1 两行写明这期的写法（「第 4 期的方向」两条）；`research/README.md` 一行。两题的预期表各在 `run` 之前记进 `research/scorecard.md` 第 3 节（H-A 等 `reference` 印出、复盘线程重写第 3 行以后），不在这一批。
 
+## 13. H-A 的结果（2026-10-22，追加）
+
+- 顺序照第 4 节第 1 条：研究会话 18:43–18:45 JST 跑 `check` 和 `reference`（main d53a86fd），QQQ 2002–07 再入迟占月频 fast_slow 长牛代价 0.28（慢腿在外 0.52、假退出 0.20），复盘线程按第 3.1 节把第 3 行写成 0.3；预期表由 TRADING-2565-49 在 `run` 之前记进记分表第 3 节（main feaaa876）；研究会话 19:19–19:21 JST 跑 `run`（`TRADING-2565-reentry-run`）。
+- 读数：第 1、2、4、6 行成立，第 3 行不成立（QQQ 2002–07 H-A −2.9、月频 −3.3，判法要 ≥ −1.65），第 5 行不读；可读 5 行对 5。按 `after_failure`：淘汰「代价主要在再入迟」；前四行不全成立，不记 F0006、不发第 8 节的卡，F0001 不换。第 4 行按判法成立，但对同平均敞口固定敞口付了 0.2 点、含成本付了 0.1 点（记分表原因核对）。标签「有效果但代价太高（按长牛段代价）」；Baker 2026-10-22 19:32 JST（10:32:33Z）在「研究自动生成和初筛」线程的卡（cmsg_011Jt6JWNgo42YfGyndrfT7RJGkiaFtiLcTDwDha6XL7DK）上选「同意」。`families.md` 的横读计数改为正式题 1/3。
+- 第 3 行失败时章程写的下一步是带宽退出；reference 的拆分里慢腿占 0.52，候选另加「慢腿换更快的回来条件（出场看 252 日、回来看 21 日）」，两条都进第 5 期草稿，由 Baker 在续期卡上定（第 9 节第 5 条）。
+- 复盘线程给以后探针的三条措施，从 H-B 的包起用：两条规则比事件和滞后时用同一条减仓线，报告印出这条线；「不付新代价」类的判法写成对同平均敞口固定敞口的差并印 25 bps 一栏；依据按单元写方向和一个数。已跑的读数不改。
+- 接着照第 4 节第 2 条做 H-B。
+
 production_effect=none；broker_action=none。
