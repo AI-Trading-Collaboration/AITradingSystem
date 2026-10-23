@@ -2,8 +2,8 @@ schema_version: task.v1
 id: DATA-025
 area: 数据工程/日报取数失败时保留错误的结尾
 priority: P1
-status: IN_PROGRESS
-next_owner: Claude（审 DATA-025-01）
-next_step: DATA-025-01 发布后，下一次取数组件失败时在 capture manifest 的 error_tail 里看错误的结尾；OPS-086 步骤 7 重新切换的日期等 D1 诊断结果
+status: DONE
+next_owner: operations owner（日常按运维手册第 9 节读调度摘要）
+next_step: DONE（2026-10-23）：DATA-025-01 在 main f1a703a70（2026-10-20）；第二次切换的发布包 20261020-84f585b98 起随发布包进生产，当前的 20261022-545e19985 带着它；验收测试和 PR 套件通过；error_tail 在生产上有没有内容，要等下一次取数失败才看得到
 acceptance: 取数命令失败且清理后的错误文本超过 600 字符时，capture 的每次尝试记录和组件结果多一个 error_tail（清理并遮罩后的最后 800 字符），其余情况为 null；error_summary、阻断分类和 OPS-085 的重试规则不变；PR 套件通过
-notes: production_effect=none；broker_action=none；需求文档 docs/requirements/DATA-025_Capture_Error_Tail.md；起因：2026-10-20 OPS-086 步骤 7 第一个生产日 sec_companyfacts 和 official_policy_sources 失败，capture 只存了 stderr 前 600 字符，真正的异常在结尾，没有留下；诊断见 knowledge/claude/runs/OPS-086-07S/D1.md
+notes: production_effect=none；broker_action=none；需求文档 docs/requirements/DATA-025_Capture_Error_Tail.md；起因：2026-10-20 OPS-086 步骤 7 第一个生产日 sec_companyfacts 和 official_policy_sources 失败，capture 只存了 stderr 前 600 字符，真正的异常在结尾，没有留下；诊断见 knowledge/claude/runs/OPS-086-07S/D1.md；2026-10-23：DONE，见 next_step

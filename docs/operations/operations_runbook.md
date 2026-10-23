@@ -1,6 +1,6 @@
 # AITradingSystem Operations Runbook
 
-最后更新：2026-10-13（OPS-084：主触发时间改为 12:00；OPS-085：17:30 对数据源临时故障自动重试一次）；2026-10-11（OPS-082：Windows 计划任务、终止恢复改为运行副本校验、新增第 9 节）；2026-10-10 GOV-008 P5 重写
+最后更新：2026-10-23（OPS-086 步骤 8：日报从发布包运行，第 1、3、9 节改写）；2026-10-13（OPS-084：主触发时间改为 12:00；OPS-085：17:30 对数据源临时故障自动重试一次）；2026-10-11（OPS-082：Windows 计划任务、终止恢复改为运行副本校验、新增第 9 节）；2026-10-10 GOV-008 P5 重写
 
 执行任何 daily、weekly、biweekly、monthly、调度或产物目录任务前先读本文：确认 cadence、触发路径、质量门禁、
 预期产物和"不影响 production"的边界。数据怎么流动见 `docs/system_flow.md` 第 1～6 节；产物怎么理解见
@@ -20,11 +20,13 @@ aits ops replay-day --mode cache-only --as-of YYYY-MM-DD   # 历史严格复现�
   cron、GitHub Actions 或云调度器都一样）。
 - 未给 `--as-of` 时，`daily-run` 与 `validate-data` 使用 America/New_York 最近已完成交易日加收盘后 3 小时
   provider-ready 缓冲，不用主机本地日期。
-- **调度（OPS-082，2026-10-11 起）**：唯一外部调度入口是 Windows 计划任务 `\AITradingSystem Daily Run`，
-  在独立运行副本 `D:\Work\AITradingSystem_ops_runtime` 里经包装脚本调用一次 `aits ops daily-run`；每天 12:00 与 17:30
+- **调度（OPS-082，2026-10-11 起；OPS-086 步骤 7，2026-10-22 起从发布包运行）**：唯一外部调度入口是 Windows 计划任务
+  `\AITradingSystem Daily Run`，启动 `D:\Work\AITradingSystem_daily\run_daily.ps1`；它按 `current.json` 选出已激活的日报发布包，
+  在状态根 `D:\Work\AITradingSystem_data\prod\state` 上经包装脚本调用一次 `aits ops daily-run`；每天 12:00 与 17:30
   （Asia/Tokyo）两个触发时间，17:30 是同一任务的补救时间，重复触发由 `daily-run` 的运行控制去重
-  （`owner_decision:OPS-082:2026-10-11:deterministic_scheduler_v1`）。Codex automation `aitradingsystem-pit` 已停用
-  （owner 2026-10-11 暂停），任一时刻只有一个调度来源；不得再登记第二个调度。包装脚本、中文摘要、注册与运行副本更新
+  （`owner_decision:OPS-082:2026-10-11:deterministic_scheduler_v1`）。旧运行副本 `D:\Work\AITradingSystem_ops_runtime`
+  不再运行日报、不更新，保留作回退（第 9.4 节）。Codex automation `aitradingsystem-pit` 已停用
+  （owner 2026-10-11 暂停），任一时刻只有一个调度来源；不得再登记第二个调度。包装脚本、中文摘要、注册、发布包部署与回退
   步骤见第 9 节。为旧调度服务的 release promotion、scheduler checkout preflight、Codex scheduler observation 与
   deployment acceptance 命令已在 GOV-008 删除，`daily-run` 不再持有 checkout guard（`--manual-execution` 选项保留但已无作用）。
 
@@ -72,8 +74,10 @@ aits ops replay-day --mode cache-only --as-of YYYY-MM-DD   # 历史严格复现�
   或其他步骤失败都不重试。摘要写明结果（`RETRIED` 或 `NOT_ELIGIBLE:<原因>`）。条件见 OPS-085 需求文档第 3 节。
 - 终止后恢复（OPS-071）只能用同一入口：`aits ops daily-run --recovery-parent-run-id <id> --recovery-from-step <step>
   --recovery-reason-code <code>`，三项必须同时给出；只允许从 `artifact_lineage` 及其后的报告/收尾步骤恢复，已 PASS 的
-  capture、DQ、PIT、评分必须复用。恢复绑定的当前版本是**运行副本的 HEAD**：工作区必须干净、HEAD 必须是本地 `origin/main`
-  可达的提交，并且与父运行 manifest 的 `git_commit` 不同（OPS-082 决定 e）；CLI 构造请求与运行控制放行时各检查一次。
+  capture、DQ、PIT、评分必须复用。恢复绑定的当前版本是**正在运行的代码根的版本**：发布包为 `RELEASE.json` 记的源提交（清单校验必须通过，即发布包文件没被改过），
+  运行副本为 HEAD（工作区必须干净、HEAD 必须是本地 `origin/main` 可达的提交）；两者都要与父运行 manifest 的 `git_commit` 不同
+  （OPS-082 决定 e）；CLI 构造请求与运行控制放行时各检查一次。发布包上的恢复命令在当前发布包目录的 `.venv` 里运行，先把环境变量
+  `AITS_STATE_ROOT` 设成状态根、`PYTHONDONTWRITEBYTECODE` 设成 `1`（与 `run_daily.ps1` 一样）；这条路径在生产上还没做过，第一次做时先在 owner 指示下核对命令。
   不再需要 `AITS_OPS_DEPLOYMENT_RECEIPT`（已无代码读取）。恢复只在 owner 指示下人工执行，计划任务不会自动恢复。
 - 同一 as-of 的终止运行没有合法恢复边界时，等待下一个 provider-ready 交易日的普通运行，不得伪装成恢复。
 - 历史缺口：`aits ops recover-historical-gap` / `validate-historical-gap` 只由 owner 人工触发单个已审查的队列项，只生成
@@ -134,36 +138,42 @@ release candidate/canary/promote、runtime git exclusions、scheduler checkout p
 deployment acceptance、workflow health 遥测与周任务、Atlas、DEVX-015 源码保全检查点、ETF 候选链（`aits etf ...`、
 dynamic-v3 rescue、候选跟踪每日步骤）。发布改由 `python tools/gov008/ship.py` 完成（见 AGENTS.md）。
 
-## 9. 运行副本与计划任务（OPS-082）
+## 9. 计划任务与日报发布包（OPS-082、OPS-086）
 
-日常运行只在独立运行副本 `D:\Work\AITradingSystem_ops_runtime` 里进行：它是单独的 clone，detached 到一个已经 ship 的
-`main` 提交，`.venv` 是 editable 安装（`.venv\Lib\site-packages\_editable_impl_ai_trading_system.pth` 指向本副本 `src`）。
-开发 checkout（`D:\Work\AITradingSystem`）不运行日报，它的 DQ 回执与报告不代表生产日报状态。
+日报从 2026-10-22 晚上起（OPS-086 步骤 7）只在日报发布包里运行：发布包在 `D:\Work\AITradingSystem_daily\releases\<release_id>`
+（从已经 ship 的提交构建，清单里的文件只读，没有 `.git`，`.venv` 在发布包目录里），`D:\Work\AITradingSystem_daily\current.json` 记当前和上一个
+release，入口是同目录的 `run_daily.ps1`；`data/`、`outputs/`、`artifacts/` 在状态根 `D:\Work\AITradingSystem_data\prod\state`，
+构建出的 zip 放在 `D:\Work\AITradingSystem_releases`。开发 checkout（`D:\Work\AITradingSystem`）不运行日报，它的 DQ 回执与报告不代表生产日报状态。
+旧运行副本 `D:\Work\AITradingSystem_ops_runtime`（单独的 clone，detached 到一个已经 ship 的提交，`.venv` 是 editable 安装）不再运行日报、不更新，保留作回退
+（第 9.4 节）；什么时候清理或搬进 archive 由 owner 决定。
 
-### 9.1 运行副本更新
+### 9.1 发布包更新（部署新版本）
 
-只把运行副本移到已经 ship 的提交（`git rev-parse main origin/main` 相等）。在运行副本根目录：
+只在 owner 指示下做：把一个已经 ship 的提交变成新的发布包并激活，计划任务和入口不变。在开发仓 `D:\Work\AITradingSystem`：
 
-1. 确认没有活动运行：计划任务不在运行（`(Get-ScheduledTask -TaskName 'AITradingSystem Daily Run').State` 不是
-   `Running`），`outputs\run_control\daily\locks\` 下没有锁文件。有活动运行就等它结束，不删锁。
-2. 确认工作区干净：`git status --porcelain=v1 --untracked-files=normal` 没有输出。不干净就停下报告。
-3. `git fetch origin main`，然后 `git checkout --detach <已 ship 的 SHA>`；该 SHA 必须可从 `origin/main` 到达
-   （`git merge-base --is-ancestor <SHA> origin/main` 退出码 0）。
-4. 不得 `pull`、`reset`、`clean`、`stash`；不改 `data/` 与 `outputs/`；不删除旧 state、ledger、recovery 回执或 intent。
-5. 确认 editable 安装仍指向本副本 `src`。`pyproject.toml` 的依赖变化时先在任务记录里说明，再在本副本 `.venv` 里按变化安装；
-   没有变化就不动 `.venv`。
-6. `.venv\Scripts\aits.exe ops daily-plan --fail-on-missing-env` 应为 `READY`（交易日 capture 模式下也可能是
-   `READY_WITH_BLOCKED_BRANCHES`，需说明原因）。
-7. 在相关任务记录或需求文档里记下新 HEAD、时间与 daily-plan 结果。
+1. 选提交：先 `git fetch origin main`，该提交必须已在 `origin/main` 上（`git merge-base --is-ancestor <SHA> origin/main` 退出码 0）；
+   构建只读这个提交里的内容，不读未提交改动。
+2. 选时间：放在当天 17:30 触发器结束之后、次日 11:50 之前，并确认没有活动运行：计划任务不在运行
+   （`(Get-ScheduledTask -TaskName 'AITradingSystem Daily Run').State` 不是 `Running`），状态根的 `outputs\run_control\daily\locks\`
+   下没有锁文件（部署脚本也会拒绝）。有活动运行就等它结束，不删锁。新提交改了 `config/scheduled_tasks.yaml` 的步骤列表时，规格编号变了，
+   同一 as_of 会按新规格重新开始（第 3 节），这类部署一定要放在当天日报完成之后。
+3. 构建并部署，命令见第 9.3 节：`build_daily_release.py --commit <SHA> --out-dir D:\Work\AITradingSystem_releases`，再用“后续部署”那条
+   `deploy_daily_release.py --bundle D:\Work\AITradingSystem_releases\<release_id>.zip --daily-root D:\Work\AITradingSystem_daily --python C:\Python314\python.exe`。
+   部署联网装依赖，依赖约束沿用当前 release 的 `.venv_freeze.txt`，不删旧 release。
+4. 核对：部署输出有 `outcome=ACTIVATED` 和新的 `release_id=`；`D:\Work\AITradingSystem_daily\current.json` 的 `release_id` 是新的、
+   `previous_release_id` 是上一个；`deploy_log.jsonl` 最后一行是这次的部署记录。下一次触发（12:00 或 17:30）就是新 release 的第一次运行，
+   它的摘要 `<状态根>\outputs\run_control\scheduler\<日期>_<窗口>.summary.md` 写着发布包 id。
+5. 在相关任务记录或需求文档里记下 release_id、源提交、时间和第一次运行的结果。
 
 ### 9.2 计划任务
 
-- **注册或更新**（幂等，重复运行不会产生第二个任务）：在运行副本根目录运行
-  `powershell -NoProfile -File scripts\ops\register_daily_scheduler_task.ps1`（默认运行副本 `D:\Work\AITradingSystem_ops_runtime`、
-  任务 `\AITradingSystem Daily Run`）。脚本要求主机时区为 Tokyo Standard Time；发现另一个计划任务也在启动 daily-run 时拒绝注册。
+- **注册或更新**（幂等，重复运行不会产生第二个任务）：在当前发布包目录运行
+  `powershell -NoProfile -File scripts\ops\register_daily_scheduler_task.ps1 -DailyRoot D:\Work\AITradingSystem_daily`（任务 `\AITradingSystem Daily Run`
+  启动 `D:\Work\AITradingSystem_daily\run_daily.ps1`）。不带 `-DailyRoot` 是旧行为：任务从运行副本 `D:\Work\AITradingSystem_ops_runtime` 启动
+  （回退用，第 9.4 节）。脚本要求主机时区为 Tokyo Standard Time；发现另一个计划任务也在启动 daily-run 时拒绝注册。
   任务：当前用户、仅登录时运行（不存密码）、不提权、每天 12:00 与 17:30、StartWhenAvailable、不并行实例、单次上限 6 小时。
   12:00 自 2026-10-13 起（OPS-084，此前 09:30）：纽约夏令 23:00、冬令 22:00，晚于 Cboe 更新 VIX 历史文件的时间。
-  改了触发时间要在运行副本根目录重跑一次本注册脚本，再用下面的查看命令确认。
+  改了触发时间要在当前发布包目录用同样的参数重跑一次本注册脚本，再用下面的查看命令确认。部署新 release 不需要重新注册（入口不变）。
 - **手动触发**（与定时触发走同一路径）：`Start-ScheduledTask -TaskName 'AITradingSystem Daily Run'`。
 - **查看配置**：`schtasks /query /tn "\AITradingSystem Daily Run" /xml`。
 - **停用**：`Disable-ScheduledTask -TaskName 'AITradingSystem Daily Run'`，只在 owner 决定时执行；不得另建第二个调度来源。
@@ -171,16 +181,17 @@ dynamic-v3 rescue、候选跟踪每日步骤）。发布改由 `python tools/gov
 - 任务以 `conhost.exe --headless` 启动 Windows PowerShell，不弹控制台窗口。conhost 不转发退出码，所以
   `Get-ScheduledTaskInfo` 的 `LastTaskResult` 只表示包装脚本已启动；**运行结论看日志与摘要**。
 
-包装脚本 `scripts\ops\daily_scheduler_run.ps1` 每次触发做且只做：
+包装脚本 `scripts\ops\daily_scheduler_run.ps1`（在发布包里，由 `run_daily.ps1` 带窗口参数调用；`run_daily.ps1` 读不到 `current.json`、字段无效或发布包缺文件时，向 `D:\Work\AITradingSystem_daily\run_daily_error.log` 追加一行并退出 2，不调用 daily-run）每次触发做且只做：
 
-1. 前置检查：工作区干净、HEAD 可从本地 `origin/main` 到达、`.venv\Scripts\aits.exe` 存在。任一失败不调用 daily-run，
-   退出码 2，摘要归为"控制面问题"。
-2. 只设置 daily-run 实际读取的环境变量：`FMP_API_KEY`、`MARKETSTACK_API_KEY`、`SEC_USER_AGENT`、`OPENAI_API_KEY`、
-   `CONGRESS_API_KEY`、`GOVINFO_API_KEY`；进程里没有时取用户环境变量。值不打印、不写日志，日志只记 PRESENT/MISSING。
+1. 前置检查：发布包里 `RELEASE.json` 校验通过（文件没被改过）、`AITS_STATE_ROOT` 是绝对路径、`.venv\Scripts\aits.exe` 存在
+   （回退到运行副本时改为：工作区干净、HEAD 可从本地 `origin/main` 到达）。任一失败不调用 daily-run，退出码 2，摘要归为"控制面问题"，
+   并写明阻断码（如 `RUNTIME_RELEASE_MODIFIED`、`STATE_ROOT_NOT_SET`）。
+2. 只设置 daily-run 实际读取的环境变量：`FMP_API_KEY`、`SEC_USER_AGENT`、`OPENAI_API_KEY`、
+   `CONGRESS_API_KEY`、`GOVINFO_API_KEY`（Marketstack 自 DATA-022 起不再读）；进程里没有时取用户环境变量。值不打印、不写日志，日志只记 PRESENT/MISSING。
    新增或停用数据源时，同一次改动更新这个列表。
 3. 调用一次 `.venv\Scripts\aits.exe ops daily-run`（不带 `--as-of`，由 daily-run 解析最近 provider-ready 交易日）；
    RESCUE 窗口（15:00 以后）加 `--retry-after-source-failure`（OPS-085，见第 3 节）。
-4. 输出与退出码写 `outputs\run_control\scheduler\<东京日期>_<PRIMARY|RESCUE>.log`（15:00 前为 PRIMARY；已存在则加 `_2`、`_3`）。
+4. 输出与退出码写 `<状态根>\outputs\run_control\scheduler\<东京日期>_<PRIMARY|RESCUE>.log`（15:00 前为 PRIMARY；已存在则加 `_2`、`_3`）。
 5. `scripts\ops\daily_scheduler_summary.py` 用代码（不调用 LLM）写同名 `.summary.md`（中文）与 `.summary.json`：as_of、窗口、
    终态、每步状态、每个 capture 组件、DQ 状态与阻断原因分类。通知只写这些文件。
 
@@ -191,29 +202,30 @@ dynamic-v3 rescue、候选跟踪每日步骤）。发布改由 `python tools/gov
 | 无阻断 | daily-run PASS，或同一 as-of 已 PASS 不重跑 | 无 |
 | 数据源不可用 | capture 组件 blocker 为 provider 鉴权/额度/不可用/schema/请求失败（含付费源停订） | 等数据源恢复或改源（研究策略调整在迁移后与 owner 讨论）；不重试刷额度 |
 | 数据质量未通过 | `validate_data` FAIL | 读 DQ 报告；按数据问题处理，不放宽门禁 |
-| 代码缺陷 | 未处理异常、非数据原因的步骤失败、finalization 失败 | 任务记录 + `ship-change` 修复，再更新运行副本 |
-| 控制面问题 | 前置检查失败、运行控制拒绝（并发、恢复无效）、缺环境变量、本地 source-control 问题 | 按证据修复环境；不删状态或锁 |
+| 代码缺陷 | 未处理异常、非数据原因的步骤失败、finalization 失败 | 任务记录 + `ship-change` 修复，再构建新发布包并部署（第 9.1 节） |
+| 控制面问题 | 前置检查失败（含发布包被改过）、`run_daily_error.log` 有新行（`current.json` 或发布包文件无效）、运行控制拒绝（并发、恢复无效）、缺环境变量、本地 source-control 问题 | 按证据修复环境；发布包被改过时按第 9.3 节从新提交重新构建、部署，或 `--activate` 回退；不删状态或锁 |
 | 等待新 as_of | 同一 as-of 已有 BLOCKED/FAILED 终态的重复触发；as-of 尚未 provider-ready | 等下一个 provider-ready 交易日的普通运行；只有 owner 指示才做终止恢复 |
 
-### 9.3 发布包（OPS-086）
+### 9.3 发布包构建、部署与回退（OPS-086）
 
-以下是步骤 6 试运行、步骤 7 切换时的操作说明，不是当前切换授权。**切换前日报仍按 9.1、9.2 在运行副本运行**。
-步骤 7 必须先由 owner 决定，之后才把同一个计划任务改指向发布包；不登记第二个调度来源。
+步骤 7 已在 2026-10-22 晚完成（第四次切换，发布包 `20261022-545e19985`，源提交 `545e19985`），日报从发布包运行；下面是构建、部署和回退的命令，
+每条只在 owner 指示下运行，不登记第二个调度来源。生产的 `<daily_root>` 是 `D:\Work\AITradingSystem_daily`，`<state_root>` 是
+`D:\Work\AITradingSystem_data\prod\state`，`<bundle_dir>` 是 `D:\Work\AITradingSystem_releases`。
 在开发仓运行下列命令，`<已发布SHA>` 必须已在本地 `origin/main` 上，`<daily_root>`、`<state_root>` 为独立绝对路径，
 `<bundle_dir>` 为构建产物目录；执行前替换占位符。不得把发布包目录当状态根。
 
 ```powershell
 # 构建：只读提交里的清单规则、报告登记表和 git archive 内容，不读未提交改动。
 .venv/Scripts/python.exe tools/release/build_daily_release.py --commit <已发布SHA> --out-dir <bundle_dir>
-# 首次部署：必须明确状态根，并从现有环境提取依赖约束。
+# 首次部署（`<daily_root>` 还没有 current.json 时；生产已经部署过，日常不用）：必须明确状态根，并从现有环境提取依赖约束。
 .venv/Scripts/python.exe tools/release/deploy_daily_release.py --bundle <bundle_dir>/<release_id>.zip --daily-root <daily_root> --state-root <state_root> --constraints-from D:\Work\AITradingSystem_ops_runtime\.venv\Scripts\python.exe --python C:\Python314\python.exe
 # 若 owner 明确选择不固定依赖，首次部署用 --unpinned 替代 --constraints-from。
 .venv/Scripts/python.exe tools/release/deploy_daily_release.py --bundle <bundle_dir>/<release_id>.zip --daily-root <daily_root> --state-root <state_root> --unpinned --python C:\Python314\python.exe
-# 后续部署：沿用 current.json 的状态根、当前 release 的 .venv_freeze.txt 约束。
+# 后续部署（日常更新用这条，第 9.1 节）：沿用 current.json 的状态根、当前 release 的 .venv_freeze.txt 约束。
 .venv/Scripts/python.exe tools/release/deploy_daily_release.py --bundle <bundle_dir>/<新release_id>.zip --daily-root <daily_root> --python C:\Python314\python.exe
 # 回退或切换：只核对已安装的 release，不再安装；仍须无活动运行。
 .venv/Scripts/python.exe tools/release/deploy_daily_release.py --activate <旧release_id> --daily-root <daily_root>
-# 仅在 owner 决定步骤 7 后执行：更新同一个任务的入口与工作目录。
+# 在当前发布包目录运行（生产已注册，见第 9.2 节）：更新同一个任务的入口与工作目录。
 powershell -NoProfile -File scripts/ops/register_daily_scheduler_task.ps1 -DailyRoot <daily_root>
 schtasks /query /tn "\AITradingSystem Daily Run" /xml
 ```
@@ -239,4 +251,28 @@ schtasks /query /tn "\AITradingSystem Daily Run" /xml
 安装、freeze、核对、只读设置或计划检查失败时，保留目录并改名为 `<release_id>.failed-<UTC时间戳>`，不删除。
 部署脚本**从不删除 release**；超过 3 个只打印 `cleanup_candidate`（排除最新 3 个、当前和上一个），由 owner 决定清理。
 不得手改 release 文件；修复应从新提交重新构建、部署，或用 `--activate` 回退。发布包不含 `.git` 和状态目录。
-本批只改仓库，production_effect=none；broker_action=none，不更改现有运行副本或计划任务。
+部署和回退只写发布目录、`current.json`、`run_daily.ps1` 和 `deploy_log.jsonl`，不写状态根；production_effect=none；broker_action=none。
+
+### 9.4 运行副本（只在回退时用）
+
+运行副本 `D:\Work\AITradingSystem_ops_runtime` 在步骤 7 之后保留，不更新、不运行日报，只作回退。回退有两层，先用轻的：
+
+1. 回到上一个发布包：`deploy_daily_release.py --activate <旧release_id> --daily-root D:\Work\AITradingSystem_daily`（第 9.3 节，要求无活动运行）。
+2. 回到运行副本：在运行副本根目录不带 `-DailyRoot` 运行
+   `powershell -NoProfile -File scripts\ops\register_daily_scheduler_task.ps1`，同一个任务改为从运行副本启动。运行副本的 `data/`、`outputs/`、
+   `artifacts/` 停在 2026-10-22 第四次切换那天，没有之后几天的日报状态；回退时如果已经过了几个交易日，先和 owner 确认状态怎么带回运行副本，不要直接启动。
+   要再回到发布包，用第 9.2 节带 `-DailyRoot` 的注册。
+
+运行副本更新（只在 owner 为回退需要而决定更新时做，日常不做）：只把运行副本移到已经 ship 的提交（`git rev-parse main origin/main` 相等）。在运行副本根目录：
+
+1. 确认没有活动运行：计划任务不在运行（`(Get-ScheduledTask -TaskName 'AITradingSystem Daily Run').State` 不是
+   `Running`），`outputs\run_control\daily\locks\` 下没有锁文件。有活动运行就等它结束，不删锁。
+2. 确认工作区干净：`git status --porcelain=v1 --untracked-files=normal` 没有输出。不干净就停下报告。
+3. `git fetch origin main`，然后 `git checkout --detach <已 ship 的 SHA>`；该 SHA 必须可从 `origin/main` 到达
+   （`git merge-base --is-ancestor <SHA> origin/main` 退出码 0）。
+4. 不得 `pull`、`reset`、`clean`、`stash`；不改 `data/` 与 `outputs/`；不删除旧 state、ledger、recovery 回执或 intent。
+5. 确认 editable 安装仍指向本副本 `src`。`pyproject.toml` 的依赖变化时先在任务记录里说明，再在本副本 `.venv` 里按变化安装；
+   没有变化就不动 `.venv`。
+6. `.venv\Scripts\aits.exe ops daily-plan --fail-on-missing-env` 应为 `READY`（交易日 capture 模式下也可能是
+   `READY_WITH_BLOCKED_BRANCHES`，需说明原因）。
+7. 在相关任务记录或需求文档里记下新 HEAD、时间与 daily-plan 结果。

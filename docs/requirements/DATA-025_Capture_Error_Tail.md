@@ -1,6 +1,6 @@
 # DATA-025：日报取数失败时保留错误的结尾
 
-状态：IN_PROGRESS。`production_effect=none`；`broker_action=none`。无需 owner 决定（B 区，只多记一个字段，不改任何行为）。
+状态：DONE（2026-10-23）。`production_effect=none`；`broker_action=none`。无需 owner 决定（B 区，只多记一个字段，不改任何行为）。
 
 ## 1. 背景
 
@@ -31,3 +31,5 @@
 ## 6. 进展
 
 - 2026-10-20：需求和验收测试写好，交 pi 实现（DATA-025-01）。
+- 2026-10-20：DATA-025-01 发布（main `f1a703a70`）。
+- 2026-10-23：任务关闭（DONE）：发布包 `20261022-545e19985` 的第一个生产日 12:00 到 12:17，27 步 PASS，五个取数部分一次通过。production_effect=none；broker_action=none。

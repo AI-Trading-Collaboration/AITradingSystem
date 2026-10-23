@@ -18,7 +18,7 @@
 
 - 读取缓存行情或宏观数据的命令，先过 `aits validate-data`；不通过就不解释投资结论。
 - 改动经 ship 门禁发布（`tools/gov008/ship.py`，先 `--dry-run`），步骤见 AGENTS.md 的 "How a change ships"。
-  要进生产的改动，发布后按运维手册第 9.1 节切换运行副本。
+  要进生产的改动，发布后按运维手册第 9.1 节构建并部署新的日报发布包。
 - 每日调度只有 Windows 计划任务 "AITradingSystem Daily Run"。
 
 ## 旧版 README

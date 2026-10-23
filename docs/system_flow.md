@@ -7,8 +7,8 @@
 
 ## 1. 每日链路
 
-唯一外部入口是 `aits ops daily-run`（`aits ops daily-plan` 只出计划不执行），由 Windows 计划任务在运行副本里每天触发
-（12:00、17:30 Asia/Tokyo，见第 5 节、OPS-082、OPS-084 与 OPS-085）。步骤、依赖和交易日/休市日条件以
+唯一外部入口是 `aits ops daily-run`（`aits ops daily-plan` 只出计划不执行），由 Windows 计划任务从日报发布包每天触发
+（12:00、17:30 Asia/Tokyo，见第 5 节、OPS-082、OPS-084、OPS-085 与 OPS-086）。步骤、依赖和交易日/休市日条件以
 `config/scheduled_tasks.yaml` 的 `daily_trading_day` 为准（32 个任务）；`ops_daily.py` 与运行控制使用同一份 DAG。
 
 ```mermaid
@@ -179,18 +179,20 @@ C 区有两种批准：
 让评估台读主工作区的研究数据；main 在此期间前进了，`ship.py --replay-records` 把这一个提交原样放到新的 main 上（补丁、提交信息、
 作者都不变）。研究会话用自己 `--dry-run` 打出的补丁指纹在主工作区跑 `publish.ps1 -ExpectedPatch -ExpectedMessage`。
 
-**运行与调度（OPS-082，`owner_decision:OPS-082:2026-10-11:deterministic_scheduler_v1`）**：ship 之后，运行副本
-`D:\Work\AITradingSystem_ops_runtime`（独立 clone，detached 到已 ship 的 main 提交，`.venv` editable 安装指向本副本 `src`）
-按运维手册第 9.1 节更新。唯一外部调度入口是 Windows 计划任务 `\AITradingSystem Daily Run`（`scripts/ops/register_daily_scheduler_task.ps1`
-幂等注册；当前用户、仅登录时运行、不提权；12:00 与 17:30 两个触发时间），它运行 `scripts/ops/daily_scheduler_run.ps1`：
+**运行与调度（OPS-082，`owner_decision:OPS-082:2026-10-11:deterministic_scheduler_v1`；OPS-086 步骤 7 起从发布包运行）**：唯一外部调度入口是
+Windows 计划任务 `\AITradingSystem Daily Run`（`scripts/ops/register_daily_scheduler_task.ps1` 幂等注册；当前用户、仅登录时运行、不提权；
+12:00 与 17:30 两个触发时间）。2026-10-22 晚起（`register_daily_scheduler_task.ps1 -DailyRoot`）它启动 `D:\Work\AITradingSystem_daily\run_daily.ps1`：
+`run_daily.ps1` 读 `current.json` 选出已激活的发布包，设状态根 `D:\Work\AITradingSystem_data\prod\state`，再运行发布包里的
+`scripts/ops/daily_scheduler_run.ps1`（发布包的构建、部署和回退见下面 OPS-086 两段和运维手册第 9.1、9.3 节）。旧运行副本
+`D:\Work\AITradingSystem_ops_runtime`（独立 clone，detached 到一个已经 ship 的提交）不再运行日报、不更新，保留作回退（运维手册第 9.4 节）。包装脚本：
 
 ```mermaid
 flowchart LR
-    TASK["Windows 计划任务<br/>12:00 / 17:30 Asia/Tokyo"] --> PRE["前置检查：运行副本工作区干净 ·<br/>HEAD 可从 origin/main 到达 · aits.exe 存在"]
+    TASK["Windows 计划任务<br/>12:00 / 17:30 Asia/Tokyo"] --> PRE["前置检查：发布包 RELEASE.json 校验通过 ·<br/>状态根是绝对路径 · aits.exe 存在"]
     PRE -->|失败| SUM
     PRE --> ENV["只设置 daily-run 读取的环境变量<br/>（日志只记 PRESENT/MISSING）"]
     ENV --> RUN["一次 aits ops daily-run<br/>运行控制按 as_of 去重<br/>17:30 加 --retry-after-source-failure"]
-    RUN --> LOG["outputs/run_control/scheduler/&lt;日期&gt;_&lt;窗口&gt;.log"]
+    RUN --> LOG["状态根/outputs/run_control/scheduler/&lt;日期&gt;_&lt;窗口&gt;.log"]
     LOG --> SUM["daily_scheduler_summary.py（代码，无 LLM）<br/>.summary.md / .summary.json：终态 · 每步 · capture 组件 · DQ · 阻断分类"]
 ```
 
@@ -198,10 +200,11 @@ flowchart LR
 同一 as_of 的第 1 次尝试只因可重抓历史源（`market_macro`）的临时故障失败、采集已关闭且其他步骤没有失败时，运行控制以
 `SOURCE_RETRY` 从 `capture_daily_inputs` 起重跑一次；已 PASS 的采集组件复用，失败组件在补救会话里重抓。其他失败照旧等待人工处理。
 
-终止恢复绑定的当前版本是运行副本 HEAD（工作区干净、可从 `origin/main` 到达、与父运行 `git_commit` 不同），
-`OperationsRecoveryRequest` v2 记录 HEAD、运行副本路径与 `origin/main`；不再使用 deployment receipt。
+终止恢复绑定的当前版本是正在运行的代码根的版本：发布包为 `RELEASE.json` 记的源提交（清单校验通过），运行副本为 HEAD（工作区干净、可从
+`origin/main` 到达）；两者都要与父运行 `git_commit` 不同。`OperationsRecoveryRequest` v2 记录该提交、代码根路径与 `origin/main`；
+不再使用 deployment receipt。
 
-**发布身份与状态根（OPS-086，`owner_decision:DATA-023:2026-10-13:state_root_separation`）**：运行副本也可以是发布包：
+**发布身份与状态根（OPS-086，`owner_decision:DATA-023:2026-10-13:state_root_separation`）**：日报的代码根可以是发布包（2026-10-22 起生产如此）：
 目录里有 `RELEASE.json`（`aits_release.v1`，逐文件记 sha256 和大小）、没有 `.git`。`ai_trading_system.release_identity` 校验清单；
 运行溯源（`core/provenance.py`）、`run_artifacts`、`ops_daily` 元数据、shadow 谱系、候选复核、运行副本检查（`runtime_checkout`）
 和 `daily_scheduler_run.ps1` 的前置检查在发布包里从清单读提交、`release_id` 和“是否被改过”，不调用 git；有 `.git` 的工作区行为不变。
@@ -213,8 +216,10 @@ flowchart LR
 `.sha256`，包里有逐文件 sha256 的 `RELEASE.json`。`tools/release/deploy_daily_release.py` 解到 `<daily_root>\releases\<release_id>`，
 建 `.venv`、校验、试跑 `ops daily-plan`，全部通过才切换 `current.json` 和 `<daily_root>\run_daily.ps1`。`run_daily.ps1` 读
 `current.json`，设 `AITS_STATE_ROOT` 和 `PYTHONDONTWRITEBYTECODE=1`，再用同一个窗口调用发布包里的
-`scripts\ops\daily_scheduler_run.ps1 -Window <窗口>`。发布包只读，状态只写在状态根里，没有 `.git`。切换到发布包（OPS-086 步骤 7）
-由 owner 决定，在此之前日报仍按本节上面的运行副本运行。
+`scripts\ops\daily_scheduler_run.ps1 -Window <窗口>`。发布包只读，状态只写在状态根里，没有 `.git`。步骤 7 已在 2026-10-22 晚完成
+（第四次切换，发布包 `20261022-545e19985`，main `545e1998`；2026-10-23 12:00 的第一个生产日 27 步 PASS）：计划任务启动 `D:\Work\AITradingSystem_daily\run_daily.ps1`，
+日报日志和摘要在状态根的 `outputs\run_control\scheduler\`。前三次切换的第一个生产日都因取数的联网层问题（DATA-025、026、027、028）退回运行副本，
+经过见 OPS-086 需求文档第 7 节。
 
 **日报收尾的登记表范围（OPS-086-05，`owner_decision:DATA-023:2026-10-13:state_root_separation`）**：`config/report_registry.yaml` 每个登记项有 `scope`：
 `daily`（日报计划的步骤或 score-daily 写出的产物，加收尾各步自己的报告，目前 21 项）或 `research`（只在开发仓检查）。`aits reports index`、

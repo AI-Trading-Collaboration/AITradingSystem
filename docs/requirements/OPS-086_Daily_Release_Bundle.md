@@ -356,7 +356,7 @@ python tools/release/deploy_daily_release.py --activate <release_id> --daily-roo
     - 第三次（`20261021-19a16391c`，2026-10-21 晚；2026-10-22 12:00，as_of 2026-10-21）：请求缓存层的两个缺陷。FRED 返回一份 898 字节、不是 CSV 的内容，被缓存当成正常响应存下，重试读到同一份；官方源上一次失败留下的再验证“失败”标记不过期，之后任何运行都不再发真实请求。12:44 退回；补了 DATA-028（失败标记只挡同一轮的 135 秒，FRED 解析失败时作废那一条缓存）。运行副本 17:30 的 OPS-085 重试在坏条目被作废后补出了 as_of 2026-10-21。
     - 第四次（`20261022-545e19985`，main `545e1998`，2026-10-22 晚；2026-10-23 12:00，as_of 2026-10-22）：12:00 到 12:17，27 步 PASS，五个取数部分一次通过，没有阻断和错误日志，运行副本没有再跑。
   - 结果：2026-10-22 晚上第四次切换完成，日报从发布包运行；运行副本不更新、保留作回退。`scripts/agent/agent_config.json` 的 `daily_scheduler_dir` 随 OPS-086-10 改到新状态根。
-- 步骤 8（切换之后）：运维手册（第 9 节等处）和 `docs/system_flow.md` 里“日报在运行副本运行”的描述改成发布包；旧运行副本和研究数据搬进 archive 另问 Baker。
+- 步骤 8（OPS-086-11，B 区：文字加一个技能文件）：运维手册第 1、3、9 节、`docs/system_flow.md` 的调度段和 OPS-086 两段、`README.md`、`.agents/skills/periodic-operations/SKILL.md` 里“日报在运行副本运行”的描述改成发布包；运维手册第 9.1 节改为发布包更新（构建、部署、核对），新增第 9.4 节“运行副本（只在回退时用）”，原来的运行副本更新步骤挪到那里；旧运行副本和研究数据搬进 archive 另问 Baker。
 
 ## 8. 不改的
 
@@ -378,3 +378,4 @@ python tools/release/deploy_daily_release.py --activate <release_id> --daily-roo
 - 2026-10-17：步骤 6d（重跑）通过，见第 7 节；同日发现发布包与运行副本的运行控制幂等键不同，步骤 7 改为工作日晚上切换、当晚不手动启动。production_effect=none；broker_action=none。
 - 2026-10-19 至 2026-10-22：步骤 7 切换了四次，前三次的第一个生产日都因取数的联网层问题失败并退回运行副本，分别补了 DATA-025 和 DATA-026、DATA-027、DATA-028，见第 7 节。production_effect=none；broker_action=none。
 - 2026-10-23：步骤 7（OPS-086-10）：第四次切换（发布包 `20261022-545e19985`）的第一个生产日 12:00 到 12:17，as_of 2026-10-22，27 步 PASS；计划任务 `\AITradingSystem Daily Run` 从 `D:\Work\AITradingSystem_daily` 启动发布包（状态根 `D:\Work\AITradingSystem_data\prod\state`），pi 车道的 `daily_scheduler_dir` 改到新状态根。production_effect=none；broker_action=none。
+- 2026-10-23：步骤 8（OPS-086-11）：运维手册、`docs/system_flow.md`、`README.md` 和 periodic-operations 技能里的日报运行位置改成发布包，运行副本只作回退（运维手册第 9.4 节）。production_effect=none；broker_action=none。

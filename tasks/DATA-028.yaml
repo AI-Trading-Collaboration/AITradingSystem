@@ -2,8 +2,8 @@ schema_version: task.v1
 id: DATA-028
 area: 数据工程/请求缓存的失败不再永久挡住后续运行
 priority: P1
-status: IN_PROGRESS
-next_owner: Claude（审 DATA-028-01）
-next_step: DATA-028-01 发布后，下一个发布包带上它；OPS-086 步骤 7 第四次切换的日期等本任务发布
+status: DONE
+next_owner: operations owner（日常按运维手册第 9 节读调度摘要）
+next_step: DONE（2026-10-23）：DATA-028-01 在 main 545e19985（2026-10-22 14:19 JST），第四次切换的发布包 20261022-545e19985 带着它；2026-10-23 第一个生产日五个取数部分一次通过、27 步 PASS，缓存层没有拒绝；SEC、FMP、官方源的 HTTP 200 坏内容仍会缓存 12 小时（没观察到，未改），见需求文档第 6 节
 acceptance: 协调层的 FAILED 标记只在 waiter_timeout_seconds（135 秒）内挡住同一指纹的 acquire，之后新运行可取新 lease（hash 链延续）；FRED 响应解析失败（csv_parse、schema）时作废刚存下的缓存条目，下一次调用重新联网，作废失败不掩盖原错误；其他来源和策略文件不变；PR 套件通过
-notes: production_effect=none；broker_action=none；owner_decision:DATA-028:2026-10-22:cache_failure_recovery；需求文档 docs/requirements/DATA-028_External_Request_Cache_Failure_Recovery.md；起因：2026-10-22 12:00 JST OPS-086 新入口第二个生产日（as_of 2026-10-21）market_macro 的 FRED 898 字节非 CSV 响应被缓存、官方源被前一天的 OWNER_FAILURE 标记拒绝，计划任务退回运行副本
+notes: production_effect=none；broker_action=none；owner_decision:DATA-028:2026-10-22:cache_failure_recovery；需求文档 docs/requirements/DATA-028_External_Request_Cache_Failure_Recovery.md；起因：2026-10-22 12:00 JST OPS-086 新入口第二个生产日（as_of 2026-10-21）market_macro 的 FRED 898 字节非 CSV 响应被缓存、官方源被前一天的 OWNER_FAILURE 标记拒绝，计划任务退回运行副本；2026-10-23：DONE，见 next_step

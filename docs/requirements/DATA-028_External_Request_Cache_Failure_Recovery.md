@@ -1,6 +1,6 @@
 # DATA-028：请求缓存里的失败不再永久挡住后续运行，坏响应作废后重取
 
-状态：IN_PROGRESS。`production_effect=none`；`broker_action=none`。
+状态：DONE（2026-10-23）。`production_effect=none`；`broker_action=none`。
 
 关联：OPS-065（过期后的跨进程 singleflight）、OPS-086（日报发布包）、DATA-024（可变数据源缓存有效期）、DATA-027（官方源读断重试）；任务记录 `tasks/DATA-028.yaml`。
 
@@ -61,3 +61,5 @@
 ## 7. 进展
 
 - 2026-10-22：需求和验收测试写好，交 pi 实现（DATA-028-01）。
+- 2026-10-22：DATA-028-01 发布（main `545e19985`）；第四次切换的发布包带着它。
+- 2026-10-23：任务关闭（DONE）：发布包 `20261022-545e19985` 的第一个生产日 12:00 到 12:17，27 步 PASS，五个取数部分一次通过。production_effect=none；broker_action=none。

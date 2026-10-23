@@ -11,24 +11,28 @@ expected artifacts. `docs/system_flow.md` sections 1-6 show the data flow.
 ## Fixed rules
 
 - One external entry point: `aits ops daily-run`, started by the single Windows scheduled task
-  `\AITradingSystem Daily Run` in the runtime checkout `D:\Work\AITradingSystem_ops_runtime` (runbook
-  section 9). Never register a second scheduler or a weekly/monthly/ad hoc command as its own task.
+  `\AITradingSystem Daily Run`, which starts the activated daily release bundle under `D:\Work\AITradingSystem_daily`
+  with the state root `D:\Work\AITradingSystem_data\prod\state` (runbook section 9; the old runtime checkout
+  `D:\Work\AITradingSystem_ops_runtime` only stays as a rollback, runbook 9.4).
+  Never register a second scheduler or a weekly/monthly/ad hoc command as its own task.
   The one exception is the trigger-less `\AITradingSystem pi agent` task (runbook section 9.2,
   owner_decision:DEVX-025:2026-10-11:manual_agent_task_exception): it only starts pi as `aits-agent`
   and never runs `aits` commands. `aits ops daily-plan --fail-on-missing-env` previews without executing.
 - Each scheduled run writes `outputs\run_control\scheduler\<date>_<window>.log` and a code-generated
-  `.summary.md`/`.summary.json` in the runtime checkout; read those first. The development checkout
+  `.summary.md`/`.summary.json` in the state root; read those first. The development checkout
   does not run the daily report, so its DQ receipts say nothing about production daily status.
-- Move the runtime checkout only to a shipped `main` commit with the runbook 9.1 steps (clean tree,
-  no active run, `fetch` + `checkout --detach`); never pull, reset, clean, or stash it.
+- Change production code only by building a daily release bundle from a shipped `main` commit and deploying it
+  with the runbook 9.1 and 9.3 steps (owner instruction, no active run); never edit files inside a release and
+  never update the runtime checkout (rollback only, runbook 9.4).
 - `aits validate-data` must pass (strict `PASS`) before anything consumes cached market or macro data.
   Report the data quality status, or link the quality report, in every output that depends on it.
 - Never delete or hand-edit `outputs/run_control/**` state, ledgers, or locks to force a rerun, and never
   rewrite a terminal run. A changed step list starts a new run key by itself.
 - Terminal recovery is only `aits ops daily-run --recovery-parent-run-id ... --recovery-from-step ...
-  --recovery-reason-code ...` with all three values, run in the runtime checkout on owner instruction.
-  The current release is the runtime checkout HEAD: the tree must be clean, HEAD reachable from
-  `origin/main`, and different from the parent run's `git_commit` (OPS-082). No deployment receipt.
+  --recovery-reason-code ...` with all three values, run from the activated release on owner instruction
+  (set `AITS_STATE_ROOT` to the state root first). The current release is the bundle's `RELEASE.json` source
+  commit (verification must pass; for the rollback checkout: clean tree, HEAD reachable from `origin/main`),
+  and it must differ from the parent run's `git_commit` (OPS-082). No deployment receipt.
 - Non-daily tasks run manually through `aits ops periodic-dispatch` with real evidence ids
   (`--data-quality-evidence-id`, `--source-artifact-id`, `--owner-decision-id`, `--confirm-manual-dispatch`,
   plus `--explicit-trigger` for ad hoc). Automatic dispatch stays disabled.

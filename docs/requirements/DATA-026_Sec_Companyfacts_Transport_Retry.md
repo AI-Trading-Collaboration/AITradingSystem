@@ -1,6 +1,6 @@
 # DATA-026：SEC companyfacts 下载对“收到响应之前的网络失败”重试
 
-状态：IN_PROGRESS。`production_effect=none`；`broker_action=none`。无需 owner 决定（B 区，只在下载适配器里补请求级重试，采集策略不变；Baker 2026-10-20 在 OPS-086 线程同意先补）。
+状态：DONE（2026-10-23）。`production_effect=none`；`broker_action=none`。无需 owner 决定（B 区，只在下载适配器里补请求级重试，采集策略不变；Baker 2026-10-20 在 OPS-086 线程同意先补）。
 
 ## 1. 背景
 
@@ -38,3 +38,5 @@
 ## 6. 进展
 
 - 2026-10-20：需求和验收测试写好，交 pi 实现（DATA-026-01）。
+- 2026-10-20：DATA-026-01 发布（main `84f585b98`）。
+- 2026-10-23：任务关闭（DONE）：发布包 `20261022-545e19985` 的第一个生产日 12:00 到 12:17，27 步 PASS，五个取数部分一次通过。production_effect=none；broker_action=none。
