@@ -105,6 +105,8 @@ H-B 条件化储备探针（TRADING-2565-51，`owner_decision:TRADING-2565:2026-
 
 状态表（TRADING-2565-56，同一决定，第 5 期章程第 3.2 节）：`python -m ai_trading_system.research_probes.state_table check`、`run --out <目录>` 读 T0008 试跑计划的信号快照里五个月频源（Shiller 价、盈利、CPI，穆迪 Baa、Aaa），只取 1871-01 到 2010-12；每个序列按评估台的 `monthly_known_at` 在工作日日历上对齐，月 M 的状态取月 M 最后一个工作日已知的值。三个状态：CAPE（实际价对 10 年平均实际盈利）到当月为止的分位 ≥ 0.8、Baa − Aaa 利差的分位 ≥ 0.8、利差比 6 个月前宽（分位在有值不足 120 个月时不定义）。印每个状态在美股大盘十个慢熊段、七个长牛段和 QQQ 两个慢熊段、长牛段上的逐月记号、段起点前 6 个月有没有、翻的滞后，跑前写下的线（只给续期卡用），利差 6 个月变化对组合尺子 25 个下跌段的表。只印：不判、不计、不开题；结果 JSON 和中文报告写进 `--out`，不出图，不读验证窗口。
 
+科技类行业整轮尺子的检验力探针（TRADING-2565-61，`owner_decision:TRADING-2565:2026-10-23:tech_proxy_power_probe`，第 6 期章程第 13 节）：`python -m ai_trading_system.research_probes.cycle_power run --out <目录>` 经 `signal_sources.load_snapshot` 读信号快照 sig-7ad8aa00b736 的 Ken French 行业 Hardw、Chips、Softw 和因子表的 RF，先切到 2010-12-31；在三者等权的月末水平上按 `research_bench.segments` 划出慢熊周期，有放回地抽周期接成 500 条 984 个月的合成历史，每个市场重新划段，只在上面跑埋的规则（故意前视，不跑任何真实规则）。量「成对日对数收益差的平稳块 bootstrap 区间」九个候选尺子的误判率和检验力，按跑前写死的读法判；`histories.jsonl`（逐条）、`summary.json` 和中文 `report.md` 写进 `--out`。不进台账、不算试验，不读验证窗口。
+
 ```mermaid
 flowchart LR
     Q["Owner 定问题（TRADING-2567）"] --> PRE["research/&lt;题号&gt;/prereg.yaml + strategy.py<br/>C 区：随 Owner-Decision ship 进 main"]
