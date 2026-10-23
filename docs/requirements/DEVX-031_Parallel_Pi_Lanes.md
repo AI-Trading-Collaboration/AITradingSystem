@@ -90,7 +90,7 @@ owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes：owner（Baker）在项目
 - 没有 summary、没有目录、没有 label，窗口照旧关到结束。
 - 窗口配置里有 `open_if_passed`（另一个窗口的 label）时，那个窗口当天的运行跑通也让这个窗口放开（3.7）。
 - `run-brief.ps1` 和 `lane.py` 都用它。
-- OPS-086 把运行副本移走时，要同步改 `daily_scheduler_dir`。
+- 日报在发布包上运行后（OPS-086 步骤 7），`daily_scheduler_dir` 是生产状态根下的 `outputs\run_control\scheduler`（`D:\Work\AITradingSystem_data\prod\state\outputs\run_control\scheduler`，OPS-086-10 改，`tests/test_ops086_agent_config.py` 固定）；日报摘要不再写进运行副本。
 
 ### 3.5 推送分支
 

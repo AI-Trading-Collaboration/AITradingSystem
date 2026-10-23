@@ -347,7 +347,16 @@ python tools/release/deploy_daily_release.py --activate <release_id> --daily-roo
 - 步骤 6b（OPS-086-07，B 区）：试运行第一次部署用开发仓的 Python 3.11 对运行副本 3.14 的约束，pip 安装失败。部署在解包前拒绝与约束来源
   不是同一主次版本的解释器（5.3 第 5 步），运维手册 9.3 的三条部署命令明写 `--python C:\Python314\python.exe`。
 - 步骤 6c（OPS-086-08，B 区）：试运行的路径跟踪显示日报读了开发仓里的 15 个文件加 1 次列目录：`sec_pit_shadow_observe` 照读旧汇总（2026-05-26）里记下的开发仓绝对路径，`daily_task_dashboard` 照读 parameter_search manifest 的 `decision_snapshot_path`；运行副本今天也是这样读的。新函数 `ai_trading_system.paths.stored_state_path` 把记录的路径放回当前状态（状态根、代码根或调用方给的目录之下原样用，其他从第一个 `data`/`outputs`/`artifacts` 起接到状态根下，没有则不解析），两处改用它。不改任何报告的内容、评分、门禁。验收：`tests/test_ops086_stored_paths.py`。
-- 步骤 7：Baker 切换计划任务（计划 P6）。之后再单独问旧运行副本和研究数据搬进 archive。
+- 步骤 6d：用 main `7f665986f` 重建发布包 `20261016-7f665986f`，在试运行目录用真实入口再跑一次（as_of 2026-10-16，2026-10-17 12:42 JST）：27 步 PASS；命令与运行副本只差根目录、run id 和四条报告命令的 `--scope daily`；路径跟踪 0 次开发仓或运行副本读取；日报简报少 29 个栏目（JSON 1.55 MB 到 0.22 MB）；SEC、FMP 估值和官方政策源重新联网取数（运行副本读的是永不过期的缓存，DATA-024-01 修的就是这个）。评审见 `knowledge/claude/runs/OPS-086-06/review2/REVIEW2.md`。
+- 步骤 7（Baker 切换，计划 P6；操作步骤见 `knowledge/claude/runs/OPS-086-07S/STEP7.md`，之后每次切换另有 07R、07T、07U 包）：把发布包部署到 `D:\Work\AITradingSystem_daily`、状态根 `D:\Work\AITradingSystem_data\prod\state`，完整复制运行副本的状态，再把同一个计划任务 `\AITradingSystem Daily Run` 改为从发布包启动，次日检查第一个生产日。
+  - 为什么选工作日（美股交易日）晚上、当晚不手动启动：发布包的 `config/scheduled_tasks.yaml` 命令与运行副本不同（`--scope daily`），日报运行控制的幂等键（工作流规格编号加 as_of）因此不同，新入口认不出运行副本已跑完的 as_of，同一 as_of 再触发会完整重跑。切换放在 17:30 之后，次日 12:00 的 as_of 是新的。
+  - 切换了四次，前三次的第一个生产日都失败并退回运行副本（计划任务指回运行副本，运行副本一直没更新），原因都在取数的联网层，不在日报逻辑：
+    - 第一次（发布包 `20261016-7f665986f`，2026-10-19 晚切换；2026-10-20 12:00，as_of 2026-10-19）：SEC 在 TLS 握手处只试一次就失败，官方政策源也失败，日报没出，12:44 退回。D1 诊断没有发现发布包本身的缺陷，更像这台电脑经代理的出口偶发失败（未能证实）；补了 DATA-025（capture 保存错误的结尾）和 DATA-026（SEC 最多 3 次尝试）。
+    - 第二次（`20261020-84f585b98`，2026-10-20 晚；2026-10-21 12:00，as_of 2026-10-20）：官方政策源下载约 29 MB 的 OFAC SDN XML 时读到一半断开（`http.client.IncompleteRead`），请求级重试没有覆盖这种异常，12:40 退回，运行副本 12:47 补跑成功；补了 DATA-027。
+    - 第三次（`20261021-19a16391c`，2026-10-21 晚；2026-10-22 12:00，as_of 2026-10-21）：请求缓存层的两个缺陷。FRED 返回一份 898 字节、不是 CSV 的内容，被缓存当成正常响应存下，重试读到同一份；官方源上一次失败留下的再验证“失败”标记不过期，之后任何运行都不再发真实请求。12:44 退回；补了 DATA-028（失败标记只挡同一轮的 135 秒，FRED 解析失败时作废那一条缓存）。运行副本 17:30 的 OPS-085 重试在坏条目被作废后补出了 as_of 2026-10-21。
+    - 第四次（`20261022-545e19985`，main `545e1998`，2026-10-22 晚；2026-10-23 12:00，as_of 2026-10-22）：12:00 到 12:17，27 步 PASS，五个取数部分一次通过，没有阻断和错误日志，运行副本没有再跑。
+  - 结果：2026-10-22 晚上第四次切换完成，日报从发布包运行；运行副本不更新、保留作回退。`scripts/agent/agent_config.json` 的 `daily_scheduler_dir` 随 OPS-086-10 改到新状态根。
+- 步骤 8（切换之后）：运维手册（第 9 节等处）和 `docs/system_flow.md` 里“日报在运行副本运行”的描述改成发布包；旧运行副本和研究数据搬进 archive 另问 Baker。
 
 ## 8. 不改的
 
@@ -366,3 +375,6 @@ python tools/release/deploy_daily_release.py --activate <release_id> --daily-roo
 - 2026-10-16：步骤 6b（OPS-086-07）：部署拒绝与约束来源不同主次版本的解释器，运维手册 9.3 明写 `--python`。production_effect=none；broker_action=none。
 - 2026-10-16：步骤 6c（OPS-086-08）：状态里记录的绝对路径改经 `stored_state_path` 放回当前状态，日报不再读开发仓。production_effect=none；broker_action=none。
 - 2026-10-16：步骤 5b（OPS-086-09）：Reader Brief 加 `--scope daily`，日报简报去掉 29 个研究类栏目，Owner Daily Brief 为 9 个 section；日报计划、计划任务和 daily-run 收尾重建都用 daily。production_effect=none；broker_action=none。
+- 2026-10-17：步骤 6d（重跑）通过，见第 7 节；同日发现发布包与运行副本的运行控制幂等键不同，步骤 7 改为工作日晚上切换、当晚不手动启动。production_effect=none；broker_action=none。
+- 2026-10-19 至 2026-10-22：步骤 7 切换了四次，前三次的第一个生产日都因取数的联网层问题失败并退回运行副本，分别补了 DATA-025 和 DATA-026、DATA-027、DATA-028，见第 7 节。production_effect=none；broker_action=none。
+- 2026-10-23：步骤 7（OPS-086-10）：第四次切换（发布包 `20261022-545e19985`）的第一个生产日 12:00 到 12:17，as_of 2026-10-22，27 步 PASS；计划任务 `\AITradingSystem Daily Run` 从 `D:\Work\AITradingSystem_daily` 启动发布包（状态根 `D:\Work\AITradingSystem_data\prod\state`），pi 车道的 `daily_scheduler_dir` 改到新状态根。production_effect=none；broker_action=none。

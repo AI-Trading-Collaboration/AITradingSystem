@@ -27,7 +27,7 @@
   "scheduled_task_name": "AITradingSystem pi agent",
   "agent_clone": "D:\\Work\\AITradingSystem_agent",
   "queue_file": "D:\\Work\\AITradingSystem_agent_runs\\queue\\request.json",
-  "daily_scheduler_dir": "D:\\Work\\AITradingSystem_ops_runtime\\outputs\\run_control\\scheduler",
+  "daily_scheduler_dir": "D:\\Work\\AITradingSystem_data\\prod\\state\\outputs\\run_control\\scheduler",
   "main_checkout": "D:\\Work\\AITradingSystem",
   "lanes": {
     "lane1": "D:\\Work\\AITradingSystem_lane1",
