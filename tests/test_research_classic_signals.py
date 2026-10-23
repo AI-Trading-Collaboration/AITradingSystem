@@ -321,14 +321,14 @@ NOTES_TAIL = (
     "；2026-10-15：S4e 第一批真实筛选已跑完并发布为记录 S0001 到 S0004（main 71f00bc1）；"
     "S4f（TRADING-2565-11）第二题用的经典趋势信号"
 )
-# The card's current owner and step (TRADING-2565-57), checked against the register.
+# The card's current owner and step (TRADING-2565-58), checked against the register.
 NEXT_OWNER = "Claude（研究自动循环）"
 NEXT_STEP = (
     "研究自动循环第 5 期（`research/_loop/charter_p5.md`，到 2026-11-18；"
     "owner_decision:TRADING-2565:2026-10-23:research_loop_p5）："
-    "慢腿的回来条件和状态表都已读完（TRADING-2565-57），经典趋势的实现层到此为止；"
-    "横读 3 由复盘线程做；前瞻记录台每周五照记；"
-    "这期不新筛信号、不开别的题；第 6 期草稿到期前给 Baker 定"
+    "慢腿的回来条件和状态表读完（TRADING-2565-57），第三次横读做完（TRADING-2565-58，owner_decision:TRADING-2565:2026-10-23:horizontal_read_3）；"
+    "前瞻记录台每周五照记，F0008 整轮核对写在核对之前；这期不新筛信号、不开别的题；"
+    "第 6 期草稿（只记账、不开题）到期前给 Baker 定"
 )
 
 
