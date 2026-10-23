@@ -123,10 +123,6 @@ from ai_trading_system.reports.report_quality_gate import (
     default_report_quality_gate_json_path,
     default_report_quality_gate_markdown_path,
 )
-from ai_trading_system.reports.research_governance_summary import (
-    default_research_governance_summary_json_path,
-    default_research_governance_summary_report_path,
-)
 from ai_trading_system.reports.score_change_attribution import (
     default_score_change_attribution_json_path,
     default_score_change_attribution_report_path,
@@ -649,14 +645,6 @@ def build_daily_ops_plan(
     report_index_json = default_report_index_json_path(reports_dir, as_of)
     documentation_contract_report = default_documentation_contract_report_path(reports_dir, as_of)
     documentation_contract_json = default_documentation_contract_json_path(reports_dir, as_of)
-    research_governance_report = default_research_governance_summary_report_path(
-        reports_dir,
-        as_of,
-    )
-    research_governance_json = default_research_governance_summary_json_path(
-        reports_dir,
-        as_of,
-    )
     reader_brief_html = default_reader_brief_html_path(reports_dir, as_of)
     reader_brief_json = default_reader_brief_json_path(reports_dir, as_of)
     reader_brief_quality_json = default_reader_brief_quality_json_path(reports_dir, as_of)
@@ -1450,25 +1438,6 @@ def build_daily_ops_plan(
                 quality_gate=(
                     "只读校验 report registry 与 artifact catalog 契约；"
                     "production_effect=none，不运行上游报告。"
-                ),
-                blocks_downstream=True,
-                enabled=dashboard_enabled,
-                skip_reason=scoring_artifact_skip_reason,
-                input_visibility="readonly",
-            ),
-            DailyOpsStep(
-                step_id="research_governance_summary",
-                title="生成 research governance summary",
-                command=(
-                    ("aits", "reports", "research-governance-summary", "--latest")
-                    if dashboard_enabled
-                    else ()
-                ),
-                required_env_vars=(),
-                produced_paths=(research_governance_report, research_governance_json),
-                quality_gate=(
-                    "只读汇总 backtest、weight、shadow observe、SEC PIT、documentation "
-                    "和 registry 状态；production_effect=none，不改变生产权重或交易行为。"
                 ),
                 blocks_downstream=True,
                 enabled=dashboard_enabled,

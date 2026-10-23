@@ -102,6 +102,8 @@ def build_reader_brief_payload(
 ) -> dict[str, Any]:
     if registry_scope not in (None, "daily"):
         raise ValueError("the Reader Brief supports --scope all or daily")
+    if registry_scope == "daily":
+        research_governance_summary_path = None
     snapshot = _read_required_json(decision_snapshot_path, "decision_snapshot")
     calculation_explainers = _read_optional_json(calculation_explainers_path)
     daily_decision_summary = _read_optional_json(daily_decision_summary_path)
@@ -126,7 +128,11 @@ def build_reader_brief_payload(
             "trace_bundle": trace_bundle_path,
             "score_change_attribution": score_change_attribution_path,
             "market_panel": market_panel_path,
-            "research_governance_summary": research_governance_summary_path,
+            **(
+                {"research_governance_summary": research_governance_summary_path}
+                if registry_scope != "daily"
+                else {}
+            ),
             "report_index": report_index_path,
             "documentation_contract": documentation_contract_path,
         }
@@ -190,6 +196,9 @@ def build_reader_brief_payload(
             documentation_contract_path is not None and documentation_contract_path.exists(),
         ),
     }
+
+    if registry_scope == "daily":
+        del source_inputs["research_governance_summary"]
 
     run_context = _run_context(
         as_of=as_of,
@@ -267,10 +276,14 @@ def build_reader_brief_payload(
     data_refresh_audit = _data_refresh_audit_summary(report_index)
     data_source_fallback_policy = _data_source_fallback_policy_summary(report_index)
     cache_catalog = _cache_catalog_summary(report_index)
-    governance_summary = _backtest_shadow_governance(
-        daily_decision_summary=daily_decision_summary,
-        daily_task_dashboard=daily_task_dashboard,
-        research_governance_summary=research_governance_summary,
+    governance_summary = (
+        _backtest_shadow_governance(
+            daily_decision_summary=daily_decision_summary,
+            daily_task_dashboard=daily_task_dashboard,
+            research_governance_summary=research_governance_summary,
+        )
+        if registry_scope != "daily"
+        else None
     )
     parameter_shadow_review = _parameter_shadow_review(as_of)
     etf_operations_health = _etf_operations_health_summary(report_index)
@@ -451,6 +464,7 @@ def build_reader_brief_payload(
         "registry_scope": registry_scope or "all",
     }
     if registry_scope == "daily":
+        del payload["backtest_shadow_governance"]
         for key in RESEARCH_ONLY_SECTIONS:
             del payload[key]
         payload["omitted_sections"] = list(RESEARCH_ONLY_SECTIONS)
@@ -516,6 +530,7 @@ def build_reader_brief_quality_payload(
     missing_impact = _mapping(reader_brief_payload.get("missing_limited_artifact_impact"))
     manual_queue = _mapping(reader_brief_payload.get("manual_review_queue"))
     status_panel = _mapping(reader_brief_payload.get("status_panel"))
+    daily_scope = reader_brief_payload.get("registry_scope") == "daily"
     executive_decision = _mapping(reader_brief_payload.get("executive_decision"))
     action_checklist = _records(reader_brief_payload.get("action_checklist"))
     checks = [
@@ -529,12 +544,16 @@ def build_reader_brief_quality_payload(
             all(
                 _text(status_panel.get(key))
                 for key in (
-                    "build_status",
-                    "decision_usability",
-                    "research_promotion_status",
+                    ("build_status", "decision_usability")
+                    if daily_scope
+                    else ("build_status", "decision_usability", "research_promotion_status")
                 )
             ),
-            "首屏拆分 Build / Decision Usability / Research Promotion 状态。",
+            (
+                "首屏拆分 Build / Decision Usability 状态。"
+                if daily_scope
+                else "首屏拆分 Build / Decision Usability / Research Promotion 状态。"
+            ),
         ),
         _quality_check(
             "action_checklist",
@@ -727,6 +746,7 @@ def render_reader_brief_quality_markdown(payload: Mapping[str, Any]) -> str:
 
 
 def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
+    daily_scope = payload.get("registry_scope") == "daily"
     as_of = _text(payload.get("as_of"), "UNKNOWN")
     status = _text(payload.get("status"), "UNKNOWN")
     status_panel = _mapping(payload.get("status_panel"))
@@ -834,10 +854,10 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
         "<body>",
         "<main>",
         f"<header><p>Reader Brief</p><h1>{html.escape(as_of)}</h1>"
-        f"{_status_panel_header(status_panel, status)}</header>",
+        f"{_status_panel_header(status_panel, status, daily_scope=daily_scope)}</header>",
         _section(
             "Executive Summary",
-            _status_panel_html(status_panel)
+            _status_panel_html(status_panel, daily_scope=daily_scope)
             + _action_checklist_html(action_checklist)
             + _top_summary_cards(
                 decision=decision,
@@ -847,8 +867,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                 status_panel=status_panel,
                 payload_status=status,
                 production_effect=_text(payload.get("production_effect"), PRODUCTION_EFFECT),
+                daily_scope=daily_scope,
             )
-            + _narrative_summary_html(narrative_summary)
+            + _narrative_summary_html(narrative_summary, daily_scope=daily_scope)
             + _definition_table(
                 [
                     ("today_conclusion", narrative_summary.get("today_conclusion")),
@@ -869,7 +890,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("market_movement", executive_summary.get("market_movement")),
                     ("major_score_change", executive_summary.get("major_score_change")),
                     ("report_freshness", executive_summary.get("report_freshness")),
-                    ("governance_status", executive_summary.get("governance_status")),
+                    *(
+                        [("governance_status", executive_summary.get("governance_status"))]
+                        if not daily_scope
+                        else []
+                    ),
                     ("manual_review_count", executive_summary.get("manual_review_count")),
                     ("production_effect", executive_summary.get("production_effect")),
                 ]
@@ -3325,7 +3350,8 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     ]
     if payload.get("registry_scope") == "daily":
         research_section_prefixes = tuple(
-            f"<section><h2>{html.escape(title)}</h2>" for title in RESEARCH_ONLY_SECTIONS.values()
+            f"<section><h2>{html.escape(title)}</h2>"
+            for title in (*RESEARCH_ONLY_SECTIONS.values(), "Backtest / Shadow / Governance")
         )
         html_parts = [part for part in html_parts if not part.startswith(research_section_prefixes)]
     return "\n".join(html_parts)
@@ -6688,7 +6714,7 @@ def _missing_artifact_impact(
     source_inputs: Mapping[str, Any],
     report_index_summary: Mapping[str, Any],
     task_cadence_calendar: Mapping[str, Any],
-    governance_summary: Mapping[str, Any],
+    governance_summary: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
     items: list[dict[str, Any]] = []
     for artifact_id, source in source_inputs.items():
@@ -6774,16 +6800,14 @@ def _artifact_impact_summary(
     *,
     items: list[dict[str, Any]],
     report_index_summary: Mapping[str, Any],
-    governance_summary: Mapping[str, Any],
+    governance_summary: Mapping[str, Any] | None,
 ) -> list[dict[str, Any]]:
     required_missing = _int(report_index_summary.get("required_missing_count"))
     blocking = len([item for item in items if item.get("impact_level") == "BLOCKING"])
     reader_missing = _int(report_index_summary.get("missing_count"))
     reader_stale = _int(report_index_summary.get("stale_count"))
     important = len([item for item in items if item.get("impact_level") == "IMPORTANT"])
-    promotion_missing = _int(governance_summary.get("missing_count"))
-    promotion_status = _research_promotion_status(governance_summary)
-    return [
+    chains = [
         {
             "chain": "今日评分链路",
             "status": "PASS" if required_missing == 0 and blocking == 0 else "BLOCKED",
@@ -6810,6 +6834,12 @@ def _artifact_impact_summary(
             ),
             "production_effect": PRODUCTION_EFFECT,
         },
+    ]
+    if governance_summary is None:
+        return chains
+    promotion_missing = _int(governance_summary.get("missing_count"))
+    promotion_status = _research_promotion_status(governance_summary)
+    chains.append(
         {
             "chain": "研究/权重晋升链路",
             "status": promotion_status,
@@ -6820,8 +6850,9 @@ def _artifact_impact_summary(
                 else "按 research governance summary 的 promotion_status 处理。"
             ),
             "production_effect": PRODUCTION_EFFECT,
-        },
-    ]
+        }
+    )
+    return chains
 
 
 def _binding_gate_ladder(
@@ -9957,7 +9988,7 @@ def _executive_summary(
     market_situation: Mapping[str, Any],
     score_changes: Mapping[str, Any],
     report_index_summary: Mapping[str, Any],
-    governance_summary: Mapping[str, Any],
+    governance_summary: Mapping[str, Any] | None,
     manual_review_queue: Mapping[str, Any],
 ) -> dict[str, Any]:
     return {
@@ -9984,10 +10015,18 @@ def _executive_summary(
             f"stale={_text(report_index_summary.get('stale_count'), '0')}; "
             f"required_missing={_text(report_index_summary.get('required_missing_count'), '0')}"
         ),
-        "governance_status": _text(governance_summary.get("status"), "UNKNOWN"),
-        "research_governance": (
-            f"research governance status = {_text(governance_summary.get('status'), 'UNKNOWN')}; "
-            f"promotion_status = {_text(governance_summary.get('promotion_status'), 'UNKNOWN')}"
+        **(
+            {
+                "governance_status": _text(governance_summary.get("status"), "UNKNOWN"),
+                "research_governance": (
+                    "research governance status = "
+                    f"{_text(governance_summary.get('status'), 'UNKNOWN')}; "
+                    "promotion_status = "
+                    f"{_text(governance_summary.get('promotion_status'), 'UNKNOWN')}"
+                ),
+            }
+            if governance_summary is not None
+            else {}
         ),
         "manual_review_count": len(_records(manual_review_queue.get("items"))),
         "production_effect": PRODUCTION_EFFECT,
@@ -10001,7 +10040,7 @@ def _narrative_executive_summary(
     market_situation: Mapping[str, Any],
     score_changes: Mapping[str, Any],
     contribution_summary: Mapping[str, Any],
-    governance_summary: Mapping[str, Any],
+    governance_summary: Mapping[str, Any] | None,
     manual_review_queue: Mapping[str, Any],
     missing_artifact_impact: Mapping[str, Any],
 ) -> dict[str, Any]:
@@ -10056,12 +10095,24 @@ def _narrative_executive_summary(
             f"当前有 {manual_count} 个复核项，其中 critical={critical_count}；"
             f"缺失/受限 artifact 中 blocking={blocking_missing}, important={important_missing}。"
             f"今日评分链路={_text(daily_chain.get('status'), 'UNKNOWN')}；"
-            f"阅读上下文={_text(reader_chain.get('status'), 'UNKNOWN')}；"
-            f"研究/权重晋升链路={_text(promotion_chain.get('status'), 'UNKNOWN')}。"
+            f"阅读上下文={_text(reader_chain.get('status'), 'UNKNOWN')}"
+            + (
+                f"；研究/权重晋升链路={_text(promotion_chain.get('status'), 'UNKNOWN')}。"
+                if governance_summary is not None
+                else "。"
+            )
         ),
-        "research_governance_summary": (
-            f"research governance status = {_text(governance_summary.get('status'), 'UNKNOWN')}; "
-            f"promotion_status = {_text(governance_summary.get('promotion_status'), 'UNKNOWN')}。"
+        **(
+            {
+                "research_governance_summary": (
+                    "research governance status = "
+                    f"{_text(governance_summary.get('status'), 'UNKNOWN')}; "
+                    "promotion_status = "
+                    f"{_text(governance_summary.get('promotion_status'), 'UNKNOWN')}。"
+                ),
+            }
+            if governance_summary is not None
+            else {}
         ),
         "production_effect_statement": (
             "Reader Brief 为只读阅读入口，production_effect=none；"
@@ -10092,7 +10143,7 @@ def _status_panel(
     *,
     build_status: str,
     decision: Mapping[str, Any],
-    governance_summary: Mapping[str, Any],
+    governance_summary: Mapping[str, Any] | None,
     manual_review_queue: Mapping[str, Any],
     missing_artifact_impact: Mapping[str, Any],
     report_index_summary: Mapping[str, Any],
@@ -10105,22 +10156,38 @@ def _status_panel(
         report_index_summary=report_index_summary,
         data_quality_pit_safety=data_quality_pit_safety,
     )
-    promotion_status = _research_promotion_status(governance_summary)
+    promotion_status = (
+        _research_promotion_status(governance_summary) if governance_summary is not None else None
+    )
     return {
         "build_status": build_status,
         "decision_usability": decision_status,
-        "research_promotion_status": promotion_status,
+        **(
+            {"research_promotion_status": promotion_status}
+            if governance_summary is not None
+            else {}
+        ),
         "raw_reader_brief_status": build_status,
-        "raw_promotion_status": _text(governance_summary.get("promotion_status"), "UNKNOWN"),
+        **(
+            {"raw_promotion_status": _text(governance_summary.get("promotion_status"), "UNKNOWN")}
+            if governance_summary is not None
+            else {}
+        ),
         "build_status_explanation": (
             "Reader Brief artifact 已生成；该状态只说明简报构建成功，不等于今日结论可直接行动。"
             if build_status in {"OK", "PASS", "PASS_WITH_WARNINGS", "LIMITED_READER_CONTEXT"}
             else "Reader Brief 构建或输入校验存在失败，需要先修复。"
         ),
         "decision_usability_explanation": _decision_usability_explanation(decision_status),
-        "research_promotion_explanation": _promotion_status_explanation(
-            promotion_status,
-            governance_summary,
+        **(
+            {
+                "research_promotion_explanation": _promotion_status_explanation(
+                    promotion_status,
+                    governance_summary,
+                ),
+            }
+            if governance_summary is not None
+            else {}
         ),
         "production_effect": PRODUCTION_EFFECT,
     }
@@ -10195,16 +10262,20 @@ def _action_checklist(
     *,
     decision: Mapping[str, Any],
     status_panel: Mapping[str, Any],
-    governance_summary: Mapping[str, Any],
+    governance_summary: Mapping[str, Any] | None,
     manual_review_queue: Mapping[str, Any],
     data_quality_pit_safety: Mapping[str, Any],
 ) -> list[dict[str, Any]]:
     position = _text(decision.get("final_risk_asset_ai_position"), "UNKNOWN")
     binding_gate = _text(decision.get("binding_gate_label"), "UNKNOWN")
     data_gate_status = _text(data_quality_pit_safety.get("data_gate_status"), "UNKNOWN")
-    promotion_status = _text(
-        status_panel.get("research_promotion_status"),
-        _research_promotion_status(governance_summary),
+    promotion_status = (
+        _text(
+            status_panel.get("research_promotion_status"),
+            _research_promotion_status(governance_summary),
+        )
+        if governance_summary is not None
+        else None
     )
     items = [
         _checklist_item(
@@ -10248,7 +10319,7 @@ def _action_checklist(
                 data_gate_status,
             )
         )
-    if promotion_status != "PROMOTABLE":
+    if governance_summary is not None and promotion_status != "PROMOTABLE":
         items.append(
             _checklist_item(
                 4,
@@ -12118,7 +12189,7 @@ def _section(title: str, body: str) -> str:
     return f"<section><h2>{html.escape(title)}</h2>{body}</section>"
 
 
-def _narrative_summary_html(summary: Mapping[str, Any]) -> str:
+def _narrative_summary_html(summary: Mapping[str, Any], *, daily_scope: bool = False) -> str:
     if not summary:
         return '<p class="narrative">Narrative summary missing.</p>'
     today = html.escape(_text(summary.get("today_conclusion"), "UNKNOWN"))
@@ -12129,8 +12200,8 @@ def _narrative_summary_html(summary: Mapping[str, Any]) -> str:
         '<div class="narrative">'
         f"<p><strong>今日结论：</strong>{today}</p>"
         f"<p><strong>为什么：</strong>{why}</p>"
-        f"<p><strong>研究治理：</strong>{governance}</p>"
-        f"<p><strong>需要复核：</strong>{review}</p>"
+        + (f"<p><strong>研究治理：</strong>{governance}</p>" if not daily_scope else "")
+        + f"<p><strong>需要复核：</strong>{review}</p>"
         "</div>"
     )
 
@@ -12144,6 +12215,7 @@ def _top_summary_cards(
     status_panel: Mapping[str, Any],
     payload_status: str,
     production_effect: str,
+    daily_scope: bool = False,
 ) -> str:
     manual_items = _records(manual_review.get("items"))
     critical_count = sum(
@@ -12204,6 +12276,9 @@ def _top_summary_cards(
             "class": "summary-card--safety",
         },
     ]
+    if daily_scope:
+        cards[-1]["detail"] = "只读阅读入口；不是交易指令"
+        del cards[-1]["extra_badge"]
     rendered = []
     for card in cards:
         badges = _status_badge(_text(card.get("badge"), "UNKNOWN"))
@@ -12221,7 +12296,9 @@ def _top_summary_cards(
     return '<div class="summary-card-grid">' + "\n".join(rendered) + "</div>"
 
 
-def _status_panel_header(status_panel: Mapping[str, Any], fallback_status: str) -> str:
+def _status_panel_header(
+    status_panel: Mapping[str, Any], fallback_status: str, *, daily_scope: bool = False
+) -> str:
     build = _text(status_panel.get("build_status"), fallback_status)
     usability = _text(status_panel.get("decision_usability"), "UNKNOWN")
     promotion = _text(status_panel.get("research_promotion_status"), "UNKNOWN")
@@ -12229,12 +12306,16 @@ def _status_panel_header(status_panel: Mapping[str, Any], fallback_status: str) 
         '<div class="status-strip">'
         f"<span>Reader Brief Build Status: {_status_badge(build)}</span>"
         f"<span>Decision Usability: {_status_badge(usability)}</span>"
-        f"<span>Research Promotion Status: {_status_badge(promotion)}</span>"
-        "</div>"
+        + (
+            f"<span>Research Promotion Status: {_status_badge(promotion)}</span>"
+            if not daily_scope
+            else ""
+        )
+        + "</div>"
     )
 
 
-def _status_panel_html(status_panel: Mapping[str, Any]) -> str:
+def _status_panel_html(status_panel: Mapping[str, Any], *, daily_scope: bool = False) -> str:
     if not status_panel:
         return ""
     cards = [
@@ -12254,6 +12335,8 @@ def _status_panel_html(status_panel: Mapping[str, Any]) -> str:
             status_panel.get("research_promotion_explanation"),
         ),
     ]
+    if daily_scope:
+        cards = cards[:2]
     return (
         '<div class="status-panel">'
         + "\n".join(

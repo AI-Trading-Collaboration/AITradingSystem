@@ -44,7 +44,7 @@ aits ops replay-day --mode cache-only --as-of YYYY-MM-DD   # 历史严格复现�
 | SEC | `fundamentals extract-sec-metrics` → `merge-tsm-ir-sec-metrics` → `validate-sec-metrics` | |
 | 评分 | `score-daily --consumer-authorization-profile daily_score_daily@1.0.0` | 评分前严格复核 DQ receipt、capture 证据与来源；任一缺失或漂移则零运行 |
 | 评分之后 | `forward-evidence capture-dry-run-daily`、`reports dashboard`、`sec-pit shadow-observe/shadow-monitor`、`reports score-change-attribution`、`reports market-panel`、`data freshness`（只读） | 只读或只写研究存档；不改写 DQ 检查过的输入、不写权重、不触发 broker |
-| 报告 | `reports artifact-lineage` → `validate-artifact-lineage` → `reports index` → `docs report-contract` → `reports research-governance-summary` → `reports reader-brief` → `reports quality-gate` → `reports validate-reader-brief` | 质量失败必须在输出中可见 |
+| 报告 | `reports artifact-lineage` → `validate-artifact-lineage` → `reports index` → `docs report-contract` → `reports reader-brief` → `reports quality-gate` → `reports validate-reader-brief` | 质量失败必须在输出中可见 |
 | 收尾 | `ops health`、`security scan-secrets`（always-run） | 它们的 PASS 不覆盖投资门禁 |
 
 之后 `daily-run` 在同一运行控制下做 canonical finalization：生成本次运行的 decision summary 与 task dashboard，

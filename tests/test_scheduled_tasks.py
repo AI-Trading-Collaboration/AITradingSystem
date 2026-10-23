@@ -131,7 +131,6 @@ def test_daily_plan_matches_required_scheduled_order() -> None:
         "reports validate-artifact-lineage --latest",
         "reports index --latest",
         "docs report-contract --latest",
-        "reports research-governance-summary --latest",
         "reports reader-brief --latest --scope daily",
         "reports quality-gate --latest",
         "reports validate-reader-brief --latest",
@@ -139,7 +138,12 @@ def test_daily_plan_matches_required_scheduled_order() -> None:
         "security scan-secrets",
     ):
         assert expected in command_text
-    for retired in ("portfolio track-candidate", "etf ", "dynamic-v3-rescue"):
+    for retired in (
+        "portfolio track-candidate",
+        "etf ",
+        "dynamic-v3-rescue",
+        "research-governance-summary",
+    ):
         assert retired not in command_text
 
 
@@ -189,7 +193,6 @@ def test_closed_market_skips_score_and_reader_artifacts_but_keeps_data_refresh(
         "validate_artifact_lineage",
         "report_index",
         "documentation_contract",
-        "research_governance_summary",
         "reader_brief",
         "report_quality_gate",
         "validate_reader_brief",
@@ -282,7 +285,7 @@ def test_daily_run_executes_forward_evidence_then_reader_brief_chain_after_score
     recover_call = ("data", "recover-freshness", "--latest", "--no-price-writes")
     validate_call = next(call for call in calls if call[:1] == ("validate-data",))
     assert calls.index(recover_call) < calls.index(validate_call)
-    assert calls[score_index + 1 : score_index + 16] == [
+    assert calls[score_index + 1 : score_index + 15] == [
         ("forward-evidence", "capture-dry-run-daily", "--as-of", "2026-05-06"),
         ("reports", "dashboard", "--as-of", "2026-05-06"),
         ("sec-pit", "shadow-observe", "--latest", "--end", "2026-05-06"),
@@ -294,7 +297,6 @@ def test_daily_run_executes_forward_evidence_then_reader_brief_chain_after_score
         ("reports", "validate-artifact-lineage", "--latest"),
         ("reports", "index", "--latest", "--scope", "daily"),
         ("docs", "report-contract", "--latest", "--scope", "daily"),
-        ("reports", "research-governance-summary", "--latest"),
         ("reports", "reader-brief", "--latest", "--scope", "daily"),
         ("reports", "quality-gate", "--latest"),
         ("reports", "validate-reader-brief", "--latest"),

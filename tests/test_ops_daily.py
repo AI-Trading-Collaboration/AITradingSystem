@@ -76,7 +76,7 @@ def test_daily_ops_plan_defers_provider_env_failures_until_capture() -> None:
     assert "`aits reports market-panel --latest`" in markdown
     assert "`aits reports index --latest --scope daily`" in markdown
     assert "`aits docs report-contract --latest --scope daily`" in markdown
-    assert "`aits reports research-governance-summary --latest`" in markdown
+    assert "research-governance-summary" not in markdown
     assert "`aits reports reader-brief --latest --scope daily`" in markdown
     assert "`aits reports validate-reader-brief --latest`" in markdown
     assert "`live_provider`" in markdown
@@ -474,7 +474,6 @@ def test_daily_ops_plan_includes_forward_evidence_after_score_daily() -> None:
         "validate_artifact_lineage",
         "report_index",
         "documentation_contract",
-        "research_governance_summary",
         "reader_brief",
         "report_quality_gate",
         "validate_reader_brief",
@@ -613,7 +612,7 @@ def test_daily_ops_plan_cli_writes_report(tmp_path: Path) -> None:
     assert "data recover-freshness --latest --no-price-writes" in markdown
     assert "reports index --latest" in markdown
     assert "docs report-contract --latest" in markdown
-    assert "reports research-governance-summary --latest" in markdown
+    assert "research-governance-summary" not in markdown
     assert "reports reader-brief --latest --scope daily" in markdown
     assert "reports validate-reader-brief --latest" in markdown
     assert "ops health --as-of 2026-05-06" in markdown
@@ -1234,7 +1233,7 @@ def test_daily_ops_plan_closed_market_skips_score_and_current_download(
     assert step_by_id["validate_artifact_lineage"].enabled is False
     assert step_by_id["report_index"].enabled is False
     assert step_by_id["documentation_contract"].enabled is False
-    assert step_by_id["research_governance_summary"].enabled is False
+    assert "research_governance_summary" not in step_by_id
     assert step_by_id["reader_brief"].enabled is False
     assert step_by_id["report_quality_gate"].enabled is False
     assert step_by_id["validate_reader_brief"].enabled is False

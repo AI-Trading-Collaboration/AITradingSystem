@@ -21,6 +21,8 @@ DEVX-029（C 区决定记录）；任务记录 `tasks/OPS-086_DAILY_RELEASE_BUND
   提交的 `Owner-Decision:` 也写这个决定。
 - `owner_decision:OPS-086:2026-10-16:reader_brief_daily_scope`：Baker 2026-10-16 14:16 JST 在本任务线程的卡片上选「删掉」
   （卡片问题：删掉日报简报里的 29 个研究类栏目吗？）。见第 7 节步骤 5b。
+- `owner_decision:OPS-086:2026-10-23:reader_brief_no_research_governance`：Baker 2026-10-23 14:08 JST 在本任务线程的卡片上选「删除」
+  （卡片问题：删除日报简报里的「研究治理摘要」一节吗？）。见第 7 节步骤 5c。
 
 计划全文在项目文件 `knowledge/claude/daily-release-and-data-root-plan-2026-10-13.md`；本文是其中 P2、P3 的需求，两者不一致时以本文为准。
 
@@ -340,9 +342,26 @@ python tools/release/deploy_daily_release.py --activate <release_id> --daily-roo
   - 不改：29 个 `_x_summary` 函数及其测试（`--scope all` 照常使用）、`research_governance_summary` 一步及它在简报里的用途（见 5c）、简报状态与质量检查、任何评分和门禁。
     仍带研究味的内容（`pit_source_manifest`、`data_refresh_audit`、`data_source_fallback_policy`、`cache_catalog`、Operations Health 和研究治理相关条目）不在本步，等 Baker 另定。
   - 验收：`tests/test_ops086_reader_brief_scope.py`；`test_ops086_registry_scope.py`、`test_scheduled_tasks.py`、`test_ops_daily.py` 里相关断言随命令改。
-- 步骤 5c（等 Baker 答复，不在 5b 里）：Reader Brief 是否保留“研究治理摘要”一节（默认不保留）。不保留时：日报计划去掉 `research_governance_summary` 一步，
-  Reader Brief 和 daily_task_dashboard 去掉对应一节（含 `backtest_shadow_governance`、Research Promotion Status 和研究治理条目），`research_governance_summary` 改 `scope: research`；
-  简报状态逻辑要同时改，因为这份摘要现在是“重要”输入，缺了简报会一直是 LIMITED_READER_CONTEXT。
+- 步骤 5c（OPS-086-12，B 区，`owner_decision:OPS-086:2026-10-23:reader_brief_no_research_governance`）：日报不再有研究治理摘要。
+  - 为什么：`research_governance_summary` 一步汇总 backtest、权重迭代、shadow、SEC PIT 的研究状态（研究晋升状态、复核项），是研究内容，日报不依赖它运行；
+    它在 Reader Brief 里是“重要”输入，缺了简报状态就是 `LIMITED_READER_CONTEXT`。Baker 2026-10-23 14:08 JST 在本任务线程的卡片上选「删除」。
+  - 日报：计划去掉 `research_governance_summary` 一步（27 步变 26 步）；`config/scheduled_tasks.yaml` 去掉 `daily_research_governance_summary`，`daily_reader_brief` 改为依赖 `documentation_contract`；
+    `config/operations/runtime_control.yaml` 的恢复步骤清单去掉它；`aits ops daily-run` 收尾重建简报不再传摘要路径。
+    `research_governance_summary` 在登记表里改 `scope: research`、`include_in_daily_task_dashboard: false`（`daily` 范围共 20 项）。命令 `aits reports research-governance-summary` 和每周的
+    `weekly_research_governance_summary_review` 不变。
+  - 日报任务看板：去掉 Research Governance Summary 卡片（payload 键 `research_governance_summary` 和 HTML 一节）。
+  - Reader Brief：`registry_scope == "daily"` 时不读摘要，也不生成、不渲染由它来的内容：payload 的 `backtest_shadow_governance`；`status_panel` 的 `research_promotion_status`、
+    `raw_promotion_status`、`research_promotion_explanation`；`executive_summary` 的 `governance_status`、`research_governance`；`narrative_executive_summary` 的
+    `research_governance_summary` 和 `manual_review_summary` 里的“研究/权重晋升链路”一句；`missing_limited_artifact_impact.impact_summary` 的第三条链路“研究/权重晋升链路”；
+    摘要带来的复核项（`manual_review_queue` 里 `research_governance_*` 和 weight_iteration 条目）；Action Checklist 里“不进行 weight promotion”一条；`source_inputs`、`appendix_links`、
+    `report_navigation` 里的摘要。HTML 去掉 Backtest / Shadow / Governance 一节、“研究治理”一行、Research Promotion Status 的徽章和卡片，Production Effect 卡片上的研究晋升字样改成“只读阅读入口；不是交易指令”。
+    Reader Brief 质量检查的 `status_panel` 项在 daily 范围只要求 `build_status` 和 `decision_usability`。Owner Daily Brief 的 `portfolio_and_shadow` 在 daily 范围只用
+    `portfolio_control_research`、`portfolio_control_forward_aging` 两个来源（`reporting_architecture.yaml` 不改）。缺这份摘要不再让简报变成 `LIMITED_READER_CONTEXT`。
+    `--scope all`（默认）的输出一个字节都不变。
+  - 不改：评分、DQ 门禁、broker 边界；`--scope all` 的 Reader Brief；每周的研究治理复核；复核项按关键词归到“影响研究晋升”的分组本身（标签仍在，别的来源的复核项可以落进去）。
+  - 生产：要下一次发布包部署才生效。计划步骤数变了，日报运行的规格 id 也变，所以部署放在当天日报跑完之后。
+  - 验收：`tests/test_ops086_governance_scope.py`；`test_ops086_reader_brief_scope.py`、`test_ops086_registry_scope.py`、`test_ops_daily.py`、`test_scheduled_tasks.py`、
+    `test_daily_task_dashboard.py`、`test_arch_004f1_operations_control_plane.py` 里相关断言随之改。
 - 步骤 6：电脑上试运行（计划 P5），只写新目录。2026-10-16 通过，评审见 `knowledge/claude/runs/OPS-086-06/REVIEW.md`。
 - 步骤 6b（OPS-086-07，B 区）：试运行第一次部署用开发仓的 Python 3.11 对运行副本 3.14 的约束，pip 安装失败。部署在解包前拒绝与约束来源
   不是同一主次版本的解释器（5.3 第 5 步），运维手册 9.3 的三条部署命令明写 `--python C:\Python314\python.exe`。
@@ -379,3 +398,4 @@ python tools/release/deploy_daily_release.py --activate <release_id> --daily-roo
 - 2026-10-19 至 2026-10-22：步骤 7 切换了四次，前三次的第一个生产日都因取数的联网层问题失败并退回运行副本，分别补了 DATA-025 和 DATA-026、DATA-027、DATA-028，见第 7 节。production_effect=none；broker_action=none。
 - 2026-10-23：步骤 7（OPS-086-10）：第四次切换（发布包 `20261022-545e19985`）的第一个生产日 12:00 到 12:17，as_of 2026-10-22，27 步 PASS；计划任务 `\AITradingSystem Daily Run` 从 `D:\Work\AITradingSystem_daily` 启动发布包（状态根 `D:\Work\AITradingSystem_data\prod\state`），pi 车道的 `daily_scheduler_dir` 改到新状态根。production_effect=none；broker_action=none。
 - 2026-10-23：步骤 8（OPS-086-11）：运维手册、`docs/system_flow.md`、`README.md` 和 periodic-operations 技能里的日报运行位置改成发布包，运行副本只作回退（运维手册第 9.4 节）。production_effect=none；broker_action=none。
+- 2026-10-23：步骤 5c（OPS-086-12）：日报不再有研究治理摘要：计划 26 步，Reader Brief 的 daily 范围和日报任务看板去掉对应内容，登记表改 `scope: research`。production_effect=none；broker_action=none。

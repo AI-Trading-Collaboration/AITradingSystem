@@ -222,7 +222,7 @@ flowchart LR
 经过见 OPS-086 需求文档第 7 节。
 
 **日报收尾的登记表范围（OPS-086-05，`owner_decision:DATA-023:2026-10-13:state_root_separation`）**：`config/report_registry.yaml` 每个登记项有 `scope`：
-`daily`（日报计划的步骤或 score-daily 写出的产物，加收尾各步自己的报告，目前 21 项）或 `research`（只在开发仓检查）。`aits reports index`、
+`daily`（日报计划的步骤或 score-daily 写出的产物，加收尾各步自己的报告，目前 20 项）或 `research`（只在开发仓检查）。`aits reports index`、
 `aits reports artifact-lineage`、`aits docs report-contract` 有 `--scope all|daily|research`，默认 `all`，行为不变；日报计划给这三步传 `--scope daily`，
 所以报告索引、lineage 和文档契约只处理日报范围的登记项，新的生产状态里本来没有的研究产物不再各出一条缺失警告。`reports quality-gate` 和 Reader Brief 读这份索引。
 日报发布包的清单也只取 `scope: daily` 的登记项。`scope` 不改任何报告的内容、评分或门禁。
@@ -233,7 +233,14 @@ flowchart LR
 `daily` 时 payload 去掉 29 个研究类栏目（`reader_brief.RESEARCH_ONLY_SECTIONS`，它们读的报告都是 `scope: research`），HTML 不渲染这些栏目，报告索引只留日报范围的记录，
 并记下 `registry_scope` 和 `omitted_sections`。Owner Daily Brief 看到 payload 的 `registry_scope` 是 `daily` 时去掉 `research_review_due`，共 9 个 section。
 日报计划的 `aits reports reader-brief --latest --scope daily` 和 `aits ops daily-run` 收尾重建最终简报都用 `daily`。简报状态、质量检查和 report quality gate 不读这 29 个栏目，所以结果不变；
-`research_governance_summary` 一步仍在日报计划里（步骤 5c 另定）。
+`research_governance_summary` 一步不在这 29 项里，在步骤 5c 去掉，见下一段。
+
+**日报不再带研究治理摘要（OPS-086-12，`owner_decision:OPS-086:2026-10-23:reader_brief_no_research_governance`）**：日报计划不再有 `research_governance_summary` 一步（26 步）；`daily_research_governance_summary` 任务从计划任务里去掉，
+`daily_reader_brief` 改为依赖 `documentation_contract`；`runtime_control.yaml` 的恢复步骤清单也去掉它。`research_governance_summary` 在登记表里改为 `scope: research`（`daily` 范围共 20 项），日报任务看板不再有这张卡片。
+`registry_scope` 为 `daily` 的 Reader Brief 不读这份摘要：payload 去掉 `backtest_shadow_governance`、`status_panel` 的研究晋升三项、`executive_summary` 和 `narrative_executive_summary` 里的研究治理语句、
+“研究/权重晋升链路”（影响摘要只剩今日评分链路和阅读上下文）、摘要带来的复核项和 Action Checklist 里“不进行 weight promotion”一条；HTML 去掉 Backtest / Shadow / Governance 一节、研究治理一行和 Research Promotion Status；
+Owner Daily Brief 的 `portfolio_and_shadow` 只用 `portfolio_control_research`、`portfolio_control_forward_aging` 两个来源。缺这份摘要不再让简报变成 `LIMITED_READER_CONTEXT`。
+`--scope all`、`aits reports research-governance-summary` 和每周的 `weekly_research_governance_summary_review` 不变。
 
 ## 6. 已退役、不再运行
 

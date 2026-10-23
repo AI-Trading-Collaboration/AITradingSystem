@@ -298,9 +298,11 @@ def test_reports_daily_tasks_cli_writes_html_and_json(tmp_path: Path) -> None:
     assert order_candidate["execution_action"] == "none"
 
 
-def test_daily_task_dashboard_reads_research_governance_summary_card(
+def test_daily_task_dashboard_has_no_research_governance_summary_card(
     tmp_path: Path,
 ) -> None:
+    # OPS-086 step 5c: the daily run no longer builds the summary, and the dashboard does not
+    # read one even when a file is lying in the reports directory.
     as_of = date(2026, 5, 4)
     metadata_path = _write_daily_ops_metadata(tmp_path, as_of)
     _write_research_governance_summary(tmp_path, as_of)
@@ -314,23 +316,23 @@ def test_daily_task_dashboard_reads_research_governance_summary_card(
 
     html = render_daily_task_dashboard(report)
     payload = build_daily_task_dashboard_payload(report)
-    summary = payload["research_governance_summary"]
 
-    assert "REPORT-051 只读卡片" in html
-    assert "Research Governance Summary" in html
-    assert summary["status"] == "PASS_WITH_WARNINGS"
-    assert summary["production_effect"] == "none"
-    assert summary["read_only"] is True
-    assert summary["card_count"] == 6
-    assert summary["missing_count"] == 1
-    assert summary["limited_count"] == 1
-    assert summary["warning_count"] == 1
-    assert summary["manual_review_required_count"] == 3
-    assert summary["group_counts"]["Shadow observe-only"] == 2
-    assert summary["group_counts"]["Candidate / research-only"] == 1
-    assert summary["group_counts"]["Blocked / insufficient data"] == 1
-    assert summary["group_counts"]["Rollback / warning"] == 1
-    assert "research_governance_summary_2026-05-04.md" in summary["report_href"]
+    assert "research_governance_summary" not in payload
+    assert "Research Governance Summary" not in html
+    assert "research-governance-summary-title" not in html
+    assert "REPORT-051" not in html
+    # Nothing the card showed is left behind: its summary grid, its risk line and its link.
+    assert "<span>latest summary date</span>" not in html
+    assert "<span>summary status</span>" not in html
+    assert "<span>card count</span>" not in html
+    assert "<span>manual review required</span>" not in html
+    assert "<span>production effect risk</span>" not in html
+    assert "<span>shadow observe-only</span>" not in html
+    assert "<span>candidate / research-only</span>" not in html
+    assert "<span>blocked / insufficient data</span>" not in html
+    assert "<span>rollback / warning</span>" not in html
+    assert "No research governance summary available" not in html
+    assert "research_governance_summary_2026-05-04" not in html
 
 
 def test_daily_decision_summary_schema_is_stable(tmp_path: Path) -> None:

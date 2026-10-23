@@ -468,21 +468,6 @@ cadences:
         production_weight_write: false
         active_shadow_weight_write: false
         broker_action: false
-      - task_id: daily_research_governance_summary
-        daily_plan_step_id: research_governance_summary
-        dependencies:
-          - documentation_contract
-        title: Build research governance summary
-        command: aits reports research-governance-summary --latest
-        command_contains:
-          - reports
-          - research-governance-summary
-          - --latest
-        closed_market_behavior: skip_score_artifacts
-        production_effect: none
-        production_weight_write: false
-        active_shadow_weight_write: false
-        broker_action: false
       - task_id: daily_reader_brief
         daily_plan_step_id: reader_brief
         dependencies:
@@ -491,7 +476,7 @@ cadences:
           - score_change_attribution
           - market_panel
           - market_data_recover_freshness
-          - research_governance_summary
+          - documentation_contract
         title: Build Reader Brief
         command: aits reports reader-brief --latest --scope daily
         command_contains:

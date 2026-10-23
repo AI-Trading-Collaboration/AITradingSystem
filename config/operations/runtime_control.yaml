@@ -54,7 +54,6 @@ terminal_recovery_allowed_from_step_ids:
   - validate_artifact_lineage
   - report_index
   - documentation_contract
-  - research_governance_summary
   - reader_brief
   - report_quality_gate
   - validate_reader_brief

@@ -173,9 +173,6 @@ from ai_trading_system.reports.report_quality_gate import (
     write_report_quality_gate_json,
     write_report_quality_gate_markdown,
 )
-from ai_trading_system.reports.research_governance_summary import (
-    default_research_governance_summary_json_path,
-)
 from ai_trading_system.reports.score_change_attribution import (
     default_score_change_attribution_json_path,
 )
@@ -788,10 +785,6 @@ def _refresh_reader_brief_from_daily_run_summary(
             as_of,
         ),
         market_panel_path=default_market_panel_json_path(reports_dir, as_of),
-        research_governance_summary_path=default_research_governance_summary_json_path(
-            reports_dir,
-            as_of,
-        ),
         report_index_path=default_report_index_json_path(reports_dir, as_of),
         documentation_contract_path=default_documentation_contract_json_path(reports_dir, as_of),
         registry_scope="daily",

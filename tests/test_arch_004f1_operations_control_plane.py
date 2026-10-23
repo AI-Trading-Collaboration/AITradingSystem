@@ -926,7 +926,7 @@ def test_all_registered_tasks_are_inventoryable_via_explicit_bindings() -> None:
         )
         total += len(assessment.workflow_spec.steps)
 
-    assert total == 59
+    assert total == 58
 
 
 def test_daily_adapter_preserves_order_explicit_dag_and_legacy_commands() -> None:

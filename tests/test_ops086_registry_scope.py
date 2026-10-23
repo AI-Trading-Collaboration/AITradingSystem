@@ -57,7 +57,6 @@ DAILY_IDS = frozenset(
         "reader_brief",
         "reader_brief_quality",
         "report_quality_gate",
-        "research_governance_summary",
         "score_change_attribution",
         "sec_pit_shadow_monitor",
         "sec_pit_shadow_observe",

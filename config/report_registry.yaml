@@ -2682,7 +2682,7 @@ reports:
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
   - report_id: research_governance_summary
-    scope: daily
+    scope: research
     title: Research Governance Summary
     group: governance
     cadence: daily
@@ -2696,7 +2696,7 @@ reports:
     freshness_rationale: Governance boundary summary should reflect the latest daily report set.
     owner_action: regenerate_if_missing_or_stale
     include_in_reader_brief: true
-    include_in_daily_task_dashboard: true
+    include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: canonical_system_status
     scope: research

@@ -80,6 +80,23 @@ EXPECTED_SECTIONS = {
     "task_register_consistency": "Task Register Consistency",
 }
 SCOPE_ONLY_KEYS = {"generated_at", "registry_scope", "omitted_sections"}
+# Step 5c (2026-10-23) takes the research governance summary out of the daily brief as well: one
+# whole key is gone, and these keys are built from the summary (test_ops086_governance_scope.py
+# pins how they differ). The HTML loses the Backtest / Shadow / Governance section with it.
+GOVERNANCE_KEY = "backtest_shadow_governance"
+GOVERNANCE_TITLE = "Backtest / Shadow / Governance"
+GOVERNANCE_DERIVED_KEYS = {
+    "action_checklist",
+    "appendix_links",
+    "executive_summary",
+    "manual_review_queue",
+    "missing_limited_artifact_impact",
+    "narrative_executive_summary",
+    "report_navigation",
+    "report_navigation_groups",
+    "source_inputs",
+    "status_panel",
+}
 
 
 # --- fixtures ------------------------------------------------------------------------------------
@@ -200,9 +217,13 @@ def test_the_daily_payload_is_the_whole_payload_without_the_29_sections(
 ) -> None:
     assert daily["registry_scope"] == "daily"
     assert daily["omitted_sections"] == list(RESEARCH_ONLY_SECTIONS)
-    assert set(daily) == (set(whole) - set(EXPECTED_SECTIONS)) | {"omitted_sections"}
-    for key in set(whole) - set(EXPECTED_SECTIONS) - SCOPE_ONLY_KEYS:
+    assert set(daily) == (set(whole) - set(EXPECTED_SECTIONS) - {GOVERNANCE_KEY}) | {
+        "omitted_sections"
+    }
+    unchanged = set(whole) - set(EXPECTED_SECTIONS) - {GOVERNANCE_KEY}
+    for key in unchanged - SCOPE_ONLY_KEYS - GOVERNANCE_DERIVED_KEYS:
         assert daily[key] == whole[key], key
+    assert GOVERNANCE_DERIVED_KEYS <= set(daily)
     assert daily["status"] == whole["status"]
 
 
@@ -346,7 +367,12 @@ def test_the_validators_see_the_same_brief_in_both_scopes(
         )
 
     assert results["daily"]["status"] == results["whole"]["status"]
-    assert results["daily"]["summary"] == results["whole"]["summary"]
+    # The governance items leave the review queue, so its count is the one number that moves.
+    summaries = {
+        name: {k: v for k, v in result["summary"].items() if k != "manual_review_count"}
+        for name, result in results.items()
+    }
+    assert summaries["daily"] == summaries["whole"]
     statuses = {
         name: [(check["check_id"], check["status"]) for check in result["checks"]]
         for name, result in results.items()
@@ -364,11 +390,12 @@ def test_the_whole_html_has_all_29_sections_and_the_daily_html_none_of_them(
     whole_titles = _titles(render_reader_brief_html(whole))
     daily_titles = _titles(render_reader_brief_html(daily))
 
-    assert set(EXPECTED_SECTIONS.values()) <= set(whole_titles)
-    assert not set(EXPECTED_SECTIONS.values()) & set(daily_titles)
-    assert len(whole_titles) - len(daily_titles) == 29
+    dropped = set(EXPECTED_SECTIONS.values()) | {GOVERNANCE_TITLE}
+    assert dropped <= set(whole_titles)
+    assert not dropped & set(daily_titles)
+    assert len(whole_titles) - len(daily_titles) == 30
     # Every other section is still there, in the same order.
-    assert daily_titles == [t for t in whole_titles if t not in set(EXPECTED_SECTIONS.values())]
+    assert daily_titles == [t for t in whole_titles if t not in dropped]
     assert {"Executive Summary", "Report Navigation", "Manual Review Queue"} <= set(daily_titles)
 
 
@@ -396,8 +423,16 @@ def test_the_owner_brief_has_nine_sections_in_the_daily_scope(
     ]
     assert len(build_owner_daily_brief_view_model(older).sections) == 10
     kept = {s.section_id: s.to_dict() for s in daily_view.sections}
-    for section in whole_view.sections:
-        if section.section_id != "research_review_due":
+    # These four read keys that step 5c changes (test_ops086_governance_scope.py pins them).
+    derived = {
+        "today_decision",
+        "owner_action_queue",
+        "portfolio_and_shadow",
+        "safety_and_navigation",
+    }
+    unchanged = [s for s in whole_view.sections if s.section_id != "research_review_due"]
+    for section in unchanged:
+        if section.section_id not in derived:
             assert kept[section.section_id] == section.to_dict()
 
 
@@ -551,16 +586,16 @@ def test_the_daily_plan_and_schedule_run_the_reader_brief_in_the_daily_scope(
     assert "--scope" not in steps["validate_reader_brief"].command
 
 
-def test_the_research_governance_summary_step_is_not_part_of_this_change() -> None:
-    # Its removal is a separate step (5c): the brief still reads its output, and the schedule
-    # still orders the brief after it.
+def test_the_research_governance_summary_step_is_gone_from_the_daily_schedule() -> None:
+    # Step 5b left it in place; step 5c removed it (test_ops086_governance_scope.py pins the rest).
     tasks = load_scheduled_tasks_config().tasks_by_id()
 
-    assert "daily_research_governance_summary" in tasks
-    assert "research_governance_summary" in tasks["daily_reader_brief"].dependencies
+    assert "daily_research_governance_summary" not in tasks
+    assert "weekly_research_governance_summary_review" in tasks
+    assert "research_governance_summary" not in tasks["daily_reader_brief"].dependencies
     registry = yaml.safe_load(DEFAULT_REPORT_REGISTRY_PATH.read_text(encoding="utf-8"))["reports"]
     entry = next(item for item in registry if item["report_id"] == "research_governance_summary")
-    assert entry["scope"] == "daily"
+    assert entry["scope"] == "research"
 
 
 # --- the records ---------------------------------------------------------------------------------

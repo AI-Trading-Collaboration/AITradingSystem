@@ -29,6 +29,8 @@ _PASS_STATES = {"PASS", "READY", "AVAILABLE", "OK", "COMPLETE", "DONE"}
 _BLOCKED_STATES = {"BLOCKED", "FAILED", "FAIL", "ERROR", "UNSAFE"}
 # Owner decision 2026-10-16 (OPS-086 step 5b): daily payloads have no research sections.
 _RESEARCH_ONLY_SECTION_IDS = frozenset({"research_review_due"})
+# Owner decision 2026-10-23 (OPS-086 step 5c): daily sections have no research governance source.
+_RESEARCH_ONLY_SOURCE_KEYS = frozenset({"backtest_shadow_governance"})
 
 
 def build_owner_daily_brief_view_model(
@@ -41,7 +43,11 @@ def build_owner_daily_brief_view_model(
     specs = tuple(
         _section_spec(
             section_id=item.section_id,
-            source_keys=item.source_keys,
+            source_keys=(
+                tuple(key for key in item.source_keys if key not in _RESEARCH_ONLY_SOURCE_KEYS)
+                if legacy_payload.get("registry_scope") == "daily"
+                else item.source_keys
+            ),
             order=index,
         )
         for index, item in enumerate(resolved_policy.core_sections, start=1)
