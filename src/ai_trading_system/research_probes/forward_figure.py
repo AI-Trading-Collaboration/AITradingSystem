@@ -1,4 +1,4 @@
-"""只通过 forward_ledger.read_ledger 核链并读取前瞻账本，画累计 QQQ 和三条敞口。
+"""只通过 forward_ledger.read_ledger 核链并读取前瞻账本，画 QQQ、四条累计和三条敞口。
 
 不读市场数据，不判、不追加账本，不接入周五流程；同样的行生成同样的 SVG。
 账本图只描述已登记的行，不授权生产或券商动作。
@@ -23,20 +23,48 @@ LINES = (
     ("exp_fixed", "固定 0.8", "#8c8c8c"),
     ("exp_overlay", "覆盖 F0001 fast_slow", "#1f77b4"),
 )
+CUMULATIVE_LINES = (
+    ("daily", "日报模型", "#d62728"),
+    ("fixed", "固定 0.8", "#8c8c8c"),
+    ("overlay", "F0001 fast_slow 覆盖", "#1f77b4"),
+    ("matched", "F0001 的同平均敞口固定", "#9467bd"),
+)
 app = typer.Typer(help="前瞻账本图：只读、核链、不判、不追加。")
 
 
-def cumulative(rows: Sequence[Mapping[str, Any]]) -> pd.Series:
+def _levels(returns: Sequence[float | None], index: pd.DatetimeIndex) -> pd.Series:
     level = 1.0
     values = []
-    for row in rows:
-        value = row["qqq_tr"]
+    for value in returns:
         if value is None:
             values.append(math.nan)
         else:
             level *= 1 + float(value)
             values.append(level)
-    return pd.Series(values, index=pd.DatetimeIndex([r["date"] for r in rows]), dtype=float)
+    return pd.Series(values, index=index, dtype=float)
+
+
+def cumulative(rows: Sequence[Mapping[str, Any]]) -> pd.Series:
+    return _levels([row["qqq_tr"] for row in rows], pd.DatetimeIndex([r["date"] for r in rows]))
+
+
+def line_levels(rows: Sequence[Mapping[str, Any]]) -> dict[str, pd.Series]:
+    index = pd.DatetimeIndex([row["date"] for row in rows])
+    result = {
+        line: _levels([row[f"ret_{line}"] for row in rows], index) for line in forward_ledger.LINES
+    }
+    exposures = [float(row["exp_overlay"]) for row in rows if row["ret_overlay"] is not None]
+    mean = sum(exposures) / len(exposures) if exposures else None
+    result["matched"] = _levels(
+        [
+            None
+            if mean is None or row["ret_overlay"] is None or row["qqq_tr"] is None
+            else mean * row["qqq_tr"]
+            for row in rows
+        ],
+        index,
+    )
+    return result
 
 
 def _dates(svg: plot_run.Svg, panel: plot_run.Panel, index: pd.DatetimeIndex) -> None:
@@ -70,9 +98,27 @@ def render(rows: Sequence[Mapping[str, Any]]) -> bytes:
     top = plot_run.Panel(
         80, 100, width - 140, 250, first, last, low - padding, high + padding, False
     )
-    bottom = plot_run.Panel(80, 425, width - 140, 140, first, last, -0.05, 1.08, False)
-    svg = plot_run.Svg(width, 640)
-    svg.text(80, 30, "前瞻账本：QQQ 累计总回报和三条敞口", size=16, weight="bold")
+    levels = line_levels(rows)
+    finite_lines = [
+        1.0,
+        *[float(v) for series in levels.values() for v in series if math.isfinite(v)],
+    ]
+    line_low, line_high = min(finite_lines), max(finite_lines)
+    line_padding = max(line_high - line_low, 0.01) * 0.12
+    middle = plot_run.Panel(
+        80,
+        500,
+        width - 140,
+        200,
+        first,
+        last,
+        line_low - line_padding,
+        line_high + line_padding,
+        False,
+    )
+    bottom = plot_run.Panel(80, 795, width - 140, 140, first, last, -0.05, 1.08, False)
+    svg = plot_run.Svg(width, 1010)
+    svg.text(80, 30, "前瞻账本：QQQ 累计总回报、四条线的累计和三条敞口", size=16, weight="bold")
     plot_run.legend(
         svg, 80, 75, [("QQQ 累计总回报（起点前一天 = 1，缺的日子断开）", "#222", 1.5, "line")]
     )
@@ -81,7 +127,44 @@ def render(rows: Sequence[Mapping[str, Any]]) -> bytes:
     plot_run.line(svg, top, with_start, "#222", 1.5, "price")
     _dates(svg, top, index)
     plot_run.plot_area(svg, top)
-    plot_run.legend(svg, 80, 405, [(text, color, 1.3, "line") for _, text, color in LINES])
+    svg.text(
+        80,
+        405,
+        "四条线的累计（现金 0，起点前一天 = 1，缺的日子断开；"
+        f"虚线是前瞻起点 {forward_ledger.FORWARD_START}）",
+    )
+    readings = []
+    for since in (forward_ledger.BACKFILL_START, forward_ledger.FORWARD_START):
+        difference = forward_ledger.overlay_difference(rows, since)
+        readings.append(
+            f"自 {since} 还没有行"
+            if not difference["days"]
+            else f"自 {since} {difference['log'] * 100:+.2f} 点"
+        )
+    svg.text(80, 425, "F0001 对同平均敞口固定的累计对数差：" + "，".join(readings))
+    svg.text(
+        80,
+        445,
+        f"（对照线按自 {forward_ledger.BACKFILL_START} 的平均敞口画；"
+        f"自 {forward_ledger.FORWARD_START} 的数用 {forward_ledger.FORWARD_START} 起的平均）",
+    )
+    plot_run.legend(
+        svg, 80, 475, [(text, color, 1.5, "line") for _, text, color in CUMULATIVE_LINES]
+    )
+    plot_run.y_ticks(svg, middle)
+    for key, _, color in CUMULATIVE_LINES:
+        with_start = pd.concat([pd.Series([1.0], index=pd.DatetimeIndex([first])), levels[key]])
+        plot_run.line(svg, middle, with_start, color, 1.5, "cumulative")
+    if rows[-1]["date"] >= forward_ledger.FORWARD_START.isoformat():
+        x = plot_run.fmt(middle.px(pd.Timestamp(forward_ledger.FORWARD_START)))
+        svg.add(
+            f'<line class="forward-start" x1="{x}" x2="{x}" '
+            f'y1="{plot_run.fmt(middle.y)}" y2="{plot_run.fmt(middle.y + middle.height)}" '
+            'stroke="#555" stroke-dasharray="4 4"/>'
+        )
+    _dates(svg, middle, index)
+    plot_run.plot_area(svg, middle)
+    plot_run.legend(svg, 80, 775, [(text, color, 1.3, "line") for _, text, color in LINES])
     plot_run.y_ticks(svg, bottom)
     for key, _, color in LINES:
         series = pd.Series([row[key] for row in rows], index=index, dtype=float)
@@ -91,7 +174,7 @@ def render(rows: Sequence[Mapping[str, Any]]) -> bytes:
     prev = str(rows[-1].get("prev_sha256") or "")[:12]
     svg.text(
         80,
-        615,
+        985,
         f"{len(rows)} 行（{rows[0]['date']}..{rows[-1]['date']}，"
         f"回填到 {forward_ledger.FORWARD_START} 之前）；"
         f"最后一行 prev_sha256 {prev}；只读账本，不判。",

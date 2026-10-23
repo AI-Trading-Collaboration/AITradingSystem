@@ -321,13 +321,13 @@ NOTES_TAIL = (
     "；2026-10-15：S4e 第一批真实筛选已跑完并发布为记录 S0001 到 S0004（main 71f00bc1）；"
     "S4f（TRADING-2565-11）第二题用的经典趋势信号"
 )
-# The card's current owner and step (TRADING-2565-59), checked against the register.
+# The card's current owner and step (TRADING-2565-60), checked against the register.
 NEXT_OWNER = "Claude（研究自动循环）"
 NEXT_STEP = (
     "研究自动循环第 6 期（`research/_loop/charter_p6.md`，2026-10-23 起到 2026-11-20；"
     "owner_decision:TRADING-2565:2026-10-23:research_loop_p6）：只记账，加整轮核对；"
-    "前瞻记录台每周五照记，F0001 和 F0008 到数时核；"
-    "周汇总和账本测试的 B 区小包（第 3.3 节）；不开题、不跑探针、不筛信号"
+    "前瞻记录台每周五照记（`weekly --daily-root`，提交前跑 `-k committed`），"
+    "F0001 和 F0008 到数时核；不开题、不跑探针、不筛信号"
 )
 
 

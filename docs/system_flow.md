@@ -95,7 +95,9 @@ H-A 不对称再入探针（TRADING-2565-48，`owner_decision:TRADING-2565:2026-
 
 出入场示意图（TRADING-2565-48，TRADING-2565-51 加储备腿）：`research_probes/plot_run.py` 用标准库写 SVG，每个窗口三张（A 总览、B 段放大（默认慢熊段，或调用方点名的段）、C 对同均值固定敞口的累计比）；腿是择时的快慢两腿，或 H-B 的储备腿（1 = 国债、0 = 现金）；每条腿每次出入一根竖线，落在 t+2 持有生效日的指数上（出场或转现金朝上、入场或转国债朝下，慢腿长、快腿短），竖线连箭头都在绘图区里，段的标签在绘图区上方的标签带里，绘图区里没有文字。图留在运行目录的 `figures/`，不入库。
 
-前瞻账本图（TRADING-2565-48）：`python -m ai_trading_system.research_probes.forward_figure draw` 只读 `research/_forward/ledger.jsonl`，把 QQQ 累计和三条敞口（日报持有、固定 0.8、F0001 覆盖）画成 `research/_forward/figures/ledger.svg`，内容不变就不重写；第 4 期结束前不进周五流程。
+前瞻记录台周汇总（TRADING-2565-45，TRADING-2565-60 加）：`python -m ai_trading_system.research_probes.forward_ledger weekly [--daily-root <日报状态根>]` 从 `research/_forward/ledger.jsonl` 写 `weekly.md`：两段（自 2026-10-12 含回填、自 2026-10-21 前瞻）各线的累计、最大回撤、平均敞口，日报模型和 F0001 各自的同平均敞口固定，F0001 对它的累计对数差（满 252 个交易日另印几何年化差）；给了 `--daily-root` 只读账本最后一行的价格捕获文件，印 QQQ 月末总收益离运行最高（`research_bench.segments` 划段，只印现在的状态）和现金按 SGOV 的一组（只印）。不写日报目录，不改账本。
+
+前瞻账本图（TRADING-2565-48，TRADING-2565-60 加一块）：`python -m ai_trading_system.research_probes.forward_figure draw` 只读 `research/_forward/ledger.jsonl`，把 QQQ 累计、四条线的累计（日报模型、固定 0.8、F0001 覆盖、F0001 的同平均敞口固定；标题印 F0001 对它的累计对数差，前瞻起点画一根虚线）和三条敞口（日报持有、固定 0.8、F0001 覆盖）画成 `research/_forward/figures/ledger.svg`，内容不变就不重写；图不入库，循环线程每周五从 main 的账本画、存项目文件。
 
 H-B 条件化储备探针（TRADING-2565-51，`owner_decision:TRADING-2565:2026-10-22:research_loop_p4`）：`python -m ai_trading_system.research_probes.conditional_reserve check`、`run --out <目录>` 读 T0008 试跑计划的长历史快照，只取美股大盘 1929–2010 和 QQQ 1999–2010 两个开发窗口（截到 2010-12-31）；QQQ 60%、储备 40%，储备在穆迪 Aaa 收益率比 6 个月底之前低时持合成 10 年期国债（Shiller），否则持现金，月底定、照评估台的时点成交，换储备按换手收成本。先核同一次运行的 T0008 主配置和它已发布的记录、模拟器在储备不变时和评估台逐日相同、状态没有偷看，任何一条不过就停下；`run` 印每个下跌 10% 段的 ΔD、尺子扣的和按实际持有扣的平时超额、C、r、r′ 和段内持国债的月数、交易日数，第 4 期章程第 3.2 节判法表第 1 到 4 行的机械比较（第 1 行按 Baker 选的「按实际持有扣」读 r′：平时超额只按段内实际持国债的交易日扣，`owner_decision:TRADING-2565:2026-10-22:hb_row1_held_deduction`；段内持国债 0 月的段 r′ 在第 1 行里记 0，不算正也不算负，Baker 选「记 0，不数」，`owner_decision:TRADING-2565:2026-10-22:hb_row1_cash_zero`，TRADING-2565-52；尺子本身和第 2 到 4 行照旧读 r），QQQ 只查方向，另印用 Ken French RF 当状态的对照。结果 JSON、中文报告和图写进 `--out`；不判、不计数、不改门、不写研究账本，不读验证窗口。
 

@@ -2,7 +2,7 @@
 
 Baker 2026-10-23 10:24 JST（01:24:01Z）在「研究循环 10-23b」线程的卡「签第 6 期研究章程吗?」（cmsg_011Jt6JWNgo42YfGyndrfT7RY92kBdis3b1FZKvEDk82Dr）上选「签,现在起四周」（`owner_decision:TRADING-2565:2026-10-23:research_loop_p6`）。卡上这个选项的原话：「第 5 期现在结束;章程作一批记录发布(叠在 -58 后),3.3 的小包接着开写,到 11-20 续期。」另三个选项是「签,11-18 起四周」、「签,到第一次整轮核对」、「改了再签」。方向在这之前已定：Baker 2026-10-23 10:05 JST（01:05:07Z）在「研究复盘 10-23」线程的卡「第 6 期(11-18 起)研究循环怎么走?」（cmsg_011Jt6JWNgo42YfGyndrfT7R1mmtMHU9Ce9gdSxNUMYt8X）上选「只记账,加整轮核对」（`owner_decision:TRADING-2565:2026-10-23:horizontal_read_3`），即第三次横读（复盘线程，项目文件 `knowledge/claude/research-review/horizontal-read-2026-10-23.md` 第 7、9 节）的 A。
 
-下面是草稿第 3 版（项目文件 `knowledge/claude/qqq-options/auto-loop/charter-p6-draft-2026-10-23.md`，复盘线程核过三次，核对在 `knowledge/claude/research-review/charter-p6-draft-review-2026-10-23.md`）。改了这几处，别的原样：标题和开头两段（替换草稿开头的版本说明和推荐起点的一段）；「第 6 期的方向」写明是 Baker 选的；日期只留「现在起」的，去掉括号里「11-18 起」的；第 1 节写明起点；第 4 节第 1 条、第 9 节第 1 条和第 12 节写成已签。
+下面是草稿第 3 版（项目文件 `knowledge/claude/qqq-options/auto-loop/charter-p6-draft-2026-10-23.md`，第 1、2 版复盘线程核过，第 3 版照核对改，核对在 `knowledge/claude/research-review/charter-p6-draft-review-2026-10-23.md`）（10-23 更正，原写「核过三次」）。改了这几处，别的原样：标题和开头两段（替换草稿开头的版本说明和推荐起点的一段）；「第 6 期的方向」写明是 Baker 选的；日期只留「现在起」的，去掉括号里「11-18 起」的；第 1 节写明起点；第 4 节第 1 条、第 9 节第 1 条和第 12 节写成已签。
 
 时间按 JST。标「（推断）」的是我的判断。
 
