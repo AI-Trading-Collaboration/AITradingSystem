@@ -3,7 +3,7 @@ id: DEVX-034_WORK_OVERVIEW
 area: Developer workflow / 整体工作总览（私有，经学习 App 打开）
 priority: P2
 status: IN_PROGRESS
-next_owner: Claude（第 2 步：写只读生成器的需求和验收测试，pi 写代码）
-next_step: 第 1 步（卡片核对和工程主线 docs/work_overview/mainlines.yaml）随 DEVX-034-01 上 main；第 2 步：只读生成器（B 区）出 work.json 和 work.html：等 Baker 的、四条线各一张卡、工程按主线分组、生产日报 14 天日历，研究那块调用 research_site 的汇总；第 3 步在 LearningSystem 仓库按那边的规矩接入学习 App；第 2 版再接开发日报副本；见需求文档第 5 节
+next_owner: Claude（在电脑上只读跑一次生成器，再把接入约定交给学习 App 那边）
+next_step: 第 1 步（卡片核对和工程主线 docs/work_overview/mainlines.yaml）随 DEVX-034-01 上 main；第 2 步生成器第 1 版（DEVX-034-02）`python -m ai_trading_system.work_overview` 只读出 work.json（等 Baker 的、工程按主线分组、生产日报 14 天日历、发布包和门禁、研究汇总），规格是需求文档第 8 节和 tests/test_work_overview.py；下一步在电脑上只读跑一次，再由学习 App 那边的工程 coordinator 在 LearningSystem 仓库接进研究页的子页面（第 8.4 节）；第 2 版再接开发日报副本
 acceptance: 见 docs/requirements/DEVX-034_Work_Overview.md 第 6 节：主线文件里的卡都存在、每张在办的工程卡都归到一条主线；生成器只读、不联网、不写生产和运行副本，读不到的块写“读不到”；不含日报正文、价格和供应商原始数据；不新增 Windows 计划任务；公开研究页不变；全套 PR 测试通过
-notes: production_effect=none；broker_action=none；requirement=docs/requirements/DEVX-034_Work_Overview.md；owner_decision:DEVX-034:2026-10-25:work_overview_private（Baker 2026-10-25 00:47 JST 在决定卡上选「私有，经学习 App 打开」）；方案在 claude.ai 的私有文档「整体工作进展展示方案」；2026-10-25：DEVX-034-01 记录批：第 1 步卡片核对（关 5 张、改写 3 张、延后 12 张，研究进展页的卡跟着改一句）、主线文件、本卡和需求文档；OPS-086（archive 搬迁）和 TRADING-2567（TRADING-2567-39）由各自的线程改
+notes: production_effect=none；broker_action=none；requirement=docs/requirements/DEVX-034_Work_Overview.md；owner_decision:DEVX-034:2026-10-25:work_overview_private（Baker 2026-10-25 00:47 JST 在决定卡上选「私有，经学习 App 打开」）；方案在 claude.ai 的私有文档「整体工作进展展示方案」；2026-10-25：DEVX-034-01 记录批：第 1 步卡片核对（关 5 张、改写 3 张、延后 12 张，研究进展页的卡跟着改一句）、主线文件、本卡和需求文档；OPS-086（archive 搬迁）和 TRADING-2567（TRADING-2567-39）由各自的线程改；2026-10-25：DEVX-034-02 生成器第 1 版：只出 work.json，页面由学习 App 画（Baker 01:26 JST），日报读调度摘要，从 --ref 上已提交的内容读，读不到的块不让生成失败

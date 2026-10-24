@@ -246,6 +246,11 @@ flowchart LR
 Owner Daily Brief 的 `portfolio_and_shadow` 只用 `portfolio_control_research`、`portfolio_control_forward_aging` 两个来源。缺这份摘要不再让简报变成 `LIMITED_READER_CONTEXT`。
 `--scope all`、`aits reports research-governance-summary` 和每周的 `weekly_research_governance_summary_review` 不变。
 
+**工作总览（DEVX-034-02，`owner_decision:DEVX-034:2026-10-25:work_overview_private`）**：`python -m ai_trading_system.work_overview --repo <仓库> --state-root <生产状态根> --daily-root <发布包目录> --out <work.json>` 只读生成私有工作总览的数据：
+`--ref`（默认 main）上已提交的任务卡、`docs/work_overview/mainlines.yaml` 和研究汇总（`git archive` 解到临时目录后调用 `research_site.collect`），状态根 `outputs/run_control/scheduler/` 下最近 14 天的调用摘要和最新的 `report_quality_gate_<as_of>.json`，
+发布包目录的 `current.json` 和 `deploy_log.jsonl`。输出等 Baker 的卡、按主线分组的工程卡和主线规则的违反、日报每天的结论（PASS、RESCUED、FAILED、NO_NEW_DAY、NO_RUN）、当前发布包、门禁结论和研究汇总。
+不联网，不写仓库、状态根和发布包目录，不读日报正文、价格、`data/` 和 `ledger.jsonl`；读不到的块写“读不到”，退出码仍是 0，不进门禁，不影响日报。页面由学习 App 画，格式见需求文档第 8 节。
+
 ## 6. 已退役、不再运行
 
 | 部分 | 退役时间 | 去向 |

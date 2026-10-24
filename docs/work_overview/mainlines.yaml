@@ -6,7 +6,7 @@ mainlines:
   - id: daily_run
     title: 日报运行与发布
     goal: 日报每天 12:00 自动跑通，从发布包运行，当天失败时 17:30 补跑
-    milestone: 2026-10-23 起从发布包运行，10-23、10-24 两次都 PASS；剩旧运行副本搬进 archive 和换包后的全量重扫
+    milestone: 2026-10-23 起从发布包运行，10-23、10-24 两次都 PASS；旧运行副本已搬进 archive，OPS-086 已关；剩换包后的全量重扫（OPS-083）
     cards:
       - OPS-086_DAILY_RELEASE_BUNDLE
       - OPS-083_DAILY_RUN_PERFORMANCE
@@ -43,7 +43,7 @@ mainlines:
   - id: display
     title: 展示与知识
     goal: 一个地方看清全部工作
-    milestone: 工作总览第 1 步（卡片核对和这个文件）完成，下一步写只读生成器
+    milestone: 工作总览第 1 步（卡片核对和这个文件）完成；第 2 步只读生成器出 work.json，下一步由学习 App 那边接进研究页的子页面
     cards:
       - DEVX-034_WORK_OVERVIEW
       - KNOWLEDGE-001_KNOWLEDGE_AND_INSIGHT_CORE

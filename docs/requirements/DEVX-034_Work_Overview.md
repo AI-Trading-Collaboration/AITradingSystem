@@ -70,8 +70,8 @@ owner_decision:DEVX-034:2026-10-25:work_overview_private —— owner（Baker）
 
 ## 5. 后面几步
 
-1. **第 2 步：生成器第 1 版（DEVX-034-02，B 区）**。Claude 写需求和验收测试，pi 写代码，走 pi 队列。出 `work.json` 和 `work.html`：等 Baker 的（卡片 next_owner 里写着 Baker 的在办卡）、四条线各一张卡、工程按主线分组、生产日报最近 14 天日历（每天过没过、用时、有没有 17:30 补跑），研究那块调用 `research_site` 的汇总，不经网络。读 main 上的 `tasks/*.yaml` 和本文件第 4 节的主线文件；电脑上的生产状态根 `outputs/run_control/daily/states/`、发布包目录的 `current.json` 和 `deploy_log.jsonl`、`outputs/reports/report_quality_gate_<as_of>.json`。
-2. **第 3 步：接入学习 App**（LearningSystem 仓库）。App 后端定时调用生成器并提供页面，“领域”页加一张总览卡；个人总览页只加一个链接。
+1. **第 2 步：生成器第 1 版（DEVX-034-02，B 区）**。Claude 写需求和验收测试，pi 写代码，走 pi 队列。内容是等 Baker 的（卡片 next_owner 里写着 Baker 的在办卡）、工程按主线分组、生产日报最近 14 天日历（每天过没过、用时、有没有 17:30 补跑）和研究汇总（调用 `research_site`，不经网络）。只出 `work.json`，不出 `work.html`：页面由学习 App 用自己的样式画（Baker 2026-10-25 01:26 JST：「主页已经重新设计了，对应的入口也暴露出来了到时候你可以直接接入到这个网页的分页中」）。日报那块读状态根 `outputs/run_control/scheduler/` 下每次调用的摘要，不读 `outputs/run_control/daily/states/`：摘要里有窗口、开始和结束时间、发布包号和自动重试的结果，状态文件里没有。详见第 8 节。
+2. **第 3 步：接入学习 App**（LearningSystem 仓库）。由学习 App 那边的工程 coordinator 按那边的规矩做：App 后端调用生成器、提供 `work.json`，研究页加一张总览卡和一个子页面。Baker 2026-10-25 03:10 JST：「好的，我们这些工作以及反馈等做完后统一转给学习app的工程coordinator把」。约定见第 8.4 节。
 3. **第 2 版**（用一两周再定）：每天的开发日报在电脑上留一份 `index.csv` 副本，接进来做协作与成本那块，加主线进度和趋势。
 
 要守的规则：
@@ -86,9 +86,47 @@ owner_decision:DEVX-034:2026-10-25:work_overview_private —— owner（Baker）
 ## 6. 验收
 
 - 第 1 步：`tools/tasks.py check` 通过；主线文件满足第 4 节规则（云端用 main 上的卡核对过）；没有测试钉住改动的卡。
-- 第 2 步：主线文件里的卡都存在、规则 1–2 的违反写在页上；生成器只读、不联网、不写生产和运行副本，读不到的块写“读不到”；页面不含日报正文、价格和供应商原始数据；同样的输入生成逐字节相同的输出；全套 PR 测试通过。
+- 第 2 步：主线文件里的卡都存在、规则 1–2 的违反写进 `work.json`；生成器只读、不联网、不写生产和运行副本，读不到的块写“读不到”；`work.json` 不含日报正文、价格和供应商原始数据；同样的输入生成逐字节相同的输出；`tests/test_work_overview.py` 和全套 PR 测试通过。
 - 第 3 步按 LearningSystem 仓库自己的验收。
 
 ## 7. 进展
 
 - 2026-10-25：第 1 步核对完；DEVX-034-01 记录批（本文件、主线文件、21 张卡的改动和本卡、订阅清单一行、OPS-083 进展）交 pi 队列。
+- 2026-10-25：第 1 步上 main（`094e1466`）。第 2 步生成器第 1 版（DEVX-034-02）：第 8 节、验收测试和代码一起上 main；下一步在电脑上只读跑一次，再把第 8.4 节的约定交给学习 App 那边。
+
+## 8. 第 2 步：生成器第 1 版（DEVX-034-02）
+
+写于 2026-10-25。验收测试 `tests/test_work_overview.py` 是规格，下面写它的意思和测试没逐字写出的部分。
+
+### 8.1 命令和位置
+
+`python -m ai_trading_system.work_overview --repo <仓库> --state-root <生产状态根> --daily-root <发布包目录> --out <work.json>`，可选 `--ref`（默认 `main`）和 `--today`（日历的最后一天，默认 JST 今天）。代码在 `src/ai_trading_system/work_overview/`（B 区），Python 接口是 `build(repo, *, state_root, daily_root, today, ref)` 和 `main(argv)`。
+
+- 学习 App 的后端用开发检出的 `.venv` 调它（`D:\Work\AITradingSystem\.venv\Scripts\python.exe -B -m ai_trading_system.work_overview ...`），不用发布包里的 Python：发布包只给日报用。
+- `--out` 在仓库、生产状态根或发布包目录里面时退出码 2、什么都不写；否则先写同目录的 `<名字>.tmp` 再改名，读的一方不会读到写了一半的文件。
+- 同样的输入（包括 `--today`）生成逐字节相同的文件：`json.dumps(..., ensure_ascii=False, indent=1, sort_keys=True, allow_nan=False)` 加换行，LF。文件里没有生成时间，App 用文件的修改时间。
+- 读不到的块写 `{"status": "unreadable", "error": "读不到：..."}`，原因同时进 `problems`；退出码仍是 0。在云端的真实 main 和电脑上生产记录的副本上约 3 秒。
+
+### 8.2 读什么
+
+| 来源 | 读的内容 | 不读 |
+|---|---|---|
+| 仓库 `--ref` 上已提交的内容 | `git archive` 把 `tasks`、`docs/work_overview`、`docs/requirements`、`research`、`config/research`、`src/ai_trading_system/research_screens/signals`（`TREE_PATHS`，`research_site` 读的就是这些）解到系统临时目录，用完删；任务卡、主线文件和研究汇总都从这份副本读。另外 `git log` 取最近 10 个提交的标题和每张卡最后改动的日子，`git rev-list --count` 算发布包落后几个提交 | 工作区里没提交的改动、别的分支；`research/_forward/ledger.jsonl`（`research_site` 不读它） |
+| 生产状态根 | `outputs/run_control/scheduler/<日期>_<PRIMARY 或 RESCUE>[_<n>].summary.json`，只读日历 14 天里的；`outputs/reports/report_quality_gate_<as_of>.json` 里日期最新的一个，只取结论和两类问题的条数 | 日报正文（`owner_daily_brief`、`reader_brief`）、`.md` 和 `.log`、`run_control/daily/states/`、`data/` 下的任何文件；摘要里的 `findings`、`steps[].detail`、`capture_components[].error_excerpt` 和各种路径 |
+| 发布包目录 | `current.json`、`deploy_log.jsonl` 的最后 5 条（只取 `at`、`action`、`outcome`、`release_id`） | `releases/` 下的任何文件 |
+
+不联网（测试把 socket 换掉）。打开的生产文件只能是上表左边那几种（测试记下每次打开）。
+
+### 8.3 work.json 的内容（`work_overview.v1`）
+
+- `source`：`ref`、`commit`、`commit_time`。
+- `waiting`（等 Baker 的）：在办的卡（状态是 IN_PROGRESS、VALIDATING、PROPOSED、READY、BLOCKED_OWNER_INPUT、BLOCKED_EXTERNAL）里，状态是 BLOCKED_OWNER_INPUT 的，或 `next_owner` 第一个括号之前写着 Baker 或 owner（不分大小写）的；按优先级、卡号排。每张卡是 `id`、`area`、`status`、`priority`、`next_owner`、`next_step`、`updated`（这张卡在 `--ref` 上最后改动那天，JST）。
+- `engineering`：主线文件的 `updated`；每条主线的 `id`、`title`、`goal`、`milestone`、它的卡和各状态的张数；`research_cards`；第 4 节规则的违反：`unassigned`（在办却不在任何主线和研究卡里的卡）、`duplicates`（出现不止一次的卡号）、`missing`（没有这张卡）；全部卡按状态的张数 `totals`；最近 10 个提交 `recent`（12 位提交号、JST 日子、标题）。违反也写进 `problems`：「主线文件：没有卡 X」「主线文件：X 出现了不止一次」「主线文件：在办的卡 X 不在任何主线里」。主线文件读不到时只有这一块读不到，`waiting` 照常。
+- `daily`：最近 14 天（`--today` 往前 13 天到当天，按调度那天的 JST 日子）每天一行：`result`、`as_of`、`minutes`、`release_id` 和当天每次调用（`name` 是文件名里的 PRIMARY、RESCUE、PRIMARY_2 这些；`window`、`as_of`、`status`（摘要的 `cli_status`）、`blocker`、开始和结束时间、`minutes`、`release_id`、`exit_code`、`retry`（数据源失败自动重试的结果）、失败的步骤 id、失败的数据源 id）。一天的 `result`：调用按开始时间排，第一个 `PASS` 是 PRIMARY 窗口的为 `PASS`，是 RESCUE 窗口的为 `RESCUED`（17:30 补跑过了）；全部是 `RUN_CONTROL_ALREADY_COMPLETE` 为 `NO_NEW_DAY`（周日、周一没有新的美股交易日）；有调用但没有过的为 `FAILED`；没有摘要为 `NO_RUN`。`minutes` 和 `release_id`、`as_of` 取过了的那次，没过时取最后一次（`minutes` 这时为空）。`counts` 是五种结论的天数。`release`：`current.json` 的发布包号、源提交、激活时间、上一个发布包，`commits_behind`（`--ref` 比源提交多几个提交，仓库里找不到源提交时为空），最近 5 条部署记录。`quality_gate`：最新那天的 `as_of`、结论、阻断和警告的条数。
+- `research`：`research_site.collect` 的 `summary`，当期章程的期号、路径、期限和方向，前瞻账本的行数和起止日，前瞻核对的条数和待核数，家族表各状态的个数。别的研究内容看研究进展页。
+- `collaboration`：`{"status": "later"}`，第 2 版接开发日报副本。
+- `problems`：读不到的文件和违反主线规则的地方，每条一句。
+
+### 8.4 学习 App 怎么接
+
+由学习 App 那边的工程 coordinator 在 LearningSystem 仓库按那边的规矩做（第 5 节第 2 条），这里只写约定：后端加一个只读接口返回 work.json，文件超过约 10 分钟就在后台重新生成一次（正在生成时照旧返回旧文件），不改后台循环、不加 Windows 计划任务；研究页加一张“工作总览”卡和一个子页面，用 App 自己的样式画上面四块，`status` 不是 `ok` 的块写 `error` 那句话。`--today` 不传，由生成器取 JST 今天。
