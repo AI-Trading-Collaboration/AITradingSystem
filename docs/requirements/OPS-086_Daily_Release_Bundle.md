@@ -1,10 +1,10 @@
 # OPS-086：日报从不带 git 的发布包运行
 
-最后更新：2026-10-14
+最后更新：2026-10-25
 
 稳定任务 ID：`OPS-086_DAILY_RELEASE_BUNDLE`
 
-状态：`IN_PROGRESS`（步骤 1～4 由 pi 写代码；步骤 5～7 之后另定）
+状态：`DONE`（2026-10-25：步骤 1～9 完成，见第 7 节和第 9 节）
 
 关联：DATA-023（代码根和状态根分开，本任务是它需求文档步骤 3 的发布包部分）、OPS-082（计划任务、包装脚本、终止恢复的运行副本校验）、
 DEVX-029（C 区决定记录）；任务记录 `tasks/OPS-086_DAILY_RELEASE_BUNDLE.yaml`。
@@ -377,7 +377,12 @@ python tools/release/deploy_daily_release.py --activate <release_id> --daily-roo
     - 第三次（`20261021-19a16391c`，2026-10-21 晚；2026-10-22 12:00，as_of 2026-10-21）：请求缓存层的两个缺陷。FRED 返回一份 898 字节、不是 CSV 的内容，被缓存当成正常响应存下，重试读到同一份；官方源上一次失败留下的再验证“失败”标记不过期，之后任何运行都不再发真实请求。12:44 退回；补了 DATA-028（失败标记只挡同一轮的 135 秒，FRED 解析失败时作废那一条缓存）。运行副本 17:30 的 OPS-085 重试在坏条目被作废后补出了 as_of 2026-10-21。
     - 第四次（`20261022-545e19985`，main `545e1998`，2026-10-22 晚；2026-10-23 12:00，as_of 2026-10-22）：12:00 到 12:17，27 步 PASS，五个取数部分一次通过，没有阻断和错误日志，运行副本没有再跑。
   - 结果：2026-10-22 晚上第四次切换完成，日报从发布包运行；运行副本不更新、保留作回退。`scripts/agent/agent_config.json` 的 `daily_scheduler_dir` 随 OPS-086-10 改到新状态根。
-- 步骤 8（OPS-086-11，B 区：文字加一个技能文件）：运维手册第 1、3、9 节、`docs/system_flow.md` 的调度段和 OPS-086 两段、`README.md`、`.agents/skills/periodic-operations/SKILL.md` 里“日报在运行副本运行”的描述改成发布包；运维手册第 9.1 节改为发布包更新（构建、部署、核对），新增第 9.4 节“运行副本（只在回退时用）”，原来的运行副本更新步骤挪到那里；旧运行副本和研究数据搬进 archive 另问 Baker。
+- 步骤 8（OPS-086-11，B 区：文字加一个技能文件）：运维手册第 1、3、9 节、`docs/system_flow.md` 的调度段和 OPS-086 两段、`README.md`、`.agents/skills/periodic-operations/SKILL.md` 里“日报在运行副本运行”的描述改成发布包；运维手册第 9.1 节改为发布包更新（构建、部署、核对），新增第 9.4 节“运行副本（只在回退时用）”，原来的运行副本更新步骤挪到那里；旧运行副本和研究数据搬进 archive 另问 Baker（见步骤 9）。
+- 步骤 9（收尾，OPS-086-14，只有文字）：旧目录归档。Baker 2026-10-25 00:55 JST 在工作总览文档的批注里同意现在搬，01:05 JST 在本任务的线程里亲手打了授权句：电脑会话先只读核对，计划任务、进程、环境变量、配置文件和目录链接都不引用这些目录、2026-10-23 以后没有写入，全部符合才搬。核对只有一处命中：Claude 用户设置 `settings.json` 里一条自动模式说明提到运行副本，Baker 01:15 JST 确认它只是说明、不算引用（这一行没改）。
+  - 在同一块盘上原样移动（改名，不复制、不删除）：`D:\Work\AITradingSystem_ops_runtime` 到 `D:\Work\AITradingSystem_data\archive\AITradingSystem_ops_runtime`（193,528 个文件，最新写入 2026-10-22 17:34 的 RESCUE 日志），`D:\Work\AITradingSystem_daily_trial` 到 `D:\Work\AITradingSystem_data\archive\AITradingSystem_daily_trial`（19,020 个文件），`D:\Work\AITradingSystem_data\prod_trial` 到 `D:\Work\AITradingSystem_data\archive\prod_trial`（46,100 个文件）；记录在 `D:\Work\AITradingSystem_data\archive\ARCHIVE_LOG.md`。
+  - 回退只用上一个发布包（`--activate`）；运维手册第 9.4 节改为“运行副本 2026-10-25 起归档”，第 1、9 节和 `docs/system_flow.md`、periodic-operations 技能里的“保留作回退”随之改。
+  - 研究数据不搬：开发仓 `D:\Work\AITradingSystem` 的 `data/`、`outputs/` 现在是研究状态根（`lane.py --with-state-root` 给 `run-brief.ps1 -StateRoot`，`owner_decision:TRADING-2565:2026-10-13:research_throughput`），研究工作区和 pi 车道都读它。搬到 `D:\Work\AITradingSystem_data\research\state` 要改状态根的设置并核对研究结果不变，不是归档，另立 DATA-029。
+  - 发布包部署的授权方式不变：每次部署由 Baker 在线程里亲手打一句授权（运维手册第 9.1 节“只在 owner 指示下做”）。两个旧发布包 `20261016-7f665986f`、`20261020-84f585b98`（部署输出的 cleanup_candidate）留在 `releases\`，部署脚本不删，清理由 owner 决定。
 
 ## 8. 不改的
 
@@ -402,3 +407,4 @@ python tools/release/deploy_daily_release.py --activate <release_id> --daily-roo
 - 2026-10-23：步骤 8（OPS-086-11）：运维手册、`docs/system_flow.md`、`README.md` 和 periodic-operations 技能里的日报运行位置改成发布包，运行副本只作回退（运维手册第 9.4 节）。production_effect=none；broker_action=none。
 - 2026-10-23：步骤 5c（OPS-086-12）：日报不再有研究治理摘要：计划 26 步，Reader Brief 的 daily 范围和日报任务看板去掉对应内容，登记表改 `scope: research`。production_effect=none；broker_action=none。
 - 2026-10-24：步骤 5c 部署：发布包 `20261023-63b5aa1a4` 于 2026-10-23 17:39 JST 激活（Baker 亲手授权），第一个生产日 2026-10-24 12:00 到 12:14，as_of 2026-10-23，26 步 PASS，Reader Brief 状态 `OK`。production_effect=none；broker_action=none。
+- 2026-10-25：步骤 9（OPS-086-14）：旧运行副本和两个试运行目录原样搬进 `D:\Work\AITradingSystem_data\archive\`（Baker 亲手授权，没有删除），运维手册第 9.4 节改为“运行副本已归档”，回退只用上一个发布包；研究数据另立 DATA-029。OPS-086 完成。production_effect=none；broker_action=none。

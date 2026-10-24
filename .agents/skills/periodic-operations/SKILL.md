@@ -12,8 +12,8 @@ expected artifacts. `docs/system_flow.md` sections 1-6 show the data flow.
 
 - One external entry point: `aits ops daily-run`, started by the single Windows scheduled task
   `\AITradingSystem Daily Run`, which starts the activated daily release bundle under `D:\Work\AITradingSystem_daily`
-  with the state root `D:\Work\AITradingSystem_data\prod\state` (runbook section 9; the old runtime checkout
-  `D:\Work\AITradingSystem_ops_runtime` only stays as a rollback, runbook 9.4).
+  with the state root `D:\Work\AITradingSystem_data\prod\state` (runbook section 9; the old runtime checkout was moved on 2026-10-25
+  to `D:\Work\AITradingSystem_data\archive\AITradingSystem_ops_runtime` and only stays as an archive; roll back with `--activate`, runbook 9.4).
   Never register a second scheduler or a weekly/monthly/ad hoc command as its own task.
   The one exception is the trigger-less `\AITradingSystem pi agent` task (runbook section 9.2,
   owner_decision:DEVX-025:2026-10-11:manual_agent_task_exception): it only starts pi as `aits-agent`

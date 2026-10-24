@@ -188,7 +188,7 @@ Windows 计划任务 `\AITradingSystem Daily Run`（`scripts/ops/register_daily_
 12:00 与 17:30 两个触发时间）。2026-10-22 晚起（`register_daily_scheduler_task.ps1 -DailyRoot`）它启动 `D:\Work\AITradingSystem_daily\run_daily.ps1`：
 `run_daily.ps1` 读 `current.json` 选出已激活的发布包，设状态根 `D:\Work\AITradingSystem_data\prod\state`，再运行发布包里的
 `scripts/ops/daily_scheduler_run.ps1`（发布包的构建、部署和回退见下面 OPS-086 两段和运维手册第 9.1、9.3 节）。旧运行副本
-`D:\Work\AITradingSystem_ops_runtime`（独立 clone，detached 到一个已经 ship 的提交）不再运行日报、不更新，保留作回退（运维手册第 9.4 节）。包装脚本：
+（独立 clone，detached 到一个已经 ship 的提交）2026-10-25 已原样搬进 `D:\Work\AITradingSystem_data\archive\AITradingSystem_ops_runtime`，只作存档；回退只用上一个发布包（运维手册第 9.3、9.4 节）。包装脚本：
 
 ```mermaid
 flowchart LR

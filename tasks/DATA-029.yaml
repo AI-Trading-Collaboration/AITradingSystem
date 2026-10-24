@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DATA-029
+area: 数据工程/研究数据从开发仓搬到研究状态根
+priority: P3
+status: DEFERRED
+next_owner: Claude（等 Baker 决定要不要做）
+next_step: 暂缓。开发仓 D:\Work\AITradingSystem 的 data/、outputs/ 现在就是研究状态根（lane.py --with-state-root 给 run-brief.ps1 -StateRoot，owner_decision:TRADING-2565:2026-10-13:research_throughput），研究工作区和 pi 车道都读它，所以 OPS-086 收尾时没有搬。要做时先写需求和验收测试：把状态根改到 D:\Work\AITradingSystem_data\research\state（lane.py、run-brief.ps1、研究会话的命令和 AITS_STATE_ROOT 用户环境变量），复制后对照研究结果不变，再把开发仓的 data/、outputs/ 搬进 D:\Work\AITradingSystem_data\archive\
+acceptance: 研究运行和 pi 车道只从 D:\Work\AITradingSystem_data\research\state 读写；搬迁前后同一研究命令的结果一致；开发仓 data/、outputs/ 原样进 archive，不删除；PR 套件无新增失败
+notes: production_effect=none；broker_action=none；来源是 2026-10-13 日报发布包和数据根计划 P6 的第二项（开发仓的研究数据搬进 research\state），前提是 DATA-023 的状态根（AITS_STATE_ROOT）；2026-10-25：OPS-086 收尾时立卡（OPS-086-14），旧运行副本先归档，研究数据单独处理
