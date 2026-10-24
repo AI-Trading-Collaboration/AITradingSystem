@@ -360,6 +360,8 @@ python tools/release/deploy_daily_release.py --activate <release_id> --daily-roo
     `--scope all`（默认）的输出一个字节都不变。
   - 不改：评分、DQ 门禁、broker 边界；`--scope all` 的 Reader Brief；每周的研究治理复核；复核项按关键词归到“影响研究晋升”的分组本身（标签仍在，别的来源的复核项可以落进去）。
   - 生产：要下一次发布包部署才生效。计划步骤数变了，日报运行的规格 id 也变，所以部署放在当天日报跑完之后。
+  - 已部署：2026-10-23 17:39 JST，发布包 `20261023-63b5aa1a4`（源提交 `63b5aa1a4911db84f84462e71eb125b435e2a050`，tree `477f5bff40924a5ad67ab316063265825ab3271d`，747 个清单文件；上一个发布包 `20261022-545e19985`）。部署前 Baker 2026-10-23 15:51 JST 在 pi 队列 10-18 线程亲手打了授权句（`knowledge/claude/runs/OPS-086-D5C/AUTH5C.md`）；常规发布包更新，不复制状态、不改计划任务、不碰运行副本。
+    第一个生产日 2026-10-24 12:00 到 12:14 JST，as_of 2026-10-23：26 步全部 PASS，没有 `research_governance_summary` 这一步；Reader Brief 状态 `OK`、质量检查全过，里面没有研究治理的内容；五个取数部分一次通过。只读核对脚本 `knowledge/claude/runs/OPS-086-D5C/tools/d5c_check.py`（16 项）全过。
   - 验收：`tests/test_ops086_governance_scope.py`；`test_ops086_reader_brief_scope.py`、`test_ops086_registry_scope.py`、`test_ops_daily.py`、`test_scheduled_tasks.py`、
     `test_daily_task_dashboard.py`、`test_arch_004f1_operations_control_plane.py` 里相关断言随之改。
 - 步骤 6：电脑上试运行（计划 P5），只写新目录。2026-10-16 通过，评审见 `knowledge/claude/runs/OPS-086-06/REVIEW.md`。
@@ -399,3 +401,4 @@ python tools/release/deploy_daily_release.py --activate <release_id> --daily-roo
 - 2026-10-23：步骤 7（OPS-086-10）：第四次切换（发布包 `20261022-545e19985`）的第一个生产日 12:00 到 12:17，as_of 2026-10-22，27 步 PASS；计划任务 `\AITradingSystem Daily Run` 从 `D:\Work\AITradingSystem_daily` 启动发布包（状态根 `D:\Work\AITradingSystem_data\prod\state`），pi 车道的 `daily_scheduler_dir` 改到新状态根。production_effect=none；broker_action=none。
 - 2026-10-23：步骤 8（OPS-086-11）：运维手册、`docs/system_flow.md`、`README.md` 和 periodic-operations 技能里的日报运行位置改成发布包，运行副本只作回退（运维手册第 9.4 节）。production_effect=none；broker_action=none。
 - 2026-10-23：步骤 5c（OPS-086-12）：日报不再有研究治理摘要：计划 26 步，Reader Brief 的 daily 范围和日报任务看板去掉对应内容，登记表改 `scope: research`。production_effect=none；broker_action=none。
+- 2026-10-24：步骤 5c 部署：发布包 `20261023-63b5aa1a4` 于 2026-10-23 17:39 JST 激活（Baker 亲手授权），第一个生产日 2026-10-24 12:00 到 12:14，as_of 2026-10-23，26 步 PASS，Reader Brief 状态 `OK`。production_effect=none；broker_action=none。
