@@ -113,4 +113,6 @@ Baker 2026-10-23 23:57 JST（14:57:10Z）在「研究方法论评审文档」线
 
 这条由 TRADING-2565-61 和探针模块同一批发布（B 区，不用 approve.ps1），记在 `docs/requirements/TRADING-2565_Research_Bench.md` 的 Owner decision 一节。
 
+结果（2026-10-24，TRADING-2565-62 记）：研究会话 02:10 JST 在 main cc25a740 上跑了一次（汇报在项目文件 `knowledge/claude/qqq-options/auto-loop/cycle-power/rc-report.md`），两个变体都是 `below_50`：`tech_ew` 24.0%（块长 1260、置信度 0.99），`three` 39.0%（21、0.99）；名义 0.95 的尺子误判 7.0–10.8%，都不合格。按第 6 条和需求第 5 节，不出预注册卡；`research/families.md` 经典趋势一行加了一句，整轮划不划算只剩前瞻账本 F0008。七行预期和五列记在 `research/scorecard.md` 第 3 节。第 8 节的一次探针用掉，第 6 期回到只记账，第 10 节照旧。
+
 production_effect=none；broker_action=none。
