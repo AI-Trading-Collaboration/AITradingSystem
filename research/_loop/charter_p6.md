@@ -133,4 +133,6 @@ Baker 2026-10-24 13:35 JST 在「梳理现在可推进的研究方向」线程�
 
 这条由 TRADING-2565-63 和探针模块同一批发布（B 区，不用 approve.ps1），记在 `docs/requirements/TRADING-2565_Research_Bench.md` 的 Owner decision 一节。
 
+结果（2026-10-24，TRADING-2565-64 记）：研究会话 15:56 JST 在 main a91f3d9b 上跑了一次（汇报在项目文件 `knowledge/claude/qqq-options/auto-loop/longbull-power/rc-report.md`），两个变体都是 `below_50`（22.8%、37.2%），选中 f = 1，定标没对上（2.67、2.65、2.54 对 1.24）；按需求第 5 节不出预注册卡，第 6 期回到只记账。`research/families.md` 经典趋势一行加了一句；七行预期和五列记在 `research/scorecard.md` 第 3 节。第 14 节的一次探针用掉，第 7 条到此为止，第 10 节照旧；第 8 条的规则照旧，从现在起开方向都照做。埋的规则在长牛里比真实 F0001 吵一倍，长牛代价这个问题留到 11-20 续期卡（`scorecard.md` 那一段列了两个选项）。
+
 production_effect=none；broker_action=none。
