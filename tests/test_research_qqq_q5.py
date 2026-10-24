@@ -244,12 +244,24 @@ NOTES_CLOSE = (
     "7-38 记 decision.md、台账第 27 条、families 和 scorecard。production_effect=none；broker_actio"
     "n=none"
 )
-NEXT_OWNER = "Claude（研究自动循环第 2 期：P1 组合尺子；下一道正式题等候选过试跑门）"
+# The card's step after the card review (TRADING-2567-39); the notes keep growing at the end.
+NOTES_REVIEW = (
+    "；2026-10-25：卡片整理（工作进展展示线程的在办卡核对，TRADING-2567"
+    "-39 记）：next_owner 和 next_step 还停在第 2 期（P1 组合"
+    "尺子），改成现在的样子：第 2 期到第 6 期都过了，QQQ-Q5 之后没有开着的 QQ"
+    "Q 题，第 6 期只记账到 2026-11-20，下一道正式题等续期卡或有候选过试跑门。"
+    "状态仍是 IN_PROGRESS，只改这两格和这条记录。production_effec"
+    "t=none；broker_action=none"
+)
+NEXT_OWNER = "Claude（研究自动循环第 6 期：只记账；下一道 QQQ 正式题等 11-20 续期卡或候选过试跑门）"
 NEXT_STEP = (
-    "第五题 QQQ-Q5 已结束：fast_slow_weekly 证据不足（`research/QQQ-Q5/decision.md`，台账第 27 条）"
-    "，失败标签「有效果但代价太高」加「软泄漏可疑」，经典趋势家族保持关闭（`research/families.md`）"
-    "。第 2 期接着做 P1 组合尺子（TRADING-2565）；下一道正式题等研究自动循环有候选过试跑门再问 Bake"
-    "r。详见 `docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md`"
+    "第五题 QQQ-Q5 已结束（2026-10-21，`research/QQQ-Q5/decision.md`，台账第 27 条），"
+    "之后没有开着的 QQQ 题。"
+    "研究自动循环第 6 期（`research/_loop/charter_p6.md`，到 2026-11-20）只记账，"
+    "前瞻账本每周五照记；"
+    "第 13、14 节的两个检验力探针（TRADING-2565-61、-63）都是 below_50，不开题。"
+    "下一道正式题等 2026-11-20 的续期卡，或研究自动循环有候选过试跑门再问 Baker。"
+    "详见 `docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md`"
 )
 
 
@@ -263,10 +275,11 @@ def test_the_research_readme_lists_the_fifth_question() -> None:
 def test_the_task_card_notes_are_only_appended() -> None:
     card = yaml.safe_load(CARD.read_text(encoding="utf-8"))
     assert card["notes"].count(NOTES_TAIL) == 1 and card["notes"].count(NOTES_CLOSE) == 1
-    assert card["notes"].endswith(NOTES_TAIL + NOTES_CLOSE)
+    assert card["notes"].endswith(NOTES_TAIL + NOTES_CLOSE + NOTES_REVIEW)
     assert card["notes"].split(NOTES_TAIL)[0].endswith("broker_action=none")
     assert "qqq_q4_prereg" in card["notes"].split(NOTES_TAIL)[0]
     assert (card["next_owner"], card["next_step"]) == (NEXT_OWNER, NEXT_STEP)
     assert card["status"] == "IN_PROGRESS"
     register = REGISTER.read_text(encoding="utf-8")
     assert NOTES_TAIL in register and NOTES_CLOSE in register and NEXT_STEP in register
+    assert NOTES_REVIEW in register
