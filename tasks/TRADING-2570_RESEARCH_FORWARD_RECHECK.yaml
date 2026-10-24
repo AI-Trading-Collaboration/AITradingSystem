@@ -2,8 +2,8 @@ schema_version: task.v1
 id: TRADING-2570_RESEARCH_FORWARD_RECHECK
 area: 研究方法 / 筛选信号的前向复查（RSI 借鉴）
 priority: P2
-status: PROPOSED
-next_owner: Claude（写 02 的验收测试）
-next_step: 01（需求文档和任务卡）发布后，Claude 写 02 的验收测试和 brief（复查命令和记录格式，只读），交 pi 队列；第一次复查要等前向样本满 250 个交易日，约 2027-10-15 之后，02 必须在那之前完成并试跑；03（窗口政策增加前向复查角色，C 区）等 Baker 的决定
+status: DEFERRED
+next_owner: 无（延后，见退出条件）
+next_step: DEFERRED（2026-10-25）：第一次复查要等前向样本满 250 个交易日（约 2027-10-15 之后），现在写 02 太早。退出条件：2027-09-01 前重开，02（复查命令和记录格式）要在第一次复查前完成并试跑；03 仍等 Baker 的决定
 acceptance: 见 docs/requirements/TRADING-2570_Research_Forward_Recheck.md 第 7 节（合成数据验收）：起点按 recorded_at 推出且起点之前的行情不进统计量；符号校正；信号局部性检查；三组池化与手算一致；固定种子零参考；拒绝读取早于 2021-02-22 的输入；命令只读，不写筛选账、试跑账、验证读取账
-notes: production_effect=none；broker_action=none；requirement=docs/requirements/TRADING-2570_Research_Forward_Recheck.md；owner_decision:TRADING-2570:2026-10-16:forward_recheck_register（Baker 2026-10-16 10:35Z 在 RSI 线程决定卡上选登记，只覆盖登记和写定协议，不覆盖 C 区改动）；来源 knowledge/claude/aits-rsi-factor-research-2026-10-16.md C 项；与 TRADING-2565 自动研究循环协调，筛选账每行已有 code.commit、module_sha256、recorded_at，所以不新增冻结字段
+notes: production_effect=none；broker_action=none；requirement=docs/requirements/TRADING-2570_Research_Forward_Recheck.md；owner_decision:TRADING-2570:2026-10-16:forward_recheck_register（Baker 2026-10-16 10:35Z 在 RSI 线程决定卡上选登记，只覆盖登记和写定协议，不覆盖 C 区改动）；来源 knowledge/claude/aits-rsi-factor-research-2026-10-16.md C 项；与 TRADING-2565 自动研究循环协调，筛选账每行已有 code.commit、module_sha256、recorded_at，所以不新增冻结字段；2026-10-25：改 DEFERRED，见 next_step；原下一步见 main ae908eb9 上的这张卡（工作总览第 1 步卡片核对，见 docs/requirements/DEVX-034_Work_Overview.md 第 3 节）

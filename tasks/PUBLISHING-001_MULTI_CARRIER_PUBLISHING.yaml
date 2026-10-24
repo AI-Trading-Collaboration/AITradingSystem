@@ -2,8 +2,8 @@ schema_version: task.v1
 id: PUBLISHING-001_MULTI_CARRIER_PUBLISHING
 area: Publishing & Experience / docs site, reports, dashboards and archival renderers
 priority: P2
-status: PROPOSED
-next_owner: publishing/reporting owner + knowledge owner + UX owner
-next_step: 详见 `docs/requirements/KNOWLEDGE-001_Knowledge_Insight_and_Multi_Carrier_Publishing.md` 的 K3；依赖K1 Knowledge Object和ARCH-004F3 typed reporting。接管REPORT-052未实施的generated index/archive/freshness事项；先做静态文档站与deterministic renderer，再按真实需求扩展交互和PDF。
+status: DEFERRED
+next_owner: 无（延后，见退出条件）
+next_step: DEFERRED（2026-10-25）：2026-07-12 登记以后没动，依赖的 KNOWLEDGE-001 也延后了。退出条件：KNOWLEDGE-001 重开并做完 K1 后重开，从 docs/requirements/KNOWLEDGE-001_Knowledge_Insight_and_Multi_Carrier_Publishing.md 的 K3 接着做
 acceptance: 同一knowledge/source/evidence ids可确定性投影到Obsidian-compatible Markdown、用户文档站、Reader Brief/Dashboard links及冻结报告；renderer不重算投资结论；current/history、as-of、DQ/PIT与limitations一致；无第二套手工同步内容。
-notes: '2026-07-12: owner确认文档、网页、可视化和PDF是同一知识核心的不同载体；登记为PROPOSED。'
+notes: '2026-07-12: owner确认文档、网页、可视化和PDF是同一知识核心的不同载体；登记为PROPOSED。；2026-10-25：改 DEFERRED，见 next_step；原下一步见 main ae908eb9 上的这张卡（工作总览第 1 步卡片核对，见 docs/requirements/DEVX-034_Work_Overview.md 第 3 节）'

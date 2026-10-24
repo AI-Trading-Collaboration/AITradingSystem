@@ -3,7 +3,7 @@ id: OPS-083_DAILY_RUN_PERFORMANCE
 area: Operations / daily-run 耗时优化（secret scan 增量、OpenAI 预审并发、CLI 启动开销）
 priority: P2
 status: IN_PROGRESS
-next_owner: Claude（第 2 步经 pi 运行 OPS-083-02 提交，验收后 ship；运行副本按运维手册 9.1 更新）
-next_step: 第 1 步已上线，核对第一次增量运行的 secret_hygiene 低于 60 秒；第 2 步 OpenAI 预审有限并发：ship 后更新运行副本，核对缓存未命中日 score_daily 低于 100 秒；第 3 步先测量 CLI 导入耗时；第 4 步 market_macro 等数据源决定；见需求文档 docs/requirements/OPS-083_Daily_Run_Performance.md 第 3 节
+next_owner: Claude（写换包重扫修复的需求和验收测试，pi 实现）
+next_step: 第 1、2 步在生产上达标（2026-10-25 核对：secret_hygiene 平时增量约 8 秒；score_daily 最近三次 43–69 秒，低于 100 秒）。下一步修换发布包后的全量重扫：扫描入口带着发布包编号（releases\<编号>\config 等），每次部署后缓存作废，2026-10-23、10-24 两天报告都是“全量（扫描入口已变化）”，各约 214 秒；目标是换包后仍按增量扫。之后第 3 步测 CLI 导入耗时，第 4 步仍暂缓；见需求文档 docs/requirements/OPS-083_Daily_Run_Performance.md 第 3、4 节
 acceptance: 每步验收见需求文档第 3 节；整体：付费源可用时 ordinary daily 全链耗时中位数较 2026-07-29..09-05 的 995 秒明显下降，secret_hygiene 不再随 outputs 增长变慢；门禁语义、步骤列表与报告结论不变
-notes: production_effect=none；broker_action=none；owner_decision:OPS-083:2026-10-12:daily_run_perf_plan；2026-10-12 分析：2026-10-11 运行（as_of 2026-10-09）915 秒，secret_hygiene 399 秒（41,041 个文件、至少 10 GB）、capture 165 秒、score_daily 161 秒（10 次 OpenAI 请求串行）、其余 24 步约 189 秒；2026-10-13：第 1 步 2026-10-12 发布（5802317d3），10-12 17:30 JST 首次运行全量 347.5 秒并写缓存；第 2 步 OPS-083-02：官方候选 OpenAI 预审最多 4 个并发（profile max_concurrency），报告与串行一致
+notes: production_effect=none；broker_action=none；owner_decision:OPS-083:2026-10-12:daily_run_perf_plan；2026-10-12 分析：2026-10-11 运行（as_of 2026-10-09）915 秒，secret_hygiene 399 秒（41,041 个文件、至少 10 GB）、capture 165 秒、score_daily 161 秒（10 次 OpenAI 请求串行）、其余 24 步约 189 秒；2026-10-13：第 1 步 2026-10-12 发布（5802317d3），10-12 17:30 JST 首次运行全量 347.5 秒并写缓存；第 2 步 OPS-083-02：官方候选 OpenAI 预审最多 4 个并发（profile max_concurrency），报告与串行一致；2026-10-25：第 1、2 步核对和新的下一步见 next_step；Baker 2026-10-25 00:56 JST 在工作总览方案文档的批注里同意把修换包重扫作为下一步（「按你说的办」）；第 3 步排在它之后（工作总览第 1 步卡片核对，见 docs/requirements/DEVX-034_Work_Overview.md 第 3 节）

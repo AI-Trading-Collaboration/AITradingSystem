@@ -17,6 +17,7 @@
 ## 总体结论
 
 - 2026-10-12 更新（DATA-022，`owner_decision:DATA-022:2026-10-12:fmp_only_secondary_optional`）：只保留 FMP 价格订阅，Marketstack 退订；日报和 DQ 不再要求第二行情源，对账改为手动可选。下面其余各条仍是 2026-06-28 的盘点，没有重新核对。
+- 2026-10-25 更新（DATA-022 关闭，DEVX-034 卡片核对）：Baker 2026-10-25 确认 Marketstack 已退订、`MARKETSTACK_API_KEY` 已删；EODHD 已于 2026-10-13 退订（Baker），`eodhd_earnings_trends` 不再可用，`eps_revision_90d_pct` 现由 FMP analyst-estimates 的自建 forward-only 索引得到。下面表里这两个源仍写 present/active，没有逐行改；`config/data_sources.yaml` 里两源的状态在 C 区，下次改那个文件时一起改。
 - 当前本机可见关键凭据：`FMP_API_KEY`、`MARKETSTACK_API_KEY`、`EODHD_API_KEY`、`FRED_API_KEY`、`BEA_API_KEY`、`BLS_API_KEY`、`ALPHA_VANTAGE_API_KEY`、`CONGRESS_API_KEY`、`GOVINFO_API_KEY`、`OPENAI_API_KEY`、`SEC_USER_AGENT`。
 - 当前本机不可见：`FINANCIAL_MODELING_PREP_API_KEY`。FMP 实际使用 `FMP_API_KEY`，`FINANCIAL_MODELING_PREP_API_KEY` 只是 audit runner 支持的别名。
 - 2026-06-28 最小服务端 key 验证：BEA `GETDATASETLIST` 返回 13 个 dataset；BLS v2 `LNS14000000` 2024 样本返回 `REQUEST_SUCCEEDED`；Alpha Vantage `GLOBAL_QUOTE` / `MSFT` 返回 `Global Quote`。

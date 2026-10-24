@@ -2,8 +2,8 @@ schema_version: task.v1
 id: DATA-024
 area: 数据工程/可变数据源的外部请求缓存加有效期
 priority: P1
-status: IN_PROGRESS
-next_owner: Claude（审 DATA-024-01）
-next_step: DATA-024-01 发布后重建发布包，在电脑上再试运行一次（SEC 文件应与当天新取一致），再做 OPS-086 步骤 7 切换
+status: DONE
+next_owner: operations owner（日常按运维手册第 9 节读调度摘要）
+next_step: DONE（2026-10-25）：DATA-024-01 在 main 15920f91（2026-10-16），随发布包进生产；2026-10-17 的试运行（发布包 20261016-7f665986f，空的请求缓存）SEC 文件是当天联网新取的；生产上第一个从发布包跑的日报（as_of 2026-10-22）17 家公司的 SEC 文件有 15 家和运行副本 as_of 2026-10-21 那份不同（例如 MSFT 事实数 32070 → 32711），和 2026-10-16 发现的新取对旧缓存 15/17 不同一致，请求缓存不再冻结 SEC 数据
 acceptance: SEC companyfacts、FMP 估值端点、官方政策源页面的成功响应 12 小时后过期并联网重取，其余来源和 4xx/5xx 规则不变；联网失败不退回旧响应；PR 套件通过；试运行里 SEC 文件和当天新取一致
-notes: production_effect=none；broker_action=none；owner_decision:DATA-024:2026-10-16:cache_positive_ttl；需求文档 docs/requirements/DATA-024_External_Request_Cache_Positive_Ttl.md；起因 OPS-086-06 试运行评审 knowledge/claude/runs/OPS-086-06/REVIEW.md
+notes: production_effect=none；broker_action=none；owner_decision:DATA-024:2026-10-16:cache_positive_ttl；需求文档 docs/requirements/DATA-024_External_Request_Cache_Positive_Ttl.md；起因 OPS-086-06 试运行评审 knowledge/claude/runs/OPS-086-06/REVIEW.md；2026-10-25：DONE，见 next_step（工作总览第 1 步卡片核对，见 docs/requirements/DEVX-034_Work_Overview.md 第 3 节）

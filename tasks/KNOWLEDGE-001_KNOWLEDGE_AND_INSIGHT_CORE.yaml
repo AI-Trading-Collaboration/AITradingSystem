@@ -2,8 +2,8 @@ schema_version: task.v1
 id: KNOWLEDGE-001_KNOWLEDGE_AND_INSIGHT_CORE
 area: Knowledge & Insight Core / carrier-independent explanation and research knowledge
 priority: P1
-status: PROPOSED
-next_owner: project owner + knowledge owner + architecture coordinator
-next_step: 详见 `docs/requirements/KNOWLEDGE-001_Knowledge_Insight_and_Multi_Carrier_Publishing.md`；先做K0资产/受众/current-history inventory和K1 Knowledge Object/lifecycle/evidence contract，复用DOCS-LEARN-001、DOC-001、REPORT-048/049/052与ARCH-004F2/F3，不创建第二套status/catalog/registry。
+status: DEFERRED
+next_owner: 无（延后，见退出条件）
+next_step: DEFERRED（2026-10-25）：2026-07-12 登记以后没动；这次的整体工作展示另开 DEVX-034，不挂在 K0/K1 下。退出条件：owner 要做知识核心时重开，从 docs/requirements/KNOWLEDGE-001_Knowledge_Insight_and_Multi_Carrier_Publishing.md 的 K0、K1 接着做
 acceptance: versioned knowledge object覆盖concept/explanation/claim/limitation/evidence/as-of/regime/range/owner/status/supersedes；机器事实与人工解释分离；CURRENT可追溯source/DQ/PIT/policy；stale/orphan/duplicate/broken/current-history误读可检测；实现阶段同步flow/catalog/tests。
-notes: '2026-07-12: owner确认“文档管理”上位抽象应为知识解释系统；本次登记PROPOSED，等待K0/K1范围与ARCH-004 lane协调。'
+notes: '2026-07-12: owner确认“文档管理”上位抽象应为知识解释系统；本次登记PROPOSED，等待K0/K1范围与ARCH-004 lane协调。；2026-10-25：改 DEFERRED，见 next_step；原下一步见 main ae908eb9 上的这张卡（工作总览第 1 步卡片核对，见 docs/requirements/DEVX-034_Work_Overview.md 第 3 节）'

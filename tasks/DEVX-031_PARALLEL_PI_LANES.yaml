@@ -2,8 +2,8 @@ schema_version: task.v1
 id: DEVX-031_PARALLEL_PI_LANES
 area: Developer workflow / pi 并行车道
 priority: P1
-status: IN_PROGRESS
-next_owner: Baker（按 tree 批运行 04）
-next_step: 04 ship.py 的 push 重试和失败后恢复本地 main（按 tree 批准）；之后用两批不相干的批次再试跑车道
+status: DONE
+next_owner: 无
+next_step: DONE（2026-10-25）：04（push 重试和失败后恢复本地 main）于 2026-10-14 发布，2026-10-18、10-20 又发布两次修补；车道每天在用（2026-10-23 lane1、lane2 都发布了批次）
 acceptance: 见 docs/requirements/DEVX-031_Parallel_Pi_Lanes.md 第 4 节：改动指纹不受附近改动影响；replay 保留改动、提交信息和作者，冲突时拒绝；两条车道先后发布，第二条自动 replay，用真的 publish.ps1；日报窗口按 summary 提前放开；全套 PR 测试通过
-notes: production_effect=none；broker_action=none；requirement=docs/requirements/DEVX-031_Parallel_Pi_Lanes.md；owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes（04:52:53Z 选"推"，05:01:21Z "好的，这样改下吧"）；lane.py、ship.py 和规则在 decision_record_excluded 里，按 tree 批；pi 本身照旧不能推送；2026-10-14 08:41Z 首次 lane.py start 失败：run-brief.ps1 把运行目录里的 brief.md 复制给自己（Copy-Item 拒绝），pi 没启动；03 让 run-brief 在同一文件时跳过复制，并让 lane.py start 在 pi 没启动时释放车道；同日 03 还加了 agent_config.json 的 shared_paths（docs/system_flow.md、research/README.md、tests/invariants/README.md、tests/test_gov008_ship.py）：两批都精确写了这些文件时不算 allowed_paths 重叠，ship.py --replay 能合并就合并，真冲突拒绝并回到人；有通配符覆盖它们时仍算重叠（pi 队列线程 08:5xZ 的两两比较显示几乎所有排队批次都共享这几个文件）；10:37Z S4a 第一次按改动指纹发布时 git push 断连：ship.py 已把本地 main 挪到门禁后的提交，重跑 publish 无法恢复（HEAD==main，计划区变 A）。04 让 ship.py 的 push 重试 3 次，全部失败后若远端 main 没动就用 compare-and-swap 把本地 main 退回原 base（同一条 publish 命令可直接重跑）；推送其实到了就算成功；远端动过或查不了就保持现状并报告；另在 .gitignore 加 /.tmp/（会话临时目录曾让门禁报工作区不干净）
+notes: production_effect=none；broker_action=none；requirement=docs/requirements/DEVX-031_Parallel_Pi_Lanes.md；owner_decision:DEVX-031:2026-10-14:parallel_pi_lanes（04:52:53Z 选"推"，05:01:21Z "好的，这样改下吧"）；lane.py、ship.py 和规则在 decision_record_excluded 里，按 tree 批；pi 本身照旧不能推送；2026-10-14 08:41Z 首次 lane.py start 失败：run-brief.ps1 把运行目录里的 brief.md 复制给自己（Copy-Item 拒绝），pi 没启动；03 让 run-brief 在同一文件时跳过复制，并让 lane.py start 在 pi 没启动时释放车道；同日 03 还加了 agent_config.json 的 shared_paths（docs/system_flow.md、research/README.md、tests/invariants/README.md、tests/test_gov008_ship.py）：两批都精确写了这些文件时不算 allowed_paths 重叠，ship.py --replay 能合并就合并，真冲突拒绝并回到人；有通配符覆盖它们时仍算重叠（pi 队列线程 08:5xZ 的两两比较显示几乎所有排队批次都共享这几个文件）；10:37Z S4a 第一次按改动指纹发布时 git push 断连：ship.py 已把本地 main 挪到门禁后的提交，重跑 publish 无法恢复（HEAD==main，计划区变 A）。04 让 ship.py 的 push 重试 3 次，全部失败后若远端 main 没动就用 compare-and-swap 把本地 main 退回原 base（同一条 publish 命令可直接重跑）；推送其实到了就算成功；远端动过或查不了就保持现状并报告；另在 .gitignore 加 /.tmp/（会话临时目录曾让门禁报工作区不干净）；2026-10-25：DONE，见 next_step（工作总览第 1 步卡片核对，见 docs/requirements/DEVX-034_Work_Overview.md 第 3 节）

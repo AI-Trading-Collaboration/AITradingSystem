@@ -1,0 +1,55 @@
+# 工程主线：工作总览（DEVX-034）的工程那一块按这里分组，规则见 docs/requirements/DEVX-034_Work_Overview.md 第 4 节。
+# 卡换了主线、新开或关掉一张工程卡时，在同一个提交里改这个文件；milestone 写“现在到哪”，一句话。
+schema_version: work_mainlines.v1
+updated: "2026-10-25"
+mainlines:
+  - id: daily_run
+    title: 日报运行与发布
+    goal: 日报每天 12:00 自动跑通，从发布包运行，当天失败时 17:30 补跑
+    milestone: 2026-10-23 起从发布包运行，10-23、10-24 两次都 PASS；剩旧运行副本搬进 archive 和换包后的全量重扫
+    cards:
+      - OPS-086_DAILY_RELEASE_BUNDLE
+      - OPS-083_DAILY_RUN_PERFORMANCE
+      - OPS-085_RESCUE_RETRY_AFTER_SOURCE_FAILURE
+  - id: data_sources
+    title: 数据源
+    goal: 付费数据只用 FMP 一家，SEC、FRED 和官方源补齐，取到的数据当天新鲜、可审计
+    milestone: FMP-only 和请求缓存有效期都已在生产上验收；估值字段 baseline 满足，PIT 累计覆盖待运营验收
+    cards:
+      - DATA-022
+      - DATA-024
+      - DATA-001
+      - PROD-004
+      - STORAGE-001
+  - id: dev_workflow
+    title: 开发流程
+    goal: Claude 写需求和审查，pi 写代码，发布少要 Baker 动手
+    milestone: 并行车道和研究记录车道每天在用；受限账户复测、防钻空子检查和改动去向指标延后
+    cards:
+      - DEVX-030_RESEARCH_RECORDS_LANE
+      - DEVX-031_PARALLEL_PI_LANES
+      - DEVX-025_PI_WORKBENCH
+      - DEVX-026_PI_ANTI_GAMING_CHECKS
+      - DEVX-027_RND_DRIFT_METRIC
+  - id: research_tools
+    title: 研究工具
+    goal: 研究循环的记账、门槛和研究进展页可靠
+    milestone: 研究进展页运行 07 已上线，研究护栏已关；判断评估和前向复查延后
+    cards:
+      - TRADING-2568_RESEARCH_PROGRESS_PAGE
+      - TRADING-2566_RESEARCH_AGENT_LOOP_GUARDRAILS
+      - TRADING-2569_JUDGMENT_EVALUATION
+      - TRADING-2570_RESEARCH_FORWARD_RECHECK
+  - id: display
+    title: 展示与知识
+    goal: 一个地方看清全部工作
+    milestone: 工作总览第 1 步（卡片核对和这个文件）完成，下一步写只读生成器
+    cards:
+      - DEVX-034_WORK_OVERVIEW
+      - KNOWLEDGE-001_KNOWLEDGE_AND_INSIGHT_CORE
+      - PUBLISHING-001_MULTI_CARRIER_PUBLISHING
+      - DOCS-PLATFORM-001_OBSIDIAN_AUTHORING_AND_GOVERNANCE
+# 研究本身不算工程主线，进度看研究进展页（research_site 的汇总）。
+research_cards:
+  - TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING
+  - TRADING-2567

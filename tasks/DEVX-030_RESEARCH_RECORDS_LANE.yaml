@@ -2,8 +2,8 @@ schema_version: task.v1
 id: DEVX-030_RESEARCH_RECORDS_LANE
 area: Developer workflow / 研究记录快车道
 priority: P1
-status: IN_PROGRESS
-next_owner: Baker（按 tree 批运行 02）
-next_step: 运行 02（ship.py 研究记录的机械检查和 --replay-records、规则 1.2.0、run-brief.ps1 -StateRoot、AGENTS.md 和模板）按 tree 批准后发布；之后 owner 同意再建研究工作区 D:\Work\AITradingSystem_research 和它的 .venv，开研究会话
+status: DONE
+next_owner: 无
+next_step: DONE（2026-10-25）：运行 02 于 2026-10-14 发布；研究工作区 D:\Work\AITradingSystem_research 已建，研究记录车道（ship.py 机械检查、--replay-records）每天在用
 acceptance: 见 docs/requirements/DEVX-030_Research_Records_Lane.md 第 4 节：只含研究记录的提交由 ship.py 机械检查后按补丁发布，正反用例和 34 个变异都通过；重放保持补丁、提交信息和作者不变；-StateRoot 进运行环境；全套 PR 测试通过
-notes: production_effect=none；broker_action=none；requirement=docs/requirements/DEVX-030_Research_Records_Lane.md；owner_decision:TRADING-2565:2026-10-13:research_throughput（11:12:21Z "两项都做"，13:22:47Z "机械检查"）；规则和 ship.py 在 decision_record_excluded 里，按 tree 批
+notes: production_effect=none；broker_action=none；requirement=docs/requirements/DEVX-030_Research_Records_Lane.md；owner_decision:TRADING-2565:2026-10-13:research_throughput（11:12:21Z "两项都做"，13:22:47Z "机械检查"）；规则和 ship.py 在 decision_record_excluded 里，按 tree 批；2026-10-25：DONE，见 next_step（工作总览第 1 步卡片核对，见 docs/requirements/DEVX-034_Work_Overview.md 第 3 节）

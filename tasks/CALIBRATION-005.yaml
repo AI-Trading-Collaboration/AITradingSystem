@@ -2,8 +2,8 @@ schema_version: task.v1
 id: CALIBRATION-005
 area: 参数配置治理/owner 暂缺量化输入
 priority: P1
-status: VALIDATING
-next_owner: 系统验证 + 项目 owner
-next_step: 详细拆解见 `docs/requirements/parameter_governance_manifest_2026-05-15.md`；参数治理 manifest、CLI 和 market feedback 摘要已完成；OPS-059 后参数治理报告登记为 weekly cadence，不再作为 `daily-run` dashboard 前置步骤；下一步观察真实 candidate ledger 阻断是否随数据覆盖改善解除，owner 暂缺量化输入期间不得改 production 参数
+status: DEFERRED
+next_owner: 无（延后，见退出条件）
+next_step: DEFERRED（2026-10-25）：2026-10-10 迁移以后没有动过，研究现在走研究自动循环（TRADING-2565），这张卡的系统验证没有人在跑；生产参数照旧不改。退出条件：owner 要恢复参数治理时重开，从 docs/requirements/parameter_governance_manifest_2026-05-15.md 接着做
 acceptance: 新增 `config/parameter_governance.yaml` 记录可调参数面、来源等级、owner/status/rationale、验证证据、退出条件和 production 边界；新增 CLI 报告读取 parameter candidate ledger、sample/backtest policy 和当前配置，输出 `parameter_governance_YYYY-MM-DD.md/json`；当 owner 缺席时只能给出 keep/collect-evidence/forward-shadow-prep/owner-required/block-by-data 等动作建议，不能写 approved overlay 或修改 scoring/backtest hard gate；报告接入市场反馈优化摘要；OPS-059 后由 `config/scheduled_tasks.yaml` 登记为 weekly governance，不由 daily-run 自动触发；目标测试、ruff、`git diff --check`、全量 pytest 和真实 smoke 通过
-notes: '2026-05-15: 新增并进入 IN_PROGRESS，原因：owner 明确当前无法提供可量化参数输入，但要求继续迭代参数配置逻辑并修复验证阻塞；本轮选择可审计 governance manifest + evidence-driven action 建议，避免把主观数值硬编码为生产参数。2026-05-15: 从 IN_PROGRESS 改为 VALIDATING，原因：`evaluate-parameter-governance`、`config/parameter_governance.yaml`、`market_feedback_optimization` 汇总和 `daily-run` 前置步骤已实现；真实 2026-05-13 smoke 为 PASS_WITH_LIMITATIONS，16 个 candidate 映射为 BLOCKED_BY_DATA=2、COLLECT_MORE_EVIDENCE=3，无生产参数改写；ruff、目标测试、全量 pytest 528 passed 和 `git diff --check` 通过。2026-05-29: OPS-059 将该报告从 daily-run 自动链路移入 weekly cadence 登记，Reader Brief daily governance 改读 `research-governance-summary`，生产参数边界不变。'
+notes: '2026-05-15: 新增并进入 IN_PROGRESS，原因：owner 明确当前无法提供可量化参数输入，但要求继续迭代参数配置逻辑并修复验证阻塞；本轮选择可审计 governance manifest + evidence-driven action 建议，避免把主观数值硬编码为生产参数。2026-05-15: 从 IN_PROGRESS 改为 VALIDATING，原因：`evaluate-parameter-governance`、`config/parameter_governance.yaml`、`market_feedback_optimization` 汇总和 `daily-run` 前置步骤已实现；真实 2026-05-13 smoke 为 PASS_WITH_LIMITATIONS，16 个 candidate 映射为 BLOCKED_BY_DATA=2、COLLECT_MORE_EVIDENCE=3，无生产参数改写；ruff、目标测试、全量 pytest 528 passed 和 `git diff --check` 通过。2026-05-29: OPS-059 将该报告从 daily-run 自动链路移入 weekly cadence 登记，Reader Brief daily governance 改读 `research-governance-summary`，生产参数边界不变。；2026-10-25：改 DEFERRED，见 next_step；原下一步见 main ae908eb9 上的这张卡（工作总览第 1 步卡片核对，见 docs/requirements/DEVX-034_Work_Overview.md 第 3 节）'

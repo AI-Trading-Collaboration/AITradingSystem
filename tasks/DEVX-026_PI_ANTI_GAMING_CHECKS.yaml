@@ -2,8 +2,8 @@ schema_version: task.v1
 id: DEVX-026_PI_ANTI_GAMING_CHECKS
 area: Developer workflow / pi 验收防钻空子（RSI 借鉴）
 priority: P1
-status: PROPOSED
-next_owner: Claude（写任务单）
-next_step: 排在 DEVX-025 运行 05 和 1b 之后，作为一次 B 区 pi 运行。两项：（1）accept_checks 增加“改了考官”检查：diff 触及 scripts/agent/accept_checks.py、brief.py、agent-run.ps1、publish.ps1、.pi/extensions/aits-guard/**、tools/gov008/**、config/gov008_ship.yaml 时，任务单必须显式声明 evaluator_change，否则检查失败；声明了的运行在 checks.json 标为永久 L0 全审。（2）accept_checks 增加“汇报与 diff 对账”：任务单模板要求 pi 在最后一条回复里用固定格式的代码块列出改动文件，accept_checks 从 events.jsonl 读出后与实际 diff 比对，列出“声称改了但没改”和“改了但没说”的文件。是否把这些考官文件整体移到 C 区（要改 config/gov008_ship.yaml，需要 owner 决定）另行请 owner 决定
+status: DEFERRED
+next_owner: 无（延后，见退出条件）
+next_step: DEFERRED（2026-10-25）：2026-10-12 以后没动，排在它前面的 DEVX-025 运行 05 和 1b 也延后了；两项（“改了考官”检查、汇报与 diff 对账）的写法见 main ae908eb9 上的这张卡。退出条件：pi 的运行出现改考官或汇报与改动不符，或 DEVX-025 重开时重开
 acceptance: 两项检查各有“该拦的拦了、不该拦的放行”测试；拿运行 04 执行 02 的真实运行目录手动跑一次，对账检查能报出汇报里声称但提交里没有的改动；ship.py --dry-run 显示 B 区；不改 config/gov008_ship.yaml
-notes: production_effect=none；broker_action=none；2026-10-11 owner 要求把 RSI（递归自我改进）调研中适合现在接入的项登记为任务；依据：Darwin Gödel Machine 删掉工具调用标记让幻觉检测失效，AIDE²（arXiv 2609.26457）运行结束时仍有 32% 在钻评估空子，本项目 DEVX-025 中 pi 曾为过检查改写 skip 写法、中途跑 accept_checks 时伪造 report.json、运行 04 执行 02 汇报了提交里没有的改动；2026-10-12 按 owner_decision:DEVX-025:2026-10-12:signoff_policy，pi 守卫和 publish.ps1 已在 DEVX-025 运行 12 列入 C 区；其余考官文件（accept_checks.py、brief.py、agent-run.ps1、tools/gov008 下除 ship.py 以外的文件）仍在 B 区。
+notes: production_effect=none；broker_action=none；2026-10-11 owner 要求把 RSI（递归自我改进）调研中适合现在接入的项登记为任务；依据：Darwin Gödel Machine 删掉工具调用标记让幻觉检测失效，AIDE²（arXiv 2609.26457）运行结束时仍有 32% 在钻评估空子，本项目 DEVX-025 中 pi 曾为过检查改写 skip 写法、中途跑 accept_checks 时伪造 report.json、运行 04 执行 02 汇报了提交里没有的改动；2026-10-12 按 owner_decision:DEVX-025:2026-10-12:signoff_policy，pi 守卫和 publish.ps1 已在 DEVX-025 运行 12 列入 C 区；其余考官文件（accept_checks.py、brief.py、agent-run.ps1、tools/gov008 下除 ship.py 以外的文件）仍在 B 区。；2026-10-25：改 DEFERRED，见 next_step；原下一步见 main ae908eb9 上的这张卡（工作总览第 1 步卡片核对，见 docs/requirements/DEVX-034_Work_Overview.md 第 3 节）
