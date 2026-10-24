@@ -107,6 +107,8 @@ H-B 条件化储备探针（TRADING-2565-51，`owner_decision:TRADING-2565:2026-
 
 科技类行业整轮尺子的检验力探针（TRADING-2565-61，`owner_decision:TRADING-2565:2026-10-23:tech_proxy_power_probe`，第 6 期章程第 13 节）：`python -m ai_trading_system.research_probes.cycle_power run --out <目录>` 经 `signal_sources.load_snapshot` 读信号快照 sig-7ad8aa00b736 的 Ken French 行业 Hardw、Chips、Softw 和因子表的 RF，先切到 2010-12-31；在三者等权的月末水平上按 `research_bench.segments` 划出慢熊周期，有放回地抽周期接成 500 条 984 个月的合成历史，每个市场重新划段，只在上面跑埋的规则（故意前视，不跑任何真实规则）。量「成对日对数收益差的平稳块 bootstrap 区间」九个候选尺子的误判率和检验力，按跑前写死的读法判；`histories.jsonl`（逐条）、`summary.json` 和中文 `report.md` 写进 `--out`。不进台账、不算试验，不读验证窗口。
 
+科技行业长牛代价的检验力探针（TRADING-2565-63，`owner_decision:TRADING-2565:2026-10-24:longbull_cost_probe`，第 6 期章程第 14 节）：`python -m ai_trading_system.research_probes.longbull_power run --out <目录>` 经 `signal_sources.load_snapshot` 读信号快照 sig-7ad8aa00b736 的 Hardw、Chips、Softw 和因子表的 Mkt-RF、RF，先切到 2010-12-31；周期、合成历史、埋的规则和模拟都调 `cycle_power`（不改）。先在美股大盘的 500 条合成历史上定标假退出的频率（只印段间标准差，不印代价大小），再在科技行业和 TRADING-2565-61 同一批的 500 条合成历史上只跑埋的规则，量「长牛段年化差（按日历年折的对数差）的段间平均」的段间 t 和段自助法区间六个候选尺子的误判率和检验力，按跑前写死的读法判；`calibration.jsonl`、`histories.jsonl`（逐条）、`summary.json` 和中文 `report.md` 写进 `--out`。不进台账、不算试验，不读验证窗口。
+
 ```mermaid
 flowchart LR
     Q["Owner 定问题（TRADING-2567）"] --> PRE["research/&lt;题号&gt;/prereg.yaml + strategy.py<br/>C 区：随 Owner-Decision ship 进 main"]
