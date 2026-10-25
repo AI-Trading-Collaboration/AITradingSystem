@@ -1241,3 +1241,77 @@ def test_module_does_not_reach_for_the_network_or_private_files() -> None:
         assert word not in source, word
     assert "from ai_trading_system import paths, research_site" in source
     assert "research_site.collect(" in source
+
+
+# ---- cost and wording (run 03) ------------------------------------------------------------------
+
+
+def _count_git(monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
+    calls: list[list[str]] = []
+    real = subprocess.run
+
+    def spy(cmd: Any, *args: Any, **kwargs: Any) -> Any:
+        if isinstance(cmd, list | tuple) and cmd and cmd[0] == "git":
+            calls.append([str(part) for part in cmd])
+        return real(cmd, *args, **kwargs)
+
+    monkeypatch.setattr(subprocess, "run", spy)
+    return calls
+
+
+def test_cards_not_shown_cost_no_git_calls(
+    world: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls = _count_git(monkeypatch)
+    _build(world)
+    before = len(calls)
+    repo = world["repo"]
+    for n in range(30):
+        _write(repo / "tasks" / f"OLD-{n + 2}.yaml", _card(f"OLD-{n + 2}", "BASELINE_DONE", "无"))
+    _git(repo, "add", "-A", when=SECOND)
+    _git(repo, "commit", "-q", "-m", "OLD: thirty finished cards", when=SECOND)
+    calls.clear()
+    model = _build(world)
+    assert model["engineering"]["totals"]["BASELINE_DONE"] == 31  # they were read
+    assert len(calls) == before  # but nobody asked git about cards that are not shown
+    # Each shown card is asked about at most once, however many blocks it appears in.
+    asked = [part for call in calls for part in call if part.startswith("tasks/")]
+    assert len(asked) == len(set(asked))
+
+
+def test_reasons_carry_no_paths_or_command_lines(
+    world: dict[str, Any], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    gone = tmp_path / "gone-SENTINEL-PATH"
+    repo = world["repo"]
+
+    def broken(tree: Path, **_: Any) -> dict[str, Any]:
+        raise subprocess.CalledProcessError(128, ["git", "-C", str(repo), "show", "x"])
+
+    monkeypatch.setattr(research_site, "collect", broken)
+    model = _build(world, state_root=gone / "state", daily_root=gone / "daily")
+    text = dumps(model)
+    assert model["daily"]["status"] == "unreadable"
+    assert model["daily"]["release"]["status"] == "unreadable"
+    assert model["daily"]["quality_gate"]["status"] == "unreadable"
+    assert model["research"]["status"] == "unreadable"
+    assert "SENTINEL-PATH" not in text and str(tmp_path) not in text
+    assert str(repo) not in text and "'-C'" not in text
+    assert any("git 退出码 128" in problem for problem in model["problems"])
+
+
+def test_file_errors_name_the_error_not_the_file(
+    world: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    secret = world["state"] / "SENTINEL-PATH" / "x.json"
+
+    def broken(tree: Path, **_: Any) -> dict[str, Any]:
+        raise FileNotFoundError(2, "No such file or directory", str(secret))
+
+    monkeypatch.setattr(research_site, "collect", broken)
+    model = _build(world)
+    assert model["research"]["status"] == "unreadable"
+    assert "SENTINEL-PATH" not in dumps(model)
+    assert any(
+        "FileNotFoundError: No such file or directory" in problem for problem in model["problems"]
+    )

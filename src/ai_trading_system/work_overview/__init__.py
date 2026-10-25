@@ -80,6 +80,10 @@ def day_result(runs: Sequence[Mapping[str, Any]]) -> str:
 
 
 def _reason(exc: Exception) -> str:
+    if isinstance(exc, subprocess.CalledProcessError):
+        return f"CalledProcessError: git 退出码 {exc.returncode}"
+    if isinstance(exc, OSError) and exc.strerror is not None:
+        return f"{type(exc).__name__}: {exc.strerror}"
     lines = str(exc).splitlines()
     message = lines[0] if lines else ""
     return f"{type(exc).__name__}: {message}" if message else type(exc).__name__
@@ -125,8 +129,9 @@ def _jst_day(value: str) -> str:
     return datetime.fromisoformat(value).astimezone(JST).date().isoformat()
 
 
-def _cards(tree: Path, repo: Path, commit: str, problems: list[str]) -> dict[str, dict[str, Any]]:
+def _cards(tree: Path, problems: list[str]) -> tuple[dict[str, dict[str, Any]], dict[str, str]]:
     cards: dict[str, dict[str, Any]] = {}
+    card_paths: dict[str, str] = {}
     for path in sorted((tree / "tasks").glob("*.yaml")):
         relative = f"tasks/{path.name}"
         try:
@@ -140,16 +145,9 @@ def _cards(tree: Path, repo: Path, commit: str, problems: list[str]) -> dict[str
         card = {
             key: raw.get(key) if isinstance(raw.get(key), str) else None for key in _CARD_FIELDS
         }
-        updated = None
-        try:
-            timestamp = _git_text(repo, "log", "-1", "--format=%cI", commit, "--", relative)
-            if timestamp:
-                updated = _jst_day(timestamp)
-        except (OSError, subprocess.CalledProcessError, ValueError):
-            pass
-        card["updated"] = updated
         cards[raw["id"]] = card
-    return cards
+        card_paths[raw["id"]] = relative
+    return cards, card_paths
 
 
 def _mainlines(tree: Path) -> Mapping[str, Any]:
@@ -177,7 +175,12 @@ def _string_list(value: object) -> bool:
 
 
 def _engineering(
-    tree: Path, repo: Path, commit: str, cards: dict[str, dict[str, Any]], problems: list[str]
+    tree: Path,
+    repo: Path,
+    commit: str,
+    cards: dict[str, dict[str, Any]],
+    problems: list[str],
+    shown: Callable[[str], dict[str, Any]],
 ) -> dict[str, Any]:
     try:
         raw = _mainlines(tree)
@@ -189,7 +192,7 @@ def _engineering(
     duplicates = sorted(card_id for card_id, count in Counter(listed).items() if count > 1)
     missing = list(dict.fromkeys(card_id for card_id in listed if card_id not in cards))
     unassigned = [
-        cards[card_id]
+        shown(card_id)
         for card_id in sorted(cards)
         if cards[card_id]["status"] in ACTIVE_STATUSES and card_id not in listed
     ]
@@ -198,7 +201,7 @@ def _engineering(
     problems.extend(f"主线文件：在办的卡 {card['id']} 不在任何主线里" for card in unassigned)
     lines = []
     for line in raw["mainlines"]:
-        members = [cards[card_id] for card_id in line["cards"] if card_id in cards]
+        members = [shown(card_id) for card_id in line["cards"] if card_id in cards]
         lines.append(
             {
                 **{key: line[key] for key in ("id", "title", "goal", "milestone")},
@@ -216,7 +219,7 @@ def _engineering(
         updated=str(raw["updated"]) if raw.get("updated") is not None else None,
         mainlines=lines,
         research_cards=[
-            cards[card_id] for card_id in raw.get("research_cards", []) if card_id in cards
+            shown(card_id) for card_id in raw.get("research_cards", []) if card_id in cards
         ],
         unassigned=unassigned,
         duplicates=duplicates,
@@ -272,11 +275,27 @@ def _repository(
                 archive = _git(repo, "archive", "--format=tar", commit, "--", *included)
                 with tarfile.open(fileobj=io.BytesIO(archive)) as bundle:
                     bundle.extractall(tree, filter="data")
-            cards = _cards(tree, repo, commit, problems)
+            cards, card_paths = _cards(tree, problems)
+            shown_cards: dict[str, dict[str, Any]] = {}
+
+            def shown(card_id: str) -> dict[str, Any]:
+                if card_id not in shown_cards:
+                    updated = None
+                    try:
+                        timestamp = _git_text(
+                            repo, "log", "-1", "--format=%cI", commit, "--", card_paths[card_id]
+                        )
+                        if timestamp:
+                            updated = _jst_day(timestamp)
+                    except (OSError, subprocess.CalledProcessError, ValueError):
+                        pass
+                    shown_cards[card_id] = {**cards[card_id], "updated": updated}
+                return shown_cards[card_id]
+
             waiting = _ok(
                 cards=sorted(
                     (
-                        card
+                        shown(card["id"])
                         for card in cards.values()
                         if waits_for_owner(card["status"], card["next_owner"])
                     ),
@@ -284,7 +303,7 @@ def _repository(
                 )
             )
             engineering = _guard(
-                "工程", problems, lambda: _engineering(tree, repo, commit, cards, problems)
+                "工程", problems, lambda: _engineering(tree, repo, commit, cards, problems, shown)
             )
             research = _guard("研究", problems, lambda: _research(tree))
             return source, waiting, engineering, research
