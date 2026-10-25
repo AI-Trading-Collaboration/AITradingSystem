@@ -53,6 +53,7 @@
 | `QQQ-Q3/` | 第三题（已结束）：结论 `decision.md`；预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |
 | `QQQ-Q4/` | 第四题（已结束，试跑 T0004 转正式题）：结论 `decision.md`；预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |
 | `QQQ-Q5/` | 第五题（已结束，QQQ-Q3 的 fast_slow 改每周调仓，没有试跑计划）：结论 `decision.md`；预注册 `prereg.yaml` 和策略模块 `strategy.py`（都在 C 区）；运行记录在 `runs/`，验证窗口的读取记录在 `window_reads.jsonl` |
+| `direction_feasibility_2026-10-23.md` | 方向备忘（2026-10-23）：AI 产业链个股横截面、财报事件、LLM 读财报文本三个候选方向的每年独立样本、可用的 PIT 年数和检出概率；只做估算，不是研究结论，不进台账，不开题 |
 
 研究进展页面（TRADING-2568）由 `python -m ai_trading_system.research_site --out <目录>` 从这里的记录生成：只读，不另存事实。运行 06 起页面顶部的现状、保险账、前瞻记录、当期题和家族台账另读 `_loop/forward_records.md`、`_forward/weekly.md`、`families.md` 和编号最大的 `_loop/charter_p<N>.md`（`_forward/ledger.jsonl` 不读，页面上没有日收益行）。main 上的研究记录更新后，GitHub Actions 的 Research site 自动重建并发布到 GitHub Pages：https://ai-trading-collaboration.github.io/AITradingSystem/
 
