@@ -51,22 +51,25 @@ owner_decision:DEVX-034:2026-10-25:work_overview_private —— owner（Baker）
 
 同一批顺带改 `docs/data_source_subscription_inventory.md` 一行（Marketstack 已退订，EODHD 2026-10-13 已退订）和 OPS-083 需求文档的进展。`config/data_sources.yaml` 里两个源仍写 active，它在 C 区，下次改这个文件时一起改。
 
-## 4. 工程主线文件
+## 4. 路线图文件
 
-`docs/work_overview/mainlines.yaml`（`work_mainlines.v1`）：
+`docs/work_overview/roadmap.yaml`（`work_roadmap.v1`）。DEVX-034-04 起取代第 1 步的主线文件 `docs/work_overview/mainlines.yaml`（原文在 main `70f12d49` 上），依据见第 9.1 节：
 
-- `updated`：最后一次改的日期。
-- `mainlines`：每条有 `id`（小写加下划线，不重复）、`title`、`goal`（这条线要达到什么）、`milestone`（现在到哪，一句话）和 `cards`（任务卡 id，必须在 `tasks/` 下存在）。
-- `research_cards`：研究本身的卡。研究不算工程主线，进度看研究进展页。
+- `updated`：最后一次核对路线图的日子。
+- `cards`：卡号到中文名。页面上只写中文名，卡号放在细节里。
+- `lines`：每条线有 `id`（小写字母、数字和下划线，不重复）、`kind`（`research` 或 `engineering`）、`title`、`goal`、可选的 `layers`（研究线的三层，每层 `title` 和 `state`：done、now、later）和 `stages`（至少一段）。
+- 每段有 `id`（这条线里不重复，写成字符串）、`title`、`state`（done 完成、now 现在这段、later 没开始、deferred 延后）、可选的 `done_on`（完成那天）、`note`（一句说明，例如延后到什么时候重开）和 `milestones`。
+- 每个里程碑有 `text`（能核对的一句话）、`state`（done 完成、now 正在做、waiting 等外面发生的事、todo 还没做、deferred 延后）、可选的 `date`（done 是完成那天，waiting 是开始等的那天，now 和 todo 是预计的日子）、`note` 和 `cards`（支撑它的卡）。
 
-规则：
+规则（生成器检查，违反的写进 `problems`，不让生成失败；格式不对时整个文件读不到）：
 
-1. 状态是 IN_PROGRESS、VALIDATING、PROPOSED、READY、BLOCKED_OWNER_INPUT、BLOCKED_EXTERNAL 的卡，除 `research_cards` 外，恰好属于一条主线。BASELINE_DONE、DEFERRED、DONE 的卡可以留在主线里，不强制（2026-10-25 有 73 张 BASELINE_DONE 的卡不在任何主线里，大多是 2026-10-10 迁移以前的，总览只计数）。
-2. 一张卡最多出现在一条主线里，不同时出现在主线和 `research_cards` 里。
-3. 新开、关掉一张工程卡或换主线时，在同一个提交里改这个文件；里程碑变了也改 `milestone`。
-4. 第 2 步的生成器检查这几条，违反的写在页面上，不让生成失败。
+1. 状态是 IN_PROGRESS、VALIDATING、PROPOSED、READY、BLOCKED_OWNER_INPUT、BLOCKED_EXTERNAL 的卡（研究卡也算）至少挂在一个里程碑下。一张卡可以支撑几个里程碑，也可以出现在几条线里，例如 TRADING-2565 既支撑研究线的 S4，又是研究工具线第 1 段做成的。BASELINE_DONE、DEFERRED、DONE 的卡不强制。
+2. 里程碑里的卡都要在 `tasks/` 下存在，并在 `cards` 里有中文名；同一个里程碑里一张卡只写一次。
+3. 一条线最多一段写着 now。
+4. 在办的卡在 `updated` 之后又改过，就提醒核对一次路线图。
+5. 维护：发布一张卡的改动时，在同一个提交里改它支撑的里程碑（勾掉就把 `state` 改成 done、`date` 写完成那天），并把 `updated` 改成当天；新开一张卡就挂到一个里程碑下，并在 `cards` 里给它中文名。加段、改段、改目标要 Baker 同意。
 
-2026-10-25 的五条主线：日报运行与发布、数据源、开发流程、研究工具、展示与知识。
+2026-10-25 的六条线：QQQ 研究计划（研究），日报运行与发布、数据源、开发流程、研究工具、展示与知识（工程）。第 1 步的主线规则（每张在办的工程卡恰好属于一条主线，主线和研究卡不重叠）随主线文件一起退役。
 
 ## 5. 后面几步
 
@@ -88,12 +91,14 @@ owner_decision:DEVX-034:2026-10-25:work_overview_private —— owner（Baker）
 - 第 1 步：`tools/tasks.py check` 通过；主线文件满足第 4 节规则（云端用 main 上的卡核对过）；没有测试钉住改动的卡。
 - 第 2 步：主线文件里的卡都存在、规则 1–2 的违反写进 `work.json`；生成器只读、不联网、不写生产和运行副本，读不到的块写“读不到”；`work.json` 不含日报正文、价格和供应商原始数据；同样的输入生成逐字节相同的输出；`tests/test_work_overview.py` 和全套 PR 测试通过。
 - 第 3 步按 LearningSystem 仓库自己的验收。
+- 第 4 批（DEVX-034-04）：仓库里的路线图满足第 4 节的格式，里程碑里的卡都存在并有中文名，每条线最多一段写着现在；`work.json` 仍是 `work_overview.v1`，只加字段；`tests/test_work_overview.py` 和全套 PR 测试通过。
 
 ## 7. 进展
 
 - 2026-10-25：第 1 步核对完；DEVX-034-01 记录批（本文件、主线文件、21 张卡的改动和本卡、订阅清单一行、OPS-083 进展）交 pi 队列。
 - 2026-10-25：第 1 步上 main（`094e1466`）。第 2 步生成器第 1 版（DEVX-034-02）：第 8 节、验收测试和代码一起上 main；下一步在电脑上只读跑一次，再把第 8.4 节的约定交给学习 App 那边。
 - 2026-10-25：DEVX-034-03：任务卡的 `updated` 只给输出里的卡问 git，原因里不带路径和命令行（第 8.1 节）；验收测试加 3 条。
+- 2026-10-25：第 1 版在电脑上只读跑通（9.3 秒，六块都读到，问题 0 条），学习 App 接上。Baker 觉得页面太底层，定了先讲路线图（第 9.1 节）。DEVX-034-04：路线图文件取代主线文件，每张卡配中文名，要 Baker 做的和在等的事分开，日报每天写原因和连续出报告的天数，列出最近 7 天勾掉的里程碑（第 4、9 节）。
 
 ## 8. 第 2 步：生成器第 1 版（DEVX-034-02）
 
@@ -121,6 +126,8 @@ owner_decision:DEVX-034:2026-10-25:work_overview_private —— owner（Baker）
 
 ### 8.3 work.json 的内容（`work_overview.v1`）
 
+第 4 批起 `engineering` 从路线图推出来，卡、`waiting`、`daily` 也加了字段，见第 9 节。
+
 - `source`：`ref`、`commit`、`commit_time`。
 - `waiting`（等 Baker 的）：在办的卡（状态是 IN_PROGRESS、VALIDATING、PROPOSED、READY、BLOCKED_OWNER_INPUT、BLOCKED_EXTERNAL）里，状态是 BLOCKED_OWNER_INPUT 的，或 `next_owner` 第一个括号之前写着 Baker 或 owner（不分大小写）的；按优先级、卡号排。每张卡是 `id`、`area`、`status`、`priority`、`next_owner`、`next_step`、`updated`（这张卡在 `--ref` 上最后改动那天，JST）。
 - `engineering`：主线文件的 `updated`；每条主线的 `id`、`title`、`goal`、`milestone`、它的卡和各状态的张数；`research_cards`；第 4 节规则的违反：`unassigned`（在办却不在任何主线和研究卡里的卡）、`duplicates`（出现不止一次的卡号）、`missing`（没有这张卡）；全部卡按状态的张数 `totals`；最近 10 个提交 `recent`（12 位提交号、JST 日子、标题）。违反也写进 `problems`：「主线文件：没有卡 X」「主线文件：X 出现了不止一次」「主线文件：在办的卡 X 不在任何主线里」。主线文件读不到时只有这一块读不到，`waiting` 照常。
@@ -132,3 +139,59 @@ owner_decision:DEVX-034:2026-10-25:work_overview_private —— owner（Baker）
 ### 8.4 学习 App 怎么接
 
 由学习 App 那边的工程 coordinator 在 LearningSystem 仓库按那边的规矩做（第 5 节第 2 条），这里只写约定：后端加一个只读接口返回 work.json，文件超过约 10 分钟就在后台重新生成一次（正在生成时照旧返回旧文件），不改后台循环、不加 Windows 计划任务；研究页加一张“工作总览”卡和一个子页面，用 App 自己的样式画上面四块，`status` 不是 `ok` 的块写 `error` 那句话。`--today` 不传，由生成器取 JST 今天。
+
+## 9. 第 4 批：先讲路线图（DEVX-034-04）
+
+写于 2026-10-25。验收测试 `tests/test_work_overview.py`（run 04 那一节，以及为路线图改写的几条老测试）是规格。
+
+### 9.1 owner 决定
+
+Baker 2026-10-25 16:56 JST 在「设计整体工作进展展示」线程说第 1 版跑通了，但页面「可读性不太强，信息太底层了」；17:05 JST：
+
+> 不论是工程线 还是 研究线 我们应该都有 roadmap 以及每个阶段的milestone ，再介绍清楚这些上次路径的情况下 再解释每个工作具体是支撑了哪些需求，这样阅读来会轻松一点
+
+Claude 按这个写了路线图草稿（研究线用 TRADING-2567 已有的 S0–S5，工程五条线的阶段按任务卡的记录拆）和四屏手机样稿，请他确认三件事：工程的阶段对不对；研究 S4 之后的 S5（期权实现）保留，还是先写成「11-20 定」；路线图放在哪、谁维护（建议放进本仓库的 `docs/work_overview/roadmap.yaml`，卡发布的同一个提交里勾掉里程碑，开新阶段或改阶段要他点头）。Baker 17:39 JST：
+
+> 工程的阶段分的没问题，期权先保留吧，路线图这边的工程来维护
+
+owner_decision:DEVX-034:2026-10-25:roadmap_first —— 路线图按草稿的阶段写进本仓库，研究 S5 期权实现保留，由 AITradingSystem 这边维护（第 4 节第 5 条）。
+
+### 9.2 work.json 加了什么
+
+仍是 `work_overview.v1`：只加字段，第 1 版的字段名和意思不变。
+
+- 每张卡加 `name`：路线图 `cards` 里的中文名，没有时为空。每张卡现在是 8 个键。
+- `waiting.asks`（要 Baker 做的）：在办的卡里，状态是 BLOCKED_OWNER_INPUT 的，或负责人第一个括号之前写着 Baker、project owner 或项目 owner 的（不分大小写）；operations owner 这类角色不算，例如 OPS-085 等的是第一次真实的数据源故障，不是等 Baker。按优先级、卡号排。`waiting.cards` 保持第 1 版的规则，App 改用 `asks`。
+- `waiting.events`（在等的事，不用 Baker 动手）：路线图里 state 是 waiting 的里程碑，每条是 `line`、`line_title`、`stage`、`stage_title`、`text`、`date`、`note` 和支撑它的卡；路线图读不到时为空（null）。
+- `roadmap`：`updated` 和 `lines`（按文件里的顺序）。每条线是 `id`、`kind`、`title`、`goal`、`layers`、`counts`（done、now、later、deferred 各几段）、`current` 和 `stages`。`current` 是第一段写着 now 的段：`stage`、`title`，`milestone` 是这段里第一个 now 的里程碑，`next` 是这段里第一个 todo 的里程碑；没有 now 的段时为空。每段是 `id`、`title`、`state`、`done_on`、`note`、`milestones`；每个里程碑是 `text`、`state`、`date`、`note` 和支撑它的卡（`tasks/` 下没有的不放，重复的只放一次）。
+- `roadmap.checked`：最近 7 天（`--today` 往前 6 天到当天）勾掉的。done 的段按 `done_on`，done 的里程碑按 `date`；每条是 `date`、`kind`（stage 或 milestone）、`line`、`line_title`、`stage`、`stage_title`、`text`。新的在前，同一天按文件里的顺序。
+- `daily` 里每次调用加 `label` 和 `reason`。`label`：PRIMARY 是「12:00 主跑」，RESCUE 是「17:30 补跑」，`_2` 起加「（第 2 次）」。`reason` 是没过的原因，一句白话：阻断类别的白话说法，加上取数出错的数据源和没过的步骤的中文名；「这个交易日已经出过报告」和「前一次失败后要先人工恢复」两种直接说；过了的为空。
+- `daily` 里每天加 `reason`：补跑过了和没过的日子，取第一次没过的那次调用的原因；别的日子为空。
+- `daily` 整块加 `streak`、`streak_rescued` 和 `last_failed`。`streak` 从最近一天往回数连着出了报告的交易日：没有新交易日的跳过，当天还没跑也跳过，碰到没过、或以前某天一次都没跑，就停。`streak_rescued` 是其中靠补跑的天数。`last_failed` 是最近一个没过的日子和它的原因，没有时为空。
+- 阻断类别、步骤和数据源的中文名在生成器里（`BLOCKER_LABELS`、`STEP_LABELS`、`SOURCE_LABELS`）。测试核对它们覆盖调度摘要的全部阻断类别、`config/scheduled_tasks.yaml` 日报的全部步骤和取数的全部数据源；没有中文名的照原样写。
+
+### 9.3 engineering 块从路线图推出来
+
+第 1 版的 `engineering` 字段不变，App 改版前照常能画。
+
+- `mainlines` 是工程线（`kind: engineering`）。每条的 `cards` 是它的里程碑里的卡，不重复，按出现的顺序。`milestone` 是「现在这段的标题：这段第一个 now 的里程碑」；没有 now 的里程碑时只写段的标题，没有 now 的段时写「没有进行中的阶段」。
+- `research_cards` 是研究线的卡，`updated` 是路线图的 `updated`。
+- `unassigned` 是没挂在任何里程碑下的在办卡（研究卡也算）。`duplicates` 是在同一个里程碑里写了两次的卡号，`missing` 是里程碑里写了但 `tasks/` 下没有的卡号。
+- 违反第 4 节规则的写进 `problems`：
+  - 「路线图：没有卡 X」
+  - 「路线图：X 在同一个里程碑里写了两次」
+  - 「路线图：卡 X 没有中文名」
+  - 「路线图：<线的标题>有不止一段写着现在」
+  - 「路线图：X 在 <日子> 改过，路线图的 updated 还是 <日子>」
+  - 「路线图：在办的卡 X 不在任何里程碑里」
+- 路线图读不到时，`roadmap` 和 `engineering` 都读不到，`waiting` 照常：卡的 `name` 为空，`events` 为空。
+
+### 9.4 文件格式
+
+- 用仓库共用的严格 YAML 读法 `load_strict_yaml_text`，重复的键报错。
+- 日子带不带引号都行，统一写成 YYYY-MM-DD。
+- `load_roadmap(root)` 是公开接口。测试用它核对仓库里的路线图：能读，里程碑里的卡都存在并有中文名，每条线最多一段写着现在。
+
+### 9.5 学习 App 那边
+
+页面怎么改由学习 App 那边按自己的规矩做，本仓库只给数据。改版说明由 Claude 写好交给 Baker 转过去：先讲路线图，再讲卡；要 Baker 做的和在等的事分开；日报一句话结论，加上每天的原因。

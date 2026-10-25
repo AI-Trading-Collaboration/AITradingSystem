@@ -1,0 +1,400 @@
+# 路线图：工作总览（DEVX-034）先讲每条线走到哪，再讲每张卡支撑哪个里程碑。规则见 docs/requirements/DEVX-034_Work_Overview.md 第 4 节。
+# 发布一张卡的改动时，在同一个提交里改它支撑的里程碑（勾掉就把 state 改成 done、date 写完成那天），并把 updated 改成当天；
+# 新开一张卡就把它挂到一个里程碑下，并在 cards 里给它一个中文名。加段、改段、改目标要 Baker 同意。
+schema_version: work_roadmap.v1
+updated: "2026-10-25"
+# 卡的中文名：页面上只写中文名，卡号放在细节里。
+cards:
+  TRADING-2567: QQQ 研究计划
+  TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING: 试验登记和研究自动循环
+  TRADING-2566_RESEARCH_AGENT_LOOP_GUARDRAILS: 研究护栏
+  TRADING-2568_RESEARCH_PROGRESS_PAGE: 研究进展页
+  TRADING-2569_JUDGMENT_EVALUATION: 判断评估
+  TRADING-2570_RESEARCH_FORWARD_RECHECK: 前向复查
+  GOV-008_RESEARCH_FIRST_GOVERNANCE_REFACTOR: 研究优先的治理迁移
+  GOV-009: 旧研究清点和清理
+  OPS-082_DETERMINISTIC_WINDOWS_SCHEDULER: 日报计划任务
+  OPS-084_DAILY_PRIMARY_TRIGGER_AFTER_SOURCE_PUBLICATION: 主跑等数据源发布
+  OPS-083_DAILY_RUN_PERFORMANCE: 日报提速
+  OPS-085_RESCUE_RETRY_AFTER_SOURCE_FAILURE: 补跑时自动重试
+  OPS-086_DAILY_RELEASE_BUNDLE: 日报发布包
+  DATA-025: 取数失败留下错误结尾
+  DATA-026: SEC 取数断线重试
+  DATA-027: 官方源取数断线重试
+  DATA-028: 缓存失败不再挡路
+  DATA-003: 估值按时点留档
+  DATA-001: 估值数据
+  DATA-022: 价格只用 FMP
+  DATA-024: 请求缓存有效期
+  PROD-004: 估值历史覆盖验收
+  STORAGE-001: 存储分区和保留
+  DATA-029: 研究数据搬家
+  DEVX-032_REVIEW_FIXES: 发布门禁修补
+  DEVX-025_PI_WORKBENCH: pi 工作台
+  DEVX-031_PARALLEL_PI_LANES: pi 并行车道
+  DEVX-030_RESEARCH_RECORDS_LANE: 研究记录快车道
+  DEVX-033_GATE_SPEEDUP: 门禁提速
+  DEVX-026_PI_ANTI_GAMING_CHECKS: 防钻空子检查
+  DEVX-027_RND_DRIFT_METRIC: 改动去向指标
+  DEVX-034_WORK_OVERVIEW: 工作总览
+  KNOWLEDGE-001_KNOWLEDGE_AND_INSIGHT_CORE: 知识核心
+  PUBLISHING-001_MULTI_CARRIER_PUBLISHING: 多处发布
+  DOCS-PLATFORM-001_OBSIDIAN_AUTHORING_AND_GOVERNANCE: 文档写作规范
+lines:
+  - id: qqq_research
+    kind: research
+    title: QQQ 研究计划
+    goal: 在 QQQ 上找到同等平均敞口下回撤更小、复利更好的做法，站住以后用期权表达
+    # 三层按顺序做（2026-10-12 的方向决定）；第三层到时另立阶段。
+    layers:
+      - title: 方向信号
+        state: now
+      - title: 期权实现
+        state: later
+      - title: 期权市场本身的信号
+        state: later
+    stages:
+      - id: S0
+        title: 清点和定方向
+        state: done
+        done_on: "2026-10-12"
+        milestones:
+          - text: 5–9 月约 860 个研究任务重新评级，没有站得住的正面结论；方向定为 QQQ 期权路径
+            state: done
+            date: "2026-10-12"
+            cards: [GOV-009, TRADING-2567]
+      - id: S1
+        title: 长历史数据
+        state: done
+        done_on: "2026-10-13"
+        milestones:
+          - text: 1999 年起的研究快照可复现，和本机 QQQ 的重叠段对过
+            state: done
+            date: "2026-10-13"
+            cards: [TRADING-2567]
+          - text: 美股大盘月度数据，给慢熊段核对用
+            state: done
+            date: "2026-10-21"
+            cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
+      - id: S2
+        title: 研究窗口
+        state: done
+        done_on: "2026-10-12"
+        milestones:
+          - text: 开发 1999–2010，验证 2011–2021 每题只读一次，2021 起只做一致性检查
+            state: done
+            date: "2026-10-12"
+            cards: [TRADING-2567]
+      - id: S3
+        title: 评估台
+        state: done
+        done_on: "2026-10-13"
+        milestones:
+          - text: 共享模拟器、试验自动登记和多重检验、标准证伪、预注册格式
+            state: done
+            date: "2026-10-13"
+            cards:
+              - TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING
+              - TRADING-2566_RESEARCH_AGENT_LOOP_GUARDRAILS
+      - id: S4
+        title: 找方向信号
+        state: now
+        milestones:
+          - text: 正式题五道都没在验证窗口站住
+            state: done
+            date: "2026-10-21"
+            note: QQQ-Q1 到 Q5，10-14 到 10-21
+            cards: [TRADING-2567]
+          - text: 研究自动循环第 1–5 期，没有候选站住
+            state: done
+            date: "2026-10-23"
+            note: 筛信号、试跑门、股债组合、慢熊判据、不对称再入、条件化国债；失败都打了标签
+            cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
+          - text: 日报仓位方案进前瞻记录
+            state: done
+            date: "2026-10-22"
+            note: 固定敞口 0.8 加 F0001，只记不进生产
+            cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
+          - text: 第 6 期只记账，加整轮核对
+            state: now
+            date: "2026-11-20"
+            note: 前瞻账本每周五追加；F0001 和 F0008 到数时核
+            cards:
+              - TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING
+              - TRADING-2567
+          - text: 11-20 续期卡：照旧再四周，或者换方向
+            state: todo
+            date: "2026-11-20"
+            cards: [TRADING-2567]
+          - text: 第一次完整的慢熊段核对
+            state: waiting
+            date: "2026-10-22"
+            note: 时间看市场，到时算 F0001 的第一次证据
+            cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
+          - text: 第一次前向复查
+            state: todo
+            note: 前瞻样本满 250 个交易日，2027-10 前后
+            cards: [TRADING-2570_RESEARCH_FORWARD_RECHECK]
+      - id: S5
+        title: 期权实现
+        state: later
+        note: 方向信号在历史上过了预注册检验以后，用 QuantConnect 回测期权表达；到时另立任务
+  - id: daily_run
+    kind: engineering
+    title: 日报运行与发布
+    goal: 日报每天 12:00 自动跑通，从发布包运行；当天没过，17:30 补跑
+    stages:
+      - id: "1"
+        title: 恢复每天自动跑
+        state: done
+        done_on: "2026-10-15"
+        milestones:
+          - text: 迁移后计划任务第一次运行就全链过了
+            state: done
+            date: "2026-10-11"
+            cards:
+              - GOV-008_RESEARCH_FIRST_GOVERNANCE_REFACTOR
+              - OPS-082_DETERMINISTIC_WINDOWS_SCHEDULER
+          - text: 12:00 主跑等数据源发布后再触发
+            state: done
+            date: "2026-10-15"
+            cards: [OPS-084_DAILY_PRIMARY_TRIGGER_AFTER_SOURCE_PUBLICATION]
+      - id: "2"
+        title: 取数失败能自己恢复
+        state: done
+        done_on: "2026-10-23"
+        milestones:
+          - text: 取数失败留下错误结尾，SEC 和官方源断线重试，缓存失败不再挡路（生产上核过）
+            state: done
+            date: "2026-10-23"
+            cards: [DATA-025, DATA-026, DATA-027, DATA-028]
+          - text: 17:30 补跑遇到数据源临时故障时自动重试
+            state: waiting
+            date: "2026-10-13"
+            note: 要等第一次真实的数据源临时故障才能验收
+            cards: [OPS-085_RESCUE_RETRY_AFTER_SOURCE_FAILURE]
+      - id: "3"
+        title: 从发布包运行
+        state: done
+        done_on: "2026-10-25"
+        milestones:
+          - text: 日报不再从开发仓运行
+            state: done
+            date: "2026-10-22"
+            cards: [OPS-086_DAILY_RELEASE_BUNDLE]
+          - text: 旧运行副本归档
+            state: done
+            date: "2026-10-25"
+            cards: [OPS-086_DAILY_RELEASE_BUNDLE]
+      - id: "4"
+        title: 提速
+        state: now
+        note: 标准：付费源可用时，全链耗时的中位数比 7–9 月的 995 秒明显下降
+        milestones:
+          - text: 密钥扫描改增量，平时约 8 秒
+            state: done
+            date: "2026-10-25"
+            cards: [OPS-083_DAILY_RUN_PERFORMANCE]
+          - text: 打分低于 100 秒
+            state: done
+            date: "2026-10-25"
+            cards: [OPS-083_DAILY_RUN_PERFORMANCE]
+          - text: 换发布包以后仍按增量扫
+            state: now
+            note: 现在每次部署后全量重扫，约 3.5 分钟
+            cards: [OPS-083_DAILY_RUN_PERFORMANCE]
+          - text: 命令行启动耗时
+            state: todo
+            cards: [OPS-083_DAILY_RUN_PERFORMANCE]
+          - text: 市场宏观取数
+            state: deferred
+            cards: [OPS-083_DAILY_RUN_PERFORMANCE]
+  - id: data_sources
+    kind: engineering
+    title: 数据源
+    goal: 付费数据只用 FMP 一家，SEC、FRED 和官方源补齐；取到的数据当天新鲜、可审计
+    stages:
+      - id: "1"
+        title: 估值数据按时点留档
+        state: done
+        milestones:
+          - text: FMP 估值和预期修正按当天快照归档，有校验和清单
+            state: done
+            cards: [DATA-003]
+          - text: 估值字段基线满足（as_of 10-23 的日报上核过）
+            state: done
+            date: "2026-10-25"
+            cards: [DATA-001]
+      - id: "2"
+        title: 付费源只留 FMP
+        state: done
+        done_on: "2026-10-25"
+        milestones:
+          - text: 价格只用 FMP，第二源对账改为可选；10-23、10-24 生产日报都过了
+            state: done
+            date: "2026-10-24"
+            cards: [DATA-022]
+          - text: Marketstack 已退订
+            state: done
+            date: "2026-10-25"
+            cards: [DATA-022]
+      - id: "3"
+        title: 可变数据源当天新鲜
+        state: done
+        done_on: "2026-10-25"
+        milestones:
+          - text: 请求缓存加有效期，SEC 文件当天联网新取（试运行核过，随发布包进生产）
+            state: done
+            date: "2026-10-25"
+            cards: [DATA-024]
+      - id: "4"
+        title: 估值历史覆盖验收
+        state: now
+        milestones:
+          - text: 用当前发布包对生产状态根只读跑一次累计覆盖，核对就绪度；再核对日报估值只写当日目录
+            state: now
+            note: Claude 做
+            cards: [PROD-004]
+      - id: "5"
+        title: 存储和搬家
+        state: deferred
+        note: 到日报或研究因为存储变慢时重开
+        milestones:
+          - text: 存储分区和保留
+            state: deferred
+            cards: [STORAGE-001]
+          - text: 研究数据从开发仓搬到研究状态根
+            state: deferred
+            cards: [DATA-029]
+  - id: dev_workflow
+    kind: engineering
+    title: 开发流程
+    goal: Claude 写需求和审查，pi 写代码，发布少要 Baker 动手
+    stages:
+      - id: "1"
+        title: 研究优先的治理和迁移
+        state: done
+        done_on: "2026-10-11"
+        milestones:
+          - text: 迁移收尾 M1–M4 完成，规则从代码和测试里推导
+            state: done
+            date: "2026-10-11"
+            cards: [GOV-008_RESEARCH_FIRST_GOVERNANCE_REFACTOR]
+      - id: "2"
+        title: pi 写代码、Claude 审
+        state: done
+        done_on: "2026-10-14"
+        milestones:
+          - text: 业务代码也由 pi 写；每批先写验收测试，Claude 审过回「可以发布」才发
+            state: done
+            date: "2026-10-13"
+            cards: [DEVX-025_PI_WORKBENCH]
+          - text: 发布门禁三处修补
+            state: done
+            date: "2026-10-14"
+            cards: [DEVX-032_REVIEW_FIXES]
+      - id: "3"
+        title: 并行和快车道
+        state: done
+        done_on: "2026-10-16"
+        milestones:
+          - text: pi 并行车道和研究记录快车道每天在用
+            state: done
+            date: "2026-10-14"
+            cards: [DEVX-031_PARALLEL_PI_LANES, DEVX-030_RESEARCH_RECORDS_LANE]
+          - text: 门禁提速三批
+            state: done
+            date: "2026-10-16"
+            cards: [DEVX-033_GATE_SPEEDUP]
+      - id: "4"
+        title: 防钻空子和改动去向
+        state: deferred
+        note: pi 出现改考官时重开；占比可能并进工作总览第 2 版
+        milestones:
+          - text: “改了考官”检查、汇报和改动对账
+            state: deferred
+            cards: [DEVX-026_PI_ANTI_GAMING_CHECKS]
+          - text: 投资系统和工作流两类提交的占比
+            state: deferred
+            cards: [DEVX-027_RND_DRIFT_METRIC]
+  - id: research_tools
+    kind: engineering
+    title: 研究工具
+    goal: 研究循环的记账、门槛和研究进展页可靠
+    stages:
+      - id: "1"
+        title: 试验登记
+        state: done
+        done_on: "2026-10-13"
+        milestones:
+          - text: 研究运行自动登记，报告第一屏显示试验次数和校正后的指标
+            state: done
+            date: "2026-10-13"
+            cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
+      - id: "2"
+        title: 研究护栏
+        state: done
+        done_on: "2026-10-25"
+        milestones:
+          - text: 研究闭环的第 1、3 项护栏上线；第 2 项不做，每道题结束时已逐条确认失败标签
+            state: done
+            date: "2026-10-25"
+            cards: [TRADING-2566_RESEARCH_AGENT_LOOP_GUARDRAILS]
+      - id: "3"
+        title: 研究进展页
+        state: done
+        done_on: "2026-10-22"
+        milestones:
+          - text: 公开页面运行 01–03、05–07 上线并核对
+            state: done
+            date: "2026-10-22"
+            cards: [TRADING-2568_RESEARCH_PROGRESS_PAGE]
+          - text: 运行 04（思路快筛和判断对账两个面板）
+            state: deferred
+            note: 随判断评估延后
+            cards: [TRADING-2568_RESEARCH_PROGRESS_PAGE]
+      - id: "4"
+        title: 判断评估和前向复查
+        state: deferred
+        note: 判断评估等有人用再开；前向复查 2027-09-01 前重开
+        milestones:
+          - text: 人工判断按市场对账、思路快筛
+            state: deferred
+            cards: [TRADING-2569_JUDGMENT_EVALUATION]
+          - text: 筛选信号满 250 个交易日后的前向复查
+            state: deferred
+            cards: [TRADING-2570_RESEARCH_FORWARD_RECHECK]
+  - id: display
+    kind: engineering
+    title: 展示与知识
+    goal: 一个地方看清全部工作
+    stages:
+      - id: "1"
+        title: 工作总览第 1 版
+        state: now
+        milestones:
+          - text: 卡片核对和主线文件；只读生成器；学习 App 接上
+            state: done
+            date: "2026-10-25"
+            cards: [DEVX-034_WORK_OVERVIEW]
+          - text: 好读的改版：先讲路线图和里程碑，再讲每项工作支撑什么
+            state: now
+            cards: [DEVX-034_WORK_OVERVIEW]
+      - id: "2"
+        title: 工作总览第 2 版
+        state: later
+        milestones:
+          - text: 加协作块（开发日报的副本），可能并进改动去向的占比
+            state: todo
+            cards: [DEVX-034_WORK_OVERVIEW, DEVX-027_RND_DRIFT_METRIC]
+      - id: "3"
+        title: 知识核心
+        state: deferred
+        note: Baker 要做时重开
+        milestones:
+          - text: 解释和研究结论按和载体无关的格式存，再发到多个地方
+            state: deferred
+            cards:
+              - KNOWLEDGE-001_KNOWLEDGE_AND_INSIGHT_CORE
+              - PUBLISHING-001_MULTI_CARRIER_PUBLISHING
+              - DOCS-PLATFORM-001_OBSIDIAN_AUTHORING_AND_GOVERNANCE

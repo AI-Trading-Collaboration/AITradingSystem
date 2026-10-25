@@ -40,3 +40,9 @@ Every value is one line; `|` is allowed only in `notes`. Statuses: `PROPOSED`, `
   Never invent one; ask the owner instead.
 - Keep `production_effect=none` and `broker_action=none` in notes unless the owner authorizes otherwise.
 - Record changes ship with the change that caused them (see the `ship-change` skill).
+- The work overview roadmap `docs/work_overview/roadmap.yaml` changes in the same commit as the
+  cards it names: tick off the milestones a change finishes (`state: done` and the `date`), hang a
+  new card under a milestone and give it a Chinese name in `cards`, and set `updated` to the day.
+  New or changed stages and goals need the owner's agreement
+  (`owner_decision:DEVX-034:2026-10-25:roadmap_first`; rules in section 4 of
+  `docs/requirements/DEVX-034_Work_Overview.md`).

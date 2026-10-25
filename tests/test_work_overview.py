@@ -1,22 +1,25 @@
-"""Acceptance tests for the work overview generator (DEVX-034, run 02).
+"""Acceptance tests for the work overview generator (DEVX-034, runs 02 to 04).
 
 Written before the implementation. The requirement is docs/requirements/DEVX-034_Work_Overview.md,
-section 8. The fixture is a small git repository (task cards, the mainline file and two research
-records), a production state root (scheduler summaries, report quality gates, and files the
-generator must never read) and a release directory (current.json, deploy_log.jsonl).
+sections 8 and 9. The fixture is a small git repository (task cards, the roadmap file and two
+research records), a production state root (scheduler summaries, report quality gates, and files
+the generator must never read) and a release directory (current.json, deploy_log.jsonl).
 """
 
 from __future__ import annotations
 
 import builtins
+import importlib.util
 import io
 import json
 import os
 import re
 import socket
 import subprocess
+import sys
 from datetime import date
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 
 import pytest
@@ -26,14 +29,24 @@ from ai_trading_system import research_site
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.work_overview import (
     ACTIVE_STATUSES,
+    BLOCKER_LABELS,
     CALENDAR_DAYS,
-    MAINLINES_PATH,
+    CHECKED_DAYS,
+    MILESTONE_STATES,
+    ROADMAP_PATH,
     SCHEMA_VERSION,
+    SOURCE_LABELS,
+    STAGE_STATES,
+    STEP_LABELS,
     TREE_PATHS,
+    asks_owner,
     build,
     day_result,
     dumps,
+    load_roadmap,
     main,
+    run_label,
+    run_reason,
     waits_for_owner,
 )
 
@@ -53,9 +66,11 @@ SECRETS = (
     "SENTINEL-OLD-SUMMARY",
 )
 
-CARD_KEYS = {"id", "area", "status", "priority", "next_owner", "next_step", "updated"}
+CARD_KEYS = {"id", "area", "status", "priority", "next_owner", "next_step", "name", "updated"}
 RUN_KEYS = {
     "name",
+    "label",
+    "reason",
     "window",
     "as_of",
     "status",
@@ -138,27 +153,153 @@ CARDS = {
 }
 
 
-def _mainlines(**changes: Any) -> str:
+NAMES = {
+    "OPS-1": "日报提速",
+    "OPS-2": "补跑时自动重试",
+    "NOTE-1": "备忘",
+    "WAIT-1": "定方向",
+    "DONE-1": "做完的卡",
+    "TRADING-1": "研究计划",
+}
+
+
+def _lines() -> list[dict[str, Any]]:
+    return [
+        {
+            "id": "research",
+            "kind": "research",
+            "title": "研究计划",
+            "goal": "找到方向信号",
+            "layers": [
+                {"title": "方向信号", "state": "now"},
+                {"title": "期权实现", "state": "later"},
+            ],
+            "stages": [
+                {
+                    "id": "S0",
+                    "title": "定方向",
+                    "state": "done",
+                    "done_on": "2026-10-12",
+                    "milestones": [
+                        {
+                            "text": "方向定了",
+                            "state": "done",
+                            "date": "2026-10-12",
+                            "cards": ["TRADING-1"],
+                        }
+                    ],
+                },
+                {
+                    "id": "S1",
+                    "title": "找方向信号",
+                    "state": "now",
+                    "milestones": [
+                        {
+                            "text": "第 6 期只记账",
+                            "state": "now",
+                            "date": "2026-11-20",
+                            "note": "每周五追加",
+                            "cards": ["TRADING-1"],
+                        },
+                        {"text": "续期卡", "state": "todo", "date": "2026-11-20"},
+                    ],
+                },
+                {"id": "S2", "title": "期权实现", "state": "later", "note": "等 S1"},
+            ],
+        },
+        {
+            "id": "daily_run",
+            "kind": "engineering",
+            "title": "日报运行与发布",
+            "goal": "日报每天跑通",
+            "stages": [
+                {
+                    "id": "1",
+                    "title": "从发布包运行",
+                    "state": "done",
+                    "done_on": "2026-10-19",
+                    "milestones": [
+                        {
+                            "text": "发布包上线",
+                            "state": "done",
+                            "date": "2026-10-18",
+                            "cards": ["OPS-1"],
+                        }
+                    ],
+                },
+                {
+                    "id": "2",
+                    "title": "提速",
+                    "state": "now",
+                    "note": "中位数明显下降",
+                    "milestones": [
+                        {
+                            "text": "扫描改增量",
+                            "state": "done",
+                            "date": "2026-10-24",
+                            "cards": ["OPS-1"],
+                        },
+                        {
+                            "text": "补跑时自动重试",
+                            "state": "waiting",
+                            "date": "2026-10-13",
+                            "note": "等第一次真实故障",
+                            "cards": ["OPS-2"],
+                        },
+                        {
+                            "text": "换包以后仍按增量扫",
+                            "state": "now",
+                            "cards": ["OPS-1", "NOTE-1"],
+                        },
+                        {"text": "命令行启动耗时", "state": "todo", "cards": []},
+                    ],
+                },
+            ],
+        },
+        {
+            "id": "display",
+            "kind": "engineering",
+            "title": "展示与知识",
+            "goal": "一个地方看清全部工作",
+            "stages": [
+                {
+                    "id": "1",
+                    "title": "第 1 版",
+                    "state": "done",
+                    "done_on": "2026-10-19",
+                    "milestones": [
+                        {
+                            "text": "生成器",
+                            "state": "done",
+                            "date": "2026-10-19",
+                            "cards": ["DONE-1"],
+                        }
+                    ],
+                },
+                {
+                    "id": "2",
+                    "title": "第 2 版",
+                    "state": "later",
+                    "milestones": [{"text": "协作块", "state": "todo", "cards": ["WAIT-1"]}],
+                },
+                {
+                    "id": "3",
+                    "title": "知识核心",
+                    "state": "deferred",
+                    "note": "要做时重开",
+                    "milestones": [{"text": "知识核心", "state": "deferred"}],
+                },
+            ],
+        },
+    ]
+
+
+def _roadmap(**changes: Any) -> str:
     raw: dict[str, Any] = {
-        "schema_version": "work_mainlines.v1",
+        "schema_version": "work_roadmap.v1",
         "updated": "2026-10-25",
-        "mainlines": [
-            {
-                "id": "daily_run",
-                "title": "日报运行与发布",
-                "goal": "日报每天跑通",
-                "milestone": "从发布包运行",
-                "cards": ["OPS-1", "OPS-2", "NOTE-1"],
-            },
-            {
-                "id": "display",
-                "title": "展示与知识",
-                "goal": "一个地方看清全部工作",
-                "milestone": "第 2 步",
-                "cards": ["WAIT-1", "DONE-1"],
-            },
-        ],
-        "research_cards": ["TRADING-1"],
+        "cards": dict(NAMES),
+        "lines": _lines(),
     }
     raw.update(changes)
     return yaml.safe_dump(raw, sort_keys=False, allow_unicode=True)
@@ -176,7 +317,7 @@ def _repo(tmp_path: Path) -> tuple[Path, str, str]:
     _git(repo, "init", "-q", "-b", "main")
     for task_id, (status, owner, priority) in CARDS.items():
         _write(repo / "tasks" / f"{task_id}.yaml", _card(task_id, status, owner, priority=priority))
-    _write(repo / MAINLINES_PATH, _mainlines())
+    _write(repo / ROADMAP_PATH, _roadmap())
     _write(repo / "research" / "_loop" / "charter_p3.md", CHARTER)
     _write(repo / "research" / "_forward" / "weekly.md", WEEKLY)
     _write(repo / "research" / "_forward" / "ledger.jsonl", '{"row": "SENTINEL-LEDGER-ROW"}\n')
@@ -519,8 +660,11 @@ def _build(world: dict[str, Any], **changes: Any) -> dict[str, Any]:
 
 def test_constants() -> None:
     assert SCHEMA_VERSION == "work_overview.v1"
-    assert MAINLINES_PATH == "docs/work_overview/mainlines.yaml"
+    assert ROADMAP_PATH == "docs/work_overview/roadmap.yaml"
     assert CALENDAR_DAYS == 14
+    assert CHECKED_DAYS == 7
+    assert STAGE_STATES == ("done", "now", "later", "deferred")
+    assert MILESTONE_STATES == ("done", "now", "waiting", "todo", "deferred")
     assert set(ACTIVE_STATUSES) == {
         "IN_PROGRESS",
         "VALIDATING",
@@ -598,6 +742,7 @@ def test_top_level_and_source(world: dict[str, Any]) -> None:
         "today",
         "source",
         "waiting",
+        "roadmap",
         "engineering",
         "daily",
         "research",
@@ -614,7 +759,7 @@ def test_top_level_and_source(world: dict[str, Any]) -> None:
     assert model["collaboration"]["status"] == "later"
     problems = model["problems"]
     assert len(problems) == 2
-    assert "主线文件：在办的卡 ORPHAN-1 不在任何主线里" in problems
+    assert "路线图：在办的卡 ORPHAN-1 不在任何里程碑里" in problems
     assert any(
         problem.startswith(
             "outputs/run_control/scheduler/2026-10-14_PRIMARY_2.summary.json: 读不到"
@@ -637,6 +782,7 @@ def test_waiting_cards(world: dict[str, Any]) -> None:
         "priority": "P0",
         "next_owner": "Baker（定方向）",
         "next_step": "WAIT-1 的下一步",
+        "name": "定方向",
         "updated": "2026-10-20",
     }
     assert cards[1]["next_step"] == "读 17:30 摘要"
@@ -664,8 +810,10 @@ def test_engineering_mainlines(world: dict[str, Any]) -> None:
     assert set(lines[0]) == {"id", "title", "goal", "milestone", "cards", "counts"}
     assert lines[0]["title"] == "日报运行与发布"
     assert lines[0]["goal"] == "日报每天跑通"
-    assert lines[0]["milestone"] == "从发布包运行"
+    assert lines[0]["milestone"] == "提速：换包以后仍按增量扫"
+    assert lines[1]["milestone"] == "没有进行中的阶段"
     assert [card["id"] for card in lines[0]["cards"]] == ["OPS-1", "OPS-2", "NOTE-1"]
+    assert [card["id"] for card in lines[1]["cards"]] == ["DONE-1", "WAIT-1"]
     assert all(set(card) == CARD_KEYS for line in lines for card in line["cards"])
     assert lines[0]["counts"] == {"IN_PROGRESS": 1, "VALIDATING": 1, "READY": 1}
     assert lines[1]["counts"] == {"PROPOSED": 1, "DONE": 1}
@@ -688,37 +836,41 @@ def test_engineering_mainlines(world: dict[str, Any]) -> None:
     ]
 
 
-def test_mainline_rule_violations(world: dict[str, Any]) -> None:
+def test_roadmap_rule_violations(world: dict[str, Any]) -> None:
     repo = world["repo"]
-    lines = yaml.safe_load(_mainlines())["mainlines"]
-    lines[1]["cards"] = ["WAIT-1", "OPS-1", "GONE-1", "GONE-1"]
-    _write(
-        repo / MAINLINES_PATH, _mainlines(mainlines=lines, research_cards=["TRADING-1", "WAIT-1"])
-    )
-    _git(repo, "commit", "-q", "-am", "DEVX-1: break the mainline rules")
+    lines = _lines()
+    lines[1]["stages"][1]["milestones"][2]["cards"] = ["OPS-1", "NOTE-1", "OPS-1", "GONE-1"]
+    lines[2]["stages"][1]["state"] = "now"
+    lines[2]["stages"][2]["state"] = "now"
+    names = {key: value for key, value in NAMES.items() if key != "NOTE-1"}
+    _write(repo / ROADMAP_PATH, _roadmap(updated="2026-10-20", cards=names, lines=lines))
+    _git(repo, "commit", "-q", "-am", "DEVX-1: break the roadmap rules")
     model = _build(world)
     engineering = model["engineering"]
-    assert engineering["status"] == "ok"
-    assert engineering["duplicates"] == ["GONE-1", "OPS-1", "WAIT-1"]
+    assert engineering["status"] == "ok" and model["roadmap"]["status"] == "ok"
+    assert engineering["duplicates"] == ["OPS-1"]
     assert engineering["missing"] == ["GONE-1"]
-    # NOTE-1 is still in daily_run; DONE-1 left the file but is done.
     assert [card["id"] for card in engineering["unassigned"]] == ["ORPHAN-1"]
-    assert [card["id"] for card in engineering["mainlines"][1]["cards"]] == ["WAIT-1", "OPS-1"]
+    milestone = model["roadmap"]["lines"][1]["stages"][1]["milestones"][2]
+    assert [card["id"] for card in milestone["cards"]] == ["OPS-1", "NOTE-1"]
+    assert milestone["cards"][1]["name"] is None
     for problem in (
-        "主线文件：没有卡 GONE-1",
-        "主线文件：GONE-1 出现了不止一次",
-        "主线文件：OPS-1 出现了不止一次",
-        "主线文件：WAIT-1 出现了不止一次",
-        "主线文件：在办的卡 ORPHAN-1 不在任何主线里",
+        "路线图：没有卡 GONE-1",
+        "路线图：OPS-1 在同一个里程碑里写了两次",
+        "路线图：卡 NOTE-1 没有中文名",
+        "路线图：展示与知识有不止一段写着现在",
+        # OPS-2 changed on 10-23, after the roadmap's updated; the cards changed on 10-20 did not.
+        "路线图：OPS-2 在 2026-10-23 改过，路线图的 updated 还是 2026-10-20",
+        "路线图：在办的卡 ORPHAN-1 不在任何里程碑里",
     ):
         assert problem in model["problems"]
-    assert sum(problem.startswith("主线文件：") for problem in model["problems"]) == 5
+    assert sum(problem.startswith("路线图：") for problem in model["problems"]) == 6
 
 
 def test_unassigned_lists_every_active_card(world: dict[str, Any]) -> None:
     repo = world["repo"]
-    _write(repo / MAINLINES_PATH, _mainlines(mainlines=[], research_cards=[]))
-    _git(repo, "commit", "-q", "-am", "DEVX-1: empty mainlines")
+    _write(repo / ROADMAP_PATH, _roadmap(lines=[]))
+    _git(repo, "commit", "-q", "-am", "DEVX-1: empty roadmap")
     engineering = _build(world)["engineering"]
     assert [card["id"] for card in engineering["unassigned"]] == [
         "NOTE-1",
@@ -733,12 +885,22 @@ def test_unassigned_lists_every_active_card(world: dict[str, Any]) -> None:
 
 def test_daily_calendar(world: dict[str, Any]) -> None:
     daily = _build(world)["daily"]
-    assert set(daily) == {"status", "error", "days", "counts", "release", "quality_gate"}
+    assert set(daily) == {
+        "status",
+        "error",
+        "days",
+        "counts",
+        "streak",
+        "streak_rescued",
+        "last_failed",
+        "release",
+        "quality_gate",
+    }
     assert daily["status"] == "ok" and daily["error"] is None
     days = {day["date"]: day for day in daily["days"]}
     assert [day["date"] for day in daily["days"]] == [f"2026-10-{n}" for n in range(12, 26)]
     assert all(
-        set(day) == {"date", "result", "as_of", "minutes", "release_id", "runs"}
+        set(day) == {"date", "result", "reason", "as_of", "minutes", "release_id", "runs"}
         for day in daily["days"]
     )
     results = {date_: day["result"] for date_, day in days.items()}
@@ -770,6 +932,7 @@ def test_daily_calendar(world: dict[str, Any]) -> None:
     assert days["2026-10-12"] == {
         "date": "2026-10-12",
         "result": "NO_RUN",
+        "reason": None,
         "as_of": None,
         "minutes": None,
         "release_id": None,
@@ -782,6 +945,8 @@ def test_daily_calendar(world: dict[str, Any]) -> None:
     assert [run["name"] for run in days["2026-10-14"]["runs"]] == ["PRIMARY"]
     assert days["2026-10-20"]["runs"][0] == {
         "name": "PRIMARY",
+        "label": "12:00 主跑",
+        "reason": "数据源取不到：市场宏观数据取数出错，管线健康检查没过",
         "window": "PRIMARY",
         "as_of": "2026-10-19",
         "status": "FAIL",
@@ -969,34 +1134,84 @@ def test_empty_state_and_daily_roots(world: dict[str, Any], tmp_path: Path) -> N
     assert daily["quality_gate"]["status"] == "unreadable"
 
 
-def test_missing_mainline_file(world: dict[str, Any]) -> None:
-    repo = world["repo"]
-    _git(repo, "rm", "-q", MAINLINES_PATH)
-    _git(repo, "commit", "-q", "-m", "DEVX-1: drop the mainline file")
-    model = _build(world)
+def _roadmap_unreadable(model: dict[str, Any]) -> None:
+    assert model["roadmap"]["status"] == "unreadable"
+    assert model["roadmap"]["error"].startswith("读不到")
     assert model["engineering"]["status"] == "unreadable"
-    assert model["engineering"]["error"].startswith("读不到")
-    assert model["waiting"]["status"] == "ok"
-    assert [card["id"] for card in model["waiting"]["cards"]] == ["WAIT-1", "OPS-2", "ORPHAN-1"]
-    assert any(problem.startswith(MAINLINES_PATH) for problem in model["problems"])
+    waiting = model["waiting"]
+    assert waiting["status"] == "ok" and waiting["events"] is None
+    assert [card["id"] for card in waiting["cards"]] == ["WAIT-1", "OPS-2", "ORPHAN-1"]
+    assert [card["id"] for card in waiting["asks"]] == ["WAIT-1", "ORPHAN-1"]
+    assert all(card["name"] is None for card in waiting["asks"])
+    assert any(problem.startswith(ROADMAP_PATH) for problem in model["problems"])
+    assert model["daily"]["status"] == "ok" and model["research"]["status"] == "ok"
+
+
+def test_missing_roadmap_file(world: dict[str, Any]) -> None:
+    repo = world["repo"]
+    _git(repo, "rm", "-q", ROADMAP_PATH)
+    _git(repo, "commit", "-q", "-m", "DEVX-1: drop the roadmap file")
+    _roadmap_unreadable(_build(world))
+
+
+def _broken_line(**changes: Any) -> list[dict[str, Any]]:
+    lines = _lines()
+    lines[1].update(changes)
+    return lines
+
+
+def _broken_stage(**changes: Any) -> list[dict[str, Any]]:
+    lines = _lines()
+    lines[1]["stages"][1].update(changes)
+    return lines
+
+
+def _broken_milestone(**changes: Any) -> list[dict[str, Any]]:
+    lines = _lines()
+    lines[1]["stages"][1]["milestones"][0].update(changes)
+    return lines
 
 
 @pytest.mark.parametrize(
     "text",
     [
-        "schema_version: work_mainlines.v0\nmainlines: []\n",
-        "schema_version: work_mainlines.v1\nmainlines: nope\n",
-        "schema_version: work_mainlines.v1\nmainlines:\n  - id: x\n    cards: [OPS-1]\n",
         "[unclosed\n",
+        "- a list\n",
+        _roadmap(schema_version="work_roadmap.v0"),
+        _roadmap(updated=None),
+        _roadmap(updated="soon"),
+        _roadmap(updated="2026-10-5"),
+        _roadmap(updated="20261025"),
+        _roadmap(cards=["OPS-1"]),
+        _roadmap(cards={"OPS-1": ""}),
+        _roadmap(cards={"OPS-1": 3}),
+        _roadmap(lines="nope"),
+        _roadmap(lines=_lines() + [_lines()[1]]),
+        _roadmap(lines=_broken_line(id="Daily-Run")),
+        _roadmap(lines=_broken_line(kind="ops")),
+        _roadmap(lines=_broken_line(goal=None)),
+        _roadmap(lines=_broken_line(stages=[])),
+        _roadmap(lines=_broken_line(layers=[{"title": "x", "state": "soon"}])),
+        _roadmap(lines=_broken_stage(id=2)),
+        _roadmap(lines=_broken_stage(id="1")),
+        _roadmap(lines=_broken_stage(state="half")),
+        _roadmap(lines=_broken_stage(done_on="10-25")),
+        _roadmap(lines=_broken_stage(milestones="none")),
+        _roadmap(lines=_broken_milestone(state="maybe")),
+        _roadmap(lines=_broken_milestone(text="")),
+        _roadmap(lines=_broken_milestone(date="2026-13-01")),
+        _roadmap(lines=_broken_milestone(cards="OPS-1")),
+        _roadmap(lines=_broken_milestone(cards=["OPS-1", 7])),
+        _roadmap(lines=_broken_milestone(note=5)),
+        # A repeated key is refused, not silently replaced (the cards map is the usual place).
+        _roadmap() + "cards:\n  OPS-1: 又一个名字\n",
     ],
 )
-def test_bad_mainline_file(world: dict[str, Any], text: str) -> None:
+def test_bad_roadmap_file(world: dict[str, Any], text: str) -> None:
     repo = world["repo"]
-    _write(repo / MAINLINES_PATH, text)
-    _git(repo, "commit", "-q", "-am", "DEVX-1: bad mainline file")
-    model = _build(world)
-    assert model["engineering"]["status"] == "unreadable"
-    assert model["waiting"]["status"] == "ok"
+    _write(repo / ROADMAP_PATH, text)
+    _git(repo, "commit", "-q", "-am", "DEVX-1: bad roadmap file")
+    _roadmap_unreadable(_build(world))
 
 
 def test_a_bad_card_is_a_problem_not_a_failure(world: dict[str, Any]) -> None:
@@ -1031,7 +1246,7 @@ def test_repository_without_the_ref(world: dict[str, Any], tmp_path: Path) -> No
     bare.mkdir()
     model = build(bare, state_root=world["state"], daily_root=world["daily"], today=TODAY)
     assert model["source"] == {"ref": "main", "commit": None, "commit_time": None}
-    for block in ("waiting", "engineering", "research"):
+    for block in ("waiting", "roadmap", "engineering", "research"):
         assert model[block]["status"] == "unreadable"
         assert model[block]["error"].startswith("读不到")
     assert model["daily"]["status"] == "ok"
@@ -1159,7 +1374,7 @@ def test_main_output_is_deterministic(
     )
     printed = capsys.readouterr().out.strip().splitlines()
     assert len(printed) == 2
-    assert printed[0].startswith("work_overview: 等 Baker 的 3 件")
+    assert printed[0].startswith("work_overview: 要 Baker 做的 2 件 · 在等的事 1 件 · 日报 PASS 3")
     assert str(first) in printed[0]
 
 
@@ -1234,7 +1449,7 @@ def test_module_does_not_reach_for_the_network_or_private_files() -> None:
         "import socket",
         "ledger.jsonl",
         "owner_daily_brief",
-        "reader_brief",
+        "reader_brief_",  # the report file; the step id reader_brief is only a label key
         "daily/states",
         "data/raw",
     ):
@@ -1315,3 +1530,422 @@ def test_file_errors_name_the_error_not_the_file(
     assert any(
         "FileNotFoundError: No such file or directory" in problem for problem in model["problems"]
     )
+
+
+# ---- roadmap first, plain words (run 04) --------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("status", "owner", "expected"),
+    [
+        ("IN_PROGRESS", "Baker（定方向）", True),
+        ("IN_PROGRESS", "BAKER", True),
+        ("READY", "Project Owner", True),
+        ("PROPOSED", "系统实现 + 项目 owner 后续复核", True),
+        ("BLOCKED_EXTERNAL", "外部条件 / project owner", True),
+        ("BLOCKED_OWNER_INPUT", "Claude", True),
+        ("BLOCKED_OWNER_INPUT", None, True),
+        # An owner role is not Baker himself: OPS-085 waits for an event, not for him.
+        ("VALIDATING", "operations owner（读 17:30 摘要）", False),
+        ("PROPOSED", "research-platform domain owner", False),
+        ("IN_PROGRESS", "Claude（等 Baker 决定）", False),
+        ("IN_PROGRESS", "Claude (Baker later)", False),
+        ("DONE", "Baker", False),
+        ("DEFERRED", "Project Owner", False),
+        ("IN_PROGRESS", None, False),
+        ("IN_PROGRESS", "", False),
+    ],
+)
+def test_asks_owner(status: str, owner: str | None, expected: bool) -> None:
+    assert asks_owner(status, owner) is expected
+
+
+def test_asks_and_events(world: dict[str, Any]) -> None:
+    waiting = _build(world)["waiting"]
+    assert set(waiting) == {"status", "error", "cards", "asks", "events"}
+    assert [card["id"] for card in waiting["asks"]] == ["WAIT-1", "ORPHAN-1"]
+    assert all(set(card) == CARD_KEYS for card in waiting["asks"])
+    assert waiting["asks"][0]["name"] == "定方向"
+    assert waiting["asks"][1]["name"] is None  # ORPHAN-1 is in no milestone and has no name
+    assert waiting["events"] == [
+        {
+            "line": "daily_run",
+            "line_title": "日报运行与发布",
+            "stage": "2",
+            "stage_title": "提速",
+            "text": "补跑时自动重试",
+            "date": "2026-10-13",
+            "note": "等第一次真实故障",
+            "cards": [
+                {
+                    "id": "OPS-2",
+                    "area": "Fixture / OPS-2 的领域",
+                    "status": "VALIDATING",
+                    "priority": "P2",
+                    "next_owner": "operations owner（读 17:30 摘要）",
+                    "next_step": "读 17:30 摘要",
+                    "name": "补跑时自动重试",
+                    "updated": "2026-10-23",
+                }
+            ],
+        }
+    ]
+
+
+def test_roadmap_lines_stages_and_milestones(world: dict[str, Any]) -> None:
+    roadmap = _build(world)["roadmap"]
+    assert set(roadmap) == {"status", "error", "updated", "lines", "checked"}
+    assert roadmap["status"] == "ok" and roadmap["error"] is None
+    assert roadmap["updated"] == "2026-10-25"
+    lines = roadmap["lines"]
+    assert [line["id"] for line in lines] == ["research", "daily_run", "display"]
+    line_keys = {"id", "kind", "title", "goal", "layers", "counts", "current", "stages"}
+    assert all(set(line) == line_keys for line in lines)
+    research, daily_run, display = lines
+    assert (research["kind"], daily_run["kind"]) == ("research", "engineering")
+    assert (daily_run["title"], daily_run["goal"]) == ("日报运行与发布", "日报每天跑通")
+    assert research["layers"] == [
+        {"title": "方向信号", "state": "now"},
+        {"title": "期权实现", "state": "later"},
+    ]
+    assert daily_run["layers"] == []
+    assert research["counts"] == {"done": 1, "now": 1, "later": 1, "deferred": 0}
+    assert display["counts"] == {"done": 1, "now": 0, "later": 1, "deferred": 1}
+    assert research["current"] == {
+        "stage": "S1",
+        "title": "找方向信号",
+        "milestone": "第 6 期只记账",
+        "next": "续期卡",
+    }
+    assert daily_run["current"] == {
+        "stage": "2",
+        "title": "提速",
+        "milestone": "换包以后仍按增量扫",
+        "next": "命令行启动耗时",
+    }
+    assert display["current"] is None
+    assert research["stages"][2] == {
+        "id": "S2",
+        "title": "期权实现",
+        "state": "later",
+        "done_on": None,
+        "note": "等 S1",
+        "milestones": [],
+    }
+    stage = daily_run["stages"][1]
+    assert set(stage) == {"id", "title", "state", "done_on", "note", "milestones"}
+    assert (stage["id"], stage["title"], stage["state"], stage["done_on"], stage["note"]) == (
+        "2",
+        "提速",
+        "now",
+        None,
+        "中位数明显下降",
+    )
+    assert daily_run["stages"][0]["done_on"] == "2026-10-19"
+    milestones = stage["milestones"]
+    assert all(set(item) == {"text", "state", "date", "note", "cards"} for item in milestones)
+    assert [(item["text"], item["state"], item["date"]) for item in milestones] == [
+        ("扫描改增量", "done", "2026-10-24"),
+        ("补跑时自动重试", "waiting", "2026-10-13"),
+        ("换包以后仍按增量扫", "now", None),
+        ("命令行启动耗时", "todo", None),
+    ]
+    now = milestones[2]
+    assert [card["id"] for card in now["cards"]] == ["OPS-1", "NOTE-1"]
+    assert [card["name"] for card in now["cards"]] == ["日报提速", "备忘"]
+    assert now["cards"][0]["updated"] == "2026-10-20"
+    assert milestones[3]["cards"] == [] and milestones[3]["note"] is None
+    assert research["stages"][1]["milestones"][1]["cards"] == []  # no cards key at all
+    every = [
+        card
+        for line in lines
+        for stage in line["stages"]
+        for item in stage["milestones"]
+        for card in item["cards"]
+    ]
+    assert every and all(set(card) == CARD_KEYS for card in every)
+
+
+def test_checked_in_the_last_seven_days(world: dict[str, Any]) -> None:
+    checked = _build(world)["roadmap"]["checked"]
+    keys = {"date", "kind", "line", "line_title", "stage", "stage_title", "text"}
+    assert all(set(entry) == keys for entry in checked)
+    # Newest first, then in file order; 10-18 is the eighth day back and is not listed.
+    assert [
+        (entry["date"], entry["kind"], entry["line"], entry["stage"], entry["text"])
+        for entry in checked
+    ] == [
+        ("2026-10-24", "milestone", "daily_run", "2", "扫描改增量"),
+        ("2026-10-19", "stage", "daily_run", "1", "从发布包运行"),
+        ("2026-10-19", "stage", "display", "1", "第 1 版"),
+        ("2026-10-19", "milestone", "display", "1", "生成器"),
+    ]
+    assert (checked[0]["line_title"], checked[0]["stage_title"]) == ("日报运行与发布", "提速")
+    later = _build(world, today=date(2026, 10, 26))["roadmap"]["checked"]
+    assert [entry["text"] for entry in later] == ["扫描改增量"]
+    # Only done counts: the now and todo milestones dated 11-20 are not checked off on 11-20.
+    assert _build(world, today=date(2026, 11, 20))["roadmap"]["checked"] == []
+
+
+def test_dates_without_quotes_are_read_as_days(world: dict[str, Any]) -> None:
+    quoted = _build(world)["roadmap"]
+    repo = world["repo"]
+    lines = _lines()
+    lines[1]["stages"][1]["milestones"][0]["date"] = date(2026, 10, 24)
+    lines[1]["stages"][0]["done_on"] = date(2026, 10, 19)
+    _write(repo / ROADMAP_PATH, _roadmap(updated=date(2026, 10, 25), lines=lines))
+    _git(repo, "commit", "-q", "-am", "DEVX-1: dates without quotes")
+    assert "updated: 2026-10-25\n" in (repo / ROADMAP_PATH).read_text(encoding="utf-8")
+    model = _build(world)
+    assert model["roadmap"] == quoted
+    assert model["engineering"]["updated"] == "2026-10-25"
+
+
+def test_every_card_carries_its_name(world: dict[str, Any]) -> None:
+    model = _build(world)
+    engineering = model["engineering"]
+    assert {
+        card["id"]: card["name"] for line in engineering["mainlines"] for card in line["cards"]
+    } == {
+        "OPS-1": "日报提速",
+        "OPS-2": "补跑时自动重试",
+        "NOTE-1": "备忘",
+        "DONE-1": "做完的卡",
+        "WAIT-1": "定方向",
+    }
+    assert [card["name"] for card in engineering["research_cards"]] == ["研究计划"]
+    assert [card["name"] for card in model["waiting"]["cards"]] == [
+        "定方向",
+        "补跑时自动重试",
+        None,
+    ]
+    assert engineering["unassigned"][0]["name"] is None
+
+
+def test_an_empty_roadmap_has_no_events(world: dict[str, Any]) -> None:
+    repo = world["repo"]
+    _write(repo / ROADMAP_PATH, _roadmap(lines=[]))
+    _git(repo, "commit", "-q", "-am", "DEVX-1: empty roadmap")
+    model = _build(world)
+    assert model["roadmap"]["status"] == "ok"
+    assert model["roadmap"]["lines"] == [] and model["roadmap"]["checked"] == []
+    assert model["waiting"]["events"] == []
+    assert [card["id"] for card in model["waiting"]["asks"]] == ["WAIT-1", "ORPHAN-1"]
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("PRIMARY", "12:00 主跑"),
+        ("RESCUE", "17:30 补跑"),
+        ("RESCUE_2", "17:30 补跑（第 2 次）"),
+        ("PRIMARY_3", "12:00 主跑（第 3 次）"),
+    ],
+)
+def test_run_label(name: str, expected: str) -> None:
+    assert run_label(name) == expected
+
+
+@pytest.mark.parametrize(
+    ("run", "expected"),
+    [
+        ({"status": "PASS", "blocker": "NONE"}, None),
+        (
+            {"status": "RUN_CONTROL_ALREADY_COMPLETE", "blocker": "WAITING_FOR_NEW_AS_OF"},
+            "这个交易日已经出过报告，没有再跑",
+        ),
+        (
+            {
+                "status": "RUN_CONTROL_BLOCKED_TERMINAL_RECOVERY_REQUIRED",
+                "blocker": "CONTROL_PLANE",
+            },
+            "前一次失败后要先人工恢复，这次没有跑",
+        ),
+        (
+            {
+                "status": "FAIL",
+                "blocker": "DATA_SOURCE_UNAVAILABLE",
+                "failed_sources": ["sec_companyfacts", "official_policy_sources"],
+                "failed_steps": ["capture_daily_inputs"],
+            },
+            "数据源取不到：SEC 公司财务数据、官方政策源取数出错，取当天的输入没过",
+        ),
+        (
+            {"status": "FAIL", "blocker": "CODE_DEFECT", "failed_steps": ["score_daily"]},
+            "代码问题：打分没过",
+        ),
+        ({"status": "FAIL", "blocker": "DATA_QUALITY_FAILED"}, "数据质量没过"),
+        ({"status": "FAIL", "blocker": "NONE", "failed_steps": ["secret_hygiene"]}, "密钥扫描没过"),
+        (
+            {
+                "status": "FAIL",
+                "blocker": "SOMETHING_NEW",
+                "failed_steps": ["new_step"],
+                "failed_sources": ["new_source"],
+            },
+            "其他原因（SOMETHING_NEW）：new_source取数出错，new_step没过",
+        ),
+        ({"status": "FAIL", "blocker": None, "failed_steps": [None, "score_daily"]}, "打分没过"),
+        ({"status": "FAIL"}, "没过"),
+        ({"status": None, "blocker": None}, "没过"),
+        ({"status": "RUN_CONTROL_LOCKED"}, "没过（RUN_CONTROL_LOCKED）"),
+    ],
+)
+def test_run_reason(run: dict[str, Any], expected: str | None) -> None:
+    assert run_reason(run) == expected
+
+
+def test_daily_reasons_and_streak(world: dict[str, Any]) -> None:
+    daily = _build(world)["daily"]
+    days = {day["date"]: day for day in daily["days"]}
+    # Only days that were rescued or failed get a reason: the first run that did not pass.
+    assert {key: day["reason"] for key, day in days.items() if day["reason"] is not None} == {
+        "2026-10-13": "数据源取不到：打分没过",
+        "2026-10-17": "数据源取不到：市场宏观数据取数出错",
+        "2026-10-20": "数据源取不到：市场宏观数据取数出错，管线健康检查没过",
+        "2026-10-22": "数据源取不到",
+    }
+    assert days["2026-10-13"]["runs"][1]["reason"] == "前一次失败后要先人工恢复，这次没有跑"
+    assert days["2026-10-18"]["runs"][0]["reason"] == "这个交易日已经出过报告，没有再跑"
+    assert days["2026-10-18"]["reason"] is None
+    assert [run["label"] for run in days["2026-10-20"]["runs"]] == [
+        "12:00 主跑",
+        "17:30 补跑",
+        "17:30 补跑（第 2 次）",
+    ]
+    assert days["2026-10-20"]["runs"][2]["reason"] is None
+    assert all(set(run) == RUN_KEYS for day in daily["days"] for run in day["runs"])
+    # Back from 10-25 (not run yet today): 10-24, 10-23 and 10-22 had a report; 10-21 had no run.
+    assert (daily["streak"], daily["streak_rescued"]) == (3, 1)
+    assert daily["last_failed"] == {"date": "2026-10-13", "reason": "数据源取不到：打分没过"}
+
+
+def _state_with(root: Path, runs: dict[str, list[tuple[str, str]]]) -> Path:
+    scheduler = root / "outputs" / "run_control" / "scheduler"
+    scheduler.mkdir(parents=True)
+    for day, calls in runs.items():
+        for hour, (name, status) in enumerate(calls, start=12):
+            _write(
+                scheduler / f"{day}_{name}.summary.json",
+                _summary(
+                    name.split("_")[0],
+                    day,
+                    status,
+                    f"{day}T{hour}:00:00+09:00",
+                    f"{day}T{hour}:10:00+09:00",
+                ),
+            )
+    return root
+
+
+@pytest.mark.parametrize(
+    ("runs", "streak", "rescued", "last_failed"),
+    [
+        (
+            {
+                "2026-10-25": [("PRIMARY", "PASS")],
+                "2026-10-24": [("PRIMARY", DONE)],
+                "2026-10-23": [("PRIMARY", "FAIL"), ("RESCUE", "PASS")],
+                "2026-10-22": [("PRIMARY", "FAIL")],
+                "2026-10-21": [("PRIMARY", "PASS")],
+                "2026-10-20": [("PRIMARY", "FAIL")],
+            },
+            2,
+            1,
+            "2026-10-22",
+        ),
+        (
+            {"2026-10-25": [("PRIMARY", "FAIL")], "2026-10-24": [("PRIMARY", "PASS")]},
+            0,
+            0,
+            "2026-10-25",
+        ),
+        # Today not run yet is skipped; a past day with no run at all had no report.
+        ({"2026-10-23": [("PRIMARY", "PASS")]}, 0, 0, None),
+        ({"2026-10-24": [("PRIMARY", "PASS")], "2026-10-23": [("PRIMARY", "PASS")]}, 2, 0, None),
+        ({}, 0, 0, None),
+    ],
+)
+def test_streak_counts_trading_days_with_a_report(
+    world: dict[str, Any],
+    tmp_path: Path,
+    runs: dict[str, list[tuple[str, str]]],
+    streak: int,
+    rescued: int,
+    last_failed: str | None,
+) -> None:
+    daily = _build(world, state_root=_state_with(tmp_path / "state2", runs))["daily"]
+    assert daily["status"] == "ok"
+    assert (daily["streak"], daily["streak_rescued"]) == (streak, rescued)
+    found = daily["last_failed"]
+    assert (found["date"] if found else None) == last_failed
+
+
+def test_a_day_that_passed_at_noon_has_no_reason(world: dict[str, Any], tmp_path: Path) -> None:
+    runs = {"2026-10-24": [("PRIMARY", "FAIL"), ("PRIMARY_2", "PASS")]}
+    daily = _build(world, state_root=_state_with(tmp_path / "state2", runs))["daily"]
+    day = daily["days"][-2]
+    assert (day["date"], day["result"], day["reason"]) == ("2026-10-24", "PASS", None)
+    assert day["runs"][0]["reason"] == "数据源取不到"
+    assert [run["label"] for run in day["runs"]] == ["12:00 主跑", "12:00 主跑（第 2 次）"]
+    assert daily["last_failed"] is None
+
+
+def test_stale_cards_are_active_cards_changed_after_the_roadmap(world: dict[str, Any]) -> None:
+    repo = world["repo"]
+    _write(repo / ROADMAP_PATH, _roadmap(updated="2026-10-19"))
+    _git(repo, "commit", "-q", "-am", "DEVX-1: an older roadmap date")
+    problems = _build(world)["problems"]
+    stale = [problem for problem in problems if "路线图的 updated 还是 2026-10-19" in problem]
+    # Every active card in a milestone changed later; DONE-1 is done and ORPHAN-1 is in none.
+    assert stale == [
+        f"路线图：{card} 在 {day} 改过，路线图的 updated 还是 2026-10-19"
+        for card, day in (
+            ("TRADING-1", "2026-10-20"),
+            ("OPS-1", "2026-10-20"),
+            ("OPS-2", "2026-10-23"),
+            ("NOTE-1", "2026-10-20"),
+            ("WAIT-1", "2026-10-20"),
+        )
+    ]
+
+
+def _scheduler_summary_module() -> ModuleType:
+    path = PROJECT_ROOT / "scripts" / "ops" / "daily_scheduler_summary.py"
+    spec = importlib.util.spec_from_file_location("devx034_scheduler_summary", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_labels_cover_every_blocker_step_and_source() -> None:
+    categories = _scheduler_summary_module().CATEGORY_LABELS
+    assert set(BLOCKER_LABELS) == set(categories) - {"NONE"}
+    plan = yaml.safe_load((PROJECT_ROOT / "config" / "scheduled_tasks.yaml").read_text("utf-8"))
+    steps = {task["daily_plan_step_id"] for task in plan["cadences"]["daily_trading_day"]["tasks"]}
+    assert steps and steps <= set(STEP_LABELS)
+    from ai_trading_system import daily_input_capture
+
+    assert set(SOURCE_LABELS) == set(daily_input_capture._SUPPORTED_COMPONENT_IDS)
+    labels = [*BLOCKER_LABELS.values(), *STEP_LABELS.values(), *SOURCE_LABELS.values()]
+    assert all(label.strip() for label in labels)
+
+
+def test_the_committed_roadmap_is_readable_and_names_its_cards() -> None:
+    roadmap = load_roadmap(PROJECT_ROOT)
+    assert set(roadmap) == {"updated", "names", "lines"}
+    tasks = {path.stem for path in (PROJECT_ROOT / "tasks").glob("*.yaml")}
+    referenced = {
+        card
+        for line in roadmap["lines"]
+        for stage in line["stages"]
+        for milestone in stage["milestones"]
+        for card in milestone["cards"]
+    }
+    assert referenced and referenced <= tasks, sorted(referenced - tasks)
+    assert referenced <= set(roadmap["names"]), sorted(referenced - set(roadmap["names"]))
+    for line in roadmap["lines"]:
+        assert sum(stage["state"] == "now" for stage in line["stages"]) <= 1, line["id"]
+    assert not (PROJECT_ROOT / "docs" / "work_overview" / "mainlines.yaml").exists()
