@@ -111,6 +111,8 @@ H-B 条件化储备探针（TRADING-2565-51，`owner_decision:TRADING-2565:2026-
 
 长牛代价重测（TRADING-2565-66，`owner_decision:TRADING-2565:2026-10-25:longbull_reprobe`，第 6 期章程第 15 节）：`python -m ai_trading_system.research_probes.longbull_reprobe decompose --out <目录>` 和 `run --out <目录>` 经 `longbull_power.load_frames` 读同一份信号快照 sig-7ad8aa00b736（切到 2010-12-31）；周期、合成历史、模拟、读数和尺子都调 `cycle_power`、`longbull_power`（都不改），只换成两条腿的埋规则。第 1 步只在美股大盘的 500 条合成历史上把长牛段读数拆成三项，按跑前写死的三件事核，写 `decompose.jsonl`、`decompose.json` 和中文 `decompose.md`；第 2 步三件都成立才在科技行业的 500 条合成历史上跑，写 `calibration.jsonl`、`decompose.jsonl`、`histories.jsonl`、`summary.json` 和中文 `report.md`。不进台账、不算试验，不读验证窗口。
 
+埋的规则放到真实美股大盘路径上（TRADING-2565-68，`owner_decision:TRADING-2565:2026-10-25:longbull_realpath`，第 6 期章程第 16 节）：`python -m ai_trading_system.research_probes.longbull_realpath run --out <目录>` 读同一份信号快照 sig-7ad8aa00b736，只用 `ff_factors_daily` 的 Mkt-RF 和 RF（经 `longbull_power.us_frame` 切到 2010-12-31），不建科技行业的序列；划段、模拟、埋规则和拆解都调 `cycle_power`、`longbull_power`、`longbull_reprobe`（都不改）。不抽合成历史，在美股大盘那一条真实路径上抽 500 组假退出，写 `realpath.json` 和中文 `realpath.md`。不进台账、不算试验，不读验证窗口。
+
 ```mermaid
 flowchart LR
     Q["Owner 定问题（TRADING-2567）"] --> PRE["research/&lt;题号&gt;/prereg.yaml + strategy.py<br/>C 区：随 Owner-Decision ship 进 main"]
