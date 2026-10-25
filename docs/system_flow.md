@@ -113,6 +113,8 @@ H-B 条件化储备探针（TRADING-2565-51，`owner_decision:TRADING-2565:2026-
 
 埋的规则放到真实美股大盘路径上（TRADING-2565-68，`owner_decision:TRADING-2565:2026-10-25:longbull_realpath`，第 6 期章程第 16 节）：`python -m ai_trading_system.research_probes.longbull_realpath run --out <目录>` 读同一份信号快照 sig-7ad8aa00b736，只用 `ff_factors_daily` 的 Mkt-RF 和 RF（经 `longbull_power.us_frame` 切到 2010-12-31），不建科技行业的序列；划段、模拟、埋规则和拆解都调 `cycle_power`、`longbull_power`、`longbull_reprobe`（都不改）。不抽合成历史，在美股大盘那一条真实路径上抽 500 组假退出，写 `realpath.json` 和中文 `realpath.md`。不进台账、不算试验，不读验证窗口。
 
+在科技行业上直接读一次 F0001 的长牛代价（TRADING-2565-70，`owner_decision:TRADING-2565:2026-10-26:longbull_tech_read`，第 6 期章程第 17 节）：`python -m ai_trading_system.research_probes.longbull_tech_read run --out <目录>` 读同一份信号快照 sig-7ad8aa00b736 的 `ff_49_industries_daily`（Hardw、Chips、Softw）和 `ff_factors_daily`（Mkt-RF、RF），切到 2010-12-31；评估台的美股大盘数据（`trial.market_data("us_market", …)`，T0001）只用来做等价核对。行业日收益减 RF 交给评估台的 `from_us_market`，F0001 的目标、模拟和固定对照都调评估台；划段和读数调 `cycle_power`、`longbull_power`（都不改）。核对都过才读，全部算完才写 `tech_read.json` 和中文 `tech_read.md`。不进台账、不算试验，不读验证窗口。
+
 ```mermaid
 flowchart LR
     Q["Owner 定问题（TRADING-2567）"] --> PRE["research/&lt;题号&gt;/prereg.yaml + strategy.py<br/>C 区：随 Owner-Decision ship 进 main"]
