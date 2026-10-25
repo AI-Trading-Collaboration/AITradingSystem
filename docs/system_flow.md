@@ -109,6 +109,8 @@ H-B 条件化储备探针（TRADING-2565-51，`owner_decision:TRADING-2565:2026-
 
 科技行业长牛代价的检验力探针（TRADING-2565-63，`owner_decision:TRADING-2565:2026-10-24:longbull_cost_probe`，第 6 期章程第 14 节）：`python -m ai_trading_system.research_probes.longbull_power run --out <目录>` 经 `signal_sources.load_snapshot` 读信号快照 sig-7ad8aa00b736 的 Hardw、Chips、Softw 和因子表的 Mkt-RF、RF，先切到 2010-12-31；周期、合成历史、埋的规则和模拟都调 `cycle_power`（不改）。先在美股大盘的 500 条合成历史上定标假退出的频率（只印段间标准差，不印代价大小），再在科技行业和 TRADING-2565-61 同一批的 500 条合成历史上只跑埋的规则，量「长牛段年化差（按日历年折的对数差）的段间平均」的段间 t 和段自助法区间六个候选尺子的误判率和检验力，按跑前写死的读法判；`calibration.jsonl`、`histories.jsonl`（逐条）、`summary.json` 和中文 `report.md` 写进 `--out`。不进台账、不算试验，不读验证窗口。
 
+长牛代价重测（TRADING-2565-66，`owner_decision:TRADING-2565:2026-10-25:longbull_reprobe`，第 6 期章程第 15 节）：`python -m ai_trading_system.research_probes.longbull_reprobe decompose --out <目录>` 和 `run --out <目录>` 经 `longbull_power.load_frames` 读同一份信号快照 sig-7ad8aa00b736（切到 2010-12-31）；周期、合成历史、模拟、读数和尺子都调 `cycle_power`、`longbull_power`（都不改），只换成两条腿的埋规则。第 1 步只在美股大盘的 500 条合成历史上把长牛段读数拆成三项，按跑前写死的三件事核，写 `decompose.jsonl`、`decompose.json` 和中文 `decompose.md`；第 2 步三件都成立才在科技行业的 500 条合成历史上跑，写 `calibration.jsonl`、`decompose.jsonl`、`histories.jsonl`、`summary.json` 和中文 `report.md`。不进台账、不算试验，不读验证窗口。
+
 ```mermaid
 flowchart LR
     Q["Owner 定问题（TRADING-2567）"] --> PRE["research/&lt;题号&gt;/prereg.yaml + strategy.py<br/>C 区：随 Owner-Decision ship 进 main"]
