@@ -12,6 +12,8 @@ tech_ew 用段间 t 0.99，three 合并三个行业的段用 0.997；上界 < 0 
 只读到 2010-12-31；读后错误不得借本模块静默重读。
 TRADING-2565-71 仅改美股核对：首次 run 停因两位小数年化差来自 -34 一位小数段内收益手算。
 现逐段对 -34 印的收益、平均敞口及 JSON 全精度三数：长牛年化差均值、最差、整段平均敞口。
+TRADING-2565-72：第二次 run 停在建 Softw 的数据，因为序列中间缺一天；现在每条序列
+去掉全部缺值日，F0001 和划段（cut_of）、cycle_power 用同一条序列，去掉的日子在划段核对里印出。
 """
 
 from __future__ import annotations
@@ -153,8 +155,8 @@ class Cut:
     spans: list[tuple[int, int]]
 
 
-def series_returns(industries: pd.DataFrame, factors: pd.DataFrame) -> dict[str, pd.Series]:
-    industries, factors = cp.cut(industries), cp.cut(factors)
+def raw_series(industries: pd.DataFrame) -> dict[str, pd.Series]:
+    industries = cp.cut(industries)
     missing = [name for name in cp.COLUMNS if name not in industries]
     if missing:
         raise ValueError(f"missing columns: {missing}")
@@ -167,6 +169,19 @@ def series_returns(industries: pd.DataFrame, factors: pd.DataFrame) -> dict[str,
             raise ValueError(f"{name} has no returns")
         result[name] = daily.loc[first:].astype(float)
     return result
+
+
+def series_returns(industries: pd.DataFrame, factors: pd.DataFrame) -> dict[str, pd.Series]:
+    return {name: daily.dropna() for name, daily in raw_series(industries).items()}
+
+
+def missing_days(industries: pd.DataFrame) -> dict[str, list[str]]:
+    return {
+        name: [
+            pd.Timestamp(day).date().isoformat() for day in daily.index[daily.isna()].sort_values()
+        ]
+        for name, daily in raw_series(industries).items()
+    }
 
 
 def bench_data(returns: pd.Series, cash: pd.Series) -> BenchData:
@@ -409,11 +424,17 @@ def us_check(inputs: Inputs) -> Record:
 def tech_check(industries: pd.DataFrame, factors: pd.DataFrame) -> tuple[dict[str, Cut], Record]:
     frame = cp.market_frame(industries, factors)
     cuts = {name: cut_of(frame[name]) for name in SERIES}
+    dropped = missing_days(industries)
     rows = {}
     for name, cut in cuts.items():
         found = [item.id for item in cut.bulls]
         expected = list(TECH_LONG_BULLS[name])
-        rows[name] = {"found": found, "expected": expected, "match": found == expected}
+        rows[name] = {
+            "found": found,
+            "expected": expected,
+            "match": found == expected,
+            "dropped": dropped[name],
+        }
     return cuts, {"series": rows, "passed": all(row["match"] for row in rows.values())}
 
 
@@ -720,12 +741,13 @@ def render(result: Mapping[str, Any]) -> str:
     else:
         _table(
             lines,
-            ("序列", "长牛段", "一致"),
+            ("序列", "长牛段", "一致", "去掉的缺值日"),
             [
                 [
                     name,
                     "、".join(key.removeprefix("long_bull_") for key in row["found"]),
                     _yes(row["match"]),
+                    "、".join(row["dropped"]) or "无",
                 ]
                 for name, row in tech["series"].items()
             ],
@@ -876,6 +898,13 @@ def run_command(out: Annotated[Path, typer.Option(help="结果目录。")]) -> N
         + "；划段核对"
         + ("通过" if tech_ok else "没通过")
     )
+    if checks["tech"] is not None:
+        typer.echo(
+            "longbull_tech_read: 去掉的缺值日 "
+            + "、".join(
+                f"{name} {len(row['dropped'])} 天" for name, row in checks["tech"]["series"].items()
+            )
+        )
     for error in result["errors"]:
         typer.echo(f"longbull_tech_read: 出错 {error}")
     for variant in VARIANTS:

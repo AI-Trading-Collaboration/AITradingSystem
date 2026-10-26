@@ -4,6 +4,10 @@ TRADING-2565-71 changed only the US check's reference: the first run stopped at 
 the seven two-decimal annual differences were hand-computed from TRADING-2565-34's one-decimal
 segment totals, so the check now compares those printed totals and exposures (charter p6 sec. 17).
 
+TRADING-2565-72: the second run stopped while building Softw's bench data, because a day inside
+its history was missing. Every series now drops all its missing days, as the segmentation and
+cycle_power do, and the segment check lists the dropped days. The synthetic data carry such gaps.
+
 Synthetic data only: no snapshot is read. The fake signal snapshot stands in for
 sig-7ad8aa00b736; the bench settings, trial T0001 and the QQQ-Q3 preregistration are the
 repository's own files (owner_decision:TRADING-2565:2026-10-26:longbull_tech_read, charter p6
@@ -58,6 +62,8 @@ BEARS = (
     ("2007-11", "2009-01"),
 )
 SOFTW_FROM = pd.Timestamp("1965-07-01")
+# Missing days inside a history (TRADING-2565-72): the real Softw lacks 1971-03-11.
+GAPS = {"Hardw": ("1950-05-10",), "Softw": ("1971-03-11", "1983-06-15")}
 
 
 def _frames(seed: int = 5) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -86,6 +92,8 @@ def _frames(seed: int = 5) -> tuple[pd.DataFrame, pd.DataFrame]:
         index=days,
     )
     industries.loc[industries.index < SOFTW_FROM, "Softw"] = np.nan
+    for name, gaps in GAPS.items():
+        industries.loc[pd.DatetimeIndex(gaps), name] = np.nan
     return factors, industries
 
 
@@ -330,8 +338,50 @@ def test_series_are_cut_and_tech_ew_is_the_market_frame_mean() -> None:
     np.testing.assert_allclose(
         RETURNS["tech_ew"][after], cut.loc[after, ["Hardw", "Chips", "Softw"]].mean(axis=1)
     )
+    for name in cp.COLUMNS:
+        column = cut[name].loc[cut[name].first_valid_index() :]
+        assert RETURNS[name].index.equals(column.dropna().index)
+        np.testing.assert_array_equal(RETURNS[name].to_numpy(), column.dropna().to_numpy())
+        for day in GAPS.get(name, ()):
+            assert pd.Timestamp(day) in column.index and pd.Timestamp(day) not in RETURNS[name]
+    assert len(RETURNS["Softw"]) == len(cut.loc[SOFTW_FROM:]) - 2
+    when = pd.Timestamp("1950-05-10")
+    assert RETURNS["tech_ew"][when] == cut.at[when, "Chips"]
     with pytest.raises(ValueError, match="missing columns"):
         lt.series_returns(INDUSTRIES.drop(columns="Chips"), FACTORS)
+
+
+def test_missing_days_inside_each_history_are_listed() -> None:
+    assert lt.missing_days(INDUSTRIES) == {
+        "tech_ew": [],
+        "Hardw": ["1950-05-10"],
+        "Chips": [],
+        "Softw": ["1971-03-11", "1983-06-15"],
+    }
+    assert list(lt.missing_days(INDUSTRIES)) == list(lt.SERIES)
+    industries = INDUSTRIES.copy()
+    industries.loc[pd.Timestamp("2011-03-10"), "Chips"] = np.nan
+    industries.loc[pd.date_range("1966-02-01", "1966-02-03"), list(cp.COLUMNS)] = np.nan
+    industries.loc[pd.Timestamp("1980-01-03"), "Softw"] = np.inf
+    days = lt.missing_days(industries)
+    assert days["tech_ew"] == ["1966-02-01", "1966-02-02", "1966-02-03"]
+    assert days["Chips"] == days["tech_ew"]
+    assert days["Softw"] == ["1966-02-01", "1966-02-02", "1966-02-03", "1971-03-11", "1983-06-15"]
+    returns = lt.series_returns(industries, FACTORS)
+    for name in lt.SERIES:
+        assert not returns[name].index.isin(pd.DatetimeIndex(days[name])).any()
+    assert np.isinf(returns["Softw"][pd.Timestamp("1980-01-03")])
+    assert np.isinf(returns["tech_ew"][pd.Timestamp("1980-01-03")])
+    empty = INDUSTRIES.copy()
+    empty["Chips"] = np.nan
+    with pytest.raises(ValueError, match="Chips has no returns"):
+        lt.missing_days(empty)
+    with pytest.raises(ValueError, match="Chips has no returns"):
+        lt.series_returns(empty, FACTORS)
+    assert TECH["series"]["Softw"]["dropped"] == ["1971-03-11", "1983-06-15"]
+    assert READ["checks"]["tech"]["series"]["Hardw"]["dropped"] == ["1950-05-10"]
+    for row in TECH["series"].values():
+        assert set(row) == {"found", "expected", "match", "dropped"}
 
 
 def test_bench_data_is_the_bench_us_market_construction() -> None:
@@ -370,6 +420,14 @@ def test_window_start_is_1929_or_the_day_after_the_first_executable_month_end() 
     short = lt.bench_data(RETURNS["Softw"].iloc[:200], cut["RF"])
     with pytest.raises(ValueError, match="F0001 has no executable target"):
         lt.window_start(short, BASE.entry)
+
+
+def test_f0001_runs_on_the_days_the_segmentation_uses() -> None:
+    data, pair = _pair("Softw")
+    dates = pd.DatetimeIndex(pair.strategy.returns.index)
+    column = FRAME["Softw"].dropna()
+    assert dates.equals(column.index[column.index >= dates[0]])
+    assert pd.Timestamp("1983-06-15") not in data.returns.index
 
 
 def test_f0001_pair_is_the_bench_pair_and_costs_four_bps_on_both_sides() -> None:
@@ -718,6 +776,26 @@ def test_a_data_error_in_one_series_reads_nothing(
     _no_numbers(result, tmp_path)
 
 
+def test_an_infinite_day_still_stops_building_the_data(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    _with(monkeypatch)
+    cuts, tech = lt.tech_check(BASE.industries, BASE.factors)
+    industries = BASE.industries.copy()
+    industries.loc[pd.Timestamp("1980-01-03"), "Softw"] = np.inf
+    monkeypatch.setattr(lt, "us_check", lambda inputs: {**US, "passed": True})
+    monkeypatch.setattr(lt, "tech_check", lambda industries, factors: (cuts, tech))
+    monkeypatch.setattr(lt, "f0001_pair", lambda *a, **k: pytest.fail("no tech simulation"))
+    result = lt.read(dataclasses.replace(BASE, industries=industries))
+    assert result["stage"] == "series" and result["series"] == {}
+    assert result["errors"] == [
+        f"{name}: ValueError: US market returns have missing or non-finite values"
+        for name in ("tech_ew", "Softw")
+    ]
+    assert all(item["mean"] is None for item in result["variants"].values())
+    _no_numbers(result, tmp_path)
+
+
 def test_an_error_while_reading_drops_every_reading(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
@@ -861,6 +939,7 @@ def test_report_sentences() -> None:
         "| 段内敞口（-34 印的 / 重算） | 一致 | 简单年化差（手算参照 / 重算） |",
         "- 结论：通过。",
         "### 划段（和 TRADING-2565-63 印的比）",
+        "| 序列 | 长牛段 | 一致 | 去掉的缺值日 |",
         "口径不同，比值偏低：TRADING-2565-63 的 1.92、1.49 是 500 条历史上点估计的标准差，"
         "这里只有一条路径的段间 t 标准误，它比真实的窄（规格第 5 节）。",
         "### Softw 的长牛段",
@@ -901,6 +980,9 @@ def test_report_sentences() -> None:
         "worst_annual_difference": "长牛年化差的最差",
         "average_exposure": "整段平均敞口",
     }
+    for name, dropped in (("tech_ew", "无"), ("Softw", "1971-03-11、1983-06-15")):
+        ids = "、".join(key.removeprefix("long_bull_") for key in INJECT["TECH_LONG_BULLS"][name])
+        assert f"| {name} | {ids} | 是 | {dropped} |" in report
     unread = lt.render(UNREAD)
     assert "- 结论：没通过。" in unread and "## 只印" not in unread
     assert "-34 印的 0.0010994207" in unread and "；一致：否。" in unread
@@ -928,7 +1010,10 @@ def test_command_runs_once_and_prints_the_verdicts(
     assert result.exit_code == 0, result.output
     lines = result.output.splitlines()
     assert lines[0].startswith("longbull_tech_read: 数据已载入并截到 2010-12-31；美股大盘 ")
-    assert "longbull_tech_read: 美股大盘核对通过；划段核对通过" in lines
+    checked = lines.index("longbull_tech_read: 美股大盘核对通过；划段核对通过")
+    assert lines[checked + 1] == (
+        "longbull_tech_read: 去掉的缺值日 tech_ew 0 天、Hardw 1 天、Chips 0 天、Softw 2 天"
+    )
     assert [line for line in lines if line.startswith("longbull_tech_read: 读完 ")] == [
         f"longbull_tech_read: 读完 {name}" for name in lt.SERIES
     ]
@@ -961,6 +1046,7 @@ def test_command_prints_check_failures(monkeypatch: pytest.MonkeyPatch, tmp_path
     result = CliRunner().invoke(lt.app, ["run", "--out", str(out)])
     assert result.exit_code == 0, result.output
     assert "longbull_tech_read: 美股大盘核对没通过；划段核对没通过" in result.output
+    assert "longbull_tech_read: 去掉的缺值日 tech_ew 0 天、Hardw 1 天" in result.output
     assert "longbull_tech_read: three 判定 incomplete，平均读数 – 点" in result.output
     assert "读完" not in result.output
     assert json.loads((out / lt.SUMMARY).read_text(encoding="utf-8"))["series"] == {}
