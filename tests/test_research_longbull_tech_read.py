@@ -1,5 +1,9 @@
 """Acceptance tests for the one direct read of F0001's long-bull cost on tech (TRADING-2565-70).
 
+TRADING-2565-71 changed only the US check's reference: the first run stopped at the check because
+the seven two-decimal annual differences were hand-computed from TRADING-2565-34's one-decimal
+segment totals, so the check now compares those printed totals and exposures (charter p6 sec. 17).
+
 Synthetic data only: no snapshot is read. The fake signal snapshot stands in for
 sig-7ad8aa00b736; the bench settings, trial T0001 and the QQQ-Q3 preregistration are the
 repository's own files (owner_decision:TRADING-2565:2026-10-26:longbull_tech_read, charter p6
@@ -118,14 +122,17 @@ def _inputs(factors: pd.DataFrame, industries: pd.DataFrame) -> lt.Inputs:
 
 FACTORS, INDUSTRIES = _frames()
 BASE = _inputs(FACTORS, INDUSTRIES)
-# With the real constants (TRADING-2565-34's seven and TRADING-2565-63's ids) synthetic data fail.
+# With the real constants (TRADING-2565-34's printed totals and TRADING-2565-63's ids) synthetic
+# data fail.
 UNREAD = lt.read(BASE)
 US = UNREAD["checks"]["us"]
 TECH = UNREAD["checks"]["tech"]
+PRINTED_KEYS = ("strategy", "benchmark", "exposure")
 INJECT = {
     "US_LONG_BULLS": tuple(tuple(span) for span in US["long_bulls"]),
-    "US_SIMPLE": tuple(round(value, 4) for value in US["simple"]),
+    "US_PRINTED": tuple(tuple(round(row[key], 3) for key in PRINTED_KEYS) for row in US["totals"]),
     "US_SD": round(US["sd"], 4),
+    "US_ANCHORS": tuple((row["name"], row["value"]) for row in US["anchors"]),
     "TECH_LONG_BULLS": {name: tuple(row["found"]) for name, row in TECH["series"].items()},
 }
 
@@ -163,9 +170,27 @@ def test_constants() -> None:
     assert lt.PRINT_LINE == lp.PRINT_LINE == -0.0167
     assert lt.PLANT_SE == {"tech_ew": 0.0192, "three": 0.0149}
     assert lt.US_LONG_BULLS == rr.LONG_BULLS
-    assert lt.US_SIMPLE == (0.0257, -0.0022, 0.0002, -0.0077, -0.0135, 0.0009, 0.0042)
+    # slow-bear rc-report, fast_slow on us_1929: segment returns and exposures, one-decimal percent
+    assert lt.US_PRINTED == (
+        (1.678, 1.469, 0.691),
+        (1.170, 1.186, 0.793),
+        (3.749, 3.737, 0.752),
+        (0.958, 1.047, 0.737),
+        (4.801, 5.747, 0.721),
+        (4.338, 4.284, 0.773),
+        (0.776, 0.742, 0.753),
+    )
+    assert lt.US_HAND == (0.0257, -0.0022, 0.0002, -0.0077, -0.0135, 0.0009, 0.0042)
+    # slow-bear rc-report, the fast_slow JSON line, stages.stage1: full precision
+    assert lt.US_ANCHORS == (
+        ("mean_annual_difference", 0.0010994206923715666),
+        ("worst_annual_difference", -0.01347890310397748),
+        ("average_exposure", 0.6557715110992798),
+    )
     assert lt.US_SD == lp.TARGET_SD == 0.0124
-    assert (lt.HALF_STEP, lt.SD_STEP) == (0.00005, 0.0001)
+    assert (lt.PRINTED_STEP, lt.SD_STEP) == (0.0005, 0.0001)
+    assert lt.US_REFERENCE == "TRADING-2565-34 印的七段段内收益和段内平均敞口（TRADING-2565-71）"
+    assert not hasattr(lt, "US_SIMPLE") and not hasattr(lt, "HALF_STEP")
     assert lt.TECH_LONG_BULLS == {
         "tech_ew": tuple(
             f"long_bull_{m}"
@@ -184,8 +209,15 @@ def test_constants() -> None:
     assert (lt.TOLERANCE, lt.SLACK) == (1e-12, 1e-12)
     assert (lt.SUMMARY, lt.REPORT) == ("tech_read.json", "tech_read.md")
     assert lt.VERDICTS == ("loss", "undecided", "gain", "incomplete")
-    # The variance of the seven printed values: SD 1.24 within the 0.01-point line.
-    assert abs(float(np.std(lt.US_SIMPLE, ddof=1)) - lt.US_SD) <= lt.SD_STEP
+    # The cause of the first run's stop: the seven hand values come from the printed totals with
+    # years = months / 12, so they carry the totals' rounding; their SD is the 1.24 reference.
+    for (first, last), (own, reference, _), hand in zip(
+        lt.US_LONG_BULLS, lt.US_PRINTED, lt.US_HAND, strict=True
+    ):
+        months = pd.Period(last, "M").ordinal - pd.Period(first, "M").ordinal + 1
+        value = (1 + own) ** (12 / months) - (1 + reference) ** (12 / months)
+        assert round(value, 4) == hand
+    assert abs(float(np.std(lt.US_HAND, ddof=1)) - lt.US_SD) <= lt.SD_STEP
 
 
 def test_imported_modules_are_unchanged() -> None:
@@ -464,14 +496,45 @@ def test_us_check_passes_with_the_printed_values() -> None:
         _with(patch)
         us = lt.us_check(BASE)
     assert us["passed"] is True
-    assert us["bulls_match"] and us["same_dates"] and us["simple_match"] and us["sd_match"]
+    assert us["bulls_match"] and us["same_dates"] and us["totals_match"] and us["sd_match"]
+    assert us["anchors_match"] is True
+    assert "simple_match" not in us and "expected" not in us
     assert us["start"] == us["bench_start"] == "1929-01-02"
     assert all(value <= lt.TOLERANCE for value in us["gaps"].values())
     assert us["printed_exposure"] == [0.656, 0.747]
-    assert len(us["simple"]) == len(INJECT["US_SIMPLE"]) == len(us["long_bulls"])
+    count = len(INJECT["US_PRINTED"])
+    assert len(us["totals"]) == len(us["simple"]) == len(us["long_bulls"]) == count
+    assert us["hand"] == list(lt.US_HAND) and us["sd_reference"] == INJECT["US_SD"]
     factors = cp.cut(FACTORS)
     data = lt.bench_data(factors["Mkt-RF"] + factors["RF"], factors["RF"])
-    exposure = lt.f0001_pair(data, BASE.entry, BASE.loaded, date(1929, 1, 2)).strategy.exposure
+    pair = lt.f0001_pair(data, BASE.entry, BASE.loaded, date(1929, 1, 2))
+    cut = lt.cut_of(lp.us_frame(factors)["tech_ew"])
+    rows = segments.segment_rows(pair.strategy, pair.benchmark, cut.bulls)
+    for total, row, printed in zip(us["totals"], rows, INJECT["US_PRINTED"], strict=True):
+        assert total == {
+            "strategy": row["strategy_return"],
+            "benchmark": row["benchmark_return"],
+            "exposure": row["average_exposure"],
+            "printed": list(printed),
+            "match": True,
+        }
+    assert us["simple"] == [row["annual_difference"] for row in rows]
+    exposure = pair.strategy.exposure
+    summary = segments.long_bull_summary(rows)
+    assert us["anchors"] == [
+        {
+            "name": name,
+            "value": value,
+            "printed": value,
+            "difference": 0.0,
+            "match": True,
+        }
+        for name, value in (
+            ("mean_annual_difference", summary["mean_annual_difference"]),
+            ("worst_annual_difference", min(us["simple"])),
+            ("average_exposure", float(exposure.mean())),
+        )
+    ]
     months = pd.DatetimeIndex(exposure.index).to_period("M")
     inside = np.zeros(len(exposure), dtype=bool)
     for start, end in INJECT["US_LONG_BULLS"]:
@@ -480,14 +543,63 @@ def test_us_check_passes_with_the_printed_values() -> None:
     assert us["bull_exposure"] == pytest.approx(float(exposure[inside].mean()), rel=1e-12)
 
 
-@pytest.mark.parametrize(("shift", "passed"), [(0.00004, True), (0.00006, False)])
-def test_us_check_allows_half_a_printed_step(shift: float, passed: bool) -> None:
-    printed = list(INJECT["US_SIMPLE"])
-    printed[2] = round(US["simple"][2], 8) + shift
+# Each case moves the printed numbers of a few (segment, column) cells by the given shift.
+@pytest.mark.parametrize(
+    "cells",
+    [
+        ((1, 0, 0.00049), (2, 1, -0.00049), (3, 2, 0.00049)),
+        ((2, 0, 0.00051),),
+        ((3, 1, -0.00051),),
+        ((4, 2, 0.00051),),
+    ],
+)
+def test_us_check_allows_half_a_printed_step(cells: tuple[tuple[int, int, float], ...]) -> None:
+    printed = [list(row) for row in INJECT["US_PRINTED"]]
+    for segment, column, shift in cells:
+        printed[segment][column] = round(US["totals"][segment][PRINTED_KEYS[column]], 8) + shift
+    failed = [segment for segment, _, shift in cells if abs(shift) > 0.0005]
     with pytest.MonkeyPatch.context() as patch:
-        _with(patch, US_SIMPLE=tuple(printed))
+        _with(patch, US_PRINTED=tuple(tuple(row) for row in printed))
         us = lt.us_check(BASE)
-    assert us["simple_match"] is passed and us["passed"] is passed
+    assert us["totals_match"] is (not failed) and us["passed"] is (not failed)
+    assert [i for i, row in enumerate(us["totals"]) if not row["match"]] == failed
+    report = lt.render({**READ, "checks": {**READ["checks"], "us": us}})
+    table = report.split("### 美股大盘")[1].split("- 简单年化差段间标准差")[0]
+    assert [line.split(" | ")[0] for line in table.splitlines() if " | 否 | " in line] == [
+        f"| {segment + 1}" for segment in failed
+    ]
+
+
+@pytest.mark.parametrize(
+    "shifts",
+    [(5e-13, -5e-13, 5e-13), (1e-11, 0.0, 0.0), (0.0, -1e-11, 0.0), (0.0, 0.0, 1e-11)],
+)
+def test_us_check_holds_the_full_precision_anchors(shifts: tuple[float, float, float]) -> None:
+    anchors = tuple(
+        (name, value + shift)
+        for (name, value), shift in zip(INJECT["US_ANCHORS"], shifts, strict=True)
+    )
+    with pytest.MonkeyPatch.context() as patch:
+        _with(patch, US_ANCHORS=anchors)
+        us = lt.us_check(BASE)
+    matches = [abs(shift) <= 1e-12 for shift in shifts]
+    assert us["totals_match"] and us["sd_match"]
+    assert us["anchors_match"] is all(matches) and us["passed"] is all(matches)
+    assert [row["match"] for row in us["anchors"]] == matches
+    for row, shift in zip(us["anchors"], shifts, strict=True):
+        assert row["difference"] == pytest.approx(-shift, abs=1e-15)
+
+
+def test_the_hand_values_are_only_printed() -> None:
+    with pytest.MonkeyPatch.context() as patch:
+        _with(patch, US_HAND=(0.5, -0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
+        us = lt.us_check(BASE)
+    assert us["passed"] is True and us["hand"] == [0.5, -0.5, 0.5, -0.5, 0.5, -0.5, 0.5]
+    with pytest.MonkeyPatch.context() as patch:
+        _with(patch, US_PRINTED=INJECT["US_PRINTED"][:-1])
+        us = lt.us_check(BASE)
+    assert not us["totals_match"] and not us["passed"]
+    assert [row["printed"] for row in us["totals"]][-1] is None
 
 
 def test_us_check_fails_on_a_daily_gap_or_other_segments() -> None:
@@ -670,6 +782,9 @@ def test_the_read_pools_three_and_judges_with_the_fixed_rulers() -> None:
     )
     assert READ["verdict"] == READ["variants"]["three"]["verdict"]
     params = READ["parameters"]
+    assert params["us_reference"] == lt.US_REFERENCE and params["printed_step"] == 0.0005
+    assert params["us_anchors"] == dict(INJECT["US_ANCHORS"])
+    assert "half_step" not in params and params["sd_step"] == 0.0001
     assert params["cost_bps"] == 4.0 and params["config"] == "fast_slow"
     assert params["rebalance"] == "month_end" and params["primary"] == "three"
     assert (params["first_day"], params["last_day"]) == ("1929-01-02", "2010-12-31")
@@ -740,6 +855,10 @@ def test_report_sentences() -> None:
         f"主读数 `three`：{verdict}。{lt.ACTION_TEXT[READ['verdict']]}",
         "### 美股大盘",
         "- 长牛段和 TRADING-2565-34 的七段逐段一致。",
+        "- 逐段对 TRADING-2565-34 印的段内收益和段内平均敞口（一位小数的百分数，"
+        "线是半格 0.05 个百分点）；简单年化差的手算参照只印，不判（TRADING-2565-71）。",
+        "| 段 | 首月 | 末月 | F0001 段内（-34 印的 / 重算） | 对照段内（-34 印的 / 重算） "
+        "| 段内敞口（-34 印的 / 重算） | 一致 | 简单年化差（手算参照 / 重算） |",
         "- 结论：通过。",
         "### 划段（和 TRADING-2565-63 印的比）",
         "口径不同，比值偏低：TRADING-2565-63 的 1.92、1.49 是 500 条历史上点估计的标准差，"
@@ -757,8 +876,36 @@ def test_report_sentences() -> None:
         "gain": "有收益",
         "incomplete": "没判",
     }
+    us = READ["checks"]["us"]
+    total, (first, last) = us["totals"][0], us["long_bulls"][0]
+    cells = [
+        f"{total['printed'][i] * 100:.1f}% / {total[key] * 100:.2f}%"
+        for i, key in enumerate(PRINTED_KEYS)
+    ]
+    assert (
+        f"| 1 | {first} | {last} | {' | '.join(cells)} | 是 | "
+        f"{us['hand'][0] * 100:+.2f} / {us['simple'][0] * 100:+.2f} |"
+    ) in report
+    assert (
+        f"- 简单年化差段间标准差：{us['sd'] * 100:.2f} 点；"
+        f"手算参照 {us['sd_reference'] * 100:.2f} 点；一致：是。"
+    ) in report
+    anchors = "；".join(
+        f"{lt.ANCHOR_TEXT[row['name']]} 重算 {row['value']:.10f}，"
+        f"-34 印的 {row['printed']:.10f}，差 {row['difference']:.1e}"
+        for row in us["anchors"]
+    )
+    assert f"- 全精度核对（TRADING-2565-34 的 JSON，线 1e-12）：{anchors}；一致：是。" in report
+    assert lt.ANCHOR_TEXT == {
+        "mean_annual_difference": "长牛年化差的平均",
+        "worst_annual_difference": "长牛年化差的最差",
+        "average_exposure": "整段平均敞口",
+    }
     unread = lt.render(UNREAD)
     assert "- 结论：没通过。" in unread and "## 只印" not in unread
+    assert "-34 印的 0.0010994207" in unread and "；一致：否。" in unread
+    assert "| 是 |" not in unread.split("### 美股大盘")[1].split("### 划段")[0]
+    assert "-34 印的 1.24" not in unread and "手算参照 1.24 点" in unread
     assert "主读数 `three`：没判。没读：核对没过或出错" in unread
 
 

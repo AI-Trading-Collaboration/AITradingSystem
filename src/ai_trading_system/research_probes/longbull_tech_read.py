@@ -10,6 +10,8 @@ tech_ew 用段间 t 0.99，three 合并三个行业的段用 0.997；上界 < 0 
 下界 > 0 为 gain，否则 undecided；段数不足为 incomplete。主读数 three，
 下界 > −1.67 对数点只印，不参与判定。只读一次、不进任何账本、不算试验、k 不动，
 只读到 2010-12-31；读后错误不得借本模块静默重读。
+TRADING-2565-71 仅改美股核对：首次 run 停因两位小数年化差来自 -34 一位小数段内收益手算。
+现逐段对 -34 印的收益、平均敞口及 JSON 全精度三数：长牛年化差均值、最差、整段平均敞口。
 """
 
 from __future__ import annotations
@@ -67,12 +69,34 @@ PRINT_LINE = lp.PRINT_LINE
 # TRADING-2565-63 汇报印的埋规则读数的标准差（500 条历史上点估计的标准差），只印比值
 PLANT_SE = {"tech_ew": 0.0192, "three": 0.0149}
 US_LONG_BULLS = rr.LONG_BULLS
-# TRADING-2565-34 印的真实 F0001 在美股大盘 1929–2010 七个长牛段的简单年化差
-# （两位小数的点）
-US_SIMPLE = (0.0257, -0.0022, 0.0002, -0.0077, -0.0135, 0.0009, 0.0042)
+# TRADING-2565-34 印的真实 F0001 在美股大盘 1929–2010 七个长牛段的段内收益、
+# 同平均敞口固定对照的段内收益、F0001 段内平均敞口（一位小数的百分数）
+US_PRINTED = (
+    (1.678, 1.469, 0.691),
+    (1.170, 1.186, 0.793),
+    (3.749, 3.737, 0.752),
+    (0.958, 1.047, 0.737),
+    (4.801, 5.747, 0.721),
+    (4.338, 4.284, 0.773),
+    (0.776, 0.742, 0.753),
+)
+US_REFERENCE = "TRADING-2565-34 印的七段段内收益和段内平均敞口（TRADING-2565-71）"
+# TRADING-2565-34 的 JSON（fast_slow、us_1929、stage1）印的全精度数，线是 TOLERANCE
+US_ANCHORS = (
+    ("mean_annual_difference", 0.0010994206923715666),
+    ("worst_annual_difference", -0.01347890310397748),
+    ("average_exposure", 0.6557715110992798),
+)
+ANCHOR_TEXT = {
+    "mean_annual_difference": "长牛年化差的平均",
+    "worst_annual_difference": "长牛年化差的最差",
+    "average_exposure": "整段平均敞口",
+}
+# 从上面的段内收益按 年数 = 月数 / 12 手算的简单年化差（点），只印
+US_HAND = (0.0257, -0.0022, 0.0002, -0.0077, -0.0135, 0.0009, 0.0042)
 US_SD = lp.TARGET_SD
-# 两位小数的半格；标准差的线放宽到一格（规格第 3 节第 3 步）
-HALF_STEP, SD_STEP = 0.00005, 0.0001
+# 一位小数百分数的半格；标准差的线一格（规格第 3 节第 3 步）
+PRINTED_STEP, SD_STEP = 0.0005, 0.0001
 # TRADING-2565-63 汇报印的四条科技序列的真实长牛段
 TECH_LONG_BULLS = {
     "tech_ew": tuple(
@@ -310,10 +334,42 @@ def us_check(inputs: Inputs) -> Record:
     }
     rows = segments.segment_rows(own.strategy, own.benchmark, cut.bulls)
     simple = [float(row["annual_difference"]) for row in rows]
-    simple_match = len(simple) == len(US_SIMPLE) and all(
-        abs(value - expected) <= HALF_STEP + SLACK
-        for value, expected in zip(simple, US_SIMPLE, strict=False)
-    )
+    totals = []
+    for i, row in enumerate(rows):
+        values = [
+            float(row[key]) for key in ("strategy_return", "benchmark_return", "average_exposure")
+        ]
+        printed = list(US_PRINTED[i]) if i < len(US_PRINTED) else None
+        totals.append(
+            {
+                "strategy": values[0],
+                "benchmark": values[1],
+                "exposure": values[2],
+                "printed": printed,
+                "match": printed is not None
+                and all(
+                    abs(value - reference) <= PRINTED_STEP + SLACK
+                    for value, reference in zip(values, printed, strict=True)
+                ),
+            }
+        )
+    totals_match = len(totals) == len(US_PRINTED) and all(row["match"] for row in totals)
+    exposure = float(own.strategy.exposure.mean())
+    summary = segments.long_bull_summary(rows)
+    anchors = []
+    for name, printed_value in US_ANCHORS:
+        value = exposure if name == "average_exposure" else summary[name]
+        difference = value - printed_value if value is not None else None
+        anchors.append(
+            {
+                "name": name,
+                "value": value,
+                "printed": printed_value,
+                "difference": difference,
+                "match": difference is not None and abs(difference) <= TOLERANCE,
+            }
+        )
+    anchors_match = all(row["match"] for row in anchors)
     sd = lp.sample_sd(np.asarray(simple, dtype=float))
     sd_match = sd is not None and abs(sd - US_SD) <= SD_STEP + SLACK
     months = pd.DatetimeIndex(own.strategy.exposure.index).to_period("M")
@@ -327,18 +383,23 @@ def us_check(inputs: Inputs) -> Record:
         "bench_start": bench.strategy.start.date().isoformat(),
         "same_dates": same_dates,
         "gaps": gaps,
+        "totals": totals,
+        "totals_match": totals_match,
+        "anchors": anchors,
+        "anchors_match": anchors_match,
         "simple": simple,
-        "expected": list(US_SIMPLE),
-        "simple_match": simple_match,
+        "hand": list(US_HAND),
         "sd": sd,
+        "sd_reference": US_SD,
         "sd_match": sd_match,
-        "exposure": float(own.strategy.exposure.mean()),
+        "exposure": exposure,
         "bull_exposure": float(own.strategy.exposure[inside].mean()) if inside.any() else None,
         "printed_exposure": [rr.F0001_EXPOSURE, rr.F0001_BULL_EXPOSURE],
         "passed": bool(
             bulls_match
             and same_dates
-            and simple_match
+            and totals_match
+            and anchors_match
             and sd_match
             and all(value is not None and value <= TOLERANCE for value in gaps.values())
         ),
@@ -484,7 +545,9 @@ def read(inputs: Inputs, progress: Progress | None = None) -> Record:
             "print_line": PRINT_LINE,
             "plant_se": dict(PLANT_SE),
             "tolerance": TOLERANCE,
-            "half_step": HALF_STEP,
+            "us_reference": US_REFERENCE,
+            "printed_step": PRINTED_STEP,
+            "us_anchors": dict(US_ANCHORS),
             "sd_step": SD_STEP,
         },
         "stage": stage,
@@ -543,28 +606,60 @@ def _render_us(lines: list[str], us: Record | None) -> None:
         f"- 逐日对：起点 {us['start']}，评估台起点 {us['bench_start']}；"
         f"日期{'一样' if us['same_dates'] else '不一样'}；"
         f"最大差：策略敞口 {gaps[0]}、策略收益 {gaps[1]}、对照收益 {gaps[2]}。",
+        "- 逐段对 TRADING-2565-34 印的段内收益和段内平均敞口（一位小数的百分数，"
+        "线是半格 0.05 个百分点）；简单年化差的手算参照只印，不判（TRADING-2565-71）。",
         "",
     ]
     rows = []
     for i, (first, last) in enumerate(us["long_bulls"]):
-        expected = us["expected"][i] if i < len(us["expected"]) else None
-        value = us["simple"][i] if i < len(us["simple"]) else None
-        difference = value - expected if value is not None and expected is not None else None
+        total = us["totals"][i] if i < len(us["totals"]) else None
+        printed = total["printed"] if total is not None else None
+        cells = []
+        for j, key in enumerate(("strategy", "benchmark", "exposure")):
+            reference = "–" if printed is None else f"{printed[j] * 100:.1f}%"
+            value = "–" if total is None else f"{total[key] * 100:.2f}%"
+            cells.append(f"{reference} / {value}")
+        hand = us["hand"][i] if i < len(us["hand"]) else None
+        simple = us["simple"][i] if i < len(us["simple"]) else None
         rows.append(
             [
                 str(i + 1),
                 first,
                 last,
-                _points(expected, signed=True),
-                _points(value, signed=True),
-                _points(difference, signed=True),
+                *cells,
+                _yes(total["match"] if total is not None else None),
+                f"{_points(hand, signed=True)} / {_points(simple, signed=True)}",
             ]
         )
-    _table(lines, ("段", "首月", "末月", "-34 印的", "重算", "差"), rows)
+    _table(
+        lines,
+        (
+            "段",
+            "首月",
+            "末月",
+            "F0001 段内（-34 印的 / 重算）",
+            "对照段内（-34 印的 / 重算）",
+            "段内敞口（-34 印的 / 重算）",
+            "一致",
+            "简单年化差（手算参照 / 重算）",
+        ),
+        rows,
+    )
+    anchors = []
+    for anchor in us["anchors"]:
+        value = "–" if anchor["value"] is None else f"{anchor['value']:.10f}"
+        difference = "–" if anchor["difference"] is None else f"{anchor['difference']:.1e}"
+        anchors.append(
+            f"{ANCHOR_TEXT[anchor['name']]} 重算 {value}，"
+            f"-34 印的 {anchor['printed']:.10f}，差 {difference}"
+        )
     lines += [
         "",
         f"- 简单年化差段间标准差：{_points(us['sd'])} 点；"
-        f"-34 印的 {_points(US_SD)} 点；一致：{_yes(us['sd_match'])}。",
+        f"手算参照 {_points(us['sd_reference'])} 点；一致：{_yes(us['sd_match'])}。",
+        f"- 全精度核对（TRADING-2565-34 的 JSON，线 {TOLERANCE:.0e}）："
+        + "；".join(anchors)
+        + f"；一致：{_yes(us['anchors_match'])}。",
         f"- 整段平均敞口 {_exposure(us['exposure'])}、"
         f"长牛平均敞口 {_exposure(us['bull_exposure'])}；-34 印的 "
         f"{_exposure(us['printed_exposure'][0])}、{_exposure(us['printed_exposure'][1])}。",
