@@ -268,7 +268,7 @@ def _fixture(tmp_path: Path) -> Path:
     _reads(validated, ["validation"])
     closed = _question(repo, "QQQ-E1")
     _runs(closed, [_run_body("QQQ-E1", 1, status="ok", sharpe=0.01)])
-    _reads(closed, ["validation", "consistency"])
+    _reads(closed, ["validation", "consistency_check"])
     closed.joinpath("decision.md").write_text(
         "# QQQ-E1 结论\n\n结论：**拒绝**。验证期没有通过。\n", encoding="utf-8"
     )
@@ -364,6 +364,16 @@ def test_status_and_step_follow_the_files(
     assert question["status"] == status
     assert question["step"] == step
     assert question["approved"] is approved
+    assert question["problems"] == []
+
+
+def test_a_consistency_check_read_is_step_seven(tmp_path: Path) -> None:
+    # The bench's role is consistency_check (research_bench.settings.WINDOW_ROLES), TRADING-2565-74.
+    repo = _fixture(tmp_path)
+    _reads(_question(repo, "QQQ-G1"), ["validation", "consistency_check"])
+    question = _by_id(collect(repo))["QQQ-G1"]
+    assert (question["status"], question["step"]) == ("consistency_read", 7)
+    assert question["next"] == "一致性期已读，等写结论。"
     assert question["problems"] == []
 
 
@@ -497,9 +507,9 @@ def test_reads_are_listed(tmp_path: Path) -> None:
             "recorded_at": "2026-10-11T00:00:00+00:00",
         },
         {
-            "read_id": "QQQ-E1-consistency-2",
-            "role": "consistency",
-            "window_id": "consistency_window",
+            "read_id": "QQQ-E1-consistency_check-2",
+            "role": "consistency_check",
+            "window_id": "consistency_check_window",
             "recorded_at": "2026-10-12T00:00:00+00:00",
         },
     ]

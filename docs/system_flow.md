@@ -115,6 +115,8 @@ H-B 条件化储备探针（TRADING-2565-51，`owner_decision:TRADING-2565:2026-
 
 在科技行业上直接读一次 F0001 的长牛代价（TRADING-2565-70，`owner_decision:TRADING-2565:2026-10-26:longbull_tech_read`，第 6 期章程第 17 节）：`python -m ai_trading_system.research_probes.longbull_tech_read run --out <目录>` 读同一份信号快照 sig-7ad8aa00b736 的 `ff_49_industries_daily`（Hardw、Chips、Softw）和 `ff_factors_daily`（Mkt-RF、RF），切到 2010-12-31；评估台的美股大盘数据（`trial.market_data("us_market", …)`，T0001）只用来做等价核对。行业日收益减 RF 交给评估台的 `from_us_market`，F0001 的目标、模拟和固定对照都调评估台；划段和读数调 `cycle_power`、`longbull_power`（都不改）。核对都过才读，全部算完才写 `tech_read.json` 和中文 `tech_read.md`。不进台账、不算试验，不读验证窗口。
 
+在 QQQ 一致性窗口读一次 2022 慢熊段的 D（TRADING-2565-74，`owner_decision:TRADING-2565:2026-10-26:consistency_2022_read`，第 6 期章程第 18 节）：`python -m ai_trading_system.research_probes.consistency_2022_read check` 只读：载入 QQQ-Q3 预注册的长历史快照，在开发窗口上和 TRADING-2565-34 的六个全精度数比，查台账能不能登记，只数 2020-02 起 qqq、cash 两列和信号读的 ndx_return 的天数；不登记、不开窗。`run --out <目录>` 先做同样的开发窗口核对（不过不登记），再经 `research_bench.ledger.register_read` 在 QQQ-Q3 登记一次一致性读取、用许可证开窗（`run.open_window`），划段核对（恰好一段慢熊、回到高点）过了才在一致性窗口上算 fast_slow（F0001）、slow_only（F0003）的慢熊段 D、段外两段和整个窗口，再用同一张许可证记两条标准的一致性运行（`run_and_record`），全部算完才写 `consistency_2022_read.json` 和中文 `consistency_2022_read.md`。目标、模拟和固定对照都调评估台（不改）；读取一行和两条运行记录写进 `research/QQQ-Q3/`，由记录批原样提交。
+
 ```mermaid
 flowchart LR
     Q["Owner 定问题（TRADING-2567）"] --> PRE["research/&lt;题号&gt;/prereg.yaml + strategy.py<br/>C 区：随 Owner-Decision ship 进 main"]

@@ -262,7 +262,7 @@ def _question(
             invalid = True
             question.update(runs=[], reads=[])
     roles = {read["role"] for read in question["reads"]}
-    if "consistency" in roles:
+    if "consistency_check" in roles:
         status, step, next_step = "consistency_read", 7, "一致性期已读，等写结论。"
     elif "validation" in roles:
         status, step, next_step = "validation_read", 6, "验证期已读，等写结论。"
