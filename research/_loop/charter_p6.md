@@ -216,4 +216,6 @@ Baker 2026-10-26 19:20 JST 在「研究循环 10-26」线程问工作总览上�
 
 这条由 TRADING-2565-74 和读数模块同一批发布（B 区，不用 approve.ps1），记在 `docs/requirements/TRADING-2565_Research_Bench.md` 的 Owner decision 一节。
 
+结果（2026-10-26，TRADING-2565-75 记）：研究会话 2026-10-26 21:42 JST 先跑了只读的 `check`（开发窗口六个数差都是 0，下一个读取号 QQQ-Q3-w0002，三列 1682 天不缺天；汇报在项目文件 `knowledge/claude/qqq-options/auto-loop/consistency-2022/rc-check.md`）。Baker 22:44 JST（13:44:01Z）在「研究循环 10-26」线程的预注册卡「现在签预注册卡,读一次 2022 慢熊段吗?」（cmsg_011Jt6JWNgo42YfGyndrfT7RVt5brSAbU1RJF31cBFBPFg）上选「签字,跑一次」。研究会话 22:49 JST 在 main fed9ee80 上跑 `run` 一次（汇报在项目文件 `knowledge/claude/qqq-options/auto-loop/consistency-2022/rc-run.md`），退出码 0：开发窗口核对过，登记 `QQQ-Q3-w0002`，划段过（2021-02 到 2026-10 恰好一段慢熊，高点 2021-12、谷底 2022-12、2023-12 回到高点），记账 `QQQ-Q3-r0010`、`r0011`（和读数四项一致，规则行只记）。2022-01..2022-12 段内 F0001 的 D +5.15 点（策略 −19.15，同平均敞口固定敞口 −24.31，QQQ −32.58；段内平均敞口 0.419，整窗 0.739），D > 0 对，区间 对；F0003 D +8.68 点，两项都对（只记）。按第 2 条：F0001 第 1 条核对为对，还要再对一次才能拿它开题或改日报，下一次照旧等下一个完整慢熊段；结果进 11-20 续期卡。只印的：2023-01 起的长牛（没完）F0001 对固定敞口每年 −2.15 点，整窗累计对数差 −1.63 点。当天告诉了 Baker。
+
 production_effect=none；broker_action=none。

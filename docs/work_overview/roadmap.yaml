@@ -130,9 +130,10 @@ lines:
             date: "2026-10-26"
             note: 三个行业合起来每年 −0.18 对数点，区间 −3.49 到 +3.14；长牛代价只剩前瞻账本 F0008
             cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
-          - text: 第 6 期第 18 节读 QQQ 2022 慢熊段
-            state: now
-            note: 先过开发窗口核对，Baker 签预注册卡后读一次 F0001、F0003 的 D；旧任务用过这段，分量比新数据轻
+          - text: 第 6 期第 18 节读 QQQ 2022 慢熊段，F0001 第 1 条核对为对
+            state: done
+            date: "2026-10-26"
+            note: D +5.15 点，在 +2.6 到 +12.0 里；旧任务用过这段，分量比新数据轻；还要再对一次
             cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
           - text: 第 6 期只记账，加整轮核对
             state: now
@@ -145,10 +146,10 @@ lines:
             state: todo
             date: "2026-11-20"
             cards: [TRADING-2567]
-          - text: 第一次完整的慢熊段核对
+          - text: 下一次慢熊段核对：下一个完整慢熊段
             state: waiting
             date: "2026-10-22"
-            note: 10-22 起在等：时间看市场，到时算 F0001 的证据；第 18 节先读 2022 那一段
+            note: 10-22 起在等：时间看市场；F0001 再对这一次，才能拿它开题或改日报
             cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
           - text: 第一次前向复查
             state: todo

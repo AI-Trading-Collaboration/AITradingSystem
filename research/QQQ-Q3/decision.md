@@ -56,4 +56,9 @@
 - 失败标签（2026-10-18，Baker 2026-10-18 同意）：fast_slow 有效果但代价太高（兼检验力不够），依据左尾 +4.4%、回撤浅 5.3 个点，几何年化每年少 1.8 个点；参照 slow_only 机制不存在，依据左尾 −2.3%、回撤深 0.7 个点；另加软泄漏可疑：方向定于 `QQQ-Q2-w0001` 之后，而且本题是 trend4 的子集。标签的定义和之后允许做什么见 `research/families.md`。
 - 记分（2026-10-18）：见 `research/scorecard.md` 第 1 节 Q3 fast_slow 一行。
 
+## 补注（2026-10-26）
+
+- 一致性窗口（2021-02-22 起）读了一次：`QQQ-Q3-w0002`（`consistency_check`），同一张许可证记了两条标准的一致性运行 `QQQ-Q3-r0010`（fast_slow）、`QQQ-Q3-r0011`（slow_only）。这是第 6 期章程（`research/_loop/charter_p6.md`）第 18 节为前瞻记录 F0001、F0003 读 2022 慢熊段的 D（`owner_decision:TRADING-2565:2026-10-26:consistency_2022_read`，读数模块 TRADING-2565-74，研究会话 2026-10-26 22:49 JST）。上面「一致性窗口不读」写的是开题时的安排；这次读不改本题的结论和评级，两条运行按预注册规则判的行（fast_slow 11 条成立 5 条，slow_only 11 条成立 4 条）只记。不进试验数、不占家族次数，k 不动。
+- 读数：2022-01..2022-12 慢熊段，fast_slow 的 D +5.15 点、slow_only +8.68 点（策略段内收益减同平均敞口固定敞口的段内收益），核对见 `research/_loop/forward_records.md`，对错和偏差原因见 `research/scorecard.md` 第 3 节。这个窗口旧任务用过、2022 走势已知，分量比全新数据轻。
+
 production_effect=none。

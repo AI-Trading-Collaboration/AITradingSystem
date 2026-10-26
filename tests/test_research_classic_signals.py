@@ -321,7 +321,7 @@ NOTES_TAIL = (
     "；2026-10-15：S4e 第一批真实筛选已跑完并发布为记录 S0001 到 S0004（main 71f00bc1）；"
     "S4f（TRADING-2565-11）第二题用的经典趋势信号"
 )
-# The card's current owner and step (TRADING-2565-74), checked against the register.
+# The card's current owner and step (TRADING-2565-75), checked against the register.
 NEXT_OWNER = "Claude（研究自动循环）"
 NEXT_STEP = (
     "研究自动循环第 6 期（`research/_loop/charter_p6.md`，2026-10-23 起到 2026-11-20；"
@@ -333,11 +333,12 @@ NEXT_STEP = (
     "owner_decision:TRADING-2565:2026-10-26:longbull_tech_read）判不定"
     "（three −0.18，0.997 区间 −3.49 到 +3.14），长牛代价只剩前瞻账本 F0008，"
     "带着判定进 11-20 续期卡；"
-    "第 18 节在 QQQ 一致性窗口读一次 F0001、F0003 的 2022 慢熊段 D（TRADING-2565-74，"
+    "第 18 节在 QQQ 一致性窗口读了一次 F0001、F0003 的 2022 慢熊段 D（TRADING-2565-74、-75，"
     "owner_decision:TRADING-2565:2026-10-26:consistency_2022_read）："
-    "先在电脑上跑只读的 check，Baker 签预注册卡后跑一次 run，记录批 TRADING-2565-75；"
+    "F0001 +5.15、F0003 +8.68，两项都对，F0001 第 1 条核对为对，下一次等下一个完整慢熊段，"
+    "带进 11-20 续期卡；"
     "前瞻记录台每周五照记（`weekly --daily-root`，提交前跑 `-k committed`），"
-    "F0001 和 F0008 到数时核；不开题、不筛信号"
+    "F0001 和 F0008 到数时核；不开题、不跑探针、不筛信号"
 )
 
 
