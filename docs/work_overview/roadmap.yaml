@@ -135,6 +135,11 @@ lines:
             date: "2026-10-26"
             note: D +5.15 点，在 +2.6 到 +12.0 里；旧任务用过这段，分量比新数据轻；还要再对一次
             cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
+          - text: 第四次横读：长牛代价按现有证据收题
+            state: done
+            date: "2026-10-27"
+            note: F0001 在 QQQ 上约等于同平均敞口的固定仓位，每年少 0 到 1.5 点，回撤小；第 6 期回到只记账
+            cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
           - text: 第 6 期只记账，加整轮核对
             state: now
             date: "2026-11-20"
