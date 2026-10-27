@@ -253,13 +253,27 @@ NOTES_REVIEW = (
     "状态仍是 IN_PROGRESS，只改这两格和这条记录。production_effec"
     "t=none；broker_action=none"
 )
-NEXT_OWNER = "Claude（研究自动循环第 6 期：只记账；下一道 QQQ 正式题等 11-20 续期卡或候选过试跑门）"
+# The step after the period-6 section 20 (TRADING-2565-78).
+NOTES_P6_20 = (
+    "；2026-10-27：第 6 期第 20 节（owner_decision:TRADIN"
+    "G-2565:2026-10-27:loop_self_select_signed，TRA"
+    "DING-2565-78 记）：研究自动循环在菜单内自选目标，next_owner 和 n"
+    "ext_step 跟着改；开正式题仍要问 Baker。production_effect="
+    "none；broker_action=none"
+)
+NEXT_OWNER = (
+    "Claude（研究自动循环第 6 期：第 20 节起菜单内自选目标；"
+    "下一道 QQQ 正式题等 11-20 续期卡或候选过试跑门）"
+)
 NEXT_STEP = (
     "第五题 QQQ-Q5 已结束（2026-10-21，`research/QQQ-Q5/decision.md`，台账第 27 条），"
     "之后没有开着的 QQQ 题。"
     "研究自动循环第 6 期（`research/_loop/charter_p6.md`，到 2026-11-20）只记账，"
     "前瞻账本每周五照记；"
     "第 13、14 节的两个检验力探针（TRADING-2565-61、-63）都是 below_50，不开题。"
+    "第 20 节（2026-10-27 签，owner_decision:TRADING-2565:2026-10-27:loop_self_select_signed）"
+    "起菜单内的方向过两道线就自己开、自己关"
+    "（数据每月 ≤ 100 美元、花费每周 ≤ 250 美元），开正式题仍要问 Baker。"
     "下一道正式题等 2026-11-20 的续期卡，或研究自动循环有候选过试跑门再问 Baker。"
     "详见 `docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md`"
 )
@@ -275,11 +289,11 @@ def test_the_research_readme_lists_the_fifth_question() -> None:
 def test_the_task_card_notes_are_only_appended() -> None:
     card = yaml.safe_load(CARD.read_text(encoding="utf-8"))
     assert card["notes"].count(NOTES_TAIL) == 1 and card["notes"].count(NOTES_CLOSE) == 1
-    assert card["notes"].endswith(NOTES_TAIL + NOTES_CLOSE + NOTES_REVIEW)
+    assert card["notes"].endswith(NOTES_TAIL + NOTES_CLOSE + NOTES_REVIEW + NOTES_P6_20)
     assert card["notes"].split(NOTES_TAIL)[0].endswith("broker_action=none")
     assert "qqq_q4_prereg" in card["notes"].split(NOTES_TAIL)[0]
     assert (card["next_owner"], card["next_step"]) == (NEXT_OWNER, NEXT_STEP)
     assert card["status"] == "IN_PROGRESS"
     register = REGISTER.read_text(encoding="utf-8")
     assert NOTES_TAIL in register and NOTES_CLOSE in register and NEXT_STEP in register
-    assert NOTES_REVIEW in register
+    assert NOTES_REVIEW in register and NOTES_P6_20 in register

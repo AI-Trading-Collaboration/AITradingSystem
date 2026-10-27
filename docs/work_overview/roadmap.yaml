@@ -140,10 +140,10 @@ lines:
             date: "2026-10-27"
             note: F0001 在 QQQ 上约等于同平均敞口的固定仓位，每年少 0 到 1.5 点，回撤小；第 6 期回到只记账
             cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
-          - text: 第 6 期只记账，加整轮核对
+          - text: 第 6 期自选目标，带每月数据预算
             state: now
             date: "2026-11-20"
-            note: 前瞻账本每周五追加；F0001 和 F0008 到数时核
+            note: 菜单内的方向过两道线就自己开、自己关；数据每月 ≤ 100 美元，花费每周 ≤ 250 美元；前瞻账本每周五照记
             cards:
               - TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING
               - TRADING-2567
