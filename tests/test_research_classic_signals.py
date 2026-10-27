@@ -321,7 +321,7 @@ NOTES_TAIL = (
     "；2026-10-15：S4e 第一批真实筛选已跑完并发布为记录 S0001 到 S0004（main 71f00bc1）；"
     "S4f（TRADING-2565-11）第二题用的经典趋势信号"
 )
-# The card's current owner and step (TRADING-2565-78), checked against the register.
+# The card's current owner and step (TRADING-2565-79), checked against the register.
 NEXT_OWNER = "Claude（研究自动循环）"
 NEXT_STEP = (
     "研究自动循环第 6 期（`research/_loop/charter_p6.md`，2026-10-23 起到 2026-11-20；"
@@ -342,7 +342,8 @@ NEXT_STEP = (
     "第 20 节（owner_decision:TRADING-2565:2026-10-27:loop_self_select_signed）改成自选目标："
     "菜单内的方向过两道线（解析式的悲观主数 ≥ 50% 才做探针，探针实测 ≥ 50% 才筛选或试跑）"
     "就自己开、自己关，数据每月 ≤ 100 美元、花费每周 ≤ 250 美元，"
-    "第一件事是可行目标清单；"
+    "可行目标清单（2026-10-27）一个都不过第一道线（择时族的锚和门槛同值），"
+    "回到只记账，换锚留到 11-20 续期卡；"
     "前瞻记录台每周五照记（`weekly --daily-root`，提交前跑 `-k committed`），"
     "F0001 和 F0008 到数时核；开正式题、读验证窗口、新供应商第一次付款要叫 Baker"
 )
