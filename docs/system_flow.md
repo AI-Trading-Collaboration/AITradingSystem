@@ -117,6 +117,8 @@ H-B 条件化储备探针（TRADING-2565-51，`owner_decision:TRADING-2565:2026-
 
 在 QQQ 一致性窗口读一次 2022 慢熊段的 D（TRADING-2565-74，`owner_decision:TRADING-2565:2026-10-26:consistency_2022_read`，第 6 期章程第 18 节）：`python -m ai_trading_system.research_probes.consistency_2022_read check` 只读：载入 QQQ-Q3 预注册的长历史快照，在开发窗口上和 TRADING-2565-34 的六个全精度数比，查台账能不能登记，只数 2020-02 起 qqq、cash 两列和信号读的 ndx_return 的天数；不登记、不开窗。`run --out <目录>` 先做同样的开发窗口核对（不过不登记），再经 `research_bench.ledger.register_read` 在 QQQ-Q3 登记一次一致性读取、用许可证开窗（`run.open_window`），划段核对（恰好一段慢熊、回到高点）过了才在一致性窗口上算 fast_slow（F0001）、slow_only（F0003）的慢熊段 D、段外两段和整个窗口，再用同一张许可证记两条标准的一致性运行（`run_and_record`），全部算完才写 `consistency_2022_read.json` 和中文 `consistency_2022_read.md`。目标、模拟和固定对照都调评估台（不改）；读取一行和两条运行记录写进 `research/QQQ-Q3/`，由记录批原样提交。
 
+日报仓位成绩单（TRADING-2565-80，`owner_decision:TRADING-2565:2026-10-28:daily_band_scorecard`，第 6 期章程第 21 节）：`python -m ai_trading_system.research_probes.daily_band_scorecard run --daily-root <日报状态根> [--daily-root <第二个>] --out <目录>` 只读日报状态目录里的 `data/processed/decision_snapshots/decision_snapshot_<日>.json`（每天取第一个有这个文件的目录，坏文件算这天没有可用快照）和第一个目录最新一天的 `data/raw/daily_input_capture/<日>/market_macro/prices_daily.csv`；持有照前瞻账本的 t+2，算日报三个区间中点、固定 0.8、F0001（`forward_ledger.overlay_exposure`）和股票/风险资产预算中点（只印）的收益，各配同平均敞口的固定线，汇总印全窗口和去掉陈旧天两遍，加按月表、降仓和加仓事件，以及照快照原样的拆因（闸门、`config/scoring_rules.yaml` 的分档边界和 `minimum_action_delta`、置信度、分项、版本）。全部算完才写 `daily_band_scorecard.json` 和中文 `daily_band_scorecard.md`。不写日报目录、不改日报代码和配置，不写前瞻账本（`forward_ledger` 只导入）；描述，不判，不进台账，不读验证窗口。
+
 ```mermaid
 flowchart LR
     Q["Owner 定问题（TRADING-2567）"] --> PRE["research/&lt;题号&gt;/prereg.yaml + strategy.py<br/>C 区：随 Owner-Decision ship 进 main"]

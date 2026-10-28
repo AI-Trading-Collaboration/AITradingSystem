@@ -2,7 +2,7 @@
 # 发布一张卡的改动时，在同一个提交里改它支撑的里程碑（勾掉就把 state 改成 done、date 写完成那天），并把 updated 改成当天；
 # 新开一张卡就把它挂到一个里程碑下，并在 cards 里给它一个中文名。加段、改段、改目标要 Baker 同意。
 schema_version: work_roadmap.v1
-updated: "2026-10-27"
+updated: "2026-10-28"
 # 卡的中文名：页面上只写中文名，卡号放在细节里。
 cards:
   TRADING-2567: QQQ 研究计划
@@ -144,6 +144,11 @@ lines:
             state: done
             date: "2026-10-27"
             note: 择时族没有文献锚，锚和门槛同值，按定义过不了；换锚留到续期卡；不买数据
+            cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
+          - text: 第 6 期第 21 节：日报仓位成绩单
+            state: now
+            date: "2026-10-30"
+            note: 只读日报已经写下的快照，照日报做和固定 0.8、F0001 对一次账，并照快照拆因；描述，不判，不改日报和账本
             cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
           - text: 第 6 期自选目标，带每月数据预算
             state: now
