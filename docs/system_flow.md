@@ -121,6 +121,8 @@ H-B 条件化储备探针（TRADING-2565-51，`owner_decision:TRADING-2565:2026-
 
 量试跑门的线（TRADING-2565-82，`owner_decision:TRADING-2565:2026-10-28:gate_floor_probe`，第 6 期章程第 22 节）：`python -m ai_trading_system.research_probes.gate_floor_probe run --out <目录> --baseline <10-18 假过门探针的结果目录> --workers <进程数>` 读和假过门探针相同的数据（截到 2010-12-31），先用 10-18 的旧种子 20261018–20261022 重跑零和近零三族、逐行和那次的 `false_pass_rows.jsonl` 比并计时（写 `gate_floor_equivalence.json`，有一处不同就停），再评估零和近零三族（新种子各 150 个）、波动效果族六档和回撤留出族三档；每一行用现在的试跑门评估（核对它是 `trial_gate_v2.yaml` 加 10% 线），线 0–0.10 从行里读出，按写定的读法给判定，写 `gate_floor_rows.jsonl`（边跑边写）、`gate_floor_result.json` 和中文 `gate_floor_result.md`。只量门，不改试跑门，不进任何账本，不是结论；判定只给 11-20 续期卡。
 
+行业暴涨状态表（TRADING-2565-84，`owner_decision:TRADING-2565:2026-10-29:print_only_tables`，第 6 期章程第 23.1 条，四张只印的表的第一张）：`python -m ai_trading_system.research_probes.runup_state_table check --out <目录>` 读信号快照 `sig-7ad8aa00b736` 的 49 个行业（照 GSY 不用「其他」）和大盘因子（截到 2010-12-31），每个行业用评估台的 `signal_exposure` 算 QQQ-Q3 预注册的 F0001 和两条腿的月末目标、照 GSY（2019）算暴涨状态，只数退出次数，写 `runup_check.json`；`run --out <目录>` 再算每次快腿退出以后被来回打、快腿得失和之后 252 个交易日跟着真跌，和退出前 63 天的波动，做 GSY 保真核对，按写定的读法给判定，写 `runup_exits.jsonl`、`runup_table.json` 和中文 `runup_table.md`。只印，不模拟新规则，不进任何账本，不是结论；判定只给 11-20 续期卡或 `research/families.md`。
+
 ```mermaid
 flowchart LR
     Q["Owner 定问题（TRADING-2567）"] --> PRE["research/&lt;题号&gt;/prereg.yaml + strategy.py<br/>C 区：随 Owner-Decision ship 进 main"]

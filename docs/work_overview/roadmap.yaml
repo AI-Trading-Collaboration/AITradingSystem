@@ -155,6 +155,11 @@ lines:
             date: "2026-10-28"
             note: 0.09 漏过 4/450，正好压在上限上；效果 10% 的检出率多约 9 个点（路径口径）、14 个点（种子口径）；门不动，进 11-20 续期卡，保守的读法是不降
             cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
+          - text: 第 6 期第 23 节：四张只印的表
+            state: now
+            date: "2026-11-09"
+            note: 一张一张做：行业暴涨状态（先做）、宏观回补、失业率过滤、新闻波动 NVIX；只印，不测新规则，判定只进 11-20 续期卡或 families.md；花费超过每周上限是 Baker 选的
+            cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
           - text: 第 6 期自选目标，带每月数据预算
             state: now
             date: "2026-11-20"
