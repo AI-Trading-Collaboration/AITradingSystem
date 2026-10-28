@@ -321,7 +321,7 @@ NOTES_TAIL = (
     "；2026-10-15：S4e 第一批真实筛选已跑完并发布为记录 S0001 到 S0004（main 71f00bc1）；"
     "S4f（TRADING-2565-11）第二题用的经典趋势信号"
 )
-# The card's current owner and step (TRADING-2565-82), checked against the register.
+# The card's current owner and step (TRADING-2565-83), checked against the register.
 NEXT_OWNER = "Claude（研究自动循环）"
 NEXT_STEP = (
     "研究自动循环第 6 期（`research/_loop/charter_p6.md`，2026-10-23 起到 2026-11-20；"
@@ -347,9 +347,11 @@ NEXT_STEP = (
     "第 21 节（owner_decision:TRADING-2565:2026-10-28:daily_band_scorecard）"
     "印了一次日报仓位成绩单（TRADING-2565-80、-81）：甲、乙都不成立，两边差不多，照只记账；"
     "日报多在 0.40 是估值闸门的设定值，对同平均敞口的固定仓位 +1.33、+1.40 点多半来自数据开关；"
-    "第 22 节（owner_decision:TRADING-2565:2026-10-28:gate_floor_probe）量一次试跑门的线（TRADING-2565-82）："
-    "门不动，换种子量 10% 线降到 0.05–0.09 时零和近零规则漏过多少、"
-    "效果 10%、13%、15% 的检出率多出多少，发布以后在电脑上跑一次，判定只给 11-20 续期卡；"
+    "第 22 节（owner_decision:TRADING-2565:2026-10-28:gate_floor_probe）"
+    "量了一次试跑门的线（TRADING-2565-82、-83）："
+    "判 lower_to_f，f* = 0.09 正好压在漏过上限上，而且是同一批行上挑的；"
+    "效果 10% 的检出率多约 9 个点（路径口径）、14 个点（种子口径），"
+    "门不动，进 11-20 续期卡，保守的读法是不降；"
     "前瞻记录台每周五照记（`weekly --daily-root`，提交前跑 `-k committed`），"
     "F0001 和 F0008 到数时核；开正式题、读验证窗口、新供应商第一次付款要叫 Baker"
 )
