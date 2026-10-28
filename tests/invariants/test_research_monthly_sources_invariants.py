@@ -1,8 +1,9 @@
-"""Invariants of the monthly long-history sources (TRADING-2565-37).
+"""Invariants of the monthly long-history sources (TRADING-2565-37, TRADING-2565-88).
 
 Acceptance tests written before the code (owner decision
-``owner_decision:TRADING-2565:2026-10-21:monthly_long_history``). Every value below is synthetic;
-no test reads a real snapshot or downloads anything.
+``owner_decision:TRADING-2565:2026-10-21:monthly_long_history``; the unemployment rates of
+TRADING-2565-88 under ``owner_decision:TRADING-2565:2026-10-29:print_only_tables``). Every value
+below is synthetic; no test reads a real snapshot or downloads anything.
 
 53. A monthly observation is used only once its month is known. Month M is published on the first
     trading day on or after the first day of month M + 1 + release_lag_months and used
@@ -20,7 +21,10 @@ no test reads a real snapshot or downloads anything.
     ``fetch.json`` names its address. The check fails a monthly date that is not the first of a
     month and warns on a missing month, not on missing weekdays. A snapshot written before this
     change still loads under its id.
-58. The approved monthly sources are the seven in the settings file, with their lags.
+58. The approved monthly sources are the ten in the settings file, with their lags.
+68. A monthly source may cover only some of the years: a FRED series that ends early or starts
+    late checks without a gap and loads as fetched. Nothing requires a monthly source to reach a
+    given year (TRADING-2565-88: the unemployment rates end in 1942 and 1946 and start in 1948).
 """
 
 from __future__ import annotations
@@ -503,7 +507,12 @@ def _fred(seed: int = 0) -> dict[str, pd.Series]:
         name: pd.Series(np.round(rng.normal(9.0, 0.3, len(months)), 2), index=months)
         for name in ("BAA", "AAA")
     }
-    return daily | monthly
+    # The unemployment rates (TRADING-2565-88): drawn last, so nothing above changes.
+    unemployment = {
+        name: pd.Series(np.round(rng.normal(6.0, 0.5, len(months)), 1), index=months)
+        for name in ("M0892AUSM156SNBR", "M0892BUSM156SNBR", "UNRATE")
+    }
+    return daily | monthly | unemployment
 
 
 def _ken_french(dataset: str) -> bytes:
@@ -521,8 +530,13 @@ def _ken_french(dataset: str) -> bytes:
     return buffer.getvalue()
 
 
-def _fetch(root: Path, calls: list[int] | None = None, table: pd.DataFrame | None = None) -> str:
-    fred = _fred()
+def _fetch(
+    root: Path,
+    calls: list[int] | None = None,
+    table: pd.DataFrame | None = None,
+    series: dict[str, pd.Series] | None = None,
+) -> str:
+    fred = _fred() if series is None else series
 
     def shiller() -> pd.DataFrame:
         if calls is not None:
@@ -660,6 +674,9 @@ def test_the_approved_monthly_sources_are_in_the_settings_file() -> None:
         "shiller_earnings": ("shiller", "E", 15, 0),
         "shiller_cpi": ("shiller", "CPI", 15, 0),
         "shiller_gs10": ("shiller", "GS10", 15, 0),
+        "unrate_nber_a": ("fred", "M0892AUSM156SNBR", 0, 5),
+        "unrate_nber_b": ("fred", "M0892BUSM156SNBR", 0, 5),
+        "unrate": ("fred", "UNRATE", 0, 5),
     }
     raw = yaml.safe_load((PROJECT_ROOT / "config/research/research_screen.yaml").read_text("utf-8"))
     written = [item for item in raw["sources"] if item["frequency"] == "monthly"]
@@ -682,3 +699,30 @@ def test_the_us_market_base_is_unchanged_by_monthly_sources() -> None:
     )
     pd.testing.assert_frame_equal(alone.returns, both.returns)
     pd.testing.assert_frame_equal(alone.inputs, both.inputs)
+
+
+# 68 ----------------------------------------------------------------------------------------------
+
+
+def test_a_monthly_source_may_end_early_or_start_late(tmp_path: Path) -> None:
+    fred = _fred()
+    early = fred["M0892AUSM156SNBR"].iloc[:3]  # 1985-10..1985-12, nothing after
+    late = fred["UNRATE"].iloc[4:]  # nothing before 1986-02
+    middle = fred["M0892BUSM156SNBR"]
+    snapshot = _fetch(tmp_path, series=fred | {"M0892AUSM156SNBR": early, "UNRATE": late})
+    report = ss.check_snapshot(tmp_path, snapshot)
+    assert report["status"] == "PASS"
+    expected = {
+        "unrate_nber_a": (early, "1985-10-01", "1985-12-01"),
+        "unrate_nber_b": (middle, "1985-10-01", "1986-03-01"),
+        "unrate": (late, "1986-02-01", "1986-03-01"),
+    }
+    loaded = ss.load_snapshot(tmp_path, snapshot)
+    for source_id, (series, first, last) in expected.items():
+        checked = report["sources"][source_id]
+        assert checked["gap_count"] == 0
+        assert (checked["first_date"], checked["last_date"]) == (first, last)
+        assert checked["row_count"] == len(series)
+        frame = loaded.frames[source_id]
+        assert pd.DatetimeIndex(frame.index).equals(pd.DatetimeIndex(series.index))
+        np.testing.assert_array_equal(frame["value"].to_numpy(), series.to_numpy())

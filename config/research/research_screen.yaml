@@ -120,6 +120,32 @@ sources:
     release_lag_months: 15
     known_lag_trading_days: 0
     description: Shiller long-term interest rate (GS10, earlier government bond yields), from 1871
+  # Unemployment rates, long history (owner_decision:TRADING-2565:2026-10-29:print_only_tables,
+  # TRADING-2565-88): free FRED monthly series, seasonally adjusted percent of the labour force,
+  # with the lags of baa_monthly. NBER Macrohistory m08292a covers 1929-04 to 1942-06 and m08292b
+  # 1940-01 to 1946-12; both were reconstructed later, so what was known then is assumed. 1947 has
+  # only the not seasonally adjusted m08292c, which is not taken; BLS UNRATE starts 1948-01.
+  - source_id: unrate_nber_a
+    provider: fred
+    dataset: M0892AUSM156SNBR
+    frequency: monthly
+    release_lag_months: 0
+    known_lag_trading_days: 5
+    description: Unemployment rate, seasonally adjusted (NBER m08292a), 1929-04 to 1942-06
+  - source_id: unrate_nber_b
+    provider: fred
+    dataset: M0892BUSM156SNBR
+    frequency: monthly
+    release_lag_months: 0
+    known_lag_trading_days: 5
+    description: Unemployment rate, seasonally adjusted (NBER m08292b, Census), 1940-01 to 1946-12
+  - source_id: unrate
+    provider: fred
+    dataset: UNRATE
+    frequency: monthly
+    release_lag_months: 0
+    known_lag_trading_days: 5
+    description: Civilian unemployment rate, seasonally adjusted (BLS), from 1948-01
 # Signal screening (S4b). Every market is cut at screen_end: the US market and the industries move
 # with QQQ after 2010, so reading them later would read QQQ's validation window. The screen has no
 # option to read past screen_end; moving it needs a change to this zone C file.

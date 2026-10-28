@@ -194,7 +194,12 @@ def _fred_series(seed: int = 0) -> dict[str, pd.Series]:
         name: pd.Series(np.round(rng.normal(centre, 0.3, len(months)), 2), index=months)
         for name, centre in (("BAA", 9.0), ("AAA", 8.0))
     }
-    return {"BAA10Y": baa, "T10Y3M": t10y3m, **loop, **monthly}
+    # The unemployment rates (TRADING-2565-88): drawn last, so nothing above changes.
+    unemployment = {
+        name: pd.Series(np.round(rng.normal(6.0, 0.5, len(months)), 1), index=months)
+        for name in ("M0892AUSM156SNBR", "M0892BUSM156SNBR", "UNRATE")
+    }
+    return {"BAA10Y": baa, "T10Y3M": t10y3m, **loop, **monthly, **unemployment}
 
 
 def _shiller() -> pd.DataFrame:
@@ -332,6 +337,9 @@ def test_the_approved_sources_are_in_the_settings_file() -> None:
         "shiller_earnings",
         "shiller_cpi",
         "shiller_gs10",
+        "unrate_nber_a",
+        "unrate_nber_b",
+        "unrate",
     }
     assert (sources["baa10y"].provider, sources["baa10y"].dataset) == ("fred", "BAA10Y")
     assert (sources["t10y3m"].provider, sources["t10y3m"].dataset) == ("fred", "T10Y3M")
