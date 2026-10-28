@@ -123,6 +123,8 @@ H-B 条件化储备探针（TRADING-2565-51，`owner_decision:TRADING-2565:2026-
 
 行业暴涨状态表（TRADING-2565-84，`owner_decision:TRADING-2565:2026-10-29:print_only_tables`，第 6 期章程第 23.1 条，四张只印的表的第一张）：`python -m ai_trading_system.research_probes.runup_state_table check --out <目录>` 读信号快照 `sig-7ad8aa00b736` 的 49 个行业（照 GSY 不用「其他」）和大盘因子（截到 2010-12-31），每个行业用评估台的 `signal_exposure` 算 QQQ-Q3 预注册的 F0001 和两条腿的月末目标、照 GSY（2019）算暴涨状态，只数退出次数，写 `runup_check.json`；`run --out <目录>` 再算每次快腿退出以后被来回打、快腿得失和之后 252 个交易日跟着真跌，和退出前 63 天的波动，做 GSY 保真核对，按写定的读法给判定，写 `runup_exits.jsonl`、`runup_table.json` 和中文 `runup_table.md`。只印，不模拟新规则，不进任何账本，不是结论；判定只给 11-20 续期卡或 `research/families.md`。
 
+宏观回补表（TRADING-2565-86，`owner_decision:TRADING-2565:2026-10-29:print_only_tables`，第 6 期章程第 23.2 条，四张只印的表的第二张）：`python -m ai_trading_system.research_probes.macro_reentry_table check --out <目录>` 读信号快照 `sig-ed9e988ffe7c` 的美股大盘日频因子和 Shiller、Baa、Aaa 月度序列（截到 2010-12-31，宏观序列照 `state_table` 取月底已知的值），用评估台的 `signal_exposure` 算 QQQ-Q3 预注册的 F0001 和两条腿的月末目标，找慢腿的每次退出和两个宏观条件（利差回落、估值便宜）的回来月，只数次数和分布，写 `macro_check.json`；`run --out <目录>` 再算早回来那一趟的近似账、二次下跌、收回的比例和「等 k 个月」对照，按写定的读法给两个判定，写 `macro_exits.jsonl`、`macro_table.json` 和中文 `macro_table.md`。只印，不模拟新规则，不进任何账本，不是结论；判定只给 11-20 续期卡或 `research/families.md`。
+
 ```mermaid
 flowchart LR
     Q["Owner 定问题（TRADING-2567）"] --> PRE["research/&lt;题号&gt;/prereg.yaml + strategy.py<br/>C 区：随 Owner-Decision ship 进 main"]
