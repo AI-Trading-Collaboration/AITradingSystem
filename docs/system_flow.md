@@ -119,6 +119,8 @@ H-B 条件化储备探针（TRADING-2565-51，`owner_decision:TRADING-2565:2026-
 
 日报仓位成绩单（TRADING-2565-80，`owner_decision:TRADING-2565:2026-10-28:daily_band_scorecard`，第 6 期章程第 21 节）：`python -m ai_trading_system.research_probes.daily_band_scorecard run --daily-root <日报状态根> [--daily-root <第二个>] --out <目录>` 只读日报状态目录里的 `data/processed/decision_snapshots/decision_snapshot_<日>.json`（每天取第一个有这个文件的目录，坏文件算这天没有可用快照）和第一个目录最新一天的 `data/raw/daily_input_capture/<日>/market_macro/prices_daily.csv`；持有照前瞻账本的 t+2，算日报三个区间中点、固定 0.8、F0001（`forward_ledger.overlay_exposure`）和股票/风险资产预算中点（只印）的收益，各配同平均敞口的固定线，汇总印全窗口和去掉陈旧天两遍，加按月表、降仓和加仓事件，以及照快照原样的拆因（闸门、`config/scoring_rules.yaml` 的分档边界和 `minimum_action_delta`、置信度、分项、版本）。全部算完才写 `daily_band_scorecard.json` 和中文 `daily_band_scorecard.md`。不写日报目录、不改日报代码和配置，不写前瞻账本（`forward_ledger` 只导入）；描述，不判，不进台账，不读验证窗口。
 
+量试跑门的线（TRADING-2565-82，`owner_decision:TRADING-2565:2026-10-28:gate_floor_probe`，第 6 期章程第 22 节）：`python -m ai_trading_system.research_probes.gate_floor_probe run --out <目录> --baseline <10-18 假过门探针的结果目录> --workers <进程数>` 读和假过门探针相同的数据（截到 2010-12-31），先用 10-18 的旧种子 20261018–20261022 重跑零和近零三族、逐行和那次的 `false_pass_rows.jsonl` 比并计时（写 `gate_floor_equivalence.json`，有一处不同就停），再评估零和近零三族（新种子各 150 个）、波动效果族六档和回撤留出族三档；每一行用现在的试跑门评估（核对它是 `trial_gate_v2.yaml` 加 10% 线），线 0–0.10 从行里读出，按写定的读法给判定，写 `gate_floor_rows.jsonl`（边跑边写）、`gate_floor_result.json` 和中文 `gate_floor_result.md`。只量门，不改试跑门，不进任何账本，不是结论；判定只给 11-20 续期卡。
+
 ```mermaid
 flowchart LR
     Q["Owner 定问题（TRADING-2567）"] --> PRE["research/&lt;题号&gt;/prereg.yaml + strategy.py<br/>C 区：随 Owner-Decision ship 进 main"]

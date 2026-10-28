@@ -150,6 +150,11 @@ lines:
             date: "2026-10-28"
             note: 日报多在 0.40，是估值闸门的设定值；对同平均敞口的固定仓位 +1.3 点，多半是数据开关；落后固定 0.8 约 1 点，主要是 9 月停跑；只有约 5 个月
             cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
+          - text: 第 6 期第 22 节：量试跑门的线
+            state: now
+            date: "2026-10-30"
+            note: 门不动，换种子量 10% 线降到 0.05–0.09 时零和近零规则漏过多少、效果 10%、13%、15% 的检出率多出多少；只给 11-20 续期卡
+            cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
           - text: 第 6 期自选目标，带每月数据预算
             state: now
             date: "2026-11-20"
