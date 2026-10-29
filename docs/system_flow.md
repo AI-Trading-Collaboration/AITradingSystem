@@ -127,6 +127,8 @@ H-B 条件化储备探针（TRADING-2565-51，`owner_decision:TRADING-2565:2026-
 
 失业率过滤表（TRADING-2565-89，`owner_decision:TRADING-2565:2026-10-29:print_only_tables`，第 6 期章程第 23.3 条，四张只印的表的第三张）：`python -m ai_trading_system.research_probes.unemployment_filter_table check --out <目录>` 读信号快照 `sig-c68ae8decccd` 的美股大盘日频因子和三条 FRED 月度失业率（`unrate_nber_a`、`unrate_nber_b`、`unrate`，TRADING-2565-88 接的；截到 2010-12-31，月底只用上个月的值，不顺延），用评估台的 `signal_exposure` 算 QQQ-Q3 预注册的 F0001 和两条腿的月末目标，找两条腿的每趟退出，看要是等失业率高于自己 12 个月均值才出、晚到哪个月末，只数次数和分布，写 `unemp_check.json`；`run --out <目录>` 再算晚出去那一趟的近似账和「晚 k 个月」对照，按写定的读法给一个判定，写 `unemp_trips.jsonl`、`unemp_table.json` 和中文 `unemp_table.md`。只印，不模拟新规则，不进任何账本，不是结论；判定只给 11-20 续期卡或 `research/families.md`。
 
+新闻波动 NVIX 表（TRADING-2565-92，`owner_decision:TRADING-2565:2026-10-29:print_only_tables`，第 6 期章程第 23.4 条，四张只印的表的第四张）：`python -m ai_trading_system.research_probes.nvix_table check --out <目录>` 读信号快照 `sig-d5cea4795c30` 的美股大盘日频因子和 Manela 的月度 NVIX（`nvix_monthly`，TRADING-2565-91 接的；截到 2010-12），算每个日历月的已实现波动、log NVIX 对 log 已实现波动的残差和月底只用上个月那一对的残差分位状态，只数月数和分布，写 `nvix_check.json`；`run --out <目录>` 再算 NVIX 和已实现波动的秩相关、状态在慢熊段起点以前和长牛段里的读法、按块打乱的对照和比 F0001 慢腿（评估台的 `signal_exposure`）早几个月，按写定的读法给一个判定，写 `nvix_months.jsonl`、`nvix_table.json` 和中文 `nvix_table.md`。只印，不模拟新规则，不进任何账本，不是结论；判定只给 11-20 续期卡或 `research/families.md`。
+
 ```mermaid
 flowchart LR
     Q["Owner 定问题（TRADING-2567）"] --> PRE["research/&lt;题号&gt;/prereg.yaml + strategy.py<br/>C 区：随 Owner-Decision ship 进 main"]
