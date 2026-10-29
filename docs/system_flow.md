@@ -71,7 +71,7 @@ ad hoc 的 SEC PIT 回填/评估与缓存回放。
 
 研究只走评估台（TRADING-2565），按 TRADING-2567 的问题和窗口进行；入口说明在 `research/README.md`。
 
-信号筛选的数据入口（TRADING-2565 S4a）：`research_data.signal_sources` 下载 FRED 日度序列和 Ken French 数据成本机快照，`research_bench.sources.known_at` 按发布滞后对齐；来源列在 `config/research/research_screen.yaml`。
+信号筛选的数据入口（TRADING-2565 S4a）：`research_data.signal_sources` 下载 FRED 日度序列和 Ken French 数据成本机快照，`research_bench.sources.known_at` 按发布滞后对齐；来源列在 `config/research/research_screen.yaml`。月度来源（TRADING-2565-37 起）是 FRED 的月度序列、Shiller 的月度股市数据和 Manela 的新闻波动 NVIX（TRADING-2565-91，`owner_decision:TRADING-2565:2026-10-29:print_only_tables_nvix`：作者网站的 .xlsx 工作簿用标准库读 NVIX 一列，1889-07 到 2016-03，已停更，只进本机快照），每条来源一列、日期是月初，按 `research_bench.sources.monthly_known_at` 对齐。
 
 信号筛选（TRADING-2565 S4b）：`research_bench screen` 在截至 2010-12-31 的 QQQ、美股大盘和 49 个行业上筛一个信号，记进 `research/_screens/ledger/` 的全局账，按全部筛过的信号做 BH 修正后给出淘汰、候选或证据不足；信号模块在 `src/ai_trading_system/research_screens/signals/`。
 

@@ -5,6 +5,8 @@ which verifies the content address, each CSV checksum and the local quality chec
 
 Monthly sources are FRED's monthly series dated at month start in its own convention and
 Robert Shiller's monthly stock-market data, one column per source, dated at month start.
+Manela's news implied volatility (TRADING-2565-91) comes from his .xlsx workbook, read with
+the standard library and dated at month start.
 """
 
 from __future__ import annotations
@@ -14,6 +16,7 @@ import hashlib
 import io
 import json
 import re
+import xml.etree.ElementTree as ET
 import zipfile
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -49,6 +52,15 @@ SHILLER_URL = (
 SHILLER_SHEET = "Data"
 # Column headers in the row beginning with "Date".
 SHILLER_HEADERS = {"P": "P", "D": "D", "E": "E", "CPI": "CPI", "GS10": "Rate GS10"}
+# Manela's NVIX workbook (TRADING-2565-91); use fetch --manela-url for a new data-page file.
+MANELA_URL = "https://asaf.manela.org/papers/mm/nvix/nvix_and_categories_timeseries_mar2016.xlsx"
+MANELA_SHEET = "news_implied_volatility"
+# Row 1 headers: the date column and each dataset's column.
+MANELA_DATE_HEADER = "Date"
+MANELA_HEADERS = {"nvix": "NVIX"}
+MANELA_MISSING_TEXT = frozenset({"", "nan", "na", "#n/a"})
+# Bound XML expansion in memory before parsing any workbook member (not a data-quality threshold).
+MANELA_MAX_MEMBER_BYTES = 20 * 1024 * 1024
 # Download history, not an evaluation window: all approved FRED sources begin after 1900.
 FRED_HISTORY_START = date(1900, 1, 1)
 
@@ -172,6 +184,160 @@ def _shiller_fetch(url: str = SHILLER_URL) -> pd.DataFrame:
     return parse_shiller_table(raw)
 
 
+def parse_manela_workbook(data: bytes) -> pd.DataFrame:
+    """Read Manela's NVIX column, storing numeric yyyymmdd month ends as monthly dates."""
+
+    main = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
+    relation_id = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id"
+    package = "{http://schemas.openxmlformats.org/package/2006/relationships}"
+    try:
+        archive = zipfile.ZipFile(io.BytesIO(data))
+    except zipfile.BadZipFile:
+        raise ValueError("Manela workbook is not a readable zip") from None
+
+    def read_xml(name: str) -> ET.Element:
+        try:
+            info = archive.getinfo(name)
+        except KeyError:
+            raise ValueError(f"Manela workbook is missing member {name}") from None
+        if info.file_size > MANELA_MAX_MEMBER_BYTES:
+            raise ValueError(f"Manela workbook member exceeds size limit: {name}")
+        try:
+            payload = archive.read(info)
+        except (zipfile.BadZipFile, RuntimeError, NotImplementedError):
+            raise ValueError("Manela workbook member is not readable") from None
+        if b"<!DOCTYPE" in payload:
+            raise ValueError(f"Manela workbook member contains a document type: {name}")
+        try:
+            return ET.fromstring(payload)
+        except ET.ParseError:
+            raise ValueError(f"Manela workbook member has invalid XML: {name}") from None
+
+    with archive:
+        workbook = read_xml("xl/workbook.xml")
+        relations = read_xml("xl/_rels/workbook.xml.rels")
+        sheets = [
+            sheet for sheet in workbook.iter(f"{main}sheet") if sheet.get("name") == MANELA_SHEET
+        ]
+        if len(sheets) != 1:
+            raise ValueError("Manela workbook needs exactly one data sheet")
+        rid = sheets[0].get(relation_id)
+        targets = [
+            item.get("Target")
+            for item in relations.iter(f"{package}Relationship")
+            if rid is not None and item.get("Id") == rid
+        ]
+        if len(targets) != 1 or not targets[0]:
+            raise ValueError("Manela workbook has no unique data sheet relationship")
+        target = targets[0]
+        member = target.lstrip("/") if target.startswith("/") else f"xl/{target}"
+        if not member.startswith("xl/") or ".." in member.split("/"):
+            raise ValueError("Manela workbook data sheet path is outside xl/")
+        strings: list[str] = []
+        if "xl/sharedStrings.xml" in archive.namelist():
+            shared = read_xml("xl/sharedStrings.xml")
+            strings = [
+                "".join(node.text or "" for node in item.iter(f"{main}t"))
+                for item in shared.findall(f"{main}si")
+            ]
+        sheet = read_xml(member)
+
+    def cell_text(cell: ET.Element) -> str | None:
+        kind = cell.get("t")
+        if kind == "s":
+            value = cell.find(f"{main}v")
+            try:
+                if value is None or value.text is None:
+                    raise ValueError
+                position = int(value.text)
+            except ValueError:
+                raise ValueError("Manela workbook has an invalid shared string index") from None
+            if not 0 <= position < len(strings):
+                raise ValueError("Manela workbook shared string index is out of range")
+            return strings[position]
+        if kind == "inlineStr":
+            return "".join(node.text or "" for node in cell.iter(f"{main}t"))
+        if kind == "str":
+            return cell.findtext(f"{main}v", default="")
+        return None
+
+    def column(cell: ET.Element) -> str:
+        match = re.match(r"[A-Z]+", cell.get("r", ""))
+        if match is None:
+            raise ValueError("Manela workbook cell has no column reference")
+        return match.group()
+
+    sheet_rows = sheet.findall(f"{main}sheetData/{main}row")
+    if not sheet_rows or sheet_rows[0].get("r") != "1":
+        raise ValueError("Manela workbook headers must be on row 1")
+    headers: dict[str, list[str]] = {}
+    for cell in sheet_rows[0].findall(f"{main}c"):
+        name = column(cell)
+        text = cell_text(cell)
+        if text is not None:
+            headers.setdefault(text.strip().lower(), []).append(name)
+    positions: list[str] = []
+    for header in (MANELA_DATE_HEADER, *MANELA_HEADERS.values()):
+        matches = headers.get(header.lower(), [])
+        if len(matches) != 1:
+            raise ValueError(f"Manela workbook needs exactly one {header} header")
+        positions.append(matches[0])
+
+    dates: list[pd.Timestamp] = []
+    rows: list[list[float]] = []
+    for row in sheet_rows[1:]:
+        cells = {column(cell): cell for cell in row.findall(f"{main}c")}
+        if not any(position in cells for position in positions):
+            continue
+        date_cell = cells.get(positions[0])
+        if date_cell is None or date_cell.get("t") not in (None, "n"):
+            raise ValueError("Manela workbook date must be numeric")
+        date_text = date_cell.findtext(f"{main}v")
+        try:
+            if date_text is None:
+                raise ValueError
+            number = float(date_text)
+            if not number.is_integer():
+                raise ValueError
+            day = pd.Timestamp(datetime.strptime(f"{int(number):08d}", "%Y%m%d"))
+            if not day.is_month_end:
+                raise ValueError
+        except (ValueError, OverflowError):
+            raise ValueError("Manela workbook date must be a yyyymmdd month end") from None
+        dates.append(day.replace(day=1))
+        values: list[float] = []
+        for position in positions[1:]:
+            data_cell = cells.get(position)
+            if data_cell is None or data_cell.get("t") == "e":
+                values.append(np.nan)
+                continue
+            text = cell_text(data_cell)
+            if text is not None:
+                if text.strip().lower() not in MANELA_MISSING_TEXT:
+                    raise ValueError("Manela workbook data column contains unexpected text")
+                values.append(np.nan)
+                continue
+            raw = data_cell.findtext(f"{main}v")
+            try:
+                values.append(float(raw) if raw is not None and raw.strip() else np.nan)
+            except ValueError:
+                raise ValueError("Manela workbook data column contains an invalid number") from None
+        rows.append(values)
+    if not dates:
+        raise ValueError("Manela workbook has no data rows")
+    index = pd.DatetimeIndex(dates, name="date")
+    months = index.to_period("M").astype("int64").to_numpy()
+    if np.any(np.diff(months) != 1):
+        raise ValueError("Manela workbook months must be consecutive and increasing")
+    return pd.DataFrame(rows, index=index, columns=list(MANELA_HEADERS), dtype=float)
+
+
+def _manela_fetch(url: str = MANELA_URL) -> pd.DataFrame:
+    response = requests.get(url, timeout=60)
+    response.raise_for_status()
+    return parse_manela_workbook(response.content)
+
+
 def extract_csv(data: bytes) -> str:
     try:
         with zipfile.ZipFile(io.BytesIO(data)) as archive:
@@ -223,15 +389,19 @@ def fetch_snapshot(
     ken_french_fetch: Callable[[str], bytes],
     shiller_fetch: Callable[[], pd.DataFrame] | None = None,
     shiller_url: str = SHILLER_URL,
+    manela_fetch: Callable[[], pd.DataFrame] | None = None,
+    manela_url: str = MANELA_URL,
 ) -> str:
     """Preserve returned row order, duplicates and missing values; only check judges quality.
 
     Download Shiller's workbook once per snapshot, with each Shiller source taking one column.
+    Download Manela's NVIX workbook once per snapshot in the same way.
     """
 
     sources: list[dict[str, Any]] = []
     payloads: dict[str, bytes] = {}
     shiller_table: pd.DataFrame | None = None
+    manela_table: pd.DataFrame | None = None
     for spec in settings.settings.sources:
         if spec.provider == "fred":
             frame = fred_fetch(spec.dataset).to_frame(name="value")
@@ -243,6 +413,14 @@ def fetch_snapshot(
             if spec.dataset not in shiller_table.columns:
                 raise ValueError(f"Shiller table is missing column {spec.dataset}")
             frame = shiller_table[spec.dataset].to_frame(name="value")
+        elif spec.provider == "manela":
+            if manela_table is None:
+                if manela_fetch is None:
+                    raise ValueError("Manela sources need a Manela fetch")
+                manela_table = manela_fetch()
+            if spec.dataset not in manela_table.columns:
+                raise ValueError(f"Manela table is missing column {spec.dataset}")
+            frame = manela_table[spec.dataset].to_frame(name="value")
         else:
             frame = parse_ken_french_csv(extract_csv(ken_french_fetch(spec.dataset)))
         dates = pd.DatetimeIndex(frame.index)
@@ -283,6 +461,8 @@ def fetch_snapshot(
                         if spec.provider == "fred"
                         else shiller_url
                         if spec.provider == "shiller"
+                        else manela_url
+                        if spec.provider == "manela"
                         else KEN_FRENCH_URL.format(dataset=spec.dataset),
                         "request_parameters": {"dataset": spec.dataset},
                     }
@@ -479,6 +659,7 @@ RootOption = Annotated[Path, typer.Option(help="代码根目录；状态路径�
 def fetch_command(
     root: RootOption = PROJECT_ROOT,
     shiller_url: Annotated[str, typer.Option(help="Shiller 月度数据的下载地址。")] = SHILLER_URL,
+    manela_url: Annotated[str, typer.Option(help="Manela 的 NVIX 工作簿地址。")] = MANELA_URL,
 ) -> None:
     """下载全部批准来源为本机快照；不打印数据行。"""
 
@@ -490,6 +671,8 @@ def fetch_command(
             ken_french_fetch=_ken_french_fetch,
             shiller_fetch=lambda: _shiller_fetch(shiller_url),
             shiller_url=shiller_url,
+            manela_fetch=lambda: _manela_fetch(manela_url),
+            manela_url=manela_url,
         )
     except Exception as exc:
         typer.echo(f"下载失败：{_safe_error_text(exc)}")

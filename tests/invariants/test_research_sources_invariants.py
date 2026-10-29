@@ -214,6 +214,14 @@ def _shiller() -> pd.DataFrame:
     )
 
 
+def _manela() -> pd.DataFrame:
+    """Manela's NVIX table as parsed (TRADING-2565-91), with its own draws."""
+
+    months = pd.date_range("1985-10-01", "1986-03-01", freq="MS", name="date")
+    rng = np.random.default_rng(13)
+    return pd.DataFrame({"nvix": np.round(rng.normal(20.0, 3.0, len(months)), 2)}, index=months)
+
+
 def _ken_french() -> Callable[[str], bytes]:
     files = {
         "F-F_Research_Data_Factors_daily": _zip("factors.CSV", FACTORS_CSV),
@@ -229,6 +237,7 @@ def _fetch(root: Path, fred: dict[str, pd.Series] | None = None) -> str:
         fred_fetch=_fred(fred or _fred_series()),
         ken_french_fetch=_ken_french(),
         shiller_fetch=_shiller,
+        manela_fetch=_manela,
     )
 
 
@@ -340,6 +349,7 @@ def test_the_approved_sources_are_in_the_settings_file() -> None:
         "unrate_nber_a",
         "unrate_nber_b",
         "unrate",
+        "nvix_monthly",
     }
     assert (sources["baa10y"].provider, sources["baa10y"].dataset) == ("fred", "BAA10Y")
     assert (sources["t10y3m"].provider, sources["t10y3m"].dataset) == ("fred", "T10Y3M")

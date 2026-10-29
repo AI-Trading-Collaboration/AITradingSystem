@@ -1,9 +1,10 @@
-"""Invariants of the monthly long-history sources (TRADING-2565-37, TRADING-2565-88).
+"""Invariants of the monthly long-history sources (TRADING-2565-37, -88 and -91).
 
 Acceptance tests written before the code (owner decision
 ``owner_decision:TRADING-2565:2026-10-21:monthly_long_history``; the unemployment rates of
-TRADING-2565-88 under ``owner_decision:TRADING-2565:2026-10-29:print_only_tables``). Every value
-below is synthetic; no test reads a real snapshot or downloads anything.
+TRADING-2565-88 under ``owner_decision:TRADING-2565:2026-10-29:print_only_tables``; Manela's NVIX
+of TRADING-2565-91 under ``owner_decision:TRADING-2565:2026-10-29:print_only_tables_nvix``). Every
+value below is synthetic; no test reads a real snapshot or downloads anything.
 
 53. A monthly observation is used only once its month is known. Month M is published on the first
     trading day on or after the first day of month M + 1 + release_lag_months and used
@@ -21,10 +22,23 @@ below is synthetic; no test reads a real snapshot or downloads anything.
     ``fetch.json`` names its address. The check fails a monthly date that is not the first of a
     month and warns on a missing month, not on missing weekdays. A snapshot written before this
     change still loads under its id.
-58. The approved monthly sources are the ten in the settings file, with their lags.
+58. The approved monthly sources are the eleven in the settings file, with their lags.
 68. A monthly source may cover only some of the years: a FRED series that ends early or starts
     late checks without a gap and loads as fetched. Nothing requires a monthly source to reach a
     given year (TRADING-2565-88: the unemployment rates end in 1942 and 1946 and start in 1948).
+69. Manela's NVIX workbook is read with the standard library: the sheet news_implied_volatility
+    found by name through a relative or absolute path, its Date and NVIX headers on row 1 in any
+    case, shared or inline strings, yyyymmdd month ends turned into month starts, and the
+    missing-value spellings, empty text and an empty value as NaN, keeping the row; rows without
+    a date or NVIX cell are skipped, and other columns are not read. A missing sheet or header,
+    headers below row 1, a sheet path outside xl/, a date that is not a yyyymmdd month end, a
+    skipped, repeated or earlier month, other text, a value or shared-string index that is not a
+    number, a shared string that is not there, a member over 20 MB, a document type, broken XML
+    and bytes that are not a zip are refused, and no refusal names a cell's value.
+70. Snapshots carry NVIX: the workbook is fetched once with requests and its default headers,
+    ``fetch.json`` names its address, missing months stay missing and the check passes; Manela
+    sources are the monthly nvix column with at least one trading day of lag, and the fetch
+    command takes --manela-url.
 """
 
 from __future__ import annotations
@@ -32,6 +46,7 @@ from __future__ import annotations
 import io
 import json
 import zipfile
+from collections.abc import Callable
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -39,7 +54,9 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import pytest
+import requests
 import yaml
+from typer.testing import CliRunner
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.research_bench import trial as tr
@@ -72,6 +89,15 @@ SHILLER: dict[str, Any] = {
     "release_lag_months": 15,
     "known_lag_trading_days": 0,
     "description": "earnings",
+}
+MANELA: dict[str, Any] = {
+    "source_id": "nvix_monthly",
+    "provider": "manela",
+    "dataset": "nvix",
+    "frequency": "monthly",
+    "release_lag_months": 0,
+    "known_lag_trading_days": 5,
+    "description": "news implied volatility",
 }
 DAILY: dict[str, Any] = {
     "source_id": "baa10y",
@@ -530,11 +556,23 @@ def _ken_french(dataset: str) -> bytes:
     return buffer.getvalue()
 
 
+def _nvix_table() -> pd.DataFrame:
+    """Manela's table as parsed (TRADING-2565-91): one missing month, no value used above."""
+
+    months = pd.date_range("1985-10-01", "1986-03-01", freq="MS", name="date")
+    values = np.round(np.random.default_rng(13).normal(20.0, 3.0, len(months)), 2)
+    values[1] = np.nan
+    values[3] = MARK
+    return pd.DataFrame({"nvix": values}, index=months)
+
+
 def _fetch(
     root: Path,
     calls: list[int] | None = None,
     table: pd.DataFrame | None = None,
     series: dict[str, pd.Series] | None = None,
+    nvix: pd.DataFrame | None = None,
+    nvix_calls: list[int] | None = None,
 ) -> str:
     fred = _fred() if series is None else series
 
@@ -543,6 +581,11 @@ def _fetch(
             calls.append(1)
         return (table if table is not None else _shiller_table()).copy()
 
+    def manela() -> pd.DataFrame:
+        if nvix_calls is not None:
+            nvix_calls.append(1)
+        return (nvix if nvix is not None else _nvix_table()).copy()
+
     return ss.fetch_snapshot(
         load_screen_settings(),
         root,
@@ -550,6 +593,8 @@ def _fetch(
         ken_french_fetch=_ken_french,
         shiller_fetch=shiller,
         shiller_url="https://example.invalid/ie_data.xls",
+        manela_fetch=manela,
+        manela_url="https://example.invalid/nvix.xlsx",
     )
 
 
@@ -677,6 +722,7 @@ def test_the_approved_monthly_sources_are_in_the_settings_file() -> None:
         "unrate_nber_a": ("fred", "M0892AUSM156SNBR", 0, 5),
         "unrate_nber_b": ("fred", "M0892BUSM156SNBR", 0, 5),
         "unrate": ("fred", "UNRATE", 0, 5),
+        "nvix_monthly": ("manela", "nvix", 0, 5),
     }
     raw = yaml.safe_load((PROJECT_ROOT / "config/research/research_screen.yaml").read_text("utf-8"))
     written = [item for item in raw["sources"] if item["frequency"] == "monthly"]
@@ -686,6 +732,10 @@ def test_the_approved_monthly_sources_are_in_the_settings_file() -> None:
     assert ss.SHILLER_URL == (
         "https://img1.wsimg.com/blobby/go/e5e77e0b-59d1-44d9-ab25-4763ac982e53/downloads/"
         "1449043e-a1ed-4e2e-8e9c-7b9a2a064493/ie_data.xls?ver=1791297298731"
+    )
+    # Manela's NVIX workbook as listed on his data page on 2026-10-29 (TRADING-2565-91).
+    assert ss.MANELA_URL == (
+        "https://asaf.manela.org/papers/mm/nvix/nvix_and_categories_timeseries_mar2016.xlsx"
     )
 
 
@@ -726,3 +776,309 @@ def test_a_monthly_source_may_end_early_or_start_late(tmp_path: Path) -> None:
         frame = loaded.frames[source_id]
         assert pd.DatetimeIndex(frame.index).equals(pd.DatetimeIndex(series.index))
         np.testing.assert_array_equal(frame["value"].to_numpy(), series.to_numpy())
+
+
+# 69 ----------------------------------------------------------------------------------------------
+
+MAIN = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+RELATIONS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+PACKAGE = "http://schemas.openxmlformats.org/package/2006/relationships"
+PROLOG = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+COLUMN_LETTERS = "ABCDEFGH"
+
+
+def _cell(ref: str, value: Any, strings: list[str], inline: bool) -> str:
+    """A number, a text (shared or inline), or (type, inner XML) for any other kind of cell."""
+
+    if value is None:
+        return ""
+    if isinstance(value, tuple):
+        kind, inner = value
+        return f'<c r="{ref}" t="{kind}">{inner}</c>' if kind else f'<c r="{ref}">{inner}</c>'
+    if isinstance(value, str):
+        if inline:
+            return f'<c r="{ref}" t="inlineStr"><is><t>{value}</t></is></c>'
+        strings.append(value)
+        return f'<c r="{ref}" t="s"><v>{len(strings) - 1}</v></c>'
+    return f'<c r="{ref}"><v>{value!r}</v></c>'
+
+
+def _workbook(
+    rows: list[list[Any]],
+    *,
+    sheet: str = "news_implied_volatility",
+    inline: bool = False,
+    absolute: bool = False,
+    target: str | None = None,
+    pad: int = 0,
+    doctype: bool = False,
+    broken: bool = False,
+    first: int = 1,
+) -> bytes:
+    """A workbook laid out like Manela's: a readme sheet first, the data sheet second."""
+
+    strings: list[str] = ["readme text"]
+    body = "".join(
+        f'<row r="{r}">'
+        + "".join(
+            _cell(f"{COLUMN_LETTERS[c]}{r}", value, strings, inline) for c, value in enumerate(row)
+        )
+        + "</row>"
+        for r, row in enumerate(rows, start=first)
+    )
+    head = PROLOG + ('<!DOCTYPE worksheet [<!ENTITY note "x">]>\n' if doctype else "")
+    data = f'{head}<worksheet xmlns="{MAIN}"><sheetData>{body}</sheetData>{" " * pad}</worksheet>'
+    if broken:
+        data = data[: len(data) // 2]
+    readme = (
+        f'{PROLOG}<worksheet xmlns="{MAIN}"><sheetData><row r="1">'
+        '<c r="A1" t="s"><v>0</v></c></row></sheetData></worksheet>'
+    )
+    workbook = (
+        f'{PROLOG}<workbook xmlns="{MAIN}" xmlns:r="{RELATIONS}"><workbookPr date1904="false"/>'
+        f'<sheets><sheet name="readme" sheetId="1" r:id="rId1"/>'
+        f'<sheet name="{sheet}" sheetId="2" r:id="rId2"/></sheets></workbook>'
+    )
+    folder = "/xl/" if absolute else ""
+    paths = {1: f"{folder}worksheets/sheet1.xml", 2: target or f"{folder}worksheets/sheet2.xml"}
+    rels = (
+        f'{PROLOG}<Relationships xmlns="{PACKAGE}">'
+        + "".join(
+            f'<Relationship Id="rId{n}" Type="{RELATIONS}/worksheet" Target="{paths[n]}"/>'
+            for n in (1, 2)
+        )
+        + f'<Relationship Id="rId3" Type="{RELATIONS}/sharedStrings" Target="sharedStrings.xml"/>'
+        + "</Relationships>"
+    )
+    shared = "".join(f"<si><t>{text}</t></si>" for text in strings)
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("[Content_Types].xml", "<Types/>")
+        archive.writestr("xl/workbook.xml", workbook)
+        archive.writestr("xl/_rels/workbook.xml.rels", rels)
+        archive.writestr("xl/sharedStrings.xml", f'{PROLOG}<sst xmlns="{MAIN}">{shared}</sst>')
+        archive.writestr("xl/worksheets/sheet1.xml", readme)
+        archive.writestr("xl/worksheets/sheet2.xml", data)
+        if target:  # the same sheet at the odd path too, so only the path rule can refuse it
+            archive.writestr(target.lstrip("/") if target.startswith("/") else f"xl/{target}", data)
+    return buffer.getvalue()
+
+
+HEADER = ("Date", "NVIX", "Government", "War")
+
+
+def _rows() -> list[list[Any]]:
+    return [
+        list(HEADER),
+        [18890731, 20.5, 1.25, 0.5],
+        [18890831, ("n", "<v>21.75</v>"), 1.0, "text in another column is not read"],
+        [18890930, None, 1.0, 0.5],  # no NVIX cell
+        [18891031, ("", ""), 1.0, 0.5],  # a cell without a value
+        [18891130, "NaN", 1.0, 0.5],
+        [18891231, " na ", 1.0, 0.5],
+        [18900131, "#N/A", 1.0, 0.5],
+        [18900228, ("e", "<v>#N/A</v>"), 1.0, 0.5],  # an error cell
+        [18900331, 19.0, 1.0, 0.5],
+        [18900430, MARK, None, None],
+    ]
+
+
+def test_the_nvix_workbook_is_read_by_its_sheet_and_headers() -> None:
+    table = ss.parse_manela_workbook(_workbook(_rows()))
+    assert list(table.columns) == ["nvix"]
+    assert table.index.name == "date"
+    assert pd.DatetimeIndex(table.index).equals(
+        pd.date_range("1889-07-01", "1890-04-01", freq="MS")
+    )
+    assert table.dtypes.map(lambda dtype: dtype == np.float64).all()
+    expected = [20.5, 21.75, *[np.nan] * 6, 19.0, MARK]
+    np.testing.assert_array_equal(table["nvix"].to_numpy(), np.array(expected))
+
+
+def test_the_nvix_headers_may_be_inline_text_in_any_case_and_order() -> None:
+    rows = [[" nvix ", "War", "DATE"], [20.5, 0.5, 20101231], [21.5, 0.5, 20110131]]
+    for workbook in (_workbook(rows, inline=True), _workbook(rows, absolute=True)):
+        table = ss.parse_manela_workbook(workbook)
+        assert list(table.index) == [pd.Timestamp("2010-12-01"), pd.Timestamp("2011-01-01")]
+        assert table["nvix"].tolist() == [20.5, 21.5]
+    blank = [
+        list(HEADER),
+        [18890731, 20.5, 1.0, 0.5],
+        [None, None, 1.0, 0.5],
+        [18890831, 21.5, 1.0],
+    ]
+    assert ss.parse_manela_workbook(_workbook(blank))["nvix"].tolist() == [20.5, 21.5]
+    empty = [list(HEADER), [18890731, ""], [18890831, ("", "<v></v>")], [18890930, 1.5]]
+    assert ss.parse_manela_workbook(_workbook(empty))["nvix"].isna().tolist() == [
+        True,
+        True,
+        False,
+    ]
+
+
+def _bad(change: Callable[[list[list[Any]]], None]) -> list[list[Any]]:
+    rows = _rows()
+    change(rows)
+    return rows
+
+
+def _setter(row: int, column: int, value: Any) -> Callable[[list[list[Any]]], None]:
+    def change(rows: list[list[Any]]) -> None:
+        rows[row][column] = value
+
+    return change
+
+
+BAD_WORKBOOKS: dict[str, Callable[[], bytes]] = {
+    "the sheet is missing": lambda: _workbook(_rows(), sheet="nvix"),
+    "a sheet path that leaves xl/": lambda: _workbook(
+        _rows(), target="../xl/worksheets/sheet2.xml"
+    ),
+    "a sheet path outside xl/": lambda: _workbook(_rows(), target="/docs/sheet2.xml"),
+    "no NVIX header": lambda: _workbook(_bad(_setter(0, 1, "NVIX2"))),
+    "two NVIX headers": lambda: _workbook(_bad(_setter(0, 3, "nvix"))),
+    "no Date header": lambda: _workbook(_bad(_setter(0, 0, "Month"))),
+    "the header is not on the first row": lambda: _workbook([["NVIX data"], *_rows()]),
+    "a date that is not a whole number": lambda: _workbook(_bad(_setter(2, 0, 18890831.5))),
+    "a date that is not a day": lambda: _workbook(_bad(_setter(2, 0, 43218765))),
+    "a date written as text": lambda: _workbook(_bad(_setter(2, 0, "1889-08"))),
+    "a row without a date": lambda: _workbook(_bad(_setter(2, 0, None))),
+    "a skipped month": lambda: _workbook(_bad(lambda rows: rows.pop(3))),
+    "a date that is not the last day of its month": lambda: _workbook(
+        _bad(_setter(2, 0, 18890815))
+    ),
+    "a repeated month": lambda: _workbook(_bad(_setter(2, 0, 18890731))),
+    "an earlier month": lambda: _workbook(_bad(_setter(10, 0, 18890430))),
+    "other text in the NVIX column": lambda: _workbook(_bad(_setter(4, 1, "4321.8765x"))),
+    "no data rows": lambda: _workbook([list(HEADER)]),
+    "a value that is not a number": lambda: _workbook(
+        _bad(_setter(4, 1, ("", "<v>4321.8765x</v>")))
+    ),
+    "a date that is not a number": lambda: _workbook(_bad(_setter(2, 0, ("n", "<v>4321x</v>")))),
+    "a shared string that is not there": lambda: _workbook(
+        _bad(_setter(4, 1, ("s", "<v>4321</v>")))
+    ),
+    "a shared string index that is not a number": lambda: _workbook(
+        _bad(_setter(4, 1, ("s", "<v>4321x</v>")))
+    ),
+    "the headers are not on row 1": lambda: _workbook(_rows(), first=2),
+    "a member over 20 MB": lambda: _workbook(_rows(), pad=21 * 1024 * 1024),
+    "a document type": lambda: _workbook(_rows(), doctype=True),
+    "broken XML": lambda: _workbook(_rows(), broken=True),
+    "not a zip": lambda: b"<html>4321.8765</html>",
+}
+
+
+@pytest.mark.parametrize("case", sorted(BAD_WORKBOOKS))
+def test_a_bad_nvix_workbook_is_refused_without_naming_a_value(case: str) -> None:
+    with pytest.raises(ValueError) as refused:
+        ss.parse_manela_workbook(BAD_WORKBOOKS[case]())
+    for text in ("4321", "43218765", "18890815", "18890831.5", "1889-08"):
+        assert text not in str(refused.value)
+
+
+# 70 ----------------------------------------------------------------------------------------------
+
+
+def test_a_snapshot_carries_nvix(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    calls: list[int] = []
+    snapshot = _fetch(tmp_path, nvix_calls=calls)
+    assert calls == [1]
+    report = ss.check_snapshot(tmp_path, snapshot)
+    assert report["status"] in {"PASS", "WARN"}
+    checked = report["sources"]["nvix_monthly"]
+    assert (checked["gap_count"], checked["off_month_start_count"]) == (0, 0)
+    assert checked["nonempty_ratio"] == {"value": 5 / 6}
+    loaded = ss.load_snapshot(tmp_path, snapshot)
+    frame = loaded.frames["nvix_monthly"]
+    table = _nvix_table()
+    assert pd.DatetimeIndex(frame.index).equals(pd.DatetimeIndex(table.index))
+    np.testing.assert_array_equal(frame["value"].to_numpy(), table["nvix"].to_numpy())
+    spec = {s.source_id: s for s in loaded.specs}["nvix_monthly"]
+    assert (spec.provider, spec.dataset, spec.frequency) == ("manela", "nvix", "monthly")
+    fetched = json.loads((_directory(tmp_path, snapshot) / "fetch.json").read_text("utf-8"))
+    endpoints = {item["source_id"]: item["endpoint"] for item in fetched["sources"]}
+    assert endpoints["nvix_monthly"] == "https://example.invalid/nvix.xlsx"
+    assert endpoints["shiller_price"] == "https://example.invalid/ie_data.xls"
+    changed = _nvix_table()
+    changed.iloc[4, 0] += 0.01
+    assert _fetch(tmp_path / "changed", nvix=changed) != snapshot
+    printed = capsys.readouterr()
+    check_md = (_directory(tmp_path, snapshot) / "check.md").read_text(encoding="utf-8")
+    for text in (printed.out, printed.err, check_md):
+        assert "4321.8765" not in text and "4321.88" not in text
+
+
+def test_manela_sources_need_a_manela_fetch(tmp_path: Path) -> None:
+    fred = _fred()
+    with pytest.raises(ValueError):
+        ss.fetch_snapshot(
+            load_screen_settings(),
+            tmp_path,
+            fred_fetch=lambda dataset: fred[dataset].copy(),
+            ken_french_fetch=_ken_french,
+            shiller_fetch=_shiller_table,
+        )
+    with pytest.raises(ValueError):
+        _fetch(tmp_path / "short", nvix=_nvix_table().rename(columns={"nvix": "war"}))
+
+
+def test_manela_specs_are_the_monthly_nvix_column_with_a_lag() -> None:
+    assert SourceSpec(**MANELA).provider == "manela"
+    for bad in (
+        {"dataset": "NVIX"},
+        {"dataset": "war"},
+        {"frequency": "daily", "release_lag_months": 0},
+        {"known_lag_trading_days": 0},
+    ):
+        with pytest.raises(ValueError):
+            SourceSpec(**(MANELA | bad))
+
+
+class _Response:
+    def __init__(self, content: bytes, status: int = 200) -> None:
+        self.content = content
+        self.status = status
+
+    def raise_for_status(self) -> None:
+        if self.status != 200:
+            raise requests.HTTPError(f"{self.status} Forbidden")
+
+
+def test_the_manela_workbook_is_downloaded_with_requests(monkeypatch: pytest.MonkeyPatch) -> None:
+    asked: list[tuple[str, dict[str, Any]]] = []
+
+    def get(url: str, **options: Any) -> _Response:
+        asked.append((url, options))
+        return _Response(_workbook(_rows()))
+
+    monkeypatch.setattr(ss.requests, "get", get)
+    table = ss._manela_fetch("https://example.invalid/nvix.xlsx")
+    pd.testing.assert_frame_equal(table, ss.parse_manela_workbook(_workbook(_rows())))
+    assert asked == [("https://example.invalid/nvix.xlsx", {"timeout": 60})]
+    ss._manela_fetch()
+    assert asked[-1] == (ss.MANELA_URL, {"timeout": 60})
+    monkeypatch.setattr(ss.requests, "get", lambda url, **options: _Response(b"", 403))
+    with pytest.raises(requests.HTTPError):
+        ss._manela_fetch()
+
+
+def test_the_fetch_command_takes_a_manela_url(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    seen: dict[str, Any] = {}
+    urls: list[str] = []
+    monkeypatch.setattr(
+        ss, "fetch_snapshot", lambda settings, root, **options: seen.update(options)
+    )
+    monkeypatch.setattr(ss, "_manela_fetch", lambda url=ss.MANELA_URL: urls.append(url))
+    address = "https://example.invalid/new_nvix.xlsx"
+    outcome = CliRunner().invoke(
+        ss.app, ["fetch", "--root", str(tmp_path), "--manela-url", address]
+    )
+    assert outcome.exit_code == 0, outcome.output
+    assert seen["manela_url"] == address
+    seen["manela_fetch"]()
+    assert urls == [address]
+    CliRunner().invoke(ss.app, ["fetch", "--root", str(tmp_path)])
+    assert seen["manela_url"] == ss.MANELA_URL

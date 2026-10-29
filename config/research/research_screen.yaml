@@ -146,6 +146,19 @@ sources:
     release_lag_months: 0
     known_lag_trading_days: 5
     description: Civilian unemployment rate, seasonally adjusted (BLS), from 1948-01
+  # News implied volatility (owner_decision:TRADING-2565:2026-10-29:print_only_tables_nvix,
+  # TRADING-2565-91): column NVIX of Manela's workbook nvix_and_categories_timeseries_mar2016.xlsx
+  # (Manela and Moreira, JFE 2017), monthly, annualized percent, 1889-07 to 2016-03; no longer
+  # updated. Fitted to VIX on 1996-2009 and predicted back from the same weights before 1986, so
+  # only the text was known then; months without WSJ text are missing. The data page allows
+  # non-commercial use free of charge and asks for a citation of the paper.
+  - source_id: nvix_monthly
+    provider: manela
+    dataset: nvix
+    frequency: monthly
+    release_lag_months: 0
+    known_lag_trading_days: 5
+    description: News implied volatility NVIX (Manela and Moreira), monthly, 1889-07 to 2016-03
 # Signal screening (S4b). Every market is cut at screen_end: the US market and the industries move
 # with QQQ after 2010, so reading them later would read QQQ's validation window. The screen has no
 # option to read past screen_end; moving it needs a change to this zone C file.

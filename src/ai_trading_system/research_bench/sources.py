@@ -3,6 +3,9 @@
 TRADING-2565-37 (owner_decision:TRADING-2565:2026-10-21:monthly_long_history): a monthly
 observation for M is published on the first trading day on or after the first day of month
 M + 1 + release_lag_months, then used known_lag_trading_days trading days later.
+
+TRADING-2565-91 (owner_decision:TRADING-2565:2026-10-29:print_only_tables_nvix): Manela's
+monthly NVIX column is also a signal source.
 """
 
 from __future__ import annotations
@@ -22,13 +25,14 @@ DEFAULT_MAX_STALE_DAYS = 5
 MONTHLY_MAX_MISSING_MONTHS = 1
 SHILLER_COLUMNS = frozenset({"P", "D", "E", "CPI", "GS10"})
 KEN_FRENCH_DATASETS = frozenset({"F-F_Research_Data_Factors_daily", "49_Industry_Portfolios_daily"})
+MANELA_COLUMNS = frozenset({"nvix"})
 
 
 class SourceSpec(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     source_id: str = Field(pattern=r"^[a-z0-9_]+$")
-    provider: Literal["fred", "ken_french", "shiller"]
+    provider: Literal["fred", "ken_french", "shiller", "manela"]
     dataset: str = Field(min_length=1)
     frequency: Literal["daily", "monthly"]
     known_lag_trading_days: int = Field(ge=0, strict=True)
@@ -51,6 +55,14 @@ class SourceSpec(BaseModel):
             self.frequency != "monthly" or self.dataset not in SHILLER_COLUMNS
         ):
             raise ValueError("Shiller sources are monthly columns P, D, E, CPI or GS10")
+        if self.provider == "manela" and (
+            self.frequency != "monthly"
+            or self.dataset not in MANELA_COLUMNS
+            or self.known_lag_trading_days < 1
+        ):
+            raise ValueError(
+                "Manela sources are the monthly nvix column with at least one trading day of lag"
+            )
         if self.frequency == "daily" and self.release_lag_months != 0:
             raise ValueError("release_lag_months applies to monthly sources only")
         return self
