@@ -2,8 +2,8 @@ schema_version: task.v1
 id: DEVX-034_WORK_OVERVIEW
 area: Developer workflow / 整体工作总览（私有，经学习 App 打开）
 priority: P2
-status: IN_PROGRESS
-next_owner: Claude（审 DEVX-034-04，发布后把改版说明交给 Baker 转给学习 App 那边）
-next_step: 第 1 步（卡片核对）和第 2 步生成器第 1 版（DEVX-034-02、-03）已上 main，电脑上只读跑通，学习 App 已接上；DEVX-034-04：路线图 docs/work_overview/roadmap.yaml 取代主线文件，work.json 先讲每条线的阶段和里程碑，卡配中文名，要 Baker 做的和在等的事分开，日报写没过的原因（需求文档第 4、9 节）；下一步把改版说明交给学习 App 那边改页面；第 2 版再接开发日报副本
+status: BASELINE_DONE
+next_owner: Baker（定第 2 版什么时候开）
+next_step: 第 1 版完成：卡片核对、只读生成器（DEVX-034-02、-03）和先讲路线图的改版（DEVX-034-04）都在 main 上，学习 App 按改版说明重画了页面，2026-10-26 核对过；剩第 2 版：协作块（开发日报的副本，可能并进改动去向的占比，路线图展示线第 2 段），日报运行稳定以后由 Baker 定什么时候开
 acceptance: 见 docs/requirements/DEVX-034_Work_Overview.md 第 6 节：路线图里的卡都存在并有中文名、每张在办的卡都挂在一个里程碑下、每条线最多一段写着现在；生成器只读、不联网、不写生产和运行副本，读不到的块写“读不到”；不含日报正文、价格和供应商原始数据；不新增 Windows 计划任务；公开研究页不变；全套 PR 测试通过
-notes: production_effect=none；broker_action=none；requirement=docs/requirements/DEVX-034_Work_Overview.md；owner_decision:DEVX-034:2026-10-25:work_overview_private（Baker 2026-10-25 00:47 JST 在决定卡上选「私有，经学习 App 打开」）；方案在 claude.ai 的私有文档「整体工作进展展示方案」；2026-10-25：DEVX-034-01 记录批：第 1 步卡片核对（关 5 张、改写 3 张、延后 12 张，研究进展页的卡跟着改一句）、主线文件、本卡和需求文档；OPS-086（archive 搬迁）和 TRADING-2567（TRADING-2567-39）由各自的线程改；2026-10-25：DEVX-034-02 生成器第 1 版：只出 work.json，页面由学习 App 画（Baker 01:26 JST），日报读调度摘要，从 --ref 上已提交的内容读，读不到的块不让生成失败；2026-10-25：DEVX-034-03：只给输出里的卡问 git（第 1 版每张卡都问），原因里不带路径和命令行；2026-10-25：DEVX-034-04：Baker 觉得第 1 版页面太底层，定了先讲路线图和每段的里程碑、再讲每张卡支撑哪个里程碑，确认「工程的阶段分的没问题，期权先保留吧，路线图这边的工程来维护」= owner_decision:DEVX-034:2026-10-25:roadmap_first；路线图取代主线文件，work.json 仍是 v1、只加字段
+notes: production_effect=none；broker_action=none；requirement=docs/requirements/DEVX-034_Work_Overview.md；owner_decision:DEVX-034:2026-10-25:work_overview_private（Baker 2026-10-25 00:47 JST 在决定卡上选「私有，经学习 App 打开」）；方案在 claude.ai 的私有文档「整体工作进展展示方案」；2026-10-25：DEVX-034-01 记录批：第 1 步卡片核对（关 5 张、改写 3 张、延后 12 张，研究进展页的卡跟着改一句）、主线文件、本卡和需求文档；OPS-086（archive 搬迁）和 TRADING-2567（TRADING-2567-39）由各自的线程改；2026-10-25：DEVX-034-02 生成器第 1 版：只出 work.json，页面由学习 App 画（Baker 01:26 JST），日报读调度摘要，从 --ref 上已提交的内容读，读不到的块不让生成失败；2026-10-25：DEVX-034-03：只给输出里的卡问 git（第 1 版每张卡都问），原因里不带路径和命令行；2026-10-25：DEVX-034-04：Baker 觉得第 1 版页面太底层，定了先讲路线图和每段的里程碑、再讲每张卡支撑哪个里程碑，确认「工程的阶段分的没问题，期权先保留吧，路线图这边的工程来维护」= owner_decision:DEVX-034:2026-10-25:roadmap_first；路线图取代主线文件，work.json 仍是 v1、只加字段；2026-10-29：第 1 版收尾（Baker 2026-10-29 说「收尾」）：学习 App 按 DEVX-034-04 的改版说明重画了页面，2026-10-26 对着说明核对过；路线图展示线第 1 段和它的第二个里程碑标完成（2026-10-26），本卡转 BASELINE_DONE，剩第 2 版；开第 2 段要 Baker 同意

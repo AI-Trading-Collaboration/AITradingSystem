@@ -416,14 +416,16 @@ lines:
     stages:
       - id: "1"
         title: 工作总览第 1 版
-        state: now
+        state: done
+        done_on: "2026-10-26"
         milestones:
           - text: 卡片核对和主线文件；只读生成器；学习 App 接上
             state: done
             date: "2026-10-25"
             cards: [DEVX-034_WORK_OVERVIEW]
           - text: 好读的改版：先讲路线图和里程碑，再讲每项工作支撑什么
-            state: now
+            state: done
+            date: "2026-10-26"
             cards: [DEVX-034_WORK_OVERVIEW]
       - id: "2"
         title: 工作总览第 2 版
