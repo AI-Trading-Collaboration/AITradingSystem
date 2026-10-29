@@ -25,6 +25,9 @@ from ai_trading_system.external_request_cache import (
     sanitize_diagnostic_text,
     write_external_request_cache_response,
 )
+from ai_trading_system.external_request_cache_revalidation_coordination import (
+    new_revalidation_owner_id,
+)
 from ai_trading_system.paths import join_root, state_dir
 from ai_trading_system.trading_calendar import is_us_equity_trading_day
 from ai_trading_system.yaml_loader import safe_load_yaml_text
@@ -787,6 +790,7 @@ class FredRateProvider:
         )
         response = None
         last_exception: Exception | None = None
+        revalidation_owner_id = new_revalidation_owner_id()
         for attempt in range(1, self.max_attempts + 1):
             try:
                 response = cached_requests_get(
@@ -797,6 +801,7 @@ class FredRateProvider:
                     timeout=self.timeout_seconds,
                     requests_module=requests,
                     cache_dir=request_cache_dir,
+                    revalidation_owner_id=revalidation_owner_id,
                 )
                 break
             except Exception as exc:
@@ -1691,6 +1696,7 @@ def _fetch_fmp_price_records(
     response: CachedHttpResponse | None = None
     last_exception: Exception | None = None
     attempt_count = 0
+    revalidation_owner_id = new_revalidation_owner_id()
     for attempt in range(1, max_attempts + 1):
         attempt_count = attempt
         try:
@@ -1702,6 +1708,7 @@ def _fetch_fmp_price_records(
                 timeout=timeout_seconds,
                 requests_module=requests,
                 cache_dir=request_cache_dir,
+                revalidation_owner_id=revalidation_owner_id,
             )
             break
         except Exception as exc:

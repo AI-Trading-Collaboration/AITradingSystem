@@ -2309,6 +2309,13 @@ lease 的 `FAILED` 终态只在 `waiter_timeout_seconds`（135 秒）内挡住�
 下一次调用重新联网，不再反复读到同一份坏响应。起因是 2026-10-22 12:00 JST 新入口第二个生产日（as_of 2026-10-21）：
 官方政策源被前一天的失败标记拒绝，FRED DGS2 的 898 字节非 CSV 响应被缓存后第二次尝试又读到它。
 
+DATA-030（`owner_decision:DATA-030:2026-10-30:fix_before_count`）让调用方自己的断线重试不再被自己上一次的失败挡住：
+官方源、SEC companyfacts、FMP 估值、EODHD、FRED、FMP 行情的 6 个重试循环在循环前用 `new_revalidation_owner_id()` 生成一个 owner id，
+每次尝试都以 `revalidation_owner_id` 传给 `cached_requests_get` / `cached_urllib_get`，再由 `execute(owner_id=...)` 用于 lease；
+`acquire` 只在最后一个 `FAILED` 事件属于别的 owner 时按 DATA-028 挡 135 秒，同一 owner 失败后按 `ACQUIRED` 取新 lease。owner id 不进缓存键，
+两个策略文件、尝试次数和退避不变；新的一轮循环、别的进程仍被挡。起因是 2026-10-28 12:00 JST（as_of 2026-10-27）：每天第一次取官方页面都要再验证，
+第一次联网失败后 DATA-027 的重试被 `OWNER_FAILURE_RETRY_DISABLED` 拒绝，没有发出第二次请求。
+
 ENG-VAL-010 为失败 formal Full 跨 clean worktree 的合法复验增加显式可移植导入，而不改写历史
 evidence。先把原 `test_runtime_summary.json` 与 fixed sibling `test_runtime_profile.json` 同字节放入
 当前 repository root 的 `outputs/validation_runtime/<run_id>/`，再执行

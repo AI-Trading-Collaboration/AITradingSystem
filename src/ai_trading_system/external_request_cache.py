@@ -211,6 +211,7 @@ def cached_requests_get(
     timeout: float = 30,
     requests_module: Any,
     cache_dir: Path | str | None = DEFAULT_EXTERNAL_REQUEST_CACHE_DIR,
+    revalidation_owner_id: str | None = None,
 ) -> CachedHttpResponse:
     cache_dir = _effective_cache_dir(cache_dir)
     lookup = lookup_external_request_cache(
@@ -284,6 +285,7 @@ def cached_requests_get(
         ),
         fetch=fetch_live_response,
         publish=publish_live_response,
+        owner_id=revalidation_owner_id,
     )
     record_external_request_cache_event(
         provider=provider,
@@ -305,6 +307,7 @@ def cached_urllib_get(
     headers: Mapping[str, str] | None = None,
     timeout: float = 30,
     cache_dir: Path | str | None = DEFAULT_EXTERNAL_REQUEST_CACHE_DIR,
+    revalidation_owner_id: str | None = None,
 ) -> CachedHttpResponse:
     cache_dir = _effective_cache_dir(cache_dir)
     lookup = lookup_external_request_cache(
@@ -381,6 +384,7 @@ def cached_urllib_get(
         ),
         fetch=fetch_live_response,
         publish=publish_live_response,
+        owner_id=revalidation_owner_id,
     )
     record_external_request_cache_event(
         provider=provider,
@@ -400,6 +404,7 @@ def _coordinate_revalidation_if_required(
     lookup: Callable[[], ExternalRequestCacheLookup],
     fetch: Callable[[], CachedHttpResponse],
     publish: Callable[[CachedHttpResponse], None],
+    owner_id: str | None = None,
 ) -> CachedHttpResponse:
     if initial_lookup.status not in {"EXPIRED_REVALIDATE", "INVALIDATED_REVALIDATE"}:
         response = fetch()
@@ -435,7 +440,7 @@ def _coordinate_revalidation_if_required(
             reason_code="CACHE_LOOKUP_INVALID",
         )
 
-    return coordinator.execute(probe=probe, fetch=fetch, publish=publish).value
+    return coordinator.execute(probe=probe, fetch=fetch, publish=publish, owner_id=owner_id).value
 
 
 def lookup_external_request_cache(

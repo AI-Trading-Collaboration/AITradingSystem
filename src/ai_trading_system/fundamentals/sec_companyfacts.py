@@ -17,6 +17,9 @@ from ai_trading_system.external_request_cache import (
     cached_requests_get,
     default_external_request_cache_dir,
 )
+from ai_trading_system.external_request_cache_revalidation_coordination import (
+    new_revalidation_owner_id,
+)
 
 SEC_REQUEST_MAX_ATTEMPTS = 3
 SEC_REQUEST_RETRY_BACKOFF_SECONDS = (5.0, 15.0)
@@ -98,6 +101,7 @@ class SecEdgarCompanyFactsProvider:
             requests_module=self._requests_module,
             explicit_cache_dir=self._request_cache_dir,
         )
+        revalidation_owner_id = new_revalidation_owner_id()
         for attempt in range(1, self._max_attempts + 1):
             try:
                 response = cached_requests_get(
@@ -112,6 +116,7 @@ class SecEdgarCompanyFactsProvider:
                     timeout=30,
                     requests_module=requests,
                     cache_dir=request_cache_dir,
+                    revalidation_owner_id=revalidation_owner_id,
                 )
                 break
             except Exception as exc:

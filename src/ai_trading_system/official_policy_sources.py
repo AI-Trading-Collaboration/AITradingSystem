@@ -21,6 +21,9 @@ from typing import Any, Protocol
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data.download import write_download_manifest
 from ai_trading_system.external_request_cache import cached_urllib_get
+from ai_trading_system.external_request_cache_revalidation_coordination import (
+    new_revalidation_owner_id,
+)
 from ai_trading_system.paths import state_dir
 
 DEFAULT_OFFICIAL_POLICY_RAW_DIR = (
@@ -136,6 +139,7 @@ class UrllibOfficialPolicyHttpClient:
         headers: Mapping[str, str] | None = None,
         timeout: int = 30,
     ) -> OfficialPolicyHttpResponse:
+        revalidation_owner_id = new_revalidation_owner_id()
         for attempt in range(1, self.max_attempts + 1):
             try:
                 response = cached_urllib_get(
@@ -144,6 +148,7 @@ class UrllibOfficialPolicyHttpClient:
                     url=url,
                     headers=headers,
                     timeout=timeout,
+                    revalidation_owner_id=revalidation_owner_id,
                 )
             except (
                 TimeoutError,

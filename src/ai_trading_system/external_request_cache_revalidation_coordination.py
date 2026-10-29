@@ -245,6 +245,11 @@ def load_revalidation_coordination_policy(
     return policy
 
 
+def new_revalidation_owner_id() -> str:
+    """Create an owner for one caller retry loop."""
+    return f"owner-{uuid4().hex}"
+
+
 class ExternalRequestRevalidationCoordinator:
     """Per-cache-key cross-process lease with replayable, redacted evidence."""
 
@@ -324,6 +329,7 @@ class ExternalRequestRevalidationCoordinator:
             if (
                 head is not None
                 and head["state"] == "FAILED"
+                and head["owner_id"] != candidate_owner_id
                 and head["causal_probe"]["causal_fingerprint"] == causal_probe.causal_fingerprint
                 and not self.policy.allow_waiter_retry_after_owner_failure
                 and instant
@@ -474,6 +480,7 @@ class ExternalRequestRevalidationCoordinator:
         publish: Callable[[T], None],
         monotonic: Callable[[], float] = time.monotonic,
         sleep: Callable[[float], None] = time.sleep,
+        owner_id: str | None = None,
     ) -> RevalidationCoordinationExecution[T]:
         started = monotonic()
         deadline = started + self.policy.waiter_timeout_seconds
@@ -485,7 +492,7 @@ class ExternalRequestRevalidationCoordinator:
         if current.status == "REUSABLE":
             return self._execution("ALREADY_REUSABLE", current, None, monotonic() - started)
 
-        owner_id = f"owner-{uuid4().hex}"
+        owner_id = owner_id if owner_id is not None else new_revalidation_owner_id()
         interval = self.policy.initial_poll_interval_milliseconds / 1000
         maximum_interval = self.policy.maximum_poll_interval_milliseconds / 1000
         waited_for_prior_owner = False

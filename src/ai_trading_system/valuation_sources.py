@@ -18,6 +18,9 @@ from ai_trading_system.external_request_cache import (
     cached_requests_get,
     default_external_request_cache_dir,
 )
+from ai_trading_system.external_request_cache_revalidation_coordination import (
+    new_revalidation_owner_id,
+)
 from ai_trading_system.valuation import (
     CrowdingSignal,
     CrowdingStatus,
@@ -546,6 +549,7 @@ class FmpHttpValuationProvider:
         )
         request_params = {**params, "apikey": self._api_key}
         response: Any | None = None
+        revalidation_owner_id = new_revalidation_owner_id()
         for attempt in range(1, self._max_attempts + 1):
             try:
                 response = cached_requests_get(
@@ -556,6 +560,7 @@ class FmpHttpValuationProvider:
                     timeout=self._timeout,
                     requests_module=requests,
                     cache_dir=request_cache_dir,
+                    revalidation_owner_id=revalidation_owner_id,
                 )
                 response.raise_for_status()
                 break
@@ -625,6 +630,7 @@ class EodhdHttpEarningsTrendsProvider:
         )
         request_params = {**params, "api_token": self._api_key}
         response: Any | None = None
+        revalidation_owner_id = new_revalidation_owner_id()
         for attempt in range(1, self._max_attempts + 1):
             try:
                 response = cached_requests_get(
@@ -635,6 +641,7 @@ class EodhdHttpEarningsTrendsProvider:
                     timeout=self._timeout,
                     requests_module=requests,
                     cache_dir=request_cache_dir,
+                    revalidation_owner_id=revalidation_owner_id,
                 )
                 response.raise_for_status()
                 break
