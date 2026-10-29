@@ -125,6 +125,8 @@ H-B 条件化储备探针（TRADING-2565-51，`owner_decision:TRADING-2565:2026-
 
 宏观回补表（TRADING-2565-86，`owner_decision:TRADING-2565:2026-10-29:print_only_tables`，第 6 期章程第 23.2 条，四张只印的表的第二张）：`python -m ai_trading_system.research_probes.macro_reentry_table check --out <目录>` 读信号快照 `sig-ed9e988ffe7c` 的美股大盘日频因子和 Shiller、Baa、Aaa 月度序列（截到 2010-12-31，宏观序列照 `state_table` 取月底已知的值），用评估台的 `signal_exposure` 算 QQQ-Q3 预注册的 F0001 和两条腿的月末目标，找慢腿的每次退出和两个宏观条件（利差回落、估值便宜）的回来月，只数次数和分布，写 `macro_check.json`；`run --out <目录>` 再算早回来那一趟的近似账、二次下跌、收回的比例和「等 k 个月」对照，按写定的读法给两个判定，写 `macro_exits.jsonl`、`macro_table.json` 和中文 `macro_table.md`。只印，不模拟新规则，不进任何账本，不是结论；判定只给 11-20 续期卡或 `research/families.md`。
 
+失业率过滤表（TRADING-2565-89，`owner_decision:TRADING-2565:2026-10-29:print_only_tables`，第 6 期章程第 23.3 条，四张只印的表的第三张）：`python -m ai_trading_system.research_probes.unemployment_filter_table check --out <目录>` 读信号快照 `sig-c68ae8decccd` 的美股大盘日频因子和三条 FRED 月度失业率（`unrate_nber_a`、`unrate_nber_b`、`unrate`，TRADING-2565-88 接的；截到 2010-12-31，月底只用上个月的值，不顺延），用评估台的 `signal_exposure` 算 QQQ-Q3 预注册的 F0001 和两条腿的月末目标，找两条腿的每趟退出，看要是等失业率高于自己 12 个月均值才出、晚到哪个月末，只数次数和分布，写 `unemp_check.json`；`run --out <目录>` 再算晚出去那一趟的近似账和「晚 k 个月」对照，按写定的读法给一个判定，写 `unemp_trips.jsonl`、`unemp_table.json` 和中文 `unemp_table.md`。只印，不模拟新规则，不进任何账本，不是结论；判定只给 11-20 续期卡或 `research/families.md`。
+
 ```mermaid
 flowchart LR
     Q["Owner 定问题（TRADING-2567）"] --> PRE["research/&lt;题号&gt;/prereg.yaml + strategy.py<br/>C 区：随 Owner-Decision ship 进 main"]
