@@ -158,7 +158,7 @@ lines:
           - text: 第 6 期第 23 节：四张只印的表
             state: now
             date: "2026-11-09"
-            note: 一张一张做：行业暴涨状态印完（not_holds：暴涨以后真跌多，可快腿一个月就回来，没留住；families.md 新开价格路径一行），宏观回补印完（利差 too_few：33 次退出只早到 5 次；估值 not_holds：早回来扣基准后是负的，收回 6%；families.md 利差、估值两行各记一句），失业率过滤（失业率趋势向上才让两条腿出去，对着晚同样月数的对照）接了数据、打印模块发布、待跑，再新闻波动 NVIX；只印，不测新规则，判定只进 11-20 续期卡或 families.md；花费超过每周上限是 Baker 选的
+            note: 一张一张做：行业暴涨状态印完（not_holds：暴涨以后真跌多，可快腿一个月就回来，没留住；families.md 新开价格路径一行），宏观回补印完（利差 too_few：33 次退出只早到 5 次；估值 not_holds：早回来扣基准后是负的，收回 6%；families.md 利差、估值两行各记一句），失业率过滤印完（not_holds：晚出去合起来多省 6.7 点，可强度只有 0.15，前一半是负的，慢熊里丢的比线多 0.5 点；families.md 经典趋势一行记一句），下一张新闻波动 NVIX，接数据要 Baker 另点一次；只印，不测新规则，判定只进 11-20 续期卡或 families.md；花费超过每周上限是 Baker 选的
             cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
           - text: 第 6 期自选目标，带每月数据预算
             state: now
