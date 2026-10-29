@@ -185,7 +185,7 @@ def _shiller_fetch(url: str = SHILLER_URL) -> pd.DataFrame:
 
 
 def parse_manela_workbook(data: bytes) -> pd.DataFrame:
-    """Read Manela's NVIX column, storing numeric yyyymmdd month ends as monthly dates."""
+    """Read Manela's NVIX column, storing numeric yyyymmdd days as month-start dates."""
 
     main = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
     relation_id = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id"
@@ -300,10 +300,8 @@ def parse_manela_workbook(data: bytes) -> pd.DataFrame:
             if not number.is_integer():
                 raise ValueError
             day = pd.Timestamp(datetime.strptime(f"{int(number):08d}", "%Y%m%d"))
-            if not day.is_month_end:
-                raise ValueError
         except (ValueError, OverflowError):
-            raise ValueError("Manela workbook date must be a yyyymmdd month end") from None
+            raise ValueError("Manela workbook date must be a yyyymmdd day") from None
         dates.append(day.replace(day=1))
         values: list[float] = []
         for position in positions[1:]:

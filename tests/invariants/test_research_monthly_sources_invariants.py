@@ -1,10 +1,11 @@
-"""Invariants of the monthly long-history sources (TRADING-2565-37, -88 and -91).
+"""Invariants of the monthly long-history sources (TRADING-2565-37, -88, -91 and -94).
 
 Acceptance tests written before the code (owner decision
 ``owner_decision:TRADING-2565:2026-10-21:monthly_long_history``; the unemployment rates of
 TRADING-2565-88 under ``owner_decision:TRADING-2565:2026-10-29:print_only_tables``; Manela's NVIX
-of TRADING-2565-91 under ``owner_decision:TRADING-2565:2026-10-29:print_only_tables_nvix``). Every
-value below is synthetic; no test reads a real snapshot or downloads anything.
+of TRADING-2565-91 under ``owner_decision:TRADING-2565:2026-10-29:print_only_tables_nvix``, and
+its date read of TRADING-2565-94 under ``owner_decision:TRADING-2565:2026-10-29:nvix_date_read``).
+Every value below is synthetic; no test reads a real snapshot or downloads anything.
 
 53. A monthly observation is used only once its month is known. Month M is published on the first
     trading day on or after the first day of month M + 1 + release_lag_months and used
@@ -28,13 +29,15 @@ value below is synthetic; no test reads a real snapshot or downloads anything.
     given year (TRADING-2565-88: the unemployment rates end in 1942 and 1946 and start in 1948).
 69. Manela's NVIX workbook is read with the standard library: the sheet news_implied_volatility
     found by name through a relative or absolute path, its Date and NVIX headers on row 1 in any
-    case, shared or inline strings, yyyymmdd month ends turned into month starts, and the
-    missing-value spellings, empty text and an empty value as NaN, keeping the row; rows without
-    a date or NVIX cell are skipped, and other columns are not read. A missing sheet or header,
-    headers below row 1, a sheet path outside xl/, a date that is not a yyyymmdd month end, a
-    skipped, repeated or earlier month, other text, a value or shared-string index that is not a
-    number, a shared string that is not there, a member over 20 MB, a document type, broken XML
-    and bytes that are not a zip are refused, and no refusal names a cell's value.
+    case, shared or inline strings, a yyyymmdd day turned into the start of its month (any day
+    of the month since TRADING-2565-94: the workbook writes 1892-02, a missing month, as
+    18920228), and the missing-value spellings, empty text and an empty value as NaN, keeping the
+    row; rows without a date or NVIX cell are skipped, and other columns are not read. A missing
+    sheet or header, headers below row 1, a sheet path outside xl/, a date that is not a yyyymmdd
+    day, a skipped, repeated or earlier month (two days of one month too), other text, a value or
+    shared-string index that is not a number, a shared string that is not there, a member over
+    20 MB, a document type, broken XML and bytes that are not a zip are refused, and no refusal
+    names a cell's value.
 70. Snapshots carry NVIX: the workbook is fetched once with requests and its default headers,
     ``fetch.json`` names its address, missing months stay missing and the check passes; Manela
     sources are the monthly nvix column with at least one trading day of lag, and the fetch
@@ -944,8 +947,9 @@ BAD_WORKBOOKS: dict[str, Callable[[], bytes]] = {
     "a date written as text": lambda: _workbook(_bad(_setter(2, 0, "1889-08"))),
     "a row without a date": lambda: _workbook(_bad(_setter(2, 0, None))),
     "a skipped month": lambda: _workbook(_bad(lambda rows: rows.pop(3))),
-    "a date that is not the last day of its month": lambda: _workbook(
-        _bad(_setter(2, 0, 18890815))
+    "a day that is not in the calendar": lambda: _workbook(_bad(_setter(8, 0, 18900229))),
+    "a second day of the same month": lambda: _workbook(
+        _bad(lambda rows: rows.insert(2, [18890715, 21.0, 1.0, 0.5]))
     ),
     "a repeated month": lambda: _workbook(_bad(_setter(2, 0, 18890731))),
     "an earlier month": lambda: _workbook(_bad(_setter(10, 0, 18890430))),
@@ -973,8 +977,28 @@ BAD_WORKBOOKS: dict[str, Callable[[], bytes]] = {
 def test_a_bad_nvix_workbook_is_refused_without_naming_a_value(case: str) -> None:
     with pytest.raises(ValueError) as refused:
         ss.parse_manela_workbook(BAD_WORKBOOKS[case]())
-    for text in ("4321", "43218765", "18890815", "18890831.5", "1889-08"):
+    for text in ("4321", "43218765", "18900229", "18890715", "18890831.5", "1889-08"):
         assert text not in str(refused.value)
+
+
+def test_an_nvix_day_that_is_not_the_last_of_its_month_names_its_month() -> None:
+    """Manela's workbook writes 1892-02 as 18920228; February 1892 has 29 days (TRADING-2565-94)."""
+
+    rows = [
+        list(HEADER),
+        [18920131, 20.5, 1.0, 0.5],
+        [18920228, None, None, None],  # the missing month, as in the workbook
+        [18920331, 19.0, 1.0, 0.5],
+        [18920415, 18.5, 1.0, 0.5],
+        [18920501, 18.0, 1.0, 0.5],
+    ]
+    table = ss.parse_manela_workbook(_workbook(rows))
+    assert pd.DatetimeIndex(table.index).equals(
+        pd.date_range("1892-01-01", "1892-05-01", freq="MS")
+    )
+    np.testing.assert_array_equal(
+        table["nvix"].to_numpy(), np.array([20.5, np.nan, 19.0, 18.5, 18.0])
+    )
 
 
 # 70 ----------------------------------------------------------------------------------------------
