@@ -321,7 +321,7 @@ NOTES_TAIL = (
     "；2026-10-15：S4e 第一批真实筛选已跑完并发布为记录 S0001 到 S0004（main 71f00bc1）；"
     "S4f（TRADING-2565-11）第二题用的经典趋势信号"
 )
-# The card's current owner and step (TRADING-2565-95), checked against the register.
+# The card's current owner and step (TRADING-2565-99), checked against the register.
 NEXT_OWNER = "Claude（研究自动循环）"
 NEXT_STEP = (
     "研究自动循环第 6 期（`research/_loop/charter_p6.md`，2026-10-23 起到 2026-11-20；"
@@ -367,6 +367,10 @@ NEXT_STEP = (
     "和同月已实现波动的秩相关 0.41，不是只是波动水平，"
     "可去掉波动以后十个慢熊段只有 3 段在起点或之前亮，families.md 波动一行记一句；"
     "第 23 节四张只印的表都印完，没有一张成立；"
+    "第 24 节财报冲击只印表（owner_decision:TRADING-2565:2026-10-30:earnings_shock_table；"
+    "TRADING-2565-97 登记、-98 接 8-K 数据、-99 打印模块）："
+    "看 QQQ 最差 5% 的日子是不是扎堆在前 5 大权重股财报后第一天，"
+    "发布以后在电脑上先 check 再 run；"
     "前瞻记录台每周五照记（`weekly --daily-root`，提交前跑 `-k committed`），"
     "F0001 和 F0008 到数时核；开正式题、读验证窗口、新供应商第一次付款要叫 Baker"
 )

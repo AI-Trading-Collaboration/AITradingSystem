@@ -75,6 +75,8 @@ ad hoc 的 SEC PIT 回填/评估与缓存回放。
 
 财报事件的数据入口（TRADING-2565-98，`owner_decision:TRADING-2565:2026-10-30:earnings_shock_table`，第 6 期加的财报急跌只印表要的数据）：`python -m ai_trading_system.research_data.earnings_events fetch` 在 owner 本机按 `config/research/research_earnings.yaml` 取三样，写成内容寻址的本机快照 `ern-…`：17 家美国公司（QQQ 信托 2003–2010 年每年 9 月 30 日持仓前 10 里的美国公司）的 8-K 和 8-K/A 清单（SEC submissions JSON，每行 6 列原样）、QQQ 信托这 8 年的持仓文件（原样字节）和其中 13 家的 FMP 复权收盘价。事件数据只当 QQQ 日子的标签，窗口照 QQQ 现有的切分：2010-12-31 以后申报或定价的行在内存里就丢掉，快照里没有 QQQ 验证窗口的任何东西。SEC 请求带 `SEC_USER_AGENT`（不存、不印）；有一个 CIK 的名字对不上或任何请求失败，整次不写。`check` 只写汇总（每家每年的申报数、结果 8-K 接收时间的美东小时分布、持仓文件的标记、价格的行数和缺口），`load_snapshot` 只读检查过、没改过的快照；持仓行的解析在打印模块。
 
+财报冲击只印表（TRADING-2565-99，`owner_decision:TRADING-2565:2026-10-30:earnings_shock_table`，第 6 期章程第 24 节）：`python -m ai_trading_system.research_probes.earnings_shock_table check --out <目录>` 读财报事件快照 `ern-a9917351bced`（TRADING-2565-98 接的），从 QQQ 信托的 8 份年度持仓文件定每年的前 10（同一发行人的几类股份合并，和写死的名单逐个比），按 SEC 接收时间把前 5 大的结果 8-K 定到 QQQ 交易日，只数次数和分布，写 `earnings_check.json`；`run --out <目录>` 再读 QQQ 长历史快照 `qlh-20261013-0b0df53cb1a2` 2004–2010 的日收益，算这些日子在 QQQ 最差 5% 的日子里的集中倍数、季内打乱的对照和躲开的代价，按写定的读法给一个判定，写 `earnings_events.jsonl`、`earnings_table.json` 和中文 `earnings_table.md`。只印，不模拟新规则，不进任何账本，不是结论；判定只给 11-20 续期卡或 `research/families.md`。
+
 信号筛选（TRADING-2565 S4b）：`research_bench screen` 在截至 2010-12-31 的 QQQ、美股大盘和 49 个行业上筛一个信号，记进 `research/_screens/ledger/` 的全局账，按全部筛过的信号做 BH 修正后给出淘汰、候选或证据不足；信号模块在 `src/ai_trading_system/research_screens/signals/`。
 
 通用的“信号 → 仓位”策略（TRADING-2565 S4d）：`research_bench.signal_strategy.signal_exposure` 把预注册里钉住的信号模块按固定映射变成目标仓位，题目目录的 `strategy.py` 只是一行导入；用到外部来源时预注册写 `data.signal_snapshot_id`。
