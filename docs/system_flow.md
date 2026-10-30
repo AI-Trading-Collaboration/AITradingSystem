@@ -73,6 +73,8 @@ ad hoc 的 SEC PIT 回填/评估与缓存回放。
 
 信号筛选的数据入口（TRADING-2565 S4a）：`research_data.signal_sources` 下载 FRED 日度序列和 Ken French 数据成本机快照，`research_bench.sources.known_at` 按发布滞后对齐；来源列在 `config/research/research_screen.yaml`。月度来源（TRADING-2565-37 起）是 FRED 的月度序列、Shiller 的月度股市数据和 Manela 的新闻波动 NVIX（TRADING-2565-91，`owner_decision:TRADING-2565:2026-10-29:print_only_tables_nvix`：作者网站的 .xlsx 工作簿用标准库读 NVIX 一列，1889-07 到 2016-03，已停更，只进本机快照），每条来源一列、日期是月初，按 `research_bench.sources.monthly_known_at` 对齐。
 
+财报事件的数据入口（TRADING-2565-98，`owner_decision:TRADING-2565:2026-10-30:earnings_shock_table`，第 6 期加的财报急跌只印表要的数据）：`python -m ai_trading_system.research_data.earnings_events fetch` 在 owner 本机按 `config/research/research_earnings.yaml` 取三样，写成内容寻址的本机快照 `ern-…`：17 家美国公司（QQQ 信托 2003–2010 年每年 9 月 30 日持仓前 10 里的美国公司）的 8-K 和 8-K/A 清单（SEC submissions JSON，每行 6 列原样）、QQQ 信托这 8 年的持仓文件（原样字节）和其中 13 家的 FMP 复权收盘价。事件数据只当 QQQ 日子的标签，窗口照 QQQ 现有的切分：2010-12-31 以后申报或定价的行在内存里就丢掉，快照里没有 QQQ 验证窗口的任何东西。SEC 请求带 `SEC_USER_AGENT`（不存、不印）；有一个 CIK 的名字对不上或任何请求失败，整次不写。`check` 只写汇总（每家每年的申报数、结果 8-K 接收时间的美东小时分布、持仓文件的标记、价格的行数和缺口），`load_snapshot` 只读检查过、没改过的快照；持仓行的解析在打印模块。
+
 信号筛选（TRADING-2565 S4b）：`research_bench screen` 在截至 2010-12-31 的 QQQ、美股大盘和 49 个行业上筛一个信号，记进 `research/_screens/ledger/` 的全局账，按全部筛过的信号做 BH 修正后给出淘汰、候选或证据不足；信号模块在 `src/ai_trading_system/research_screens/signals/`。
 
 通用的“信号 → 仓位”策略（TRADING-2565 S4d）：`research_bench.signal_strategy.signal_exposure` 把预注册里钉住的信号模块按固定映射变成目标仓位，题目目录的 `strategy.py` 只是一行导入；用到外部来源时预注册写 `data.signal_snapshot_id`。

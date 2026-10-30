@@ -1,0 +1,59 @@
+# Earnings event intake for the period 6 earnings-shock print-only table (TRADING-2565-98).
+# Owner decision: owner_decision:TRADING-2565:2026-10-30:earnings_shock_table (Baker chose "do the
+# table now" on 2026-10-30 13:42 JST; the card said the 8-K data intake takes his approval once).
+# Read by src/ai_trading_system/research_data/earnings_events.py only; nothing here feeds the daily
+# run or production.
+#
+# Window (period 6 charter section 20.4: event data takes QQQ's own split, not a new one): the
+# development window ends 2010-12-31 and 2011-2021 is QQQ's validation window, so the fetch keeps
+# no filing, price or holding after data_end; a snapshot holds nothing from the validation window.
+# The 8-K list starts in 2003 (results 8-Ks carry items from 2003-Q4 on); prices start four months
+# before the first event window (2004-01-01) so every event day has a prior close.
+schema_version: research_earnings.v1
+filing_start: 2003-01-01
+data_end: 2010-12-31
+price_start: 2003-09-01
+
+# The US issuers among the ten largest QQQ holdings at any September 30 from 2003 to 2010 (the QQQ
+# trust's annual schedules of investments). entity_pattern must match the submissions name or one
+# of its former names, case-insensitive; a mismatch stops the fetch before anything is written.
+# Every name was printed by a read-only probe before this file was written; IACI's CIK is now Match
+# Group (former names IAC/InterActiveCorp, InterActiveCorp) and SYMC's is Gen Digital (former name
+# Symantec Corp). Nextel's other CIK, 944741 (/DE), filed no 8-K from 2003 to 2010.
+# fmp_ticker is null where FMP has no history of that company (Dell, Nextel) or the ticker now
+# belongs to a later company (IAC, Symantec); those holdings appear only in the top-10 sensitivity.
+issuers:
+  - {id: MSFT, ciks: [789019], entity_pattern: "^microsoft", fmp_ticker: MSFT}
+  - {id: INTC, ciks: [50863], entity_pattern: "^intel corp", fmp_ticker: INTC}
+  - {id: CSCO, ciks: [858877], entity_pattern: "^cisco systems", fmp_ticker: CSCO}
+  - {id: QCOM, ciks: [804328], entity_pattern: "^qualcomm", fmp_ticker: QCOM}
+  - {id: AMGN, ciks: [318154], entity_pattern: "^amgen", fmp_ticker: AMGN}
+  - {id: EBAY, ciks: [1065088], entity_pattern: "^ebay", fmp_ticker: EBAY}
+  - {id: AAPL, ciks: [320193], entity_pattern: "^apple", fmp_ticker: AAPL}
+  - {id: GOOG, ciks: [1288776], entity_pattern: "^google", fmp_ticker: GOOG}
+  # The holding company from 2006-02; Oracle first enters the top ten on 2006-09-30.
+  - {id: ORCL, ciks: [1341439], entity_pattern: "^oracle corp", fmp_ticker: ORCL}
+  - {id: DELL, ciks: [826083], entity_pattern: "^dell", fmp_ticker: null}
+  - {id: CMCSA, ciks: [1166691], entity_pattern: "^comcast corp", fmp_ticker: CMCSA}
+  - {id: NXTL, ciks: [824169], entity_pattern: "^nextel communications", fmp_ticker: null}
+  - {id: IACI, ciks: [891103], entity_pattern: "interactivecorp", fmp_ticker: null}
+  - {id: SBUX, ciks: [829224], entity_pattern: "^starbucks", fmp_ticker: SBUX}
+  - {id: SYMC, ciks: [849399], entity_pattern: "^symantec", fmp_ticker: null}
+  - {id: GILD, ciks: [882095], entity_pattern: "^gilead", fmp_ticker: GILD}
+  - {id: AMZN, ciks: [1018724], entity_pattern: "^amazon", fmp_ticker: AMZN}
+
+# Foreign private issuers in the top ten file no 8-K; they are skipped, not replaced.
+foreign:
+  - {id: RIMM, foreign: true}
+  - {id: TEVA, foreign: true}
+
+# The QQQ trust's schedule of investments at each September 30 (CIK 1067839); kept byte for byte.
+holdings_documents:
+  - {fiscal_year: 2003, filing_date: 2004-01-30, accession: 0001206774-04-000023, document: d13831.txt, form: 485BPOS}
+  - {fiscal_year: 2004, filing_date: 2005-05-16, accession: 0000930413-05-003631, document: c36210.txt, form: N-30B-2}
+  - {fiscal_year: 2005, filing_date: 2006-04-25, accession: 0001047469-06-005571, document: a2167148zn-30b_2.txt, form: N-30B-2}
+  - {fiscal_year: 2006, filing_date: 2007-01-18, accession: 0001104659-07-003177, document: a06-24326_3n30b2.htm, form: N-30B-2}
+  - {fiscal_year: 2007, filing_date: 2008-02-25, accession: 0001104659-08-012645, document: a08-3893_3n30b2.htm, form: N-30B-2}
+  - {fiscal_year: 2008, filing_date: 2009-01-30, accession: 0001104659-09-005352, document: a08-28674_2n30b2.htm, form: N-30B-2}
+  - {fiscal_year: 2009, filing_date: 2010-01-15, accession: 0001104659-10-001821, document: a09-31668_2n30b2.htm, form: N-30B-2}
+  - {fiscal_year: 2010, filing_date: 2010-12-30, accession: 0001104659-10-064790, document: a10-18275_1n30b2.htm, form: N-30B-2}

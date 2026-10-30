@@ -21,6 +21,7 @@ caught, or a recorded mutation of the guarded code that makes the test fail.
 | G1/G2 monthly long-history sources | A monthly value is used only once its month is known: month M is published on the first trading day on or after the first of month M + 1 + the release lag, used after the known lag and carried over at most one missing month, checked by hand, day by day and against later changes; specs stay strict; the bench inputs, the screen, the trial and both commands align by the rule; Shiller's sheet is read by its header cells and y.1 is October; snapshots carry the monthly sources and the check reads them by month; the approved sources (seven, ten since TRADING-2565-88 added three unemployment rates, eleven since TRADING-2565-91 added Manela's NVIX), their lags and the US market base are fixed; a monthly source may end early or start late and still checks without a gap and loads as fetched; Manela's NVIX workbook is read with the standard library by its sheet name and first-row headers, a yyyymmdd day becomes the start of its month (any day of the month since TRADING-2565-94), missing cells stay missing, and a bad workbook is refused without naming a value; a snapshot downloads it once with requests and its default headers (TRADING-2565-37, invariants 53–58; TRADING-2565-88, invariant 68; TRADING-2565-91, invariants 69–70; TRADING-2565-94, invariant 69) | `test_research_monthly_sources_invariants.py` |
 | G3 P1 portfolio ruler | A fixed mix holding a reserve other than cash is judged by the portfolio ruler: a cash reserve gives every number zero, the geometric difference is exactly the reserve's own excess plus the rebalancing return, rebalancing earns on an independent reserve and loses on a correlated one, the quiet-period excess removes a constant carry and nothing else, the declines are the fixed 10% rule's of each development window, the gate changes only for reserve configurations (the timing rules stay word for word, a window the ruler does not name records no_ruler), and the plans, the probes' gate copies and the verdicts of earlier records stay as they were (TRADING-2565-39, invariants 59–63) | `test_research_portfolio_invariants.py` |
 | G2/G3 Treasury from 1929 | The ten-year par bond priced from Shiller's monthly long-term rate earns its coupon and reprices on yields only: a constant yield compounds to (1 + y/12)^12 − 1 a year, each month is the par-bond move from last month's yield plus a twelfth of it, spread over the month's dates; no date sees a later month and a month without both yields is empty; `treasury_10y` is the pre-batch formula to the bit, the gate maps only it to the 1962 window and the new reserve lands on the windows the portfolio ruler names; the stand-in check's use rule and T0008's configurations are fixed before any run (TRADING-2565-40, invariants 64–67) | `test_research_shiller_treasury_invariants.py` |
+| G1/G2 earnings event intake | The earnings intake stays inside QQQ's development window: a spec cannot end after 2010-12-31, and a snapshot holds only 8-K and 8-K/A rows filed from filing_start to data_end, prices from price_start to data_end and the QQQ trust's holdings documents byte for byte; every CIK must name its issuer and every request must work, or nothing is written; the id is the manifest's content address; the check fails a changed byte, a filing outside the window, a repeated accession, another form, an unparsed results 8-K time, a missing holdings document or marker and a bad price, and load_snapshot reads only a checked, unchanged snapshot; the SEC User-Agent is sent after a pause and never stored or printed (TRADING-2565-98, invariants 71–73) | `test_research_earnings_events_invariants.py` |
 
 Existing tests that already guard the same guarantees and stay in the suite (not duplicated here):
 
@@ -313,3 +314,25 @@ TRADING-2565-91 的读法要求每个日期都是月末；Manela 的工作簿把
 | 报错带上日期 | `test_a_bad_nvix_workbook_is_refused_without_naming_a_value` 的四个日期坏例子 | 4 failed |
 
 TRADING-2565-91 证据表里「不是月末的日期也收」那一项现在是规定的读法，不再是变异。第一轮「同一个月的第二个日子」把八月那行改成 7 月 15 日，后面就跳了一个月，按跳月报错，「重复或更早的月份也收」只抓到更早的月份；改成多插一行 7 月 15 日以后两个都抓到。变异脚本和逐项结果在项目文件 `knowledge/claude/runs/TRADING-2565-94/draft/`。这些是数据入口正确性证据，不是投资结论。
+
+## TRADING-2565-98 变异证据（2026-10-30）
+
+新的不变量 71–73 在 `test_research_earnings_events_invariants.py`（48 项）。代码由 pi 写；测试先写，每项只在循环线程的参考实现（不进仓库）和这批配置的副本上临时变异，跑这一个文件，随后还原；验收文件未改。54 项全部被抓到。
+
+| 变异 | 失败的验收测试（举例） | 结果 |
+|---|---|---|
+| `data_end` 可以过 2010-12-31；开发窗口的终点写成 2011-12-31 | `test_a_spec_stays_inside_the_development_window` | 各 1–2 failed |
+| 留 `filing_start` 以前或 `data_end` 以后的申报；留别的表格类型；留 `price_start` 以前或 `data_end` 以后的价格 | `test_the_snapshot_keeps_the_window_only`、`test_an_empty_window_is_an_empty_list_not_an_error`、`test_only_a_checked_unchanged_snapshot_loads` | 各 5 failed |
+| 没有交集的老页也请求；向 FMP 要 `data_end` 以后的日子 | `test_the_snapshot_keeps_the_window_only`、`test_the_fetch_command_sends_the_user_agent_and_never_keeps_it` | 各 1–2 failed |
+| 不看曾用名；不核名字；先写 `LATEST` 再取数 | `test_a_fetch_writes_nothing_unless_everything_worked` 等 | 1–28 failed |
+| 持仓文件改换行；取数时间进内容地址；id 只算申报 | `test_the_snapshot_id_is_the_content_address` 等 | 各 1–6 failed |
+| `check` 不核哈希、放过窗口外、重复、别的表格类型、未知 CIK 的申报，放过没有时间的结果 8-K，接收时间宽松地读 | `test_the_check_fails_bad_content` 对应的一组 | 各 1–3 failed |
+| 8-K/A 算结果申报；items 当文字找；小时按 UTC 或固定的东部标准时间数 | `test_results_filings_are_8k_with_item_2_02_or_12`、`test_the_check_counts_results_filings_by_their_eastern_hour` | 各 1–2 failed |
+| 不找年份或合计的标记；找标记以前不反转义、不合并断行、不去标签；缺持仓文件也过 | `test_the_check_fails_bad_content`、`test_the_snapshot_keeps_the_window_only` 等 | 1–5 failed |
+| 报告里记价格表或申报表解析出错的原文；价格转不了数时异常直接漏出 | `test_the_check_fails_bad_content` 的 `a price that is not a number`、`a day that is not a date`、`a CIK that is not a number` | 各 1–2 failed |
+| 放过零价、重复的日子、窗口外的价格、没配置的代码、没有价格的代码；价格缺口判失败或不警告 | `test_the_check_fails_bad_content`、`test_a_price_gap_warns` | 各 1–2 failed |
+| 没检查的快照也能读；读时不核哈希；`check` 印价格 | `test_only_a_checked_unchanged_snapshot_loads`、`test_the_check_fails_bad_content` | 1–19 failed |
+| 请求前不停；不带 User-Agent；印出 User-Agent；没有 User-Agent 也取 | 不变量 73 的三条命令测试 | 各 1–2 failed |
+| 配置：Oracle 用旧 CIK 777676；`data_end` 写成 2011-01-03；给 Dell 一个 FMP 代码；少一份持仓文件 | `test_the_settings_file_names_the_issuers_and_documents` | 各 1 failed |
+
+第一版 45 项测试上，复盘线程提出两处没盖到的：真文件里「September 30,」和年份可能断在两行、HTML 用 `&#160;`，标记规整不对时 C 区会误报；解析出错时 pandas 和 `int()` 的错误信息带原值。补了两份持仓文件的写法和三个坏例子（价格不是数、日子不是日期、CIK 不是数）以后，对应的 6 项都抓到，最后 54 项整套重跑全部抓到。变异脚本和逐项结果在项目文件 `knowledge/claude/runs/TRADING-2565-98/draft/`。这些是数据入口正确性证据，不是投资结论。
