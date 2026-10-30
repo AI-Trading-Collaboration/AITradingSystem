@@ -321,7 +321,7 @@ NOTES_TAIL = (
     "；2026-10-15：S4e 第一批真实筛选已跑完并发布为记录 S0001 到 S0004（main 71f00bc1）；"
     "S4f（TRADING-2565-11）第二题用的经典趋势信号"
 )
-# The card's current owner and step (TRADING-2565-99), checked against the register.
+# The card's current owner and step (TRADING-2565-100), checked against the register.
 NEXT_OWNER = "Claude（研究自动循环）"
 NEXT_STEP = (
     "研究自动循环第 6 期（`research/_loop/charter_p6.md`，2026-10-23 起到 2026-11-20；"
@@ -367,10 +367,11 @@ NEXT_STEP = (
     "和同月已实现波动的秩相关 0.41，不是只是波动水平，"
     "可去掉波动以后十个慢熊段只有 3 段在起点或之前亮，families.md 波动一行记一句；"
     "第 23 节四张只印的表都印完，没有一张成立；"
-    "第 24 节财报冲击只印表（owner_decision:TRADING-2565:2026-10-30:earnings_shock_table；"
-    "TRADING-2565-97 登记、-98 接 8-K 数据、-99 打印模块）："
-    "看 QQQ 最差 5% 的日子是不是扎堆在前 5 大权重股财报后第一天，"
-    "发布以后在电脑上先 check 再 run；"
+    "第 24 节财报冲击只印表印了一次（owner_decision:TRADING-2565:2026-10-30:earnings_shock_table；"
+    "TRADING-2565-97、-98、-99、-100）：压着线判 holds，"
+    "QQQ 最差 5% 的日子里前 5 大权重股财报后第一天约占 2 倍（2.09，14 天正好够），季内打乱 p 0.006，"
+    "躲开的代价测不出为正；可提前 5 天平移的倍数 2.23 比当天还高，多半是财报季，不只是那一天；"
+    "families.md 日历季节一行记一句，按日程降仓要不要进前瞻账本交 11-20 续期卡；"
     "前瞻记录台每周五照记（`weekly --daily-root`，提交前跑 `-k committed`），"
     "F0001 和 F0008 到数时核；开正式题、读验证窗口、新供应商第一次付款要叫 Baker"
 )
