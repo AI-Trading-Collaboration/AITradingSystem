@@ -166,6 +166,11 @@ lines:
             date: "2026-10-30"
             note: QQQ 最差 5% 的日子里前 5 大权重股财报后第一天约占 2 倍（2.09，14 天正好够），季内打乱 p 0.006，躲开的代价测不出为正；可提前 5 天平移的倍数 2.23 比当天还高，多半是财报季，不只是那一天；Baker 10-30 选现在就做；families.md 日历季节一行记一句；按日程降仓要不要进前瞻账本交 11-20 续期卡
             cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
+          - text: 第 6 期第 25 节：杠杆账表
+            state: now
+            date: "2026-10-31"
+            note: F0001 加杠杆到买入持有的回撤或波动，全周期收益能不能多 1 点以上；Baker 10-30 选先算杠杆账；打印模块发布、待跑；只印，不改研究目标，判定只进 11-20 续期卡或 families.md
+            cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
           - text: 第 6 期自选目标，带每月数据预算
             state: now
             date: "2026-11-20"
