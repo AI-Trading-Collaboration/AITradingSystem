@@ -965,7 +965,8 @@ def test_the_records_describe_the_rule() -> None:
         assert text in requirement
     assert "DATA-030" in flow and "revalidation_owner_id" in flow
     assert card["id"] == "DATA-030"
-    assert card["status"] == "IN_PROGRESS"
+    assert card["status"] == "DONE"
+    assert "owner_decision:DATA-030:2026-10-30:as_of_2026_10_27_gap" in requirement
     assert "docs/requirements/DATA-030_Transport_Retry_Owns_Its_Failure.md" in card["notes"]
     assert roadmap["cards"]["DATA-030"]
     milestones = [
@@ -976,4 +977,4 @@ def test_the_records_describe_the_rule() -> None:
         if "DATA-030" in milestone.get("cards", [])
     ]
     assert len(milestones) == 1
-    assert milestones[0]["state"] == "now"
+    assert milestones[0]["state"] == "done"

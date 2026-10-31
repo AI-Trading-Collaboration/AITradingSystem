@@ -2,8 +2,8 @@ schema_version: task.v1
 id: DATA-030
 area: 数据工程/取数重试不再被自己上一次的失败挡住
 priority: P1
-status: IN_PROGRESS
-next_owner: Claude（审 DATA-030-01，做新发布包）
-next_step: DATA-030-01 发布后做新发布包；2026-10-30（周五）17:30 补救窗口之后换包，要 Baker 打授权句；换包后第一个生产日核对官方源、SEC、FMP 估值一次通过，再关卡
+status: DONE
+next_owner: operations owner（日常按运维手册第 9 节读调度摘要）
+next_step: DONE（2026-10-31）：DATA-030-01 在 main be4febf55（2026-10-30 02:28 JST），发布包 20261029-be4febf55 2026-10-30 17:45 JST 换上；2026-10-31 第一个生产日（as_of 2026-10-30）五个取数部分一次通过，官方源、SEC、FMP 估值都是 1/1，没有 OWNER_FAILURE_RETRY_DISABLED；当天日报失败在 score_daily（LLM 预审给了未登记的风险 ID），和本任务无关，由 RISK-017 处理；as_of 2026-10-27 记为已知缺口；FMP 429/5xx 重试读到缓存里的同一个错误等未解决项见需求文档第 7 节
 acceptance: 同一个重试循环用一个 owner id（new_revalidation_owner_id），每次尝试都带 revalidation_owner_id；协调层只在最后一个 FAILED 不是自己的时候挡 135 秒，自己失败后按 ACQUIRED 取新 lease；revalidation_owner_id 不进缓存键；官方源、SEC companyfacts、FMP 估值、EODHD、FRED、FMP 行情 6 处重试循环都改；尝试次数、退避、两个策略文件不变；别的 owner 仍被挡（DATA-028 测试不改）；PR 套件通过
-notes: production_effect=none；broker_action=none；owner_decision:DATA-030:2026-10-30:fix_before_count；需求文档 docs/requirements/DATA-030_Transport_Retry_Owns_Its_Failure.md；起因：2026-10-28 12:00 JST 日报（as_of 2026-10-27，发布包 20261023-63b5aa1a4）official_policy_sources 第一次联网失败后，DATA-027 的重试被缓存协调层的 FAILED 标记拒绝（OWNER_FAILURE_RETRY_DISABLED），没有发出第二次请求，当天日报没出；SEC companyfacts、FMP 估值同样的写法，云端复现
+notes: production_effect=none；broker_action=none；owner_decision:DATA-030:2026-10-30:fix_before_count；需求文档 docs/requirements/DATA-030_Transport_Retry_Owns_Its_Failure.md；起因：2026-10-28 12:00 JST 日报（as_of 2026-10-27，发布包 20261023-63b5aa1a4）official_policy_sources 第一次联网失败后，DATA-027 的重试被缓存协调层的 FAILED 标记拒绝（OWNER_FAILURE_RETRY_DISABLED），没有发出第二次请求，当天日报没出；SEC companyfacts、FMP 估值同样的写法，云端复现；owner_decision:DATA-030:2026-10-30:as_of_2026_10_27_gap（as_of 2026-10-27 记为已知缺口）；2026-10-31：DONE，见 next_step

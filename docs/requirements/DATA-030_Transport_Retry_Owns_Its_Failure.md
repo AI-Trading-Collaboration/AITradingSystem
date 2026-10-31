@@ -1,12 +1,13 @@
 # DATA-030：取数重试不再被自己上一次的失败挡住
 
-状态：IN_PROGRESS（2026-10-30）。`production_effect=none`；`broker_action=none`。
+状态：DONE（2026-10-31）。`production_effect=none`；`broker_action=none`。
 
 关联：OPS-065（过期后的跨进程 singleflight）、DATA-024（可变数据源缓存 12 小时有效期）、DATA-026（SEC 断线重试）、DATA-027（官方源读断重试）、DATA-028（失败标记只挡 135 秒）、OPS-086（日报发布包）；任务记录 `tasks/DATA-030.yaml`。
 
 ## 1. Owner decision
 
 - `owner_decision:DATA-030:2026-10-30:fix_before_count`：Baker 2026-10-30 01:25 JST 在「收尾工作总览第 1 版并评估日报稳定性」线程的卡片上选「先修再数」：先修这个问题、换发布包，工作总览第 2 版等换包后连续 5 个交易日一次通过再开。
+- `owner_decision:DATA-030:2026-10-30:as_of_2026_10_27_gap`：Baker 2026-10-30 13:30 JST 在本任务线程的卡片上选「记为缺口」：as_of 2026-10-27 没有成功的日报，照 2026-10-13 的做法记成已知缺口，不做事后补算（第 8 节）。
 
 ## 2. 背景
 
@@ -86,3 +87,7 @@ RevalidationCoordinationError: OWNER_FAILURE_RETRY_DISABLED: policy forbids anot
 ## 8. 进展
 
 - 2026-10-30：需求和验收测试写好，交 pi 实现（DATA-030-01）。
+- 2026-10-30 02:28 JST：DATA-030-01 发布，main `be4febf55025dfce2901450a52ef3a926c16c3c2`（pi 写 6 个源文件，Claude 审过；验收测试 29 条和相关已有测试全过，门禁全量 pytest 通过）。
+- 2026-10-30 17:45 JST：日报换到新发布包 `20261029-be4febf55`（OPS-086 运行手册第 9.1 节，Baker 13:30 JST 在本任务线程亲手打了授权句；上一个发布包 `20261023-63b5aa1a4` 保留，可 `--activate` 回退）。发布包 761 个文件，source_tree `c538c423`；日报步骤和规格、依赖都没变，同一 as_of 不重新开始。
+- 2026-10-27（as_of）无成功日报：官方政策源第一次联网失败后，DATA-027 的重试被缓存协调层挡住（`OWNER_FAILURE_RETRY_DISABLED`，第 2 节），运行 FAILED 终态；17:30 补救窗口 `RUN_CONTROL_BLOCKED_TERMINAL_RECOVERY_REQUIRED`（官方源 `HISTORICAL_RECAPTURE_FORBIDDEN`，OPS-085 只重试 `market_macro`）。按 OPS-073 disposition，该 as_of 保留为已知缺口，不做事后补算（`owner_decision:DATA-030:2026-10-30:as_of_2026_10_27_gap`）。
+- 2026-10-31 12:00 JST：新发布包上第一个生产日（as_of 2026-10-30，run_id `daily_ops_run:2026-10-30:20261031T030006Z`）。取数五个部分都一次通过：`market_macro` 1/2、`fmp_forward_pit` 1/1、`sec_companyfacts` 1/1、`fmp_valuation` 1/1、`official_policy_sources` 1/1，没有 `OWNER_FAILURE_RETRY_DISABLED`，validate_data PASS；第 6 节的生产验收通过，任务关闭。当天日报失败在 `score_daily`：风险事件 LLM formal assessment 报 `llm_formal_assessment_unknown_risk_id`（一条国会议案的 LLM 预审给了两个未在 `config/risk_events.yaml` 登记的风险 ID，整批停写），和本任务无关，由 RISK-017 处理。
