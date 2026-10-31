@@ -415,6 +415,7 @@ def run_openai_risk_event_prereview(
         input_packet,
         api_key=api_key,
         data_sources=data_sources,
+        risk_events=risk_events,
         input_path=input_path,
         model=model,
         reasoning_effort=reasoning_effort,

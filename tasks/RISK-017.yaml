@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: RISK-017
+area: 风险事件/预审只让模型选已登记的风险 ID
+priority: P1
+status: IN_PROGRESS
+next_owner: Claude（审 RISK-017-01，做新发布包）
+next_step: RISK-017-01 发布后做新发布包，要 Baker 打授权句换包；2026-11-03（周二）12:00 JST 的日报（as_of 2026-11-02）第一次在新包上跑，score_daily 通过、预审记录是 llm_claim_precheck_v2 后关卡
+acceptance: 带风险配置的预审请求附 registered_risk_events（event_id、name、level、description，按 event_id 排序），system 文本接 REGISTERED_RISK_ID_RULE，schema 把 risk_id_candidate 限定为这些 ID 的枚举，记录 prompt_version 为 llm_claim_precheck_v2；空配置不发请求并报 llm_precheck_registered_risk_ids_empty；不带配置的请求不变；原 schema 常量不被改动；run_openai_risk_event_prereview 传 risk_events；RISK-012 的未登记 ID 整批停写不变；PR 套件通过
+notes: production_effect=none；broker_action=none；owner_decision:RISK-017:2026-10-31:registered_risk_ids；owner_decision:RISK-017:2026-10-31:as_of_2026_10_30_gap；需求文档 docs/requirements/RISK-017_Precheck_Registered_Risk_Ids.md；起因：2026-10-31 12:00 JST 日报（as_of 2026-10-30，发布包 20261029-be4febf55）score_daily 报 llm_formal_assessment_unknown_risk_id，模型给国会决议编了两个未登记的风险 ID（请求里从没列出已登记 ID，schema 不限制），整批停写，下游 11 步 BLOCKED；2026-08-31 同一原因（RISK-012）；as_of 2026-10-30 记为缺口

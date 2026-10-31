@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import copy
 import json
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from enum import StrEnum
@@ -28,7 +29,7 @@ from ai_trading_system.agent_request_cache import (
     write_agent_request_archive_entry,
     write_agent_request_cache_entry,
 )
-from ai_trading_system.config import DataSourceConfig, DataSourcesConfig
+from ai_trading_system.config import DataSourceConfig, DataSourcesConfig, RiskEventsConfig
 from ai_trading_system.yaml_loader import safe_load_yaml_text
 
 OpenAIReasoningEffort = Literal["none", "minimal", "low", "medium", "high", "xhigh"]
@@ -37,6 +38,11 @@ OpenAIRequestCacheStatus = AgentRequestCacheStatus
 
 LLM_CLAIM_PREREVIEW_SCHEMA_VERSION = "llm_claim_prereview_queue.v2"
 LLM_CLAIM_PREREVIEW_PROMPT_VERSION = "llm_claim_precheck_v1"
+LLM_CLAIM_PREREVIEW_REGISTERED_RISK_PROMPT_VERSION = "llm_claim_precheck_v2"
+REGISTERED_RISK_ID_RULE = (
+    "risk_event_candidate.risk_id_candidate 只能填写 registered_risk_events 里的 event_id；"
+    "没有符合的就输出空数组，不要自造 ID。"
+)
 DEFAULT_OPENAI_REQUEST_CACHE_DIR = DEFAULT_AGENT_REQUEST_CACHE_DIR
 DEFAULT_OPENAI_REQUEST_CACHE_TTL_SECONDS = DEFAULT_AGENT_REQUEST_CACHE_TTL_SECONDS
 OPENAI_AGENT_PROVIDER = "openai"
@@ -264,6 +270,23 @@ OPENAI_LLM_CLAIM_RESPONSE_FORMAT: dict[str, Any] = {
         },
     },
 }
+
+
+def openai_llm_claim_response_format(
+    registered_risk_ids: Sequence[str] | None = None,
+) -> dict[str, Any]:
+    """Return the claim response format, optionally limited to registered risk IDs."""
+    if registered_risk_ids is None:
+        return OPENAI_LLM_CLAIM_RESPONSE_FORMAT
+    risk_ids = sorted(set(registered_risk_ids))
+    if not risk_ids:
+        raise ValueError("registered_risk_ids must not be empty")
+    response_format = copy.deepcopy(OPENAI_LLM_CLAIM_RESPONSE_FORMAT)
+    response_format["name"] = LLM_CLAIM_PREREVIEW_REGISTERED_RISK_PROMPT_VERSION
+    claim = response_format["schema"]["properties"]["claims"]["items"]
+    candidate = claim["properties"]["risk_event_candidate"]
+    candidate["properties"]["risk_id_candidate"]["items"] = {"type": "string", "enum": risk_ids}
+    return response_format
 
 
 class LlmPrecheckIssueSeverity(StrEnum):
@@ -544,6 +567,7 @@ def run_openai_claim_precheck(
     *,
     api_key: str,
     data_sources: DataSourcesConfig | None = None,
+    risk_events: RiskEventsConfig | None = None,
     input_path: Path | str = Path("<memory>"),
     model: str = DEFAULT_OPENAI_LLM_MODEL,
     reasoning_effort: str = DEFAULT_OPENAI_REASONING_EFFORT,
@@ -587,6 +611,21 @@ def run_openai_claim_precheck(
                     code="openai_api_key_missing",
                     precheck_id=input_packet.precheck_id,
                     message="未找到 OpenAI API key 环境变量，已停止 LLM 预审。",
+                ),
+            ),
+        )
+
+    if risk_events is not None and not risk_events.event_rules:
+        return LlmClaimPrecheckReport(
+            input_path=Path(input_path),
+            generated_at=timestamp,
+            records=(),
+            issues=(
+                LlmPrecheckIssue(
+                    severity=LlmPrecheckIssueSeverity.ERROR,
+                    code="llm_precheck_registered_risk_ids_empty",
+                    precheck_id=input_packet.precheck_id,
+                    message="风险事件配置没有登记任何 event_id，已停止 LLM 预审。",
                 ),
             ),
         )
@@ -643,16 +682,22 @@ def run_openai_claim_precheck(
             ),
         )
 
+    prompt_version = (
+        LLM_CLAIM_PREREVIEW_PROMPT_VERSION
+        if risk_events is None
+        else LLM_CLAIM_PREREVIEW_REGISTERED_RISK_PROMPT_VERSION
+    )
     client_request_id = f"aits-llm-precheck-{uuid4()}"
     request_payload = _build_openai_request_payload(
         input_packet=input_packet,
         permission=permission,
         model=model,
         reasoning_effort=normalized_reasoning_effort,
+        risk_events=risk_events,
     )
     input_checksum = _sha256_json(
         {
-            "prompt_version": LLM_CLAIM_PREREVIEW_PROMPT_VERSION,
+            "prompt_version": prompt_version,
             "source": _source_payload(input_packet, permission),
             "content_text": input_packet.content_text,
             "request_payload": request_payload,
@@ -859,7 +904,7 @@ def run_openai_claim_precheck(
         source_permission=permission,
         model=model,
         reasoning_effort=normalized_reasoning_effort,
-        prompt_version=LLM_CLAIM_PREREVIEW_PROMPT_VERSION,
+        prompt_version=prompt_version,
         request_id=request_id or request_result.client_request_id or client_request_id,
         response_id=response_id,
         client_request_id=request_result.client_request_id or client_request_id,
@@ -1107,7 +1152,22 @@ def _build_openai_request_payload(
     permission: SourcePermissionEnvelope,
     model: str,
     reasoning_effort: str,
+    risk_events: RiskEventsConfig | None = None,
 ) -> dict[str, Any]:
+    source_payload = _source_payload(input_packet, permission)
+    registered_risk_ids: list[str] | None = None
+    if risk_events is not None:
+        event_rules = sorted(risk_events.event_rules, key=lambda item: item.event_id)
+        registered_risk_ids = [rule.event_id for rule in event_rules]
+        source_payload["registered_risk_events"] = [
+            {
+                "event_id": rule.event_id,
+                "name": rule.name,
+                "level": rule.level,
+                "description": rule.description,
+            }
+            for rule in event_rules
+        ]
     return {
         "model": model,
         "reasoning": {"effort": reasoning_effort},
@@ -1119,18 +1179,19 @@ def _build_openai_request_payload(
                     "你是投资决策支持系统的证据分类器。只能抽取和分类事实断言，"
                     "不得给出看多、看空、买入、卖出、加仓、减仓或仓位建议。"
                     "所有输出必须保持 pending_review，不能写成正式评分或仓位闸门输入。"
-                ),
+                )
+                + (REGISTERED_RISK_ID_RULE if risk_events is not None else ""),
             },
             {
                 "role": "user",
                 "content": json.dumps(
-                    _source_payload(input_packet, permission),
+                    source_payload,
                     ensure_ascii=False,
                     sort_keys=True,
                 ),
             },
         ],
-        "text": {"format": OPENAI_LLM_CLAIM_RESPONSE_FORMAT},
+        "text": {"format": openai_llm_claim_response_format(registered_risk_ids)},
     }
 
 
