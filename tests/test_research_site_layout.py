@@ -968,8 +968,9 @@ def test_real_repository_has_the_new_blocks() -> None:
     assert families["by_signal"] and set(families["status_counts"]) == {"开放", "停车", "关闭"}
     assert charter["present"] and charter["period"] is not None and charter["period"] >= 4
     assert charter["direction"] and charter["term"]
-    # Period 6 only keeps the forward ledger: its charter has no prereg section (TRADING-2565-59).
-    assert charter["questions"] or charter["period"] == 6
+    # Periods 6 and 7 pre-register no question, so their charters have no prereg section
+    # (TRADING-2565-59, -103).
+    assert charter["questions"] or charter["period"] in (6, 7)
     funnel = model["funnel"]
     assert funnel["screened"] == model["screens"]["family_size"] >= 17
     assert funnel["candidates"] == model["screens"]["counts"]["candidate"]
