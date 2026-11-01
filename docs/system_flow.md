@@ -81,6 +81,8 @@ ad hoc 的 SEC PIT 回填/评估与缓存回放。
 
 入场时机族第 0 步（TRADING-2565-104，`owner_decision:TRADING-2565:2026-11-01:research_loop_p7`，第 7 期章程第 5.2 节）：`python -m ai_trading_system.research_probes.entry_timing_counts check --out <目录>` 和杠杆账表读同样的两把尺子（切到 2010-12-31），把 200 日线回踩规则换成收盘价版，只数触线、信号、计入、持有天数和平均敞口（美股大盘再分三个年代段），写 `entry_timing_counts.json`，已有结果拒绝覆盖。不印收益，不进日报、前瞻账本和券商，不是结论；次数只用来算第 6 期第 20.2 节的第一道线。
 
+第 0 号变体的收益对比表（TRADING-2565-105，`owner_decision:TRADING-2565:2026-11-01:entry_timing_v0_returns`）：`python -m ai_trading_system.research_probes.entry_timing_returns run --out <目录>` 读同样的两把尺子，输入检查过了才算；每个计入信号印入场后第 20、60 个收盘的收益和 8% 收盘止损的收益，旁边是入场那一年任一天入场的平均，再按段汇总，写 `entry_timing_returns.json` 和 `entry_timing_returns.md`，已有结果拒绝覆盖。只印不判，不进日报、前瞻账本和券商；这是 Baker 给第 0 步开的例外，别的变体照旧只印次数。
+
 信号筛选（TRADING-2565 S4b）：`research_bench screen` 在截至 2010-12-31 的 QQQ、美股大盘和 49 个行业上筛一个信号，记进 `research/_screens/ledger/` 的全局账，按全部筛过的信号做 BH 修正后给出淘汰、候选或证据不足；信号模块在 `src/ai_trading_system/research_screens/signals/`。
 
 通用的“信号 → 仓位”策略（TRADING-2565 S4d）：`research_bench.signal_strategy.signal_exposure` 把预注册里钉住的信号模块按固定映射变成目标仓位，题目目录的 `strategy.py` 只是一行导入；用到外部来源时预注册写 `data.signal_snapshot_id`。
