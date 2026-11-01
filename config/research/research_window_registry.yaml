@@ -270,6 +270,44 @@ windows:
       - synthetic_2x_3x_without_fees_never_held_by_a_trial
       - ken_french_daily_data_revised_between_snapshots
       - treasury_synthetic_constant_maturity_par_bond_without_fees
+  # Baker's print-only read of the 200-day pullback rule on QQQ's own index before QQQ traded
+  # (TRADING-2565-107, owner_decision:TRADING-2565:2026-11-02:ndx_price_1986_1999): the FRED
+  # Nasdaq-100 price index from its first date to the day before qqq_long_history_development
+  # starts. Only research_probes/entry_timing_ndx.py reads it; no question type, trial gate or
+  # screen uses it. The price index carries no dividends, and the 200-day average warms up inside
+  # the window. Once read, the span is no longer unseen history for the entry-timing family
+  # (period 7 charter, section 5.2).
+  ndx_price_1986_1999:
+    start: 1986-01-02
+    end: 1999-03-09
+    requested_start: 1986-01-02
+    actual_start: 1986-01-02
+    actual_portfolio_start: 1986-01-02
+    role: owner_print_only
+    question_types: []
+    assets: [NDX_PRICE_INDEX]
+    exact_or_proxy: proxy
+    data_quality_contract: qqq_long_history_snapshot_check
+    data_source: fred_qqq_long_history_research
+    data_spec: config/research/qqq_long_history.yaml
+    data_column: ndx_price
+    read_policy: once_per_owner_decision
+    allowed_usage:
+      - owner_requested_print_only_read
+    blocked_usage:
+      - signal_development
+      - parameter_selection
+      - validation_read
+      - trial_or_screen
+      - promotion_evidence
+      - production
+      - paper_shadow
+      - broker_order
+    caveats:
+      - nasdaq_100_price_index_without_dividends
+      - qqq_etf_trades_from_1999_03_10
+      - fred_carries_the_price_index_over_some_closed_sessions
+      - the_200_day_average_warms_up_inside_the_window
 safety_boundary:
   research_only: true
   actual_path_required: true
