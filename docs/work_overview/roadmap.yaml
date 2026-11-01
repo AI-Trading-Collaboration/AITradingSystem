@@ -2,7 +2,7 @@
 # 发布一张卡的改动时，在同一个提交里改它支撑的里程碑（勾掉就把 state 改成 done、date 写完成那天），并把 updated 改成当天；
 # 新开一张卡就把它挂到一个里程碑下，并在 cards 里给它一个中文名。加段、改段、改目标要 Baker 同意。
 schema_version: work_roadmap.v1
-updated: "2026-10-31"
+updated: "2026-11-01"
 # 卡的中文名：页面上只写中文名，卡号放在细节里。
 cards:
   TRADING-2567: QQQ 研究计划
@@ -11,6 +11,7 @@ cards:
   TRADING-2568_RESEARCH_PROGRESS_PAGE: 研究进展页
   TRADING-2569_JUDGMENT_EVALUATION: 判断评估
   TRADING-2570_RESEARCH_FORWARD_RECHECK: 前向复查
+  TRADING-2571_QQQ_MA200_FORWARD_RECORD: 200 日线信号前向记录
   GOV-008_RESEARCH_FIRST_GOVERNANCE_REFACTOR: 研究优先的治理迁移
   GOV-009: 旧研究清点和清理
   OPS-082_DETERMINISTIC_WINDOWS_SCHEDULER: 日报计划任务
@@ -192,6 +193,11 @@ lines:
             state: todo
             note: 前瞻样本满 250 个交易日，2027-10 前后
             cards: [TRADING-2570_RESEARCH_FORWARD_RECHECK]
+          - text: QQQ 200 日线回踩信号的前向记录：窗口 2026-11-02 到 2027-10-29，信号满 60 日结算
+            state: now
+            date: "2028-01-31"
+            note: 只用于学习检验；规则 10-31 定死，回测 26 年 13 次、样本外没过；每周五和前瞻账本一起追加，回测约每年 0.5 次
+            cards: [TRADING-2571_QQQ_MA200_FORWARD_RECORD]
       - id: S5
         title: 期权实现
         state: later

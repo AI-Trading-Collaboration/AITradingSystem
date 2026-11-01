@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2571_QQQ_MA200_FORWARD_RECORD
+area: 研究 / QQQ 200 日线回踩信号的前向记录（学习检验）
+priority: P2
+status: IN_PROGRESS
+next_owner: pi（TRADING-2571-01 写模块）；发布后研究会话首跑
+next_step: TRADING-2571-01：pi 照 brief 写 research_probes/ma200_forward.py；发布后在电脑上下载 Yahoo 文件、reproduce、append 首跑，之后每周五和前瞻记录台一起追加
+acceptance: 见 docs/requirements/TRADING-2571_QQQ_MA200_Forward_Record.md 第 5 节：合成数据验收测试全过；append 先复现回测（84/21/63，计入 13）才写；记录只追加、哈希链、用新价格文件重算对不上就拒绝；窗口里每天满 60 日、信号都结算后才给判定
+notes: production_effect=none；broker_action=none；requirement=docs/requirements/TRADING-2571_QQQ_MA200_Forward_Record.md；owner_decision:TRADING-2571:2026-11-01:ma200_forward_record（Baker 2026-11-01 13:32 JST 要求单独记录，只用于学习检验，不是交易指令；规则 2026-10-31 定死）；记录 research/_forward/ma200/；Yahoo 数据不进仓库
