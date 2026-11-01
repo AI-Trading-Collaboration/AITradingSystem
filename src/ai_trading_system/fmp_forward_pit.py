@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import csv
+import gzip
 import io
 import json
 import re
 from collections import deque
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, date, datetime, timedelta
 from enum import StrEnum
 from hashlib import sha256
@@ -70,6 +71,8 @@ FMP_FORWARD_PIT_NORMALIZED_COLUMNS = (
 FMP_EARNINGS_CALENDAR_SEGMENT_DAYS = 7
 FMP_EARNINGS_CALENDAR_ROW_CAP = 4000
 FMP_EARNINGS_CALENDAR_MAX_REQUESTS = 60
+FMP_EARNINGS_CALENDAR_FULL_SCHEMA = "fmp_earnings_calendar_full.v1"
+FMP_EARNINGS_CALENDAR_FULL_GLOB = "fmp_earnings_calendar_full_*.jsonl.gz"
 FMP_FORWARD_PIT_SOURCE_ID = "fmp_valuation_expectations"
 FMP_FORWARD_PIT_NORMALIZATION_VERSION = "fmp_forward_pit_v1"
 DEFAULT_FMP_FORWARD_PIT_RAW_DIR = state_dir(PROJECT_ROOT, "data") / "raw" / "fmp_forward_pit"
@@ -159,6 +162,11 @@ class FmpForwardPitFetchReport:
     earnings_calendar_segment_count: int = 0
     earnings_calendar_max_segment_rows: int = 0
     earnings_calendar_resplit_count: int = 0
+    earnings_calendar_records: tuple[dict[str, Any], ...] = ()
+    earnings_calendar_full_state: str = ""
+    earnings_calendar_full_path: Path | None = None
+    earnings_calendar_full_row_count: int = 0
+    earnings_calendar_full_file_count: int = 0
 
     @property
     def raw_payload_count(self) -> int:
@@ -366,6 +374,7 @@ def fetch_fmp_forward_pit_snapshots(
         earnings_calendar_segment_count=segment_count,
         earnings_calendar_max_segment_rows=max_segment_rows,
         earnings_calendar_resplit_count=resplit_count,
+        earnings_calendar_records=tuple(calendar_records),
     )
 
 
@@ -406,6 +415,118 @@ def build_fmp_forward_pit_failure_report(
         checksum_sha256=_json_checksum({"issues": [issue.__dict__]}),
         issues=(issue,),
     )
+
+
+def _fmp_earnings_calendar_full_json_line(value: dict[str, Any]) -> bytes:
+    return (
+        json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n"
+    ).encode("utf-8")
+
+
+def write_fmp_earnings_calendar_full(
+    report: FmpForwardPitFetchReport,
+    output_dir: Path | str,
+) -> Path:
+    directory = Path(output_dir)
+    directory.mkdir(parents=True, exist_ok=True)
+    output_path = directory / (
+        f"fmp_earnings_calendar_full_{_timestamp_token(report.downloaded_at)}.jsonl.gz"
+    )
+    rows_raw = b"".join(
+        _fmp_earnings_calendar_full_json_line(row) for row in report.earnings_calendar_records
+    )
+    segments = (
+        report.raw_payloads[0].request_parameters_by_endpoint.get("earnings-calendar", {}).get(
+            "segments", []
+        )
+        if report.raw_payloads
+        else []
+    )
+    header = {
+        "schema": FMP_EARNINGS_CALENDAR_FULL_SCHEMA,
+        "as_of": report.as_of.isoformat(),
+        "captured_at": report.captured_at.isoformat(),
+        "downloaded_at": report.downloaded_at.isoformat(),
+        "provider": report.source_name,
+        "endpoint": "earnings-calendar",
+        "from": report.earnings_calendar_from.isoformat(),
+        "to": report.earnings_calendar_to.isoformat(),
+        "segments": segments,
+        "row_cap": FMP_EARNINGS_CALENDAR_ROW_CAP,
+        "row_count": len(report.earnings_calendar_records),
+        "rows_sha256": sha256(rows_raw).hexdigest(),
+    }
+    raw = _fmp_earnings_calendar_full_json_line(header) + rows_raw
+    write_bytes_atomic(output_path, gzip.compress(raw, mtime=0))
+    return output_path
+
+
+def attach_fmp_earnings_calendar_full(
+    report: FmpForwardPitFetchReport,
+    output_dir: Path | str,
+    *,
+    project_root: Path = PROJECT_ROOT,
+) -> FmpForwardPitFetchReport:
+    try:
+        output_path = write_fmp_earnings_calendar_full(report, output_dir)
+    except Exception as exc:
+        issue = FmpForwardPitIssue(
+            severity=FmpForwardPitIssueSeverity.WARNING,
+            code="fmp_forward_pit_earnings_calendar_full_write_failed",
+            endpoint="earnings-calendar",
+            message=(
+                "FMP earnings-calendar 全窗口文件写失败，当天全窗口日历算缺："
+                f"{_sanitize_fmp_error_message(exc)}"
+            ),
+        )
+        return replace(
+            report,
+            issues=(*report.issues, issue),
+            earnings_calendar_full_state="write_failed",
+        )
+    return replace(
+        report,
+        earnings_calendar_full_state="written",
+        earnings_calendar_full_path=_display_path(output_path, project_root),
+        earnings_calendar_full_row_count=len(report.earnings_calendar_records),
+    )
+
+
+def load_fmp_earnings_calendar_full(
+    path: Path | str,
+) -> tuple[dict[str, Any], tuple[dict[str, Any], ...]]:
+    input_path = Path(path)
+    try:
+        raw = gzip.decompress(input_path.read_bytes())
+        header_raw, separator, rows_raw = raw.partition(b"\n")
+        if not separator:
+            raise ValueError("缺少头部换行")
+        header = json.loads(header_raw)
+        if (
+            not isinstance(header, dict)
+            or header.get("schema") != FMP_EARNINGS_CALENDAR_FULL_SCHEMA
+        ):
+            raise ValueError("头部不是对象或 schema 不匹配")
+        for key in ("as_of", "from", "to"):
+            value = header.get(key)
+            if not isinstance(value, str):
+                raise ValueError(f"{key} 不是日期")
+            date.fromisoformat(value)
+        if sha256(rows_raw).hexdigest() != header.get("rows_sha256"):
+            raise ValueError("记录 SHA256 不匹配")
+        if rows_raw and not rows_raw.endswith(b"\n"):
+            raise ValueError("记录末尾缺少换行")
+        rows: list[dict[str, Any]] = []
+        for line in rows_raw.split(b"\n")[:-1]:
+            row = json.loads(line)
+            if not isinstance(row, dict):
+                raise ValueError("记录不是 JSON 对象")
+            rows.append(row)
+        if len(rows) != header.get("row_count"):
+            raise ValueError("记录数与 row_count 不匹配")
+    except (OSError, EOFError, ValueError, TypeError) as exc:
+        raise ValueError(f"FMP earnings-calendar 全窗口文件无效：{input_path}：{exc}") from exc
+    return header, tuple(rows)
 
 
 def write_fmp_forward_pit_raw_payloads(
@@ -596,6 +717,13 @@ def project_fmp_forward_pit_capture(
     report = _fmp_forward_pit_report_from_retained_payloads(
         ordered_payloads,
         normalized_rows=normalized_rows,
+    )
+    report = replace(
+        report,
+        earnings_calendar_full_state="projection",
+        earnings_calendar_full_file_count=len(
+            tuple(raw_input_dir.glob(FMP_EARNINGS_CALENDAR_FULL_GLOB))
+        ),
     )
     capture_sha256 = sha256(capture_raw).hexdigest()
     normalized_sha256 = sha256(normalized_raw).hexdigest()
@@ -876,7 +1004,31 @@ def attach_fmp_forward_pit_report_artifacts(
         earnings_calendar_segment_count=report.earnings_calendar_segment_count,
         earnings_calendar_max_segment_rows=report.earnings_calendar_max_segment_rows,
         earnings_calendar_resplit_count=report.earnings_calendar_resplit_count,
+        earnings_calendar_records=report.earnings_calendar_records,
+        earnings_calendar_full_state=report.earnings_calendar_full_state,
+        earnings_calendar_full_path=report.earnings_calendar_full_path,
+        earnings_calendar_full_row_count=report.earnings_calendar_full_row_count,
+        earnings_calendar_full_file_count=report.earnings_calendar_full_file_count,
     )
+
+
+def _fmp_earnings_calendar_full_report_line(report: FmpForwardPitFetchReport) -> str:
+    prefix = "- earnings-calendar 全窗口："
+    if report.earnings_calendar_full_state == "written" and report.earnings_calendar_full_path:
+        return (
+            f"{prefix}{report.earnings_calendar_full_row_count} 行，"
+            f"{report.earnings_calendar_full_path.as_posix()}"
+        )
+    if report.earnings_calendar_full_state == "write_failed":
+        return f"{prefix}写失败，当天算缺"
+    if report.earnings_calendar_full_state == "projection":
+        count = report.earnings_calendar_full_file_count
+        if count == 1:
+            return f"{prefix}投影不读，当天 capture 的 raw 目录里有 1 份"
+        if count == 0:
+            return f"{prefix}投影不读，当天 capture 的 raw 目录里没有，算缺"
+        return f"{prefix}投影不读，当天 capture 的 raw 目录里有 {count} 份，算缺"
+    return f"{prefix}没有写"
 
 
 def render_fmp_forward_pit_fetch_report(report: FmpForwardPitFetchReport) -> str:
@@ -908,6 +1060,7 @@ def render_fmp_forward_pit_fetch_report(report: FmpForwardPitFetchReport) -> str
             if report.earnings_calendar_segment_count
             else "- earnings-calendar 分段：无记录（旧存档，或没有请求日历）"
         ),
+        _fmp_earnings_calendar_full_report_line(report),
         f"- 原始 payload 数：{report.raw_payload_count}",
         f"- 原始记录数：{report.row_count}",
         f"- 标准化行数：{report.normalized_row_count}",

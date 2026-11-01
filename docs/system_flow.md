@@ -1869,6 +1869,19 @@ PASS reuse 只以 component-owned raw/normalized/report artifacts 的 exact path
 集合为 authority；会由下游扩展的 cross-kind PIT aggregate manifest 属于 consumer，
 排除时必须披露，且不能掩盖任何 source-owned drift。`fmp_forward_pit` snapshot kind
 必须非空；analyst/history snapshot 即使共享 source id 也不能替代。
+
+FMP 财报日历（DATA-031、DATA-032，`owner_decision:TRADING-2565:2026-11-01:research_loop_p7`）：
+`fetch-fmp-forward` 把 `as_of` 前 7 天到后 90 天的 `earnings-calendar` 按 7 天一段请求，满
+4000 行的段对半再切，最多 60 次请求；一段出错、截断或请求到上限只记 WARNING，全部拿不到才
+ERROR。合并去重后每股 payload 只留自己那一只的行，分段记进 payload 的请求参数。DATA-032 另在
+raw 目录根上写一份 `fmp_earnings_calendar_full_<token>.jsonl.gz`（gzip mtime 0；头一行是
+schema、窗口、segments、row_cap、row_count、rows_sha256，后面每行一条合并后的记录，不按观察
+名单筛），给研究读名单以外股票的日期。名字不以 `.json` 结尾，payload 加载和 PIT manifest
+都不读它；日报采集对整个 raw 目录记 sha256，所以它进当天的承诺，这个目录写完只读，事后增、删、
+改任何文件都让当天 PASS 不能复用（`SOURCE_STATE_INVALID`）。写失败只记 WARNING
+`fmp_forward_pit_earnings_calendar_full_write_failed`，当天 PIT 照写；canonical 投影不读这个
+文件，只在报告里写有几份。研究用 `load_fmp_earnings_calendar_full` 读（核头、行数和
+`rows_sha256`）。
 Immutable download publication resolver 对 transaction-bound legacy manifest 只允许绝对
 checkout 前缀迁移且 artifact filename 必须 exact；新 generation pre-commit 仍校验当前 root
 exact path，其他 manifest/source/window/checksum 字段保持 fail closed。

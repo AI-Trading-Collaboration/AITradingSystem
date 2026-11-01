@@ -21,6 +21,7 @@ from ai_trading_system.fmp_forward_pit import (
     FmpForwardPitFetchReport,
     FmpForwardPitIssue,
     FmpForwardPitIssueSeverity,
+    attach_fmp_earnings_calendar_full,
     attach_fmp_forward_pit_raw_paths,
     attach_fmp_forward_pit_report_artifacts,
     build_fmp_forward_pit_failure_report,
@@ -487,6 +488,7 @@ def fetch_fmp_forward_pit_command(
             raw_payloads=attached_payloads,
             normalized_rows=fetch_report.normalized_rows,
         )
+        fetch_report = attach_fmp_earnings_calendar_full(fetch_report, raw_output_dir)
         write_fmp_forward_pit_normalized_csv_from_payloads(
             attached_payloads,
             normalized_output,

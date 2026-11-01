@@ -7,6 +7,9 @@ import subprocess
 from datetime import UTC, date, datetime
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
+
+import pytest
 
 import ai_trading_system.daily_input_capture as capture_module
 from ai_trading_system.daily_input_capture import (
@@ -794,6 +797,115 @@ def test_fmp_pass_reuse_still_rejects_source_owned_artifact_drift(
         item for item in second.component_results if item["component_id"] == "fmp_forward_pit"
     )
     assert second.status == "PARTIAL_CAPTURE"
+    assert fmp["blocker_code"] == "SOURCE_STATE_INVALID"
+    assert fmp["error_summary"] == "terminal PASS source state artifact drift"
+
+
+
+# DATA-032: the full-window earnings calendar file sits in the source-owned FMP raw directory, so
+# a day's PASS commits to it like to every payload, and any file added to or changed in that
+# directory after the PASS (for example a calendar back-filled for an older day) voids reuse.
+_FULL_CALENDAR_NAME = "fmp_earnings_calendar_full_2026-07-28T00-30-00Z.jsonl.gz"
+
+
+def _capture_fmp_day(tmp_path: Path, *, with_full_calendar: bool) -> tuple[Path, Path]:
+    policy_path = tmp_path / "capture_policy.yaml"
+    _write_policy(policy_path, tmp_path)
+    policy = load_daily_input_capture_policy(policy_path, project_root=tmp_path)
+    as_of = date(2026, 7, 27)
+    paths = daily_input_capture_paths(as_of, policy=policy)
+    components = build_daily_input_capture_components(
+        as_of=as_of,
+        paths=paths,
+        policy=policy,
+        project_root=tmp_path,
+    )
+    base_runner = _runner_for_components(components, calls=[])
+
+    def runner(command: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        result: subprocess.CompletedProcess[str] = base_runner(command, **kwargs)
+        if with_full_calendar and "pit-snapshots" in command:
+            (paths.pit_raw_dir / _FULL_CALENDAR_NAME).write_bytes(b"full calendar v1\n")
+        return result
+
+    first = capture_daily_inputs(
+        as_of=as_of,
+        project_root=tmp_path,
+        policy_path=policy_path,
+        runner=runner,
+        snapshotter=lambda _component: None,
+        generated_at=datetime(2026, 7, 28, 0, 30, tzinfo=UTC),
+    )
+    assert first.status == "CAPTURED"
+    return policy_path, paths.pit_raw_dir / _FULL_CALENDAR_NAME
+
+
+def _recapture_fmp_day(tmp_path: Path, policy_path: Path) -> dict[str, Any]:
+    second = capture_daily_inputs(
+        as_of=date(2026, 7, 27),
+        project_root=tmp_path,
+        policy_path=policy_path,
+        runner=lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("provider request repeated")
+        ),
+        snapshotter=lambda _component: None,
+        generated_at=datetime(2026, 7, 28, 0, 35, tzinfo=UTC),
+    )
+    fmp = dict(
+        next(
+            item for item in second.component_results if item["component_id"] == "fmp_forward_pit"
+        )
+    )
+    fmp["capture_status"] = second.status
+    return fmp
+
+
+def test_an_old_fmp_pass_without_the_full_calendar_is_still_reused(tmp_path: Path) -> None:
+    policy_path, full = _capture_fmp_day(tmp_path, with_full_calendar=False)
+
+    fmp = _recapture_fmp_day(tmp_path, policy_path)
+
+    assert not full.exists()
+    assert fmp["capture_status"] == "CAPTURED"
+    assert fmp["idempotency_reused"] is True
+
+
+def test_a_new_fmp_pass_commits_to_the_full_calendar_and_is_reused(tmp_path: Path) -> None:
+    policy_path, full = _capture_fmp_day(tmp_path, with_full_calendar=True)
+
+    fmp = _recapture_fmp_day(tmp_path, policy_path)
+
+    assert fmp["capture_status"] == "CAPTURED"
+    assert fmp["idempotency_reused"] is True
+    artifact = next(item for item in fmp["artifacts"] if item["path"].endswith(full.name))
+    assert artifact["sha256"] == hashlib.sha256(full.read_bytes()).hexdigest()
+    assert artifact["size_bytes"] == full.stat().st_size
+
+
+@pytest.mark.parametrize("change", ["deleted", "changed"])
+def test_a_new_fmp_pass_rejects_a_removed_or_changed_full_calendar(
+    tmp_path: Path, change: str
+) -> None:
+    policy_path, full = _capture_fmp_day(tmp_path, with_full_calendar=True)
+    if change == "deleted":
+        full.unlink()
+    else:
+        full.write_bytes(b"full calendar v2\n")
+
+    fmp = _recapture_fmp_day(tmp_path, policy_path)
+
+    assert fmp["capture_status"] == "PARTIAL_CAPTURE"
+    assert fmp["blocker_code"] == "SOURCE_STATE_INVALID"
+    assert fmp["error_summary"] == "terminal PASS source state artifact drift"
+
+
+def test_a_full_calendar_added_to_an_old_fmp_pass_voids_its_reuse(tmp_path: Path) -> None:
+    policy_path, full = _capture_fmp_day(tmp_path, with_full_calendar=False)
+    full.write_bytes(b"back-filled from the request cache\n")
+
+    fmp = _recapture_fmp_day(tmp_path, policy_path)
+
+    assert fmp["capture_status"] == "PARTIAL_CAPTURE"
     assert fmp["blocker_code"] == "SOURCE_STATE_INVALID"
     assert fmp["error_summary"] == "terminal PASS source state artifact drift"
 
