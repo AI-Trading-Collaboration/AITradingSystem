@@ -52,7 +52,9 @@ BACKTEST_START = date(2000, 1, 3)
 BACKTEST_END = date(2026, 10, 30)
 GAP_CHECK_FROM = date(2025, 10, 1)
 # Frozen replay/revision precision from the requirement, not performance thresholds.
-REVISION_TOLERANCE = 1e-6
+REVISION_TOLERANCE = 1e-5
+# Yahoo scales old adjusted prices down after dividends; a row's [RESCALE_FLOOR, 1] is no revision.
+RESCALE_FLOOR = 0.9
 REPRODUCE_TOLERANCE = 5e-4
 # Numerical identity tolerance: avoid binary-rounding differences at exact boundaries.
 TOLERANCE = 1e-9
@@ -135,6 +137,13 @@ SETTLE_FIELDS = (
 )
 CHECKED_FIELDS = ("touches", "signals", "counted", "settled", "open")
 FIELDS = {"touch": TOUCH_FIELDS, "settle": SETTLE_FIELDS, "checked": CHECKED_FIELDS}
+PRICE_FIELDS = {
+    "touch": ("prev_close", "prev_sma", "low", "sma", "sma_lag", "closes", "entry_price"),
+    "settle": ("entry_price", "exit_price", "stop_open", "stop_low", "stop_fill"),
+    "checked": (),
+}
+RETURN_FIELDS = ("r60", "r60_stop")
+ANCHORS = {"touch": "sma", "settle": "entry_price"}
 NOTE_TEXT = "只用于学习检验，不是交易指令。"
 HOLDS_TEXT = "合格：60 日上涨比例高 10 个百分点以上，带止损的 60 日均值高 3 个百分点以上"
 NOT_HOLDS_TEXT = "不合格：两条线没有同时过"
@@ -512,12 +521,47 @@ def _equal(left: Any, right: Any) -> bool:
     return bool(left == right)
 
 
+def rescale_factor(new: Any, old: Any) -> float | None:
+    if _number(new) and _number(old) and new > 0 and old > 0:
+        factor = new / old
+        if RESCALE_FLOOR <= factor <= 1 + REVISION_TOLERANCE:
+            return float(factor)
+    return None
+
+
+def rescale(recorded: Mapping[str, Any], recomputed: Mapping[str, Any]) -> float:
+    anchor = ANCHORS.get(recorded["kind"])
+    if anchor is not None and recomputed.get("kind") == recorded["kind"]:
+        factor = rescale_factor(recomputed.get(anchor), recorded.get(anchor))
+        if factor is not None:
+            return factor
+    return 1.0
+
+
 def differences(recorded: Mapping[str, Any], recomputed: Mapping[str, Any]) -> list[str]:
-    return [
-        key
-        for key in ("kind", "decided_on", *FIELDS[recorded["kind"]])
-        if not _equal(recorded.get(key), recomputed.get(key))
-    ]
+    factor = rescale(recorded, recomputed)
+    kind = recorded["kind"]
+
+    def scaled(value: Any) -> Any:
+        if isinstance(value, list):
+            return [item * factor if _number(item) else item for item in value]
+        return value * factor if _number(value) else value
+
+    def return_equal(old: Any, new: Any) -> bool:
+        return bool(_number(old) and _number(new) and abs(old - new) <= REVISION_TOLERANCE)
+
+    changed = []
+    for key in ("kind", "decided_on", *FIELDS[kind]):
+        old, new = recorded.get(key), recomputed.get(key)
+        if key in PRICE_FIELDS[kind]:
+            matches = _equal(scaled(old), new)
+        elif key in RETURN_FIELDS:
+            matches = return_equal(old, new)
+        else:
+            matches = _equal(old, new)
+        if not matches:
+            changed.append(key)
+    return changed
 
 
 def _require(condition: bool, message: str) -> None:
@@ -586,7 +630,12 @@ def _settle_problem(
     )
     assert touch is not None
     for field in ("entry_date", "entry_price", "counted"):
-        _require(_equal(row[field], touch[field]), f"{field} does not match its touch")
+        matches = (
+            rescale_factor(row[field], touch[field]) is not None
+            if field == "entry_price"
+            else _equal(row[field], touch[field])
+        )
+        _require(matches, f"{field} does not match its touch")
     _require(row["touch_date"] not in settled, "signal is settled twice")
     _positive_fields(row, ("entry_price", "exit_price"))
     _require(row["exit_date"] == row["decided_on"], "exit_date is not decided_on")

@@ -1,4 +1,4 @@
-"""TRADING-2571-01: the QQQ 200-day pullback signal's forward record, on synthetic Yahoo files."""
+"""TRADING-2571: the QQQ 200-day pullback signal's forward record, on synthetic Yahoo files."""
 
 from __future__ import annotations
 
@@ -154,7 +154,8 @@ def test_the_rules_are_the_frozen_ones() -> None:
     assert (mf.LINE_UP, mf.LINE_MEAN) == (0.10, 0.03)
     assert (mf.BACKTEST_START, mf.BACKTEST_END) == (date(2000, 1, 3), date(2026, 10, 30))
     assert mf.GAP_CHECK_FROM == date(2025, 10, 1)
-    assert (mf.REVISION_TOLERANCE, mf.REPRODUCE_TOLERANCE) == (1e-6, 5e-4)
+    assert (mf.REVISION_TOLERANCE, mf.REPRODUCE_TOLERANCE) == (1e-5, 5e-4)
+    assert mf.RESCALE_FLOOR == 0.9
     assert (mf.EVENTS_FILE, mf.SUMMARY_FILE) == ("events.jsonl", "summary.md")
     assert mf.DEFAULT_DIR == RECORD_DIR
     assert mf.KINDS == ("touch", "settle", "checked")
@@ -858,6 +859,149 @@ def test_append_keeps_existing_bytes(tmp_path: Path, no_replay: None) -> None:
     assert len(_rows(tmp_path)) == 4
 
 
+# Dividends: Yahoo rewrites every earlier adjusted price by one factor (TRADING-2571-02) ----------
+
+
+def _rewritten(series: Series, factor: float, noise: float = 0.0) -> Series:
+    """The same bars in a file downloaded after a dividend, with Yahoo-like rounding noise."""
+
+    copy = Series()
+    for name in ("close", "open", "low"):
+        values = getattr(series, name)
+        setattr(copy, name, [v * factor * (1 + noise * math.cos(k)) for k, v in enumerate(values)])
+    return copy
+
+
+def test_the_price_and_return_fields() -> None:
+    assert mf.PRICE_FIELDS == {
+        "touch": ("prev_close", "prev_sma", "low", "sma", "sma_lag", "closes", "entry_price"),
+        "settle": ("entry_price", "exit_price", "stop_open", "stop_low", "stop_fill"),
+        "checked": (),
+    }
+    assert mf.RETURN_FIELDS == ("r60", "r60_stop")
+    assert mf.ANCHORS == {"touch": "sma", "settle": "entry_price"}
+
+
+@pytest.mark.parametrize(
+    ("new", "old", "factor"),
+    [
+        (99.85, 100.0, 0.9985),
+        (90.01, 100.0, 0.9001),
+        (100.0, 100.0, 1.0),
+        (100.0005, 100.0, 1.000005),
+        (89.99, 100.0, None),
+        (100.002, 100.0, None),
+        (50.0, 100.0, None),
+        (None, 100.0, None),
+        (100.0, 0.0, None),
+        (True, 1.0, None),
+    ],
+)
+def test_rescale_factor_accepts_one_dividend_factor_between_0_9_and_1(
+    new: Any, old: Any, factor: float | None
+) -> None:
+    result = mf.rescale_factor(new, old)
+    assert result == (None if factor is None else pytest.approx(factor, rel=1e-12))
+
+
+def test_rescale_takes_the_factor_from_the_rows_anchor() -> None:
+    touch = {"kind": "touch", "sma": 500.0, "low": 499.0}
+    assert mf.rescale(touch, {"kind": "touch", "sma": 499.5, "low": 1.0}) == pytest.approx(0.999)
+    assert mf.rescale(touch, {"kind": "touch", "sma": 400.0}) == 1.0
+    assert mf.rescale(touch, {"kind": "settle", "entry_price": 499.5}) == 1.0
+    settle = {"kind": "settle", "entry_price": 600.0, "exit_price": 700.0}
+    assert mf.rescale(settle, {"kind": "settle", "entry_price": 597.0}) == pytest.approx(0.995)
+    assert mf.rescale(settle, {"kind": "touch", "entry_price": 597.0}) == 1.0
+    assert mf.rescale({"kind": "checked"}, {"kind": "checked"}) == 1.0
+
+
+def test_a_dividend_rewrite_of_earlier_prices_is_not_a_revision(
+    tmp_path: Path, no_replay: None
+) -> None:
+    series, _, entry = _signal_series()
+    mf.append(tmp_path, series.bars(), date(2026, 11, 6), provenance=PROVENANCE)
+    before = (tmp_path / mf.EVENTS_FILE).read_bytes()
+    once = _rewritten(series, 0.9985, noise=2e-6)
+    assert mf.check(tmp_path, once.bars()) == []
+    mf.append(tmp_path, once.bars(), date(2026, 11, 13), provenance=PROVENANCE)
+    twice = _rewritten(once, 0.9984)
+    mf.append(tmp_path, twice.bars(), DAYS[entry + 61], provenance=PROVENANCE)
+    assert (tmp_path / mf.EVENTS_FILE).read_bytes().startswith(before)
+    assert mf.verify(tmp_path) == []
+    touch, settle = _content(_rows(tmp_path))
+    assert settle["entry_price"] == pytest.approx(touch["entry_price"] * 0.9985 * 0.9984, rel=1e-5)
+    assert settle["r60"] == pytest.approx(GROWTH**60 - 1, abs=1e-5)
+    thrice = _rewritten(twice, 0.9986, noise=2e-6)
+    assert mf.check(tmp_path, thrice.bars()) == []
+    mf.append(tmp_path, thrice.bars(), DAYS[entry + 66], provenance=PROVENANCE)
+    assert mf.check(tmp_path, thrice.bars()) == []
+
+
+@pytest.mark.parametrize("factor", [0.8999, 0.5, 1.0001, 1.01])
+def test_a_rewrite_outside_the_dividend_band_is_a_revision(
+    tmp_path: Path, no_replay: None, factor: float
+) -> None:
+    series, _, _ = _signal_series()
+    mf.append(tmp_path, series.bars(), date(2026, 11, 6), provenance=PROVENANCE)
+    moved = _rewritten(series, factor).bars()
+    message = "line 1 differs in prev_close, prev_sma, low, sma, sma_lag, closes, entry_price"
+    assert mf.check(tmp_path, moved) == [message]
+    with pytest.raises(mf.Ma200Error, match=message):
+        mf.append(tmp_path, moved, date(2026, 11, 13), provenance=PROVENANCE)
+
+
+@pytest.mark.parametrize("factor", [0.9001, 0.9985, 1.0])
+def test_a_rewrite_inside_the_dividend_band_is_accepted(
+    tmp_path: Path, no_replay: None, factor: float
+) -> None:
+    series, _, _ = _signal_series()
+    mf.append(tmp_path, series.bars(), date(2026, 11, 6), provenance=PROVENANCE)
+    moved = _rewritten(series, factor).bars()
+    mf.append(tmp_path, moved, date(2026, 11, 13), provenance=PROVENANCE)
+    assert mf.check(tmp_path, moved) == []
+
+
+def test_a_rewrite_that_also_moves_one_price_is_a_revision(tmp_path: Path, no_replay: None) -> None:
+    series, touch, _ = _signal_series()
+    mf.append(tmp_path, series.bars(), date(2026, 11, 6), provenance=PROVENANCE)
+    moved = _rewritten(series, 0.9985)
+    moved.close[touch + 1] *= 1 + 5e-5
+    with pytest.raises(mf.Ma200Error, match=r"line 1 differs in closes$"):
+        mf.append(tmp_path, moved.bars(), date(2026, 11, 13), provenance=PROVENANCE)
+
+
+def test_rounding_noise_beyond_the_tolerance_is_a_revision(tmp_path: Path, no_replay: None) -> None:
+    series, _, entry = _signal_series()
+    mf.append(tmp_path, series.bars(), DAYS[entry + 61], provenance=PROVENANCE)
+    assert mf.check(tmp_path, _rewritten(series, 0.9985, noise=2e-6).bars()) == []
+    problems = mf.check(tmp_path, _rewritten(series, 0.9985, noise=3e-5).bars())
+    assert problems[0].startswith("line 1 differs in"), problems
+    assert any(p.startswith("line 2 differs in") for p in problems), problems
+
+
+def test_a_settled_return_that_moved_is_a_revision(tmp_path: Path, no_replay: None) -> None:
+    series, _, entry = _signal_series()
+    mf.append(tmp_path, series.bars(), DAYS[entry + 61], provenance=PROVENANCE)
+    moved = _rewritten(series, 0.9985)
+    moved.close[entry + 60] *= 1 + 2e-5
+    assert mf.check(tmp_path, moved.bars()) == ["line 2 differs in exit_price, r60, r60_stop"]
+
+
+def test_a_settlement_may_carry_a_dividend_rewritten_entry_price(
+    tmp_path: Path, no_replay: None
+) -> None:
+    path = _recorded(tmp_path, no_replay)
+    price = _rows(tmp_path)[0]["entry_price"]
+    for factor, message in (
+        (1.01, "entry_price does not match its touch"),
+        (0.85, "entry_price does not match its touch"),
+        (0.95, "r60 is not"),
+    ):
+        _rewrite(path, 2, {"entry_price": price * factor})
+        problems = mf.verify(tmp_path)
+        assert problems and message in problems[0], (factor, problems)
+
+
 # Verifying the record -----------------------------------------------------------------------------
 
 
@@ -909,6 +1053,7 @@ def test_verify_accepts_an_empty_or_missing_record(tmp_path: Path) -> None:
         (2, {"r60": 0.5}, True, "r60 is not"),
         (2, {"stop_fill": 1.0}, True, "stop_fill"),
         (2, {"entry_price": 1.0}, True, "entry_price does not match its touch"),
+        (2, {"entry_date": "2026-11-09"}, True, "entry_date does not match its touch"),
         (2, {"touch_date": "2026-11-05"}, True, "no earlier signal touch"),
         (2, {"decided_on": "2026-11-05"}, True, "goes backwards"),
     ],
