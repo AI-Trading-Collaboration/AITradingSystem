@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DATA-031
+area: 数据工程/FMP 财报日历按周分段取，不再被 4000 行上限截掉近的日子
+priority: P1
+status: IN_PROGRESS
+next_owner: Claude（审 DATA-031-01，做新发布包）
+next_step: DATA-031-01 发布后做新发布包，要 Baker 打授权句换包（DATA-032 一周内能发布就一起换）；换包后第一个生产日在电脑上只读核一次当天原始 payload 的 segments（约 14 段，没有满 4000 行的段，没有日历的警告和错误），MSFT、META 的下一季日期在日历里
+acceptance: 日历窗口切成 7 天一段（默认 98 天 14 段），一段满 4000 行先留够预算再对半切，一天还满或预算不够就留着行、记 truncated 警告；一段出错记 failed 警告、别的段照收；日历请求最多 60 次，超出的段 skipped、记 request_cap 警告；全部拿不到才记 unavailable 错误；只去跨段的重复；原始 payload 记 segments 和 row_cap，from、to 仍是整个窗口；重放从 segments 重建同样的问题，旧存档印「无记录」，新旧混批报 mismatch；抓取报告加分段一行；daily_input_capture.py、命令参数、source_revision、HTTP 层不变；PR 套件通过
+notes: production_effect=none；broker_action=none；owner_decision:TRADING-2565:2026-11-01:research_loop_p7（第 7 期章程第 3.1 题照推荐现在修）；需求文档 docs/requirements/DATA-031_FMP_Earnings_Calendar_Week_Segments.md；起因：FMP stable/earnings-calendar 一次最多回 4000 行（推断），整窗 98 天一次请求时留远的日子、截掉近的，2026 年十月下旬财报高峰整段没采到；规矩变一条：以前日历一出错整天 FMP PIT 停，现在部分段出错只记警告，全部拿不到才停；读法：error、skipped 段算缺，truncated 段算可能不全，上线以前的存档近 3–4 周可能缺；名单以外的股票（AAPL）另开 DATA-032

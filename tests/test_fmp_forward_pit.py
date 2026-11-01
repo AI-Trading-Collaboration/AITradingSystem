@@ -453,11 +453,16 @@ class _FakeFmpForwardPitProvider:
         from_date: date,
         to_date: date,
     ) -> list[dict[str, Any]]:
-        assert from_date == date(2026, 4, 25)
-        assert to_date == date(2026, 7, 31)
+        # DATA-031: the window comes in one-week segments; serve the rows that fall in each.
+        assert from_date <= to_date
+        assert (to_date - from_date).days < 7
         return [
-            {"symbol": "NVDA", "date": "2026-05-28", "epsEstimated": 1.0},
-            {"symbol": "AAPL", "date": "2026-05-04", "epsEstimated": 2.0},
+            record
+            for record in (
+                {"symbol": "NVDA", "date": "2026-05-28", "epsEstimated": 1.0},
+                {"symbol": "AAPL", "date": "2026-05-04", "epsEstimated": 2.0},
+            )
+            if from_date <= date.fromisoformat(str(record["date"])) <= to_date
         ]
 
 

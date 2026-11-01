@@ -4,7 +4,8 @@ import csv
 import io
 import json
 import re
-from collections.abc import Mapping
+from collections import deque
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from enum import StrEnum
@@ -66,6 +67,9 @@ FMP_FORWARD_PIT_NORMALIZED_COLUMNS = (
     "confidence_level",
     "confidence_reason",
 )
+FMP_EARNINGS_CALENDAR_SEGMENT_DAYS = 7
+FMP_EARNINGS_CALENDAR_ROW_CAP = 4000
+FMP_EARNINGS_CALENDAR_MAX_REQUESTS = 60
 FMP_FORWARD_PIT_SOURCE_ID = "fmp_valuation_expectations"
 FMP_FORWARD_PIT_NORMALIZATION_VERSION = "fmp_forward_pit_v1"
 DEFAULT_FMP_FORWARD_PIT_RAW_DIR = state_dir(PROJECT_ROOT, "data") / "raw" / "fmp_forward_pit"
@@ -152,6 +156,9 @@ class FmpForwardPitFetchReport:
     issues: tuple[FmpForwardPitIssue, ...] = field(default_factory=tuple)
     source_name: str = FMP_SOURCE_NAME
     source_type: str = "paid_vendor"
+    earnings_calendar_segment_count: int = 0
+    earnings_calendar_max_segment_rows: int = 0
+    earnings_calendar_resplit_count: int = 0
 
     @property
     def raw_payload_count(self) -> int:
@@ -269,11 +276,14 @@ def fetch_fmp_forward_pit_snapshots(
     issues: list[FmpForwardPitIssue] = []
     raw_payloads: list[FmpForwardPitRawPayload] = []
     raw_payload_for_checksum: dict[str, dict[str, list[dict[str, Any]]]] = {}
-    calendar_records = _fetch_earnings_calendar_records(
+    calendar_records, calendar_segments = _fetch_earnings_calendar_records(
         fetch_provider,
         from_date=calendar_from,
         to_date=calendar_to,
         issues=issues,
+    )
+    segment_count, max_segment_rows, resplit_count = _earnings_calendar_segment_summary(
+        calendar_segments, calendar_from, calendar_to
     )
 
     for ticker in normalized_tickers:
@@ -319,6 +329,7 @@ def fetch_fmp_forward_pit_snapshots(
             analyst_estimate_limit=analyst_estimate_limit,
             calendar_from=calendar_from,
             calendar_to=calendar_to,
+            calendar_segments=calendar_segments,
         )
         raw_payloads.append(
             FmpForwardPitRawPayload(
@@ -352,6 +363,9 @@ def fetch_fmp_forward_pit_snapshots(
         row_count=sum(payload.row_count for payload in raw_payloads),
         checksum_sha256=_json_checksum(raw_payload_for_checksum),
         issues=tuple(issues),
+        earnings_calendar_segment_count=segment_count,
+        earnings_calendar_max_segment_rows=max_segment_rows,
+        earnings_calendar_resplit_count=resplit_count,
     )
 
 
@@ -675,6 +689,14 @@ def _fmp_forward_pit_report_from_retained_payloads(
         payload.request_parameters_by_endpoint["earnings-calendar"].get("to")
         for payload in payloads
     }
+    calendar_segment_values = {
+        _json_checksum(payload.request_parameters_by_endpoint["earnings-calendar"].get("segments"))
+        for payload in payloads
+    }
+    calendar_row_cap_values = {
+        payload.request_parameters_by_endpoint["earnings-calendar"].get("row_cap")
+        for payload in payloads
+    }
     if (
         len(downloaded_at_values) != 1
         or len(captured_at_values) != 1
@@ -682,6 +704,8 @@ def _fmp_forward_pit_report_from_retained_payloads(
         or len(analyst_limits) != 1
         or len(calendar_from_values) != 1
         or len(calendar_to_values) != 1
+        or len(calendar_segment_values) != 1
+        or len(calendar_row_cap_values) != 1
     ):
         raise ValueError("FMP forward PIT retained payload batch metadata mismatch")
     analyst_limit = next(iter(analyst_limits))
@@ -692,6 +716,16 @@ def _fmp_forward_pit_report_from_retained_payloads(
         calendar_to = date.fromisoformat(str(next(iter(calendar_to_values))))
     except ValueError as exc:
         raise ValueError("FMP forward PIT earnings calendar window is invalid") from exc
+    calendar_segments = payloads[0].request_parameters_by_endpoint["earnings-calendar"].get(
+        "segments"
+    )
+    segment_count, max_segment_rows, resplit_count = 0, 0, 0
+    issues: list[FmpForwardPitIssue] = []
+    if isinstance(calendar_segments, list):
+        segment_count, max_segment_rows, resplit_count = _earnings_calendar_segment_summary(
+            calendar_segments, calendar_from, calendar_to
+        )
+        issues = _earnings_calendar_segment_issues(calendar_segments)
     checksum_payload = {
         payload.ticker: {
             endpoint: list(payload.endpoint_records[endpoint])
@@ -712,6 +746,10 @@ def _fmp_forward_pit_report_from_retained_payloads(
         normalized_rows=normalized_rows,
         row_count=sum(payload.row_count for payload in payloads),
         checksum_sha256=_json_checksum(checksum_payload),
+        issues=tuple(issues),
+        earnings_calendar_segment_count=segment_count,
+        earnings_calendar_max_segment_rows=max_segment_rows,
+        earnings_calendar_resplit_count=resplit_count,
     )
 
 
@@ -835,6 +873,9 @@ def attach_fmp_forward_pit_report_artifacts(
         issues=report.issues,
         source_name=report.source_name,
         source_type=report.source_type,
+        earnings_calendar_segment_count=report.earnings_calendar_segment_count,
+        earnings_calendar_max_segment_rows=report.earnings_calendar_max_segment_rows,
+        earnings_calendar_resplit_count=report.earnings_calendar_resplit_count,
     )
 
 
@@ -858,6 +899,14 @@ def render_fmp_forward_pit_fetch_report(report: FmpForwardPitFetchReport) -> str
             f"limit={report.analyst_estimate_limit}; earnings-calendar "
             f"from={report.earnings_calendar_from.isoformat()}, "
             f"to={report.earnings_calendar_to.isoformat()}"
+        ),
+        (
+            f"- earnings-calendar 分段：{report.earnings_calendar_segment_count} 段，"
+            f"单段最多 {report.earnings_calendar_max_segment_rows} 行"
+            f"（上限 {FMP_EARNINGS_CALENDAR_ROW_CAP}），"
+            f"再切 {report.earnings_calendar_resplit_count} 次"
+            if report.earnings_calendar_segment_count
+            else "- earnings-calendar 分段：无记录（旧存档，或没有请求日历）"
         ),
         f"- 原始 payload 数：{report.raw_payload_count}",
         f"- 原始记录数：{report.row_count}",
@@ -942,19 +991,150 @@ def _fetch_earnings_calendar_records(
     from_date: date,
     to_date: date,
     issues: list[FmpForwardPitIssue],
-) -> tuple[dict[str, Any], ...]:
-    try:
-        return tuple(provider.fetch_earnings_calendar(from_date=from_date, to_date=to_date))
-    except Exception as exc:
+) -> tuple[tuple[dict[str, Any], ...], list[dict[str, object]]]:
+    if from_date > to_date:
+        raise ValueError("FMP earnings calendar window is invalid")
+    pending: deque[tuple[date, date]] = deque()
+    start = from_date
+    while start <= to_date:
+        end = min(start + timedelta(days=FMP_EARNINGS_CALENDAR_SEGMENT_DAYS - 1), to_date)
+        pending.append((start, end))
+        start = end + timedelta(days=1)
+
+    records: list[dict[str, Any]] = []
+    segments: list[dict[str, object]] = []
+    errors: dict[tuple[str, str], str] = {}
+    seen: set[str] = set()
+    request_count = 0
+    while pending:
+        start, end = pending.popleft()
+        segment: dict[str, object] = {"from": start.isoformat(), "to": end.isoformat()}
+        if request_count >= FMP_EARNINGS_CALENDAR_MAX_REQUESTS:
+            segment.update(rows=None, skipped=True)
+            segments.append(segment)
+            continue
+        request_count += 1
+        try:
+            rows = provider.fetch_earnings_calendar(from_date=start, to_date=end)
+        except Exception as exc:
+            segment.update(rows=None, error=True)
+            segments.append(segment)
+            errors[(start.isoformat(), end.isoformat())] = _sanitize_fmp_error_message(exc)
+            continue
+        if (
+            len(rows) >= FMP_EARNINGS_CALENDAR_ROW_CAP
+            and start < end
+            and request_count + 2 + len(pending) <= FMP_EARNINGS_CALENDAR_MAX_REQUESTS
+        ):
+            middle = start + timedelta(days=(end - start).days // 2)
+            pending.appendleft((middle + timedelta(days=1), end))
+            pending.appendleft((start, middle))
+            continue
+        segment["rows"] = len(rows)
+        if len(rows) >= FMP_EARNINGS_CALENDAR_ROW_CAP:
+            segment["truncated"] = True
+        segments.append(segment)
+        # Only earlier segments suppress rows; duplicates within this segment are retained.
+        keys = [_json_checksum(row) for row in rows]
+        records.extend(row for row, key in zip(rows, keys, strict=True) if key not in seen)
+        seen.update(keys)
+
+    issues.extend(_earnings_calendar_segment_issues(segments, errors))
+    return tuple(records), segments
+
+
+def _earnings_calendar_segment_issues(
+    segments: Sequence[object],
+    errors: Mapping[tuple[str, str], str] | None = None,
+) -> list[FmpForwardPitIssue]:
+    issues: list[FmpForwardPitIssue] = []
+    skipped: list[dict[str, Any]] = []
+    multiday_truncated_count = 0
+    for segment in segments:
+        if not isinstance(segment, dict):
+            continue
+        start, end = str(segment.get("from")), str(segment.get("to"))
+        if segment.get("error"):
+            reason = (errors or {}).get((start, end), "原因见当天 capture 目录里的抓取报告")
+            issues.append(
+                FmpForwardPitIssue(
+                    severity=FmpForwardPitIssueSeverity.WARNING,
+                    code="fmp_forward_pit_earnings_calendar_failed",
+                    endpoint="earnings-calendar",
+                    message=(
+                        f"FMP earnings-calendar 请求失败（{start} 至 {end}），"
+                        f"这一段算缺：{reason}"
+                    ),
+                )
+            )
+        if segment.get("truncated"):
+            rows = segment.get("rows")
+            if start == end:
+                message = (
+                    f"FMP earnings-calendar {start} 一天返回 {rows} 行，"
+                    f"达到上限 {FMP_EARNINGS_CALENDAR_ROW_CAP}，这一天可能不全"
+                )
+            else:
+                multiday_truncated_count += 1
+                message = (
+                    f"FMP earnings-calendar {start} 至 {end} 返回 {rows} 行，"
+                    f"达到上限 {FMP_EARNINGS_CALENDAR_ROW_CAP}，"
+                    "请求次数不够再切，这一段可能不全"
+                )
+            issues.append(
+                FmpForwardPitIssue(
+                    severity=FmpForwardPitIssueSeverity.WARNING,
+                    code="fmp_forward_pit_earnings_calendar_truncated",
+                    endpoint="earnings-calendar",
+                    message=message,
+                )
+            )
+        if segment.get("skipped"):
+            skipped.append(segment)
+    if skipped or multiday_truncated_count:
+        skipped_span = (
+            f"（{skipped[0].get('from')} 至 {skipped[-1].get('to')}）" if skipped else ""
+        )
+        issues.append(
+            FmpForwardPitIssue(
+                severity=FmpForwardPitIssueSeverity.WARNING,
+                code="fmp_forward_pit_earnings_calendar_request_cap",
+                endpoint="earnings-calendar",
+                message=(
+                    f"FMP earnings-calendar 达到请求上限 {FMP_EARNINGS_CALENDAR_MAX_REQUESTS}，"
+                    f"{multiday_truncated_count} 个多天截断段未再切，"
+                    f"跳过 {len(skipped)} 段{skipped_span}"
+                ),
+            )
+        )
+    valid_segments = [segment for segment in segments if isinstance(segment, dict)]
+    if valid_segments and all(
+        segment.get("error") or segment.get("skipped") for segment in valid_segments
+    ):
         issues.append(
             FmpForwardPitIssue(
                 severity=FmpForwardPitIssueSeverity.ERROR,
-                code="fmp_forward_pit_earnings_calendar_failed",
+                code="fmp_forward_pit_earnings_calendar_unavailable",
                 endpoint="earnings-calendar",
-                message=f"FMP earnings-calendar 请求失败：{_sanitize_fmp_error_message(exc)}",
+                message=f"FMP earnings-calendar {len(valid_segments)} 段都没有拿到，当天日历缺失",
             )
         )
-        return tuple()
+    return issues
+
+
+def _earnings_calendar_segment_summary(
+    segments: Sequence[object],
+    from_date: date,
+    to_date: date,
+) -> tuple[int, int, int]:
+    row_counts = [
+        segment["rows"]
+        for segment in segments
+        if isinstance(segment, dict) and type(segment.get("rows")) is int
+    ]
+    days = (to_date - from_date).days + 1
+    initial_count = -(-days // FMP_EARNINGS_CALENDAR_SEGMENT_DAYS)
+    return len(segments), max(row_counts, default=0), max(len(segments) - initial_count, 0)
 
 
 def _calendar_records_for_symbol(
@@ -975,6 +1155,7 @@ def _request_parameters_by_endpoint(
     analyst_estimate_limit: int,
     calendar_from: date,
     calendar_to: date,
+    calendar_segments: list[dict[str, object]],
 ) -> dict[str, dict[str, object]]:
     return {
         "analyst-estimates": {
@@ -992,6 +1173,8 @@ def _request_parameters_by_endpoint(
             "from": calendar_from.isoformat(),
             "to": calendar_to.isoformat(),
             "filtered_symbol": provider_symbol,
+            "segments": [dict(segment) for segment in calendar_segments],
+            "row_cap": FMP_EARNINGS_CALENDAR_ROW_CAP,
         },
     }
 
