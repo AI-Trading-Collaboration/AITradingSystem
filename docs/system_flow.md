@@ -93,6 +93,8 @@ QQQ 出场族在纳斯达克 100 价格指数 1986–1999 上的价目表（TRAD
 
 QQQ 出场信号之后 20 天的最大跌幅（TRADING-2565-113，`owner_decision:TRADING-2565:2026-11-02:exit_family_after_signal`）：`python -m ai_trading_system.research_probes.exit_rules_after run --out <目录>` 经 `exit_rules_counts` 载入 QQQ 尺子（开发窗口）、经 `entry_timing_ndx` 读登记的窗口 `ndx_price_1986_1999`，两段各用出场族自己的检查核对数据，过了才算；入场、七条出场规则和止损系数照第 0 步写死，只取规则判出场的笔，印信号日之后 20 个收盘的最大跌幅和最大回撤，按每笔、信号日和簇三种看法，旁边是同一段每一天和同 20 日波动档的每一天，写 `exit_rules_after.json` 和 `exit_rules_after.md`，已有结果拒绝覆盖。只印不判，不进日报、前瞻账本和券商。TRADING-2565-115 在跑以前加了波动的几列：每行另印信号日和同档的平均 20 日波动、按波动缩放的同档对照（每个信号日的 20 日波动乘它那一档每天「最大跌幅 ÷ 20 日波动」的平均）和同档的 20 天后涨跌，任一天和每档另印平均 20 日波动和「最大跌幅 ÷ 20 日波动」的平均，JSON 每簇第一天另记 20 日波动；Markdown 的表是 20 列。
 
+QQQ 出场族按大跌逐次看（TRADING-2565-117，`owner_decision:TRADING-2565:2026-11-02:exit_family_big_declines`）：`python -m ai_trading_system.research_probes.exit_rules_declines run --out <目录>` 照 `exit_rules_after` 载入和核对 QQQ 尺子（开发窗口）和登记的窗口 `ndx_price_1986_1999`，两段都过了才算；每段收盘上按 15% 的之字形事后划出每次大跌，只用来对照，不进任何规则；对一直拿过高点的人，X2（回落 8% 的移动止损）、X3、X4、X5 四条只用当时已知的收盘、每次响了从第二天重新开始，印每次大跌里每条规则第一次响时离高点几天、已跌多少、卖出后还跌多少、躲掉几成和高点前 20 天响过没有，每条规则的汇总，以及警报（按簇取第一天）落在大跌里、高点前和虚惊的个数和每年个数；X0、X1、X6 按买入价算，标不适用。写 `exit_rules_declines.json` 和 `exit_rules_declines.md`，已有结果拒绝覆盖。只印不判，不进日报、前瞻账本和券商。
+
 信号筛选（TRADING-2565 S4b）：`research_bench screen` 在截至 2010-12-31 的 QQQ、美股大盘和 49 个行业上筛一个信号，记进 `research/_screens/ledger/` 的全局账，按全部筛过的信号做 BH 修正后给出淘汰、候选或证据不足；信号模块在 `src/ai_trading_system/research_screens/signals/`。
 
 通用的“信号 → 仓位”策略（TRADING-2565 S4d）：`research_bench.signal_strategy.signal_exposure` 把预注册里钉住的信号模块按固定映射变成目标仓位，题目目录的 `strategy.py` 只是一行导入；用到外部来源时预注册写 `data.signal_snapshot_id`。
