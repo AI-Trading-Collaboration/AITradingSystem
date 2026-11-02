@@ -85,6 +85,8 @@ ad hoc 的 SEC PIT 回填/评估与缓存回放。
 
 纳斯达克 100 价格指数 1986–1999 的只印表（TRADING-2565-107，`owner_decision:TRADING-2565:2026-11-02:ndx_price_1986_1999`）：`python -m ai_trading_system.research_probes.entry_timing_ndx run --out <目录>` 读登记的窗口 `ndx_price_1986_1999` 和 QQQ 长历史快照里QQQ 跟踪的指数本身（`ndx_price`，不含分红，到 1999-03-09），输入检查过了才算；印第 0 号变体的次数和每个计入信号的 20/60 天收益（带和不带 8% 收盘止损）对当年任一天入场的平均，写 `entry_timing_ndx.json` 和 `entry_timing_ndx.md`，已有结果拒绝覆盖。只印不判，不进日报、前瞻账本和券商；这个窗口不给任何题型、试跑门或筛选用。
 
+QQQ 出场族第 0 步（TRADING-2565-108，`owner_decision:TRADING-2565:2026-11-02:exit_family_step0`）：`python -m ai_trading_system.research_probes.exit_rules_counts check --out <目录>` 只载入 QQQ 尺子（长历史快照 `qlh-20261013-0b0df53cb1a2`，切到 2010-12-31），把开发窗口里每个交易日收盘当一次入场，套七条出场规则（固定 8% 止损、按波动缩放的止损、移动止损、50 日均线破位、周急跌、第二腿、20 天时间止损），只印出场次数、持有天数和判断日簇数，写 `exit_rules_counts.json`，已有结果拒绝覆盖。不印收益，不读别的标的，不进日报、前瞻账本和券商，不是结论；次数只用来定配对对照的持有天数和算第一道线。
+
 信号筛选（TRADING-2565 S4b）：`research_bench screen` 在截至 2010-12-31 的 QQQ、美股大盘和 49 个行业上筛一个信号，记进 `research/_screens/ledger/` 的全局账，按全部筛过的信号做 BH 修正后给出淘汰、候选或证据不足；信号模块在 `src/ai_trading_system/research_screens/signals/`。
 
 通用的“信号 → 仓位”策略（TRADING-2565 S4d）：`research_bench.signal_strategy.signal_exposure` 把预注册里钉住的信号模块按固定映射变成目标仓位，题目目录的 `strategy.py` 只是一行导入；用到外部来源时预注册写 `data.signal_snapshot_id`。
