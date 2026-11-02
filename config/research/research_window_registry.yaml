@@ -280,7 +280,10 @@ windows:
   # (TRADING-2565-111, owner_decision:TRADING-2565:2026-11-02:exit_family_ndx_1986_1999):
   # research_probes/exit_rules_ndx.py prints the exit family's price list here with the rules and
   # stop factor frozen on QQQ 2000-2010. Once read, the span is no longer unseen history for the
-  # exit family either.
+  # exit family either. Baker then chose a third read for the same family (TRADING-2565-113,
+  # owner_decision:TRADING-2565:2026-11-02:exit_family_after_signal):
+  # research_probes/exit_rules_after.py prints how far the price falls in the 20 closes after each
+  # exit signal, beside every day of the span, with the same entries, rules and stop factor.
   ndx_price_1986_1999:
     start: 1986-01-02
     end: 1999-03-09
