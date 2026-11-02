@@ -89,6 +89,8 @@ QQQ 出场族第 0 步（TRADING-2565-108，`owner_decision:TRADING-2565:2026-11
 
 QQQ 出场族价目表（TRADING-2565-109，`owner_decision:TRADING-2565:2026-11-02:exit_family_price_list`）：`python -m ai_trading_system.research_probes.exit_rules_returns run --out <目录>` 经 `exit_rules_counts` 只载入 QQQ 尺子、用同样的入场和出场，先核对数据和第 0 步相同，再印每条规则对「拿同样天数」和拿满 60 天的每笔收益、左尾（5% 分位、CVaR5）、最深浮亏、假出场比例、仓位和按年的差，写 `exit_rules_returns.json` 和 `exit_rules_returns.md`，已有结果拒绝覆盖。按笔、算术，只印不判，不读别的标的，不进日报、前瞻账本和券商。
 
+QQQ 出场族在纳斯达克 100 价格指数 1986–1999 上的价目表（TRADING-2565-111，`owner_decision:TRADING-2565:2026-11-02:exit_family_ndx_1986_1999`）：`python -m ai_trading_system.research_probes.exit_rules_ndx run --out <目录>` 经 `entry_timing_ndx` 读登记的窗口 `ndx_price_1986_1999` 和 QQQ 长历史快照里 QQQ 跟踪的指数本身（`ndx_price`，不含分红，到 1999-03-09），先核对数据就是 TRADING-2565-107 印的那份，过了才算；每个收盘入场，七条出场规则和止损系数照 QQQ 2000–2010 写死，配对对照的天数在这一段上重算，印和 QQQ 价目表同样的每笔收益对比（旁边是 QQQ 2000–2010 的读数），写 `exit_rules_ndx.json` 和 `exit_rules_ndx.md`，已有结果拒绝覆盖。只印不判，不进日报、前瞻账本和券商。
+
 信号筛选（TRADING-2565 S4b）：`research_bench screen` 在截至 2010-12-31 的 QQQ、美股大盘和 49 个行业上筛一个信号，记进 `research/_screens/ledger/` 的全局账，按全部筛过的信号做 BH 修正后给出淘汰、候选或证据不足；信号模块在 `src/ai_trading_system/research_screens/signals/`。
 
 通用的“信号 → 仓位”策略（TRADING-2565 S4d）：`research_bench.signal_strategy.signal_exposure` 把预注册里钉住的信号模块按固定映射变成目标仓位，题目目录的 `strategy.py` 只是一行导入；用到外部来源时预注册写 `data.signal_snapshot_id`。

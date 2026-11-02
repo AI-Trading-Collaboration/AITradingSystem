@@ -273,10 +273,14 @@ windows:
   # Baker's print-only read of the 200-day pullback rule on QQQ's own index before QQQ traded
   # (TRADING-2565-107, owner_decision:TRADING-2565:2026-11-02:ndx_price_1986_1999): the FRED
   # Nasdaq-100 price index from its first date to the day before qqq_long_history_development
-  # starts. Only research_probes/entry_timing_ndx.py reads it; no question type, trial gate or
+  # starts. research_probes/entry_timing_ndx.py reads it; no question type, trial gate or
   # screen uses it. The price index carries no dividends, and the 200-day average warms up inside
   # the window. Once read, the span is no longer unseen history for the entry-timing family
-  # (period 7 charter, section 5.2).
+  # (period 7 charter, section 5.2). Baker then chose a second read for the QQQ exit family
+  # (TRADING-2565-111, owner_decision:TRADING-2565:2026-11-02:exit_family_ndx_1986_1999):
+  # research_probes/exit_rules_ndx.py prints the exit family's price list here with the rules and
+  # stop factor frozen on QQQ 2000-2010. Once read, the span is no longer unseen history for the
+  # exit family either.
   ndx_price_1986_1999:
     start: 1986-01-02
     end: 1999-03-09
