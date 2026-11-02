@@ -87,6 +87,8 @@ ad hoc 的 SEC PIT 回填/评估与缓存回放。
 
 QQQ 出场族第 0 步（TRADING-2565-108，`owner_decision:TRADING-2565:2026-11-02:exit_family_step0`）：`python -m ai_trading_system.research_probes.exit_rules_counts check --out <目录>` 只载入 QQQ 尺子（长历史快照 `qlh-20261013-0b0df53cb1a2`，切到 2010-12-31），把开发窗口里每个交易日收盘当一次入场，套七条出场规则（固定 8% 止损、按波动缩放的止损、移动止损、50 日均线破位、周急跌、第二腿、20 天时间止损），只印出场次数、持有天数和判断日簇数，写 `exit_rules_counts.json`，已有结果拒绝覆盖。不印收益，不读别的标的，不进日报、前瞻账本和券商，不是结论；次数只用来定配对对照的持有天数和算第一道线。
 
+QQQ 出场族价目表（TRADING-2565-109，`owner_decision:TRADING-2565:2026-11-02:exit_family_price_list`）：`python -m ai_trading_system.research_probes.exit_rules_returns run --out <目录>` 经 `exit_rules_counts` 只载入 QQQ 尺子、用同样的入场和出场，先核对数据和第 0 步相同，再印每条规则对「拿同样天数」和拿满 60 天的每笔收益、左尾（5% 分位、CVaR5）、最深浮亏、假出场比例、仓位和按年的差，写 `exit_rules_returns.json` 和 `exit_rules_returns.md`，已有结果拒绝覆盖。按笔、算术，只印不判，不读别的标的，不进日报、前瞻账本和券商。
+
 信号筛选（TRADING-2565 S4b）：`research_bench screen` 在截至 2010-12-31 的 QQQ、美股大盘和 49 个行业上筛一个信号，记进 `research/_screens/ledger/` 的全局账，按全部筛过的信号做 BH 修正后给出淘汰、候选或证据不足；信号模块在 `src/ai_trading_system/research_screens/signals/`。
 
 通用的“信号 → 仓位”策略（TRADING-2565 S4d）：`research_bench.signal_strategy.signal_exposure` 把预注册里钉住的信号模块按固定映射变成目标仓位，题目目录的 `strategy.py` 只是一行导入；用到外部来源时预注册写 `data.signal_snapshot_id`。
