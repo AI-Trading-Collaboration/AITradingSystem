@@ -140,6 +140,7 @@ def test_the_rules_are_the_frozen_ones() -> None:
     assert mf.RUN_ID == "TRADING-2571-01"
     assert mf.SCHEMA == "ma200_forward.v1"
     assert mf.OWNER_DECISION == "owner_decision:TRADING-2571:2026-11-01:ma200_forward_record"
+    assert mf.VERDICT_DECISION == "owner_decision:TRADING-2571:2026-11-02:return_only_verdict"
     assert mf.TICKER == "QQQ"
     assert mf.EASTERN == "America/New_York"
     assert (mf.WINDOW_START, mf.WINDOW_END) == (date(2026, 11, 2), date(2027, 10, 29))
@@ -243,10 +244,8 @@ def test_the_row_fields() -> None:
 
 def test_the_texts() -> None:
     assert mf.NOTE_TEXT == "只用于学习检验，不是交易指令。"
-    assert mf.HOLDS_TEXT == (
-        "合格：60 日上涨比例高 10 个百分点以上，带止损的 60 日均值高 3 个百分点以上"
-    )
-    assert mf.NOT_HOLDS_TEXT == "不合格：两条线没有同时过"
+    assert mf.HOLDS_TEXT == "合格：信号带止损的 60 日均值比任意一天高 3 个百分点以上"
+    assert mf.NOT_HOLDS_TEXT == "不合格：信号带止损的 60 日均值没有比任意一天高 3 个百分点"
     assert mf.NO_SIGNAL_TEXT == "窗口内没有信号，不判"
     assert mf.IN_PROGRESS_TEXT == "进行中：只描述，不判"
     assert mf.PREFIX == "ma200_forward: "
@@ -1108,15 +1107,21 @@ def _stats(n: int, up60: float, mean60: float, mean60_stop: float) -> dict[str, 
     return {"n": n, "up60": up60, "mean60": mean60, "mean60_stop": mean60_stop, "worst60": 0.0}
 
 
-def test_judge_uses_the_two_lines() -> None:
+def test_judge_uses_only_the_return_line() -> None:
     base = _stats(250, 0.70, 0.03, 0.02)
     holds = mf.judge(_stats(2, 0.80, 0.0, 0.06), base, True)
     assert holds["state"] == "holds" and holds["text"] == mf.HOLDS_TEXT
     assert holds["diff_up"] == pytest.approx(0.10) and holds["diff_mean"] == pytest.approx(0.03)
     assert holds["line_up"] is True and holds["line_mean"] is True
+    # VERDICT_DECISION (2026-11-02): the up-ratio line is still computed, for reference only.
+    low_up = mf.judge(_stats(2, 0.50, 0.0, 0.06), base, True)
+    assert low_up["state"] == "holds" and low_up["text"] == mf.HOLDS_TEXT
+    assert low_up["line_up"] is False and low_up["diff_up"] == pytest.approx(-0.20)
     short = mf.judge(_stats(2, 0.80, 0.09, 0.0599), base, True)
     assert short["state"] == "not_holds" and short["line_mean"] is False
-    assert short["text"] == mf.NOT_HOLDS_TEXT
+    assert short["line_up"] is True and short["text"] == mf.NOT_HOLDS_TEXT
+    both = mf.judge(_stats(2, 0.50, 0.09, 0.0), base, True)
+    assert both["state"] == "not_holds" and both["diff_mean"] == pytest.approx(-0.03)
     assert mf.judge(_stats(2, 0.79, 0.0, 0.9), base, True)["line_up"] is False
     waiting = mf.judge(_stats(2, 0.80, 0.0, 0.06), base, False)
     assert waiting["state"] == "in_progress" and waiting["text"] == mf.IN_PROGRESS_TEXT
@@ -1175,7 +1180,8 @@ def test_the_summary(tmp_path: Path, no_replay: None) -> None:
         mf.NOTE_TEXT,
         "## 信号",
         "## 没站稳的触线",
-        "## 合格标准（Baker 事先定）",
+        "## 合格标准（Baker 定，2026-11-02 起只看收益）",
+        f"依据 `{mf.VERDICT_DECISION}`",
         "## 回测对照（2000-01 至 2026-10，固定）",
         mf.IN_PROGRESS_TEXT,
         "2026-11-04",
@@ -1185,6 +1191,10 @@ def test_the_summary(tmp_path: Path, no_replay: None) -> None:
     ):
         assert part in text, part
     assert "没有。" in text
+    mean_title = "- 信号带止损均值减任意一天不带止损均值（判定线 +3.00）："
+    up_title = "- 上涨比例差（只参考，不进判定；原线 +10.00）："
+    assert mean_title in text and up_title in text
+    assert text.index(mean_title) < text.index(up_title)
     assert "没给价格文件" in mf.render_summary(mf.read_events(tmp_path), None)
     mf.append(tmp_path, bars, DAYS[entry + 61], provenance=PROVENANCE)
     path = mf.write_summary(tmp_path, bars)
@@ -1322,6 +1332,8 @@ def test_committed_readme_quotes_the_frozen_rules() -> None:
         "合格标准（Baker 事先定）：60 天上涨比例比任意一天高 10 个百分点以上，"
         "且带止损的 60 天平均收益高 3 个百分点以上。",
         mf.OWNER_DECISION,
+        mf.VERDICT_DECISION,
+        "2026-11-02 起正式判定只看第二条",
         "topic-ma200-c20261031-2220",
     ):
         assert line in text, line

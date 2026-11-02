@@ -34,6 +34,7 @@ from ai_trading_system.trading_calendar import is_us_equity_trading_day
 RUN_ID = "TRADING-2571-01"
 SCHEMA = "ma200_forward.v1"
 OWNER_DECISION = "owner_decision:TRADING-2571:2026-11-01:ma200_forward_record"
+VERDICT_DECISION = "owner_decision:TRADING-2571:2026-11-02:return_only_verdict"
 TICKER = "QQQ"
 EASTERN = "America/New_York"
 # Frozen pilot rules and descriptive criteria: OWNER_DECISION, requirement sections 1-3.
@@ -46,6 +47,7 @@ CONFIRM_DAYS = 3
 COOLDOWN = 20
 HOLD_DAYS = 60
 STOP = 0.08
+# Since VERDICT_DECISION, LINE_UP is printed for reference only; only LINE_MEAN decides.
 LINE_UP = 0.10
 LINE_MEAN = 0.03
 BACKTEST_START = date(2000, 1, 3)
@@ -145,8 +147,8 @@ PRICE_FIELDS = {
 RETURN_FIELDS = ("r60", "r60_stop")
 ANCHORS = {"touch": "sma", "settle": "entry_price"}
 NOTE_TEXT = "只用于学习检验，不是交易指令。"
-HOLDS_TEXT = "合格：60 日上涨比例高 10 个百分点以上，带止损的 60 日均值高 3 个百分点以上"
-NOT_HOLDS_TEXT = "不合格：两条线没有同时过"
+HOLDS_TEXT = "合格：信号带止损的 60 日均值比任意一天高 3 个百分点以上"
+NOT_HOLDS_TEXT = "不合格：信号带止损的 60 日均值没有比任意一天高 3 个百分点"
 NO_SIGNAL_TEXT = "窗口内没有信号，不判"
 IN_PROGRESS_TEXT = "进行中：只描述，不判"
 PREFIX = "ma200_forward: "
@@ -872,7 +874,7 @@ def judge(
         state, text = "in_progress", IN_PROGRESS_TEXT
     elif not signals["n"]:
         state, text = "no_signal", NO_SIGNAL_TEXT
-    elif line_up and line_mean:
+    elif line_mean:
         state, text = "holds", HOLDS_TEXT
     else:
         state, text = "not_holds", NOT_HOLDS_TEXT
@@ -979,8 +981,9 @@ def render_summary(rows: Sequence[Mapping[str, Any]], bars: Bars | None = None) 
         "",
         "、".join(failed) + "。" if failed else "没有。",
         "",
-        "## 合格标准（Baker 事先定）",
+        "## 合格标准（Baker 定，2026-11-02 起只看收益）",
         "",
+        f"依据 `{VERDICT_DECISION}`：只看标着「判定线」的那一行，上涨比例照印，只参考。",
         f"判定：{result['text']}",
         "信号：" + _stats_text(result["signals"]),
     ]
@@ -990,8 +993,8 @@ def render_summary(rows: Sequence[Mapping[str, Any]], bars: Bars | None = None) 
         + ("没给价格文件" if base is None else _stats_text(base) + "（带止损只参考）")
     )
     for key, title in (
-        ("diff_up", "上涨比例差（线 +10.00）"),
-        ("diff_mean", "信号带止损均值减任意一天不带止损均值（线 +3.00）"),
+        ("diff_mean", "信号带止损均值减任意一天不带止损均值（判定线 +3.00）"),
+        ("diff_up", "上涨比例差（只参考，不进判定；原线 +10.00）"),
     ):
         value = result[key]
         lines.append(f"- {title}：" + ("—" if value is None else f"{value * 100:+.2f} 个百分点"))
