@@ -5,7 +5,9 @@ asked about the next 20 days after reviewing the two price lists (-109, -111).
 Exit signals govern exits; buying back belongs to entry signals. Keep step
 zero's entries, seven rules and stop factor on both spans. Select signal
 exits at the decision close and print subsequent falls and drawdowns beside
-every day on that span and every day in the same volatility band. Print only:
+every day on that span and every day in the same volatility band.
+TRADING-2565-115 adds both sides' mean volatility and a volatility-scaled same-band reference.
+Print only:
 no verdicts or accounting entries, no gate or ruler changes, and no daily
 report or broker action.
 """
@@ -37,6 +39,7 @@ OWNER_DECISION = "owner_decision:TRADING-2565:2026-11-02:exit_family_after_signa
 RULES = xc.RULES
 SPANS = ("qqq", "ndx")
 VIEWS = ("trades", "days", "clusters")
+MATCHED = ("fall_mean", "fall_share10", "scaled_fall_mean", "sigma_mean", "r20_mean")
 # Frozen print-only pilot under OWNER_DECISION; exit at Baker's review of this table.
 # These describe the post-signal paths, not acceptance or promotion gates.
 AFTER = 20
@@ -53,7 +56,10 @@ NOTE = (
     "最大跌幅是之后 20 个收盘里最低收盘相对信号日收盘的跌幅，没跌算 0；"
     "最大回撤是信号日起这 21 个收盘里从高点到之后低点的最大跌幅。"
     "三种看法：每笔、信号日去重、簇（隔不到 20 个交易日的并成一簇，每簇只取第一天）。"
-    "对照是同一段每一天和同 20 日波动档（五档）的每一天。"
+    "对照是同一段里每一天，和同 20 日波动档（五档）的每一天；"
+    "档内的波动不一定对齐，所以另印信号日和同档的平均 σ20，"
+    "和按 σ 缩放的同档对照（每个信号日的 σ20 乘它那一档每天「最大跌幅 ÷ σ20」的平均）。"
+    "「20 天后涨跌」「20 天后更高」按笔的版本，价目表已经印过（从卖出日算，差一天）。"
     "买回是入场信号的事，这张表不算错过的反弹。"
 )
 app = typer.Typer(help="QQQ 出场信号之后 20 天的最大跌幅：只印不判。")
@@ -123,6 +129,10 @@ def band(sigma: float, edges: Sequence[float]) -> int:
     return sum(sigma > edge for edge in edges)
 
 
+def mean(values: Sequence[float]) -> float | None:
+    return math.fsum(values) / len(values) if values else None
+
+
 def span_table(
     series: ec.Closes,
     prepared: xc.Prepared,
@@ -136,20 +146,32 @@ def span_table(
     rows = {t: after(close, t) for t in base_days}
     edges = band_edges(list(sigmas.values()))
     band_of = {t: band(s, edges) for t, s in sigmas.items()}
-    bands = [stats([rows[t] for t in base_days if band_of[t] == b]) for b in range(BANDS)]
+
+    def describe(days: Sequence[int]) -> dict[str, int | float | None]:
+        return {
+            **stats([rows[t] for t in days]),
+            "sigma_mean": mean([sigmas[t] for t in days]),
+            "fall_per_sigma_mean": mean([rows[t]["fall"] / sigmas[t] for t in days]),
+        }
+
+    bands = [describe([t for t in base_days if band_of[t] == b]) for b in range(BANDS)]
 
     def matched(days: Sequence[int]) -> dict[str, float | None]:
         if not days:
-            return {"fall_mean": None, "fall_share10": None}
+            return dict.fromkeys(MATCHED)
         result: dict[str, float | None] = {}
-        for key in ("fall_mean", "fall_share10"):
+        for key in MATCHED:
             values: list[float] = []
             for d in days:
-                value = bands[band_of[d]][key]
+                reference_key = "fall_per_sigma_mean" if key == "scaled_fall_mean" else key
+                value = bands[band_of[d]][reference_key]
                 # A chosen day belongs to its own nonempty reference band.
                 assert value is not None
+                if key == "scaled_fall_mean":
+                    # Scale the band's mean fall per sigma by this signal day's own sigma.
+                    value *= sigmas[d]
                 values.append(value)
-            result[key] = math.fsum(values) / len(days)
+            result[key] = mean(values)
         return result
 
     rules: dict[str, Any] = {}
@@ -163,7 +185,11 @@ def span_table(
         days = sorted(set(kept))
         firsts = first_days(days)
         views = {
-            view: {**stats([rows[d] for d in chosen]), "matched": matched(chosen)}
+            view: {
+                **stats([rows[d] for d in chosen]),
+                "sigma_mean": mean([sigmas[d] for d in chosen]),
+                "matched": matched(chosen),
+            }
             for view, chosen in zip(VIEWS, (kept, days, firsts), strict=True)
         }
         rules[rule] = {
@@ -171,13 +197,19 @@ def span_table(
             "beyond_end": len(signalled) - len(kept),
             "views": views,
             "clusters": [
-                {"date": series.dates[d].isoformat(), "band": band_of[d], **rows[d]} for d in firsts
+                {
+                    "date": series.dates[d].isoformat(),
+                    "band": band_of[d],
+                    "sigma": sigmas[d],
+                    **rows[d],
+                }
+                for d in firsts
             ],
         }
     return {
         "first_day": series.dates[base_days[0]].isoformat(),
         "last_day": series.dates[base_days[-1]].isoformat(),
-        "any_day": stats(list(rows.values())),
+        "any_day": describe(base_days),
         "band_edges": edges,
         "bands": bands,
         "rules": rules,
@@ -257,6 +289,14 @@ def _line(cells: Sequence[str]) -> str:
     return "| " + " | ".join(cells) + " |"
 
 
+def sigma_text(value: float | None) -> str:
+    return "—" if value is None else f"{100.0 * value:.2f}%"
+
+
+def ratio_text(value: float | None) -> str:
+    return "—" if value is None else f"{value:+.2f}"
+
+
 def render_markdown(result: Mapping[str, Any]) -> str:
     lines = ["# QQQ 出场信号之后 20 天的最大跌幅（TRADING-2565-113）", "", NOTE, ""]
     headers = [
@@ -266,6 +306,9 @@ def render_markdown(result: Mapping[str, Any]) -> str:
         "平均最大跌幅",
         "任一天",
         "同波动档",
+        "同档按 σ 缩放",
+        "信号日 σ20",
+        "同档 σ20",
         "中位",
         "最差 5%",
         "CVaR5",
@@ -275,6 +318,7 @@ def render_markdown(result: Mapping[str, Any]) -> str:
         "平均最大回撤",
         "次日涨跌",
         "20 天后涨跌",
+        "同档 20 天后涨跌",
         "20 天后更高",
     ]
     for span in SPANS:
@@ -288,9 +332,14 @@ def render_markdown(result: Mapping[str, Any]) -> str:
             f"最差 5% {xr.pct(base['fall_p05'])}，跌过 5% {xr.share(base['fall_share05'])}，"
             f"跌过 10% {xr.share(base['fall_share10'])}，"
             f"平均最大回撤 {xr.pct(base['drawdown_mean'])}，"
-            f"20 天后更高 {xr.share(base['r20_up'])}。",
+            f"20 天后更高 {xr.share(base['r20_up'])}，平均 σ20 {sigma_text(base['sigma_mean'])}，"
+            f"最大跌幅 ÷ σ20 平均 {ratio_text(base['fall_per_sigma_mean'])}。",
             "20 日波动五档（从低到高）的平均最大跌幅："
             + "、".join(xr.pct(b["fall_mean"]) for b in one["bands"])
+            + "；平均 σ20："
+            + "、".join(sigma_text(b["sigma_mean"]) for b in one["bands"])
+            + "；最大跌幅 ÷ σ20 平均："
+            + "、".join(ratio_text(b["fall_per_sigma_mean"]) for b in one["bands"])
             + "。",
             "",
             _line(headers),
@@ -308,6 +357,9 @@ def render_markdown(result: Mapping[str, Any]) -> str:
                             xr.pct(row["fall_mean"]),
                             xr.pct(base["fall_mean"]),
                             xr.pct(row["matched"]["fall_mean"]),
+                            xr.pct(row["matched"]["scaled_fall_mean"]),
+                            sigma_text(row["sigma_mean"]),
+                            sigma_text(row["matched"]["sigma_mean"]),
                             xr.pct(row["fall_median"]),
                             xr.pct(row["fall_p05"]),
                             xr.pct(row["fall_cvar05"]),
@@ -317,6 +369,7 @@ def render_markdown(result: Mapping[str, Any]) -> str:
                             xr.pct(row["drawdown_mean"]),
                             xr.pct(row["next_mean"]),
                             xr.pct(row["r20_mean"]),
+                            xr.pct(row["matched"]["r20_mean"]),
                             xr.share(row["r20_up"]),
                         ]
                     )

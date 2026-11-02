@@ -1,8 +1,8 @@
-"""Acceptance tests for TRADING-2565-113: falls in the 20 closes after each QQQ exit signal.
+"""Acceptance tests for TRADING-2565-113/-115: falls in the 20 closes after each QQQ exit signal.
 
 Requirement: knowledge qqq-options/auto-loop/period7/exit-family/exit-family-after-signal-
-requirements-2026-11-02.md (owner decision exit_family_after_signal). Synthetic data only; no
-snapshot, no network.
+requirements-2026-11-02.md (owner decision exit_family_after_signal); -115 adds the volatility
+columns the review asked for. Synthetic data only; no snapshot, no network.
 """
 
 from __future__ import annotations
@@ -52,6 +52,7 @@ def test_the_run_is_the_after_signal_table_of_the_exit_family() -> None:
     assert xa.RULES == xc.RULES == ("X0", "X1", "X2", "X3", "X4", "X5", "X6")
     assert xa.SPANS == ("qqq", "ndx")
     assert xa.VIEWS == ("trades", "days", "clusters")
+    assert xa.MATCHED == ("fall_mean", "fall_share10", "scaled_fall_mean", "sigma_mean", "r20_mean")
     assert (xa.AFTER, xa.TAIL, xa.FALL_LINES, xa.BANDS) == (20, 0.05, (0.05, 0.10), 5)
     assert (xa.RESULT_JSON, xa.RESULT_MD) == ("exit_rules_after.json", "exit_rules_after.md")
     assert xa.SPAN_TEXT == {"qqq": "QQQ 1999–2010（开发窗口，切到 2010-12-31）", "ndx": en.TITLE}
@@ -67,6 +68,10 @@ def test_the_note_says_what_is_measured_and_what_is_not() -> None:
         "每簇只取第一天",
         "同 20 日波动档（五档）",
         "不算错过的反弹",
+        "平均 σ20",
+        "按 σ 缩放的同档对照",
+        "最大跌幅 ÷ σ20",
+        "价目表已经印过（从卖出日算，差一天）",
     ):
         assert words in xa.NOTE, words
 
@@ -224,6 +229,14 @@ def test_clusters_keep_the_first_day_after_a_gap_of_twenty() -> None:
     assert xa.first_days(days) == [5, 30, 80, 119]
     assert len(xa.first_days(days)) == xc.clusters(days)
     assert xa.first_days([]) == []
+
+
+def test_a_mean_and_the_volatility_texts() -> None:
+    assert xa.mean([]) is None
+    assert xa.mean([0.1, 0.2, 0.6]) == pytest.approx(0.3)
+    assert (xa.sigma_text(0.01814), xa.sigma_text(None)) == ("1.81%", "—")
+    ratios = (xa.ratio_text(-2.954), xa.ratio_text(0.5), xa.ratio_text(None))
+    assert ratios == ("-2.95", "+0.50", "—")
 
 
 def test_volatility_bands_are_nearest_rank_quintiles() -> None:
@@ -475,6 +488,14 @@ def _sigmas(prepared: xc.Prepared, days: list[int]) -> dict[int, float]:
     return {t: s for t in days if (s := prepared.sigma[t]) is not None}
 
 
+def _same_sigma(
+    got: dict[str, Any], days: list[int], sig: dict[int, float], rows: dict[int, dict[str, float]]
+) -> None:
+    assert got["sigma_mean"] == pytest.approx(float(np.mean([sig[t] for t in days])), rel=1e-9)
+    ratio = float(np.mean([rows[t]["fall"] / sig[t] for t in days]))
+    assert got["fall_per_sigma_mean"] == pytest.approx(ratio, rel=1e-9, abs=1e-12)
+
+
 def _base(span: str) -> tuple[list[float], list[int], dict[int, dict[str, float]]]:
     series, prepared, entries, _ = SPAN_INPUTS[span]
     close = list(series.close)
@@ -492,13 +513,16 @@ def test_the_any_day_base_and_the_bands(table: dict[str, Any], span: str) -> Non
     assert got["last_day"] == series.dates[len(series.close) - 21].isoformat()
     _same(got["any_day"], _stats(list(rows.values())))
     sig = _sigmas(prepared, days)
+    _same_sigma(got["any_day"], days, sig, rows)
     sigmas = sorted(sig.values())
     edges = [sigmas[max(math.ceil(q * len(sigmas)) - 1, 0)] for q in (0.2, 0.4, 0.6, 0.8)]
     assert got["band_edges"] == edges
     assert len(got["bands"]) == 5
     for b, one in enumerate(got["bands"]):
-        chosen = [rows[t] for t in days if sum(sig[t] > e for e in edges) == b]
-        _same(one, _stats(chosen))
+        members = [t for t in days if sum(sig[t] > e for e in edges) == b]
+        _same(one, _stats([rows[t] for t in members]))
+        _same_sigma(one, members, sig, rows)
+        assert list(one)[-2:] == ["sigma_mean", "fall_per_sigma_mean"]
     assert sum(one["n"] for one in got["bands"]) == len(days)
 
 
@@ -511,6 +535,8 @@ def test_each_rule_s_three_views(table: dict[str, Any], span: str, rule: str) ->
     sig = _sigmas(prepared, days)
     band_of = {t: sum(sig[t] > e for e in edges) for t in days}
     band_rows = {b: [rows[t] for t in days if band_of[t] == b] for b in range(5)}
+    band_days = {b: [t for t in days if band_of[t] == b] for b in range(5)}
+    per_sigma = {b: np.mean([rows[t]["fall"] / sig[t] for t in band_days[b]]) for b in range(5)}
     signalled = [x.decision for x in exits[rule].values() if x.reason == "signal"]
     kept = [d for d in signalled if d is not None and d in rows]
     unique = sorted(set(kept))
@@ -528,13 +554,27 @@ def test_each_rule_s_three_views(table: dict[str, Any], span: str, rule: str) ->
             want_share = np.mean(
                 [np.mean([r["fall"] <= -0.10 for r in band_rows[band_of[d]]]) for d in chosen]
             )
-            assert one["matched"]["fall_mean"] == pytest.approx(float(want_fall), rel=1e-9)
-            assert one["matched"]["fall_share10"] == pytest.approx(float(want_share), rel=1e-9)
+            want_scaled = np.mean([sig[d] * per_sigma[band_of[d]] for d in chosen])
+            want_sigma = np.mean([np.mean([sig[t] for t in band_days[band_of[d]]]) for d in chosen])
+            want_r20 = np.mean([np.mean([r["r20"] for r in band_rows[band_of[d]]]) for d in chosen])
+            matched = one["matched"]
+            assert list(matched) == list(xa.MATCHED)
+            assert matched["fall_mean"] == pytest.approx(float(want_fall), rel=1e-9)
+            assert matched["fall_share10"] == pytest.approx(float(want_share), rel=1e-9)
+            assert matched["scaled_fall_mean"] == pytest.approx(float(want_scaled), rel=1e-9)
+            assert matched["sigma_mean"] == pytest.approx(float(want_sigma), rel=1e-9)
+            assert matched["r20_mean"] == pytest.approx(float(want_r20), rel=1e-9, abs=1e-12)
+            want_own = float(np.mean([sig[d] for d in chosen]))
+            assert one["sigma_mean"] == pytest.approx(want_own, rel=1e-9)
         else:
-            assert one["matched"] == {"fall_mean": None, "fall_share10": None}
+            assert one["matched"] == dict.fromkeys(xa.MATCHED)
+            assert one["sigma_mean"] is None
+        assert list(one)[-2:] == ["sigma_mean", "matched"]
     assert [c["date"] for c in got["clusters"]] == [series.dates[d].isoformat() for d in firsts]
     for c, d in zip(got["clusters"], firsts, strict=True):
+        assert list(c)[:3] == ["date", "band", "sigma"]
         assert c["band"] == band_of[d]
+        assert c["sigma"] == sig[d]
         for key, value in _after(list(series.close), d).items():
             assert c[key] == pytest.approx(value, rel=1e-9, abs=1e-12)
 
@@ -583,16 +623,52 @@ def test_the_markdown(table: dict[str, Any]) -> None:
         assert f"## {xa.SPAN_TEXT[span]}" in lines
     rows = [line for line in lines if line.startswith("| X")]
     assert len(rows) == 2 * 7 * 3
-    assert all(line.count("|") == 17 for line in rows)
+    assert all(line.count("|") == 21 for line in rows)
     header = [line for line in lines if line.startswith("| 规则 |")]
-    assert len(header) == 2 and header[0].count("|") == 17
+    assert len(header) == 2 and header[0].count("|") == 21
+    assert header[0].startswith(
+        "| 规则 | 看法 | 个数 | 平均最大跌幅 | 任一天 | 同波动档 | "
+        "同档按 σ 缩放 | 信号日 σ20 | 同档 σ20 |"
+    )
+    assert header[0].endswith("| 20 天后涨跌 | 同档 20 天后涨跌 | 20 天后更高 |")
     q = table["spans"]["qqq"]
     one = q["rules"]["X0"]["views"]["clusters"]
+    m = one["matched"]
     want = (
         f"| X0 | 簇 | {one['n']} | {xr.pct(one['fall_mean'])} | "
-        f"{xr.pct(q['any_day']['fall_mean'])} | {xr.pct(one['matched']['fall_mean'])} |"
+        f"{xr.pct(q['any_day']['fall_mean'])} | {xr.pct(m['fall_mean'])} | "
+        f"{xr.pct(m['scaled_fall_mean'])} | {xa.sigma_text(one['sigma_mean'])} | "
+        f"{xa.sigma_text(m['sigma_mean'])} | {xr.pct(one['fall_median'])} |"
     )
-    assert any(line.startswith(want) for line in rows)
+    tail = f"| {xr.pct(one['r20_mean'])} | {xr.pct(m['r20_mean'])} | {xr.share(one['r20_up'])} |"
+    assert any(line.startswith(want) and line.endswith(tail) for line in rows)
+    differ = 0
+    for span in xa.SPANS:
+        got = table["spans"][span]
+        for rule in xa.RULES:
+            for view, word in (("trades", "每笔"), ("days", "信号日"), ("clusters", "簇")):
+                one = got["rules"][rule]["views"][view]
+                own, same = (
+                    xa.sigma_text(one["sigma_mean"]),
+                    xa.sigma_text(one["matched"]["sigma_mean"]),
+                )
+                differ += own != same
+                cells = f"| {xr.pct(one['matched']['scaled_fall_mean'])} | {own} | {same} |"
+                assert (
+                    sum(
+                        f"| {rule} | {word} | {one['n']} |" in line and cells in line
+                        for line in rows
+                    )
+                    >= 1
+                ), (span, rule, view)
+    assert differ >= 5
+    base = q["any_day"]
+    assert (
+        f"平均 σ20 {xa.sigma_text(base['sigma_mean'])}，"
+        f"最大跌幅 ÷ σ20 平均 {xa.ratio_text(base['fall_per_sigma_mean'])}。"
+    ) in md
+    assert "；平均 σ20：" + "、".join(xa.sigma_text(b["sigma_mean"]) for b in q["bands"]) in md
+    assert "；最大跌幅 ÷ σ20 平均：" in md
     for view, word in (("trades", "每笔"), ("days", "信号日"), ("clusters", "簇")):
         assert sum(line.startswith(f"| X3 | {word} |") for line in rows) == 2, view
     assert "20 日波动五档（从低到高）的平均最大跌幅：" in md
