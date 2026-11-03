@@ -101,6 +101,8 @@ QQQ 入场加出场，出场和回补要第二天收盘确认（TRADING-2565-119
 
 QQQ 跌破 200 日线后的结构转变入场（TRADING-2565-120，`owner_decision:TRADING-2565:2026-11-03:entry_structure_shift`）：`python -m ai_trading_system.research_probes.entry_structure_shift run --out <目录>` 照 `entry_exit_combo` 载入和核对 QQQ 尺子（开发窗口）和 6 个入场日，过了才算；收盘跌破 200 日线以后，出现更低的摆动低点 L（严格低于左右各 5 个收盘，另印各 2 个收盘的对照），之后第一个收盘高于 L 前面那个摆动高点就入场，收盘跌回 L 下止损；印每次入场的风险和之后 20/60 天的收益（带和不带止损），和任一天比，再把它作第二个买回信号放进 TRADING-2565-118 的 A 版；写 `entry_structure_shift.json` 和 `entry_structure_shift.md`，已有结果拒绝覆盖。只印不判，不读别的标的，不进日报、前瞻账本和券商。
 
+QQQ 结构转变入场和策略放到别的时期（TRADING-2565-122，`owner_decision:TRADING-2565:2026-11-03:structure_shift_other_periods`）：`python -m ai_trading_system.research_probes.structure_shift_periods check --out <目录>` 先核对新登记的只印窗口 `qqq_after_2010_owner_print`，载入 QQQ 尺子（不切到 2010-12-31）和登记的窗口 `ndx_price_1986_1999`，只核对两段输入、写检查；`run --out <目录>` 核对过后用同一套代码重算 QQQ 1999–2010，等于 TRADING-2565-120 印的才算，然后在纳斯达克 100 1986–1999 和 QQQ 2011-01-03 以后照 TRADING-2565-120 写死的规则印入场表和策略表（2011 年以前的收盘只当回看），三段都另印「只在 200 日线下算」三行和「线上响的 X2 再等 200 日线涨到响时收盘价」一行；写 `structure_shift_periods.json` 和 `structure_shift_periods.md`，已有结果拒绝覆盖。只印不判，不读别的标的，不进日报、前瞻账本和券商。
+
 信号筛选（TRADING-2565 S4b）：`research_bench screen` 在截至 2010-12-31 的 QQQ、美股大盘和 49 个行业上筛一个信号，记进 `research/_screens/ledger/` 的全局账，按全部筛过的信号做 BH 修正后给出淘汰、候选或证据不足；信号模块在 `src/ai_trading_system/research_screens/signals/`。
 
 通用的“信号 → 仓位”策略（TRADING-2565 S4d）：`research_bench.signal_strategy.signal_exposure` 把预注册里钉住的信号模块按固定映射变成目标仓位，题目目录的 `strategy.py` 只是一行导入；用到外部来源时预注册写 `data.signal_snapshot_id`。

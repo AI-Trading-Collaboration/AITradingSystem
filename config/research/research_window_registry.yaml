@@ -289,7 +289,11 @@ windows:
   # research_probes/exit_rules_declines.py marks each decline of at least 15% on closes after
   # the fact and prints, for a holder who kept the position through the peak, when the price
   # rules X2 to X5 first fire, how far the price had fallen by then and how much of the rest of
-  # the fall the next-close sale avoids. The marking enters no rule.
+  # the fall the next-close sale avoids. The marking enters no rule. Baker then chose a fifth
+  # read, for the entry-timing family and the exit family together (TRADING-2565-122,
+  # owner_decision:TRADING-2565:2026-11-03:structure_shift_other_periods):
+  # research_probes/structure_shift_periods.py prints TRADING-2565-120's frozen structure-shift
+  # entry and strategy here, with the comparison rows Baker added before the run.
   ndx_price_1986_1999:
     start: 1986-01-02
     end: 1999-03-09
@@ -321,6 +325,49 @@ windows:
       - qqq_etf_trades_from_1999_03_10
       - fred_carries_the_price_index_over_some_closed_sessions
       - the_200_day_average_warms_up_inside_the_window
+  # Baker's one-time print-only read of QQQ after 2010 (TRADING-2565-122,
+  # owner_decision:TRADING-2565:2026-11-03:structure_shift_other_periods): the long-history
+  # snapshot's actual QQQ series (the one the period 7 probes use) from 2011-01-03 to its last
+  # close, with the 1999-2010 closes as lookback only. research_probes/structure_shift_periods.py
+  # reads it once to print TRADING-2565-120's frozen structure-shift strategy and the comparison
+  # rows Baker added before the run; no question type, trial gate or screen uses it. The span
+  # overlaps qqq_long_history_validation and the consistency window, so this read is a one-time
+  # exception to the period 7 charter, sections 5.2 and 11, approved by Baker's owner-decision
+  # record. Once read, QQQ after 2010 is seen history for the entry-timing family and the exit
+  # family (X2, X3 and the rest): no unseen QQQ history is left for them. The forward ledger and
+  # the 200-day forward record use closes after their own start dates and are not affected.
+  qqq_after_2010_owner_print:
+    start: 2011-01-03
+    end: latest
+    requested_start: 2011-01-03
+    actual_start: 2011-01-03
+    actual_portfolio_start: 2011-01-03
+    role: owner_print_only
+    question_types: []
+    assets: [QQQ]
+    exact_or_proxy: exact
+    data_quality_contract: qqq_long_history_snapshot_check
+    data_source: fred_qqq_long_history_research
+    data_spec: config/research/qqq_long_history.yaml
+    data_column: etf_reference_return
+    lookback_history_from: 1999-03-10
+    read_policy: once_per_owner_decision
+    allowed_usage:
+      - owner_requested_print_only_read
+    blocked_usage:
+      - signal_development
+      - parameter_selection
+      - validation_read
+      - trial_or_screen
+      - promotion_evidence
+      - production
+      - paper_shadow
+      - broker_order
+    caveats:
+      - overlaps_qqq_long_history_validation_and_the_consistency_window
+      - period_7_charter_one_time_exception
+      - after_this_read_2011_onward_is_seen_history_for_the_entry_timing_and_exit_families
+      - qqq_adjusted_close_on_the_snapshot_calendar
 safety_boundary:
   research_only: true
   actual_path_required: true
