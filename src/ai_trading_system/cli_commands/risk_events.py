@@ -592,6 +592,8 @@ def fetch_official_policy_sources_command(
     console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
     for blocker_code in report.blocker_codes:
         console.print(f"blocker_code={blocker_code}")
+    if report.gap_sources:
+        console.print("gap_sources=" + ",".join(report.gap_sources))
     if report.issues:
         issue_codes = ",".join(sorted({issue.code for issue in report.issues}))
         console.print(f"issue_codes={issue_codes}")

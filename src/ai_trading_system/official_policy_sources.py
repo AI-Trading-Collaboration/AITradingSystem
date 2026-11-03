@@ -61,6 +61,8 @@ _USER_AGENT = "AITradingSystem policy source fetcher; contact=project-owner"
 _DEFAULT_LIMIT = 50
 _OFFICIAL_POLICY_TRANSPORT_MAX_ATTEMPTS = 3
 _OFFICIAL_POLICY_TRANSPORT_BACKOFF_SECONDS = (1.0, 2.0)
+OFFICIAL_POLICY_MAX_GAP_SOURCES = 2
+OFFICIAL_POLICY_SOURCE_GAP_CODE = "official_policy_source_unavailable_gap"
 
 
 class OfficialPolicyIssueSeverity(StrEnum):
@@ -243,6 +245,7 @@ class OfficialPolicySourceFetchReport:
     candidates: tuple[OfficialPolicyCandidate, ...]
     skipped_sources: tuple[str, ...] = ()
     issues: tuple[OfficialPolicyIssue, ...] = field(default_factory=tuple)
+    gap_sources: tuple[str, ...] = ()
     production_effect: str = "none"
 
     @property
@@ -444,6 +447,7 @@ def fetch_official_policy_sources(
         payloads.append(payload)
         candidates.extend(request_candidates)
 
+    report_issues, gap_sources = _classify_unavailable_source_gaps(issues, payloads)
     report = OfficialPolicySourceFetchReport(
         as_of=as_of,
         since=since_date,
@@ -453,7 +457,8 @@ def fetch_official_policy_sources(
         payloads=tuple(payloads),
         candidates=tuple(sorted(candidates, key=lambda item: item.candidate_id)),
         skipped_sources=tuple(skipped_sources),
-        issues=tuple(issues),
+        issues=report_issues,
+        gap_sources=gap_sources,
     )
     write_official_policy_candidates_csv(
         report,
@@ -466,6 +471,51 @@ def fetch_official_policy_sources(
             filename=download_manifest_path.name,
         )
     return report
+
+
+def _classify_unavailable_source_gaps(
+    issues: Sequence[OfficialPolicyIssue],
+    payloads: Sequence[OfficialPolicyRawPayload],
+) -> tuple[tuple[OfficialPolicyIssue, ...], tuple[str, ...]]:
+    """抓完全部来源后，将符合 DATA-033 条件的不可用问题改记为当天缺口。"""
+    errors = [issue for issue in issues if issue.severity == OfficialPolicyIssueSeverity.ERROR]
+    unavailable = [
+        issue
+        for issue in errors
+        if issue.blocker_code == "PROVIDER_UNAVAILABLE" and issue.source_id is not None
+    ]
+    if (
+        not unavailable
+        or len(unavailable) != len(errors)
+        or len(unavailable) > OFFICIAL_POLICY_MAX_GAP_SOURCES
+        or not any(payload.status_code < 400 for payload in payloads)
+    ):
+        return tuple(issues), ()
+
+    report_issues: list[OfficialPolicyIssue] = []
+    gap_sources: list[str] = []
+    for issue in issues:
+        if (
+            issue.severity == OfficialPolicyIssueSeverity.ERROR
+            and issue.blocker_code == "PROVIDER_UNAVAILABLE"
+            and issue.source_id is not None
+        ):
+            report_issues.append(
+                OfficialPolicyIssue(
+                    severity=OfficialPolicyIssueSeverity.WARNING,
+                    code=OFFICIAL_POLICY_SOURCE_GAP_CODE,
+                    source_id=issue.source_id,
+                    blocker_code=issue.blocker_code,
+                    message=(
+                        issue.message
+                        + "；本来源记为当天缺口（DATA-033），不补抓，其余来源照常使用。"
+                    ),
+                )
+            )
+            gap_sources.append(issue.source_id)
+        else:
+            report_issues.append(issue)
+    return tuple(report_issues), tuple(gap_sources)
 
 
 def build_official_policy_source_requests(
@@ -635,6 +685,7 @@ def render_official_policy_fetch_report(report: OfficialPolicySourceFetchReport)
         f"- 官方 payload 数：{report.payload_count}",
         f"- 待人工复核候选数：{report.candidate_count}",
         f"- 跳过来源数：{len(report.skipped_sources)}",
+        f"- 当天缺口来源：{', '.join(report.gap_sources) or '无'}",
         f"- 错误数：{report.error_count}",
         f"- 警告数：{report.warning_count}",
         f"- production_effect：`{report.production_effect}`",
@@ -654,6 +705,11 @@ def render_official_policy_fetch_report(report: OfficialPolicySourceFetchReport)
         (
             "- 单个来源只对 pre-response TLS/timeout/connection failure 做 3 次有界尝试；"
             "HTTP status、parser/schema/provider error 不进入 transport retry。"
+        ),
+        (
+            f"- DATA-033：最多 {OFFICIAL_POLICY_MAX_GAP_SOURCES} 个来源因网络或 5xx 不可用、"
+            "其余来源没有错误且至少一个来源成功时，这些来源记为当天缺口（警告），"
+            "不补抓；否则仍为 FAIL。"
         ),
         "",
         "## 来源抓取结果",

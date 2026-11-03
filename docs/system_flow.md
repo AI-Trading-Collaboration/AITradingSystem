@@ -2361,6 +2361,13 @@ DATA-030（`owner_decision:DATA-030:2026-10-30:fix_before_count`）让调用方�
 两个策略文件、尝试次数和退避不变；新的一轮循环、别的进程仍被挡。起因是 2026-10-28 12:00 JST（as_of 2026-10-27）：每天第一次取官方页面都要再验证，
 第一次联网失败后 DATA-027 的重试被 `OWNER_FAILURE_RETRY_DISABLED` 拒绝，没有发出第二次请求。
 
+DATA-033（`owner_decision:DATA-033:2026-11-04:official_source_gap_not_day_loss`）让官方源单个网址断线只记该来源缺口：`fetch_official_policy_sources`
+抓完全部来源后，若 1 到 2 个来源不可用（`ERROR` 且阻断码 `PROVIDER_UNAVAILABLE`：传输重试用尽、可重试的传输异常、HTTP 5xx）、没有别的 `ERROR`、
+至少一个来源 HTTP 状态小于 400，这些问题原位改为 `WARNING` `official_policy_source_unavailable_gap`，报告 `gap_sources` 和「当天缺口来源」列出它们，
+状态 `PASS_WITH_WARNINGS`，命令退出码 0，采集组件 PASS，`score_daily` 照常消费其余来源；3 个以上、没有成功来源或有别的错误时仍 `FAIL`。
+不补抓，`config/operations/daily_input_capture.yaml`（一次采集、`HISTORICAL_RECAPTURE_FORBIDDEN`、`source_revision`）不变。起因是 2026-11-03 12:00 JST（as_of 2026-11-02）：
+8 个官方网址里只有 OFAC 合并名单 SSL 握手超时，整天日报没出。
+
 ENG-VAL-010 为失败 formal Full 跨 clean worktree 的合法复验增加显式可移植导入，而不改写历史
 evidence。先把原 `test_runtime_summary.json` 与 fixed sibling `test_runtime_profile.json` 同字节放入
 当前 repository root 的 `outputs/validation_runtime/<run_id>/`，再执行
@@ -8201,7 +8208,7 @@ flowchart TD
 |风险事件校验|`aits risk-events validate` / `src/ai_trading_system/cli_commands/risk_events.py`|校验风险等级、产业链引用、相关标的和动作规则；`risk-events` Typer 命令组已迁入低耦合命令模块，主入口仍保持命令名、参数、退出码和报告语义兼容|已实现基础版|
 |风险事件发生记录|`data/external/risk_event_occurrences/`|记录真实触发或观察中的政策/地缘事件、状态、证据来源、S/A/B/C/D/X 证据等级、严重性、概率、影响范围、时效性、可逆性、动作等级、人工复核人、复核日期、复核决策、理由、下次复核日期和时间线；也可记录人工复核声明，说明指定窗口内已检查来源范围且未发现未记录重大风险事件；保守 source policy 下 `S/A` 可支持评分和仓位闸门，`B` 只支持普通评分，`C/D/X` 只复核|已实现基础版|
 |风险事件每日复核声明|`aits risk-events record-review-attestation` / `src/ai_trading_system/cli_commands/risk_events.py`|在用户显式提供复核人、来源范围和理由后写入 `review_attestation` YAML；声明只表示人工复核覆盖窗口和列出的来源范围，不会自动触发仓位闸门，也不会覆盖已记录 active/watch 发生记录；命令语义随 `risk-events` 模块化迁移保持兼容|已实现基础版|
-|风险事件官方来源抓取|`aits risk-events fetch-official-sources` / `src/ai_trading_system/cli_commands/risk_events.py`|按 owner 确认的低成本官方来源组合抓取 Federal Register/BIS/OFAC/USTR/Congress.gov/GovInfo/Trade.gov CSL；每个 request 只对 pre-response TLS/timeout/connection 做最多3次1/2秒退避，HTTP status、parser/schema/provider error不重试；写入 raw payload、download manifest、待复核候选 CSV 和中文报告；最终 transport exhaustion 输出 typed issue 和 stable blocker；Congress.gov/GovInfo 缺 API key 时显式跳过并报告；候选强制 `pending_review` 和 `production_effect=none`，不得直接评分、触发仓位闸门或写入正式 occurrence|OPS-072|
+|风险事件官方来源抓取|`aits risk-events fetch-official-sources` / `src/ai_trading_system/cli_commands/risk_events.py`|按 owner 确认的低成本官方来源组合抓取 Federal Register/BIS/OFAC/USTR/Congress.gov/GovInfo/Trade.gov CSL；每个 request 只对 pre-response TLS/timeout/connection 做最多3次1/2秒退避，HTTP status、parser/schema/provider error不重试；写入 raw payload、download manifest、待复核候选 CSV 和中文报告；最终 transport exhaustion 输出 typed issue 和 stable blocker；Congress.gov/GovInfo 缺 API key 时显式跳过并报告；1 到 2 个来源不可用（传输重试用尽或 5xx）、没有别的错误且至少一个来源成功时记为当天缺口（WARNING `official_policy_source_unavailable_gap`，报告列出 `gap_sources`，不补抓，DATA-033）；候选强制 `pending_review` 和 `production_effect=none`，不得直接评分、触发仓位闸门或写入正式 occurrence|OPS-072|
 |官方政策来源原始缓存|`data/raw/official_policy_sources/YYYY-MM-DD/*`|保存官方来源原始 JSON/XML/HTML payload，文件名包含 source_id 和 checksum 前缀；manifest 记录 provider、endpoint、请求参数、下载时间、transport attempt count、row count、输出路径和 checksum；API key 不写入报告或 manifest|OPS-072|
 |官方政策来源待复核候选|`data/processed/official_policy_source_candidates_YYYY-MM-DD.csv`|从官方来源 metadata/title/summary 中抽取政策/地缘候选，记录 source_id、provider、source URL、published_at、matched risk_id/ticker/node、raw payload checksum 和人工复核问题；只能作为 owner 每日复核、AI 模块相关性 triage 和 reviewed occurrence CSV 的输入|已实现基础版|
 |官方政策来源抓取报告|`outputs/reports/official_policy_sources_YYYY-MM-DD.md`|中文输出抓取状态、来源数、payload 数、候选数、错误/警告、跳过来源、每个 payload 的 transport attempts/row count/checksum、stable blocker、逐 source transport/parser 错误和候选摘要；报告声明不代表已确认事件或无事件结论；transport exhaustion 与 raw payload 写入后的 parser 异常均必须 fail closed 并保留结构化错误，不得裸 traceback 中断报告生成|OPS-072|
