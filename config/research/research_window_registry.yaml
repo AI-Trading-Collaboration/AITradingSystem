@@ -294,6 +294,11 @@ windows:
   # owner_decision:TRADING-2565:2026-11-03:structure_shift_other_periods):
   # research_probes/structure_shift_periods.py prints TRADING-2565-120's frozen structure-shift
   # entry and strategy here, with the comparison rows Baker added before the run.
+  # Baker then chose a sixth read for the same two families (TRADING-2565-124,
+  # owner_decision:TRADING-2565:2026-11-04:structure_shift_rebuy_above_line):
+  # research_probes/structure_shift_rebuy.py reprints TRADING-2565-122 here and adds two rows to
+  # its below-the-line X2 row that buy back on the first close, or the second of two consecutive
+  # closes, above the 200-day line.
   ndx_price_1986_1999:
     start: 1986-01-02
     end: 1999-03-09
@@ -336,6 +341,12 @@ windows:
   # record. Once read, QQQ after 2010 is seen history for the entry-timing family and the exit
   # family (X2, X3 and the rest): no unseen QQQ history is left for them. The forward ledger and
   # the 200-day forward record use closes after their own start dates and are not affected.
+  # Baker then chose a second read (TRADING-2565-124,
+  # owner_decision:TRADING-2565:2026-11-04:structure_shift_rebuy_above_line):
+  # research_probes/structure_shift_rebuy.py reprints TRADING-2565-122 here and adds two rows to
+  # its below-the-line X2 row that buy back on the first close, or the second of two consecutive
+  # closes, above the 200-day line. The span was already seen history for both families, so the
+  # second read loses no unseen QQQ history; the forward ledger stays the only unseen test.
   qqq_after_2010_owner_print:
     start: 2011-01-03
     end: latest
