@@ -95,6 +95,8 @@ QQQ 出场信号之后 20 天的最大跌幅（TRADING-2565-113，`owner_decisio
 
 QQQ 出场族按大跌逐次看（TRADING-2565-117，`owner_decision:TRADING-2565:2026-11-02:exit_family_big_declines`）：`python -m ai_trading_system.research_probes.exit_rules_declines run --out <目录>` 照 `exit_rules_after` 载入和核对 QQQ 尺子（开发窗口）和登记的窗口 `ndx_price_1986_1999`，两段都过了才算；每段收盘上按 15% 的之字形事后划出每次大跌，只用来对照，不进任何规则；对一直拿过高点的人，X2（回落 8% 的移动止损）、X3、X4、X5 四条只用当时已知的收盘、每次响了从第二天重新开始，印每次大跌里每条规则第一次响时离高点几天、已跌多少、卖出后还跌多少、躲掉几成和高点前 20 天响过没有，每条规则的汇总，以及警报（按簇取第一天）落在大跌里、高点前和虚惊的个数和每年个数；X0、X1、X6 按买入价算，标不适用。写 `exit_rules_declines.json` 和 `exit_rules_declines.md`，已有结果拒绝覆盖。只印不判，不进日报、前瞻账本和券商。
 
+QQQ 入场加出场的第一版策略（TRADING-2565-118，`owner_decision:TRADING-2565:2026-11-03:entry_exit_combo`）：`python -m ai_trading_system.research_probes.entry_exit_combo run --out <目录>` 经 `exit_rules_counts` 载入 QQQ 尺子（开发窗口），用第 0 步的检查和 TRADING-2565-104 的 6 个入场日核对，过了才算；从第一个能判入场的收盘起满仓，三种出场（X2 回落 8%、先回到 50 日线上才算的 X3、X2 或 X3 先响）在下一个收盘卖，A 版只在 200 日线回踩收盘价版的入场买回，B 版另外在收盘回到卖出价时买回，旁边是买入持有；印收益、回撤、左尾、在场时间、每次卖出和买回和每年的收益，写 `entry_exit_combo.json` 和 `entry_exit_combo.md`，已有结果拒绝覆盖。只印不判，不读别的标的，不进日报、前瞻账本和券商。
+
 信号筛选（TRADING-2565 S4b）：`research_bench screen` 在截至 2010-12-31 的 QQQ、美股大盘和 49 个行业上筛一个信号，记进 `research/_screens/ledger/` 的全局账，按全部筛过的信号做 BH 修正后给出淘汰、候选或证据不足；信号模块在 `src/ai_trading_system/research_screens/signals/`。
 
 通用的“信号 → 仓位”策略（TRADING-2565 S4d）：`research_bench.signal_strategy.signal_exposure` 把预注册里钉住的信号模块按固定映射变成目标仓位，题目目录的 `strategy.py` 只是一行导入；用到外部来源时预注册写 `data.signal_snapshot_id`。
