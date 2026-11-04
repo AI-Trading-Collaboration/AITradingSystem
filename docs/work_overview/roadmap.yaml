@@ -238,9 +238,9 @@ lines:
             date: "2026-10-15"
             cards: [OPS-084_DAILY_PRIMARY_TRIGGER_AFTER_SOURCE_PUBLICATION]
           - text: 模型编出未登记的风险 ID 时日报不再整批停写，换包后生产上核过
-            state: now
-            date: "2026-11-03"
-            note: 10-31 的日报（as_of 10-30）因模型给国会决议编了两个未登记的风险 ID 停在打分，记为缺口
+            state: done
+            date: "2026-11-04"
+            note: 10-31 的日报（as_of 10-30）因模型给国会决议编了两个未登记的风险 ID 停在打分，记为缺口；11-04 新发布包上打分通过（11-03 停在取数，见 DATA-033）
             cards: [RISK-017]
       - id: "2"
         title: 取数失败能自己恢复

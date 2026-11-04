@@ -1,6 +1,6 @@
 # RISK-017：风险事件预审只让模型选已登记的风险 ID
 
-状态：IN_PROGRESS（2026-10-31）。`production_effect=none`；`broker_action=none`。
+状态：DONE（2026-11-04）。`production_effect=none`；`broker_action=none`。
 
 关联：RISK-012（未登记 ID 整批停写，2026-09-01）、LLM-005（日报预审 profile）、OPS-071（同日恢复）、OPS-085（17:30 取数重试）、DATA-030（上一次换包）；任务记录 `tasks/RISK-017.yaml`。
 
@@ -66,3 +66,6 @@
 ## 7. 进展
 
 - 2026-10-31：需求和验收测试写好，交 pi 实现（RISK-017-01）。
+- 2026-10-31：RISK-017-01 发布到 main `e872a7a9`（13:24 JST）；发布包 `20261031-e872a7a98` 18:06 JST 换上（Baker 亲手打的授权句），旧发布包 `20261029-be4febf55` 保留。
+- 2026-11-03：换包后第一个交易日（as_of 2026-11-02）的日报停在取数：`official_policy_sources` 的 OFAC 合并名单 SSL 握手超时，`score_daily` 没有运行，本任务的代码没被执行到（由 DATA-033 处理，和本任务无关）；不是新发布包的问题，没有回退。
+- 2026-11-04：as_of 2026-11-03 的日报 26 步全部通过，`score_daily` 通过。预审队列由这次运行重写，0 条记录，没有 `llm_claim_precheck_v1` 记录；第 5 节“预审报告里的记录是 `llm_claim_precheck_v2`”当天没有记录可看。v2 请求的内容由第 5 节的测试覆盖；以后模型若再给出未登记的 ID，仍按 RISK-012 整批停写并报 `llm_formal_assessment_unknown_risk_id`，不会悄悄出错，所以按此关卡 DONE。
