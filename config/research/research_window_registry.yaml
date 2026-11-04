@@ -347,6 +347,14 @@ windows:
   # its below-the-line X2 row that buy back on the first close, or the second of two consecutive
   # closes, above the 200-day line. The span was already seen history for both families, so the
   # second read loses no unseen QQQ history; the forward ledger stays the only unseen test.
+  # Baker then chose a third read (TRADING-2565-126,
+  # owner_decision:TRADING-2565:2026-11-04:scaled_entry_ladder):
+  # research_probes/structure_shift_ladder.py reprints TRADING-2565-122 here and adds a scaled
+  # buy-back to its original X2 row and to its below-the-line X2 row: tranches on closes at or
+  # below 0.9, 0.8, 0.7 and 0.6 times the selling close, the rest on a close back at it or at the
+  # next closing-price entry or structure shift. The span was already seen history for both
+  # families, so the third read loses no unseen QQQ history; the forward ledger stays the only
+  # unseen test.
   qqq_after_2010_owner_print:
     start: 2011-01-03
     end: latest
