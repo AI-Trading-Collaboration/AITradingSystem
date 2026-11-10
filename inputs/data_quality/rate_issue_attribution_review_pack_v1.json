@@ -391,8 +391,8 @@
     {
       "path": "config/data_quality.yaml",
       "role": "reviewed_dq_policy",
-      "sha256": "3a22c2ff4c7eec84cac71243983b8a7ee123b463f955c1982ca1956fa0f54694",
-      "size_bytes": 9548
+      "sha256": "eca7c2ab849d9c45b48daeb33c2247dc01e249ffd67b50129804f34bcd2f941f",
+      "size_bytes": 10140
     }
   ],
   "parent_owner_decision_id": "owner_decision:DATA-GOV-002:2026-07-26:approve_long_term_capability_receipt_engineering_v1",
@@ -433,7 +433,7 @@
     },
     "suspicious_daily_change_abs": 0.75
   },
-  "review_pack_id": "dq_rate_issue_attribution_review_99d509a92c77f0eee84c42af",
+  "review_pack_id": "dq_rate_issue_attribution_review_bce282f0c29db75d3dc3cfee",
   "safety": {
     "broker_action": "none",
     "cached_data_mutated": false,

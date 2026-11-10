@@ -148,6 +148,15 @@ prices:
         reviewed_at: 2026-07-23
         review_condition: "Sponsor/exchange correction, provider adjustment-policy change, or observed ratio/date drift."
         note: "iShares Semiconductor ETF split effective date."
+      - effective_date: 2026-11-05
+        ratio: 3
+        source_name: iShares Trust Form 497 supplement on the SOXX three-for-one share split
+        source_url: https://www.sec.gov/Archives/edgar/data/0001100663/000119312526430480/d156277d497.htm
+        status: REVIEWED
+        owner: data_platform_owner
+        reviewed_at: 2026-11-10
+        review_condition: "Sponsor/exchange correction, provider adjustment-policy change, or observed ratio/date drift."
+        note: "iShares Semiconductor ETF three-for-one split: record date 2026-11-03, split-adjusted trading from 2026-11-05."
   # 第二来源核验使用同一组阈值：raw close 超阈值会阻塞；
   # adjusted close 若仅因分红复权口径不同而 raw close 对齐，则输出警告。
   secondary_source_min_overlap_ratio: 0.80

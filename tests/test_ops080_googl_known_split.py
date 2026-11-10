@@ -91,7 +91,8 @@ def test_googl_split_event_is_reviewed_like_goog() -> None:
         "SOXX",
         "TQQQ",
     ]
-    assert sum(len(items) for items in events.values()) == 12
+    # 13 since DATA-034 added SOXX's 2026-11-05 split (SOXX now has two events).
+    assert sum(len(items) for items in events.values()) == 13
     assert len(events["GOOGL"]) == 1
     googl = events["GOOGL"][0]
     goog = events["GOOG"][0]
