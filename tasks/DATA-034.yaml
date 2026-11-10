@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: DATA-034
+area: 数据工程/拆股后整段重取价格历史
+priority: P1
+status: IN_PROGRESS
+next_owner: Claude（审 DATA-034-01，接着做 DATA-034-02 和新发布包）
+next_step: DATA-034-01（下载核对、整段重取）发布后做 DATA-034-02（登记 SOXX 2026-11-05 拆股，C 区，Baker 运行 approve.ps1），两批都发布后从 main 打新发布包，2026-11-11 12:00 JST 以前要 Baker 打授权句换包；换包后第一次正式运行开始重新数 5 个交易日
+acceptance: 主价格源补尾部时每个已缓存标的从倒数第 20 个缓存日起重读；重读到的缓存日期里有一行 adj_close 相差超过 10% 就把该标的从第一个缓存日到结束日整段重取（每段最多 1200 个日历日），缓存行全部换成重取的行，重取缺任何一个缓存日期就抛 PRICE_HISTORY_REBASE_COVERAGE_SHORTFALL 且不发布；没超过就保留缓存行只加新行；第二源和 VIX 后备照旧只补尾部；下载发布记录 history_rebase_check 和 history_rebases，download-data 每个重取的标的打印一行；config/data_quality.yaml 登记 SOXX 2026-11-05 一拆三（阈值、profile、policy_version 不变），复核包、决定文件、contract 常量和 regime label 依赖重绑；换包后第一次日报 validate_data PASS、score_daily 跑到；PR 套件通过
+notes: production_effect=none；broker_action=none；owner_decision:DATA-034:2026-11-10:split_history_refetch；需求文档 docs/requirements/DATA-034_Split_History_Refetch.md；起因：2026-11-10 12:00 JST 日报（as_of 2026-11-09，发布包 20261103-ad63dc839）SOXX 三拆一（2026-11-05 起按拆后股数交易）后，只补尾部的价格缓存里 11-03 及以前是拆前口径，adj_close 在 11-04 单日 -67.7%，validate_data 报 prices_extreme_adj_close_move；as_of 2026-11-09 怎么记在收尾批里问 Baker

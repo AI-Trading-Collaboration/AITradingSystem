@@ -273,6 +273,17 @@ def download_data(
             f"{', '.join(summary.auxiliary_price_tickers)}"
         )
     console.print(f"FRED 宏观序列：{', '.join(summary.rate_series)}")
+    for rebase in summary.price_history_rebases:
+        console.print(
+            f"价格历史整段重取（DATA-034）：{rebase.get('ticker')} "
+            f"check_date={rebase.get('check_date')} "
+            f"cached_adj_close={rebase.get('cached_adj_close')} "
+            f"provider_adj_close={rebase.get('provider_adj_close')} "
+            f"refetch={rebase.get('refetch_start')}..{rebase.get('refetch_end')} "
+            f"replaced_rows={rebase.get('replaced_row_count')} "
+            f"refetched_rows={rebase.get('refetched_row_count')}",
+            soft_wrap=True,
+        )
     for budget in summary.request_budget_statuses:
         violation_reasons = _budget_violation_reasons(budget)
         tail_catch_up = budget.get("tail_catch_up")

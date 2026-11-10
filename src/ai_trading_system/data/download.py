@@ -69,6 +69,15 @@ _LIVE_PROVIDER = "LIVE_PROVIDER"
 _CANONICAL_PREDECESSOR_REUSE = "CANONICAL_PREDECESSOR_REUSE"
 _LEGACY_LOCAL_CACHE_IMPORT = "LEGACY_LOCAL_CACHE_IMPORT"
 
+# DATA-034: re-read cached adjusted closes before extending the tail, replacing stale
+# histories instead of mixing adjustment bases. The owner-selected overlap and split-sized
+# tolerance, bounded request chunks and fail-closed coverage rule are specified in
+# docs/requirements/DATA-034_Split_History_Refetch.md, section 3.1.
+PRICE_HISTORY_REBASE_OVERLAP_ROWS = 20
+PRICE_HISTORY_REBASE_ADJ_CLOSE_REL_TOLERANCE = 0.10
+PRICE_HISTORY_REBASE_CHUNK_CALENDAR_DAYS = 1200
+PRICE_HISTORY_REBASE_COVERAGE_SHORTFALL = "PRICE_HISTORY_REBASE_COVERAGE_SHORTFALL"
+
 
 @dataclass(frozen=True)
 class DataDownloadSummary:
@@ -91,6 +100,7 @@ class DataDownloadSummary:
     legacy_projection_atomicity: str | None = None
     consumer_cutover_allowed: bool = False
     price_session_normalization_audits: tuple[dict[str, object], ...] = ()
+    price_history_rebases: tuple[dict[str, object], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -108,6 +118,30 @@ class IncrementalPriceWindow:
 
 
 @dataclass(frozen=True)
+class PriceHistoryRebase:
+    ticker: str
+    check_date: date
+    cached_adj_close: float
+    provider_adj_close: float
+    refetch_start: date
+    refetch_end: date
+    replaced_row_count: int
+    refetched_row_count: int
+
+    def to_payload(self) -> dict[str, object]:
+        return {
+            "ticker": self.ticker,
+            "check_date": self.check_date.isoformat(),
+            "cached_adj_close": self.cached_adj_close,
+            "provider_adj_close": self.provider_adj_close,
+            "refetch_start": self.refetch_start.isoformat(),
+            "refetch_end": self.refetch_end.isoformat(),
+            "replaced_row_count": self.replaced_row_count,
+            "refetched_row_count": self.refetched_row_count,
+        }
+
+
+@dataclass(frozen=True)
 class IncrementalPriceDownload:
     prices: pd.DataFrame
     supported_tickers: tuple[str, ...]
@@ -119,6 +153,8 @@ class IncrementalPriceDownload:
     output_row_count: int
     request_budget_status: dict[str, object] | None = None
     raw_source_commitments: tuple[Mapping[str, object], ...] = ()
+    history_rebase_check: bool = False
+    history_rebases: tuple[PriceHistoryRebase, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -404,6 +440,7 @@ def download_daily_data(
             existing_source_event_id=primary_existing_event_id,
             live_source_event_id=primary_live_event_id,
             new_ticker_starts={ticker: auxiliary_new_ticker_start for ticker in auxiliary_tickers},
+            history_rebase_check=True,
         )
         price_frames = [primary_download.prices]
         vix_download: IncrementalPriceDownload | None = None
@@ -701,6 +738,7 @@ def download_daily_data(
             )
             if isinstance(audit, Mapping)
         ),
+        price_history_rebases=tuple(item.to_payload() for item in primary_download.history_rebases),
     )
 
 
@@ -713,6 +751,7 @@ def _download_incremental_prices(
     live_source_event_id: str,
     marketstack_tail_catch_up: bool = False,
     new_ticker_starts: Mapping[str, date] | None = None,
+    history_rebase_check: bool = False,
 ) -> IncrementalPriceDownload:
     supported_tickers = _supported_price_tickers(provider, request.tickers)
     skipped_tickers = tuple(ticker for ticker in request.tickers if ticker not in supported_tickers)
@@ -732,6 +771,7 @@ def _download_incremental_prices(
         start=request.start,
         end=request.end,
         new_ticker_starts=new_ticker_starts,
+        overlap_rows=PRICE_HISTORY_REBASE_OVERLAP_ROWS if history_rebase_check else 0,
     )
     fetch_windows, request_budget_status = _marketstack_fetch_windows_and_budget_status(
         provider=provider,
@@ -760,6 +800,17 @@ def _download_incremental_prices(
         fetched[_PROVENANCE_EVENT_COLUMN] = live_source_event_id
         fetched_frames.append(fetched)
 
+    history_rebases: tuple[PriceHistoryRebase, ...] = ()
+    if history_rebase_check:
+        existing, fetched_frames, rebase_windows, history_rebases = _check_price_history_rebases(
+            provider=provider,
+            request=request,
+            existing=existing,
+            fetched_frames=fetched_frames,
+            live_source_event_id=live_source_event_id,
+        )
+        fetch_windows = (*fetch_windows, *rebase_windows)
+
     prices = _merge_price_frames(
         [existing, *fetched_frames],
         tickers=supported_tickers,
@@ -786,7 +837,119 @@ def _download_incremental_prices(
         output_row_count=len(prices),
         request_budget_status=request_budget_status,
         raw_source_commitments=_unique_raw_source_commitments(raw_source_commitments),
+        history_rebase_check=history_rebase_check,
+        history_rebases=history_rebases,
     )
+
+
+def _check_price_history_rebases(
+    *,
+    provider: PriceDataProvider,
+    request: PriceRequest,
+    existing: pd.DataFrame,
+    fetched_frames: list[pd.DataFrame],
+    live_source_event_id: str,
+) -> tuple[
+    pd.DataFrame,
+    list[pd.DataFrame],
+    tuple[IncrementalPriceWindow, ...],
+    tuple[PriceHistoryRebase, ...],
+]:
+    """Replace stale ticker histories when re-read adjusted closes disagree with the cache."""
+    non_empty = [frame for frame in fetched_frames if not frame.empty]
+    if existing.empty or not non_empty:
+        return existing, fetched_frames, (), ()
+    cached = existing.copy()
+    cached["date"] = pd.to_datetime(cached["date"]).dt.strftime("%Y-%m-%d")
+    cached["ticker"] = cached["ticker"].astype(str)
+    fetched = pd.concat(non_empty, ignore_index=True)
+    fetched["date"] = pd.to_datetime(fetched["date"]).dt.strftime("%Y-%m-%d")
+    fetched["ticker"] = fetched["ticker"].astype(str)
+    ranges = _price_date_ranges(cached)
+    latest_dates = {ticker: latest.isoformat() for ticker, (_, latest) in ranges.items()}
+    reread = fetched["ticker"].isin(ranges) & (
+        fetched["date"] <= fetched["ticker"].map(latest_dates)
+    )
+    compared = fetched.loc[reread, ["ticker", "date", "adj_close"]].merge(
+        cached[["ticker", "date", "adj_close"]],
+        on=["ticker", "date"],
+        how="inner",
+        suffixes=("_provider", "_cached"),
+    )
+    for column in ("adj_close_provider", "adj_close_cached"):
+        compared[column] = pd.to_numeric(compared[column], errors="coerce")
+    compared = compared.loc[
+        (compared["adj_close_provider"] > 0) & (compared["adj_close_cached"] > 0)
+    ].copy()
+    compared["relative_difference"] = (
+        compared["adj_close_provider"] / compared["adj_close_cached"] - 1
+    ).abs()
+    mismatches = compared.loc[
+        compared["relative_difference"] > PRICE_HISTORY_REBASE_ADJ_CLOSE_REL_TOLERANCE
+    ]
+    new_rows = fetched.loc[~reread].copy()
+    if mismatches.empty:
+        return existing, [new_rows], (), ()
+
+    rebased_tickers = sorted(set(mismatches["ticker"].astype(str)))
+    grouped: dict[date, list[str]] = {}
+    for ticker in rebased_tickers:
+        grouped.setdefault(ranges[ticker][0], []).append(ticker)
+    windows: list[IncrementalPriceWindow] = []
+    refetched_frames: list[pd.DataFrame] = []
+    for refetch_start in sorted(grouped):
+        tickers = tuple(grouped[refetch_start])
+        for chunk_start, chunk_end in _price_history_date_chunks(
+            refetch_start, request.end, PRICE_HISTORY_REBASE_CHUNK_CALENDAR_DAYS
+        ):
+            window = IncrementalPriceWindow(tickers=tickers, start=chunk_start, end=chunk_end)
+            windows.append(window)
+            refetched = provider.download_prices(
+                PriceRequest(
+                    tickers=list(window.tickers),
+                    start=window.start,
+                    end=window.end,
+                    interval=request.interval,
+                )
+            ).copy()
+            refetched[_PROVENANCE_EVENT_COLUMN] = live_source_event_id
+            refetched["ticker"] = refetched["ticker"].astype(str)
+            refetched = refetched.loc[refetched["ticker"].isin(tickers)].copy()
+            refetched["date"] = pd.to_datetime(refetched["date"]).dt.strftime("%Y-%m-%d")
+            refetched_frames.append(refetched)
+    refetched_rows = pd.concat(refetched_frames, ignore_index=True)
+    records: list[PriceHistoryRebase] = []
+    for ticker in rebased_tickers:
+        cached_dates = set(cached.loc[cached["ticker"] == ticker, "date"].astype(str))
+        refetched_dates = set(
+            refetched_rows.loc[refetched_rows["ticker"] == ticker, "date"].astype(str)
+        )
+        refetch_start = ranges[ticker][0]
+        missing = sorted(cached_dates - refetched_dates)
+        if missing:
+            raise ValueError(
+                f"{PRICE_HISTORY_REBASE_COVERAGE_SHORTFALL}: {ticker} "
+                f"refetch from {refetch_start.isoformat()} misses {len(missing)} cached dates "
+                f"(first {', '.join(missing[:3])})"
+            )
+        worst = mismatches.loc[mismatches["ticker"] == ticker].sort_values(
+            ["relative_difference", "date"], ascending=[False, True]
+        ).iloc[0]
+        records.append(
+            PriceHistoryRebase(
+                ticker=ticker,
+                check_date=date.fromisoformat(str(worst["date"])),
+                cached_adj_close=float(worst["adj_close_cached"]),
+                provider_adj_close=float(worst["adj_close_provider"]),
+                refetch_start=refetch_start,
+                refetch_end=request.end,
+                replaced_row_count=len(cached_dates),
+                refetched_row_count=len(refetched_dates),
+            )
+        )
+    retained_cache = existing.loc[~existing["ticker"].astype(str).isin(rebased_tickers)].copy()
+    new_rows = new_rows.loc[~new_rows["ticker"].isin(rebased_tickers)].copy()
+    return retained_cache, [new_rows, *refetched_frames], tuple(windows), tuple(records)
 
 
 def _supported_price_tickers(
@@ -1343,10 +1506,14 @@ def _price_fetch_windows(
     start: date,
     end: date,
     new_ticker_starts: Mapping[str, date] | None = None,
+    overlap_rows: int = 0,
 ) -> tuple[IncrementalPriceWindow, ...]:
+    if overlap_rows < 0:
+        raise ValueError("overlap_rows must be non-negative")
     if not tickers:
         return ()
     date_ranges_by_ticker = _price_date_ranges(existing)
+    overlap_starts = _price_overlap_starts(existing, overlap_rows) if overlap_rows else {}
     grouped: dict[date, list[str]] = {}
     for ticker in tickers:
         date_range = date_ranges_by_ticker.get(ticker)
@@ -1359,7 +1526,11 @@ def _price_fetch_windows(
             if latest >= end:
                 continue
             else:
-                fetch_start = _next_us_equity_trading_day(latest)
+                fetch_start = (
+                    overlap_starts[ticker]
+                    if overlap_rows
+                    else _next_us_equity_trading_day(latest)
+                )
         if fetch_start <= end:
             grouped.setdefault(fetch_start, []).append(ticker)
     return tuple(
@@ -1370,6 +1541,32 @@ def _price_fetch_windows(
         )
         for fetch_start in sorted(grouped)
     )
+
+
+def _price_overlap_starts(existing: pd.DataFrame, overlap_rows: int) -> dict[str, date]:
+    if existing.empty:
+        return {}
+    dates = pd.to_datetime(existing["date"], errors="coerce").dt.date
+    starts: dict[str, date] = {}
+    for ticker, ticker_dates in dates.groupby(existing["ticker"].astype(str)):
+        unique_dates = sorted(set(ticker_dates.dropna()))
+        if unique_dates:
+            starts[str(ticker)] = unique_dates[max(0, len(unique_dates) - overlap_rows)]
+    return starts
+
+
+def _price_history_date_chunks(
+    start: date, end: date, days: int
+) -> tuple[tuple[date, date], ...]:
+    if days <= 0:
+        raise ValueError("days must be positive")
+    chunks: list[tuple[date, date]] = []
+    current = start
+    while current <= end:
+        chunk_end = min(current + timedelta(days=days - 1), end)
+        chunks.append((current, chunk_end))
+        current = chunk_end + timedelta(days=1)
+    return tuple(chunks)
 
 
 def _next_us_equity_trading_day(value: date) -> date:
@@ -2126,7 +2323,7 @@ def _price_request_parameters(
     if provider_symbol_aliases:
         request_parameters["provider_symbol_aliases"] = provider_symbol_aliases
     if incremental_download is not None:
-        request_parameters["incremental_refresh"] = {
+        incremental_refresh: dict[str, object] = {
             "mode": "coverage_gap",
             "supported_tickers": list(incremental_download.supported_tickers),
             "skipped_tickers": list(incremental_download.skipped_tickers),
@@ -2137,6 +2334,15 @@ def _price_request_parameters(
             "output_row_count": incremental_download.output_row_count,
             "request_budget_status": incremental_download.request_budget_status,
         }
+        if incremental_download.history_rebase_check:
+            incremental_refresh["history_rebase_check"] = {
+                "overlap_rows": PRICE_HISTORY_REBASE_OVERLAP_ROWS,
+                "adj_close_rel_tolerance": PRICE_HISTORY_REBASE_ADJ_CLOSE_REL_TOLERANCE,
+            }
+            incremental_refresh["history_rebases"] = [
+                item.to_payload() for item in incremental_download.history_rebases
+            ]
+        request_parameters["incremental_refresh"] = incremental_refresh
     cache_summaries = _cache_summaries_for_provider(request_cache_summaries, provider_name)
     if cache_summaries:
         request_parameters["external_request_cache_summary"] = cache_summaries

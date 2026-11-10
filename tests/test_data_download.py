@@ -262,7 +262,9 @@ def test_download_daily_data_incrementally_requests_only_missing_tail(
 
     assert primary_provider.calls[0].start == date(2026, 4, 29)
     assert primary_provider.calls[0].end == date(2026, 4, 30)
-    assert primary_provider.calls[1].start == date(2026, 5, 1)
+    # DATA-034: the primary tail fetch re-reads the last cached rows (up to 20) to check the
+    # adjustment basis; the secondary source still requests only the missing tail.
+    assert primary_provider.calls[1].start == date(2026, 4, 29)
     assert primary_provider.calls[1].end == date(2026, 5, 1)
     assert secondary_provider.calls[1].start == date(2026, 5, 1)
     assert secondary_provider.calls[1].end == date(2026, 5, 1)
@@ -283,7 +285,12 @@ def test_download_daily_data_incrementally_requests_only_missing_tail(
     assert incremental["reused_row_count"] == first.price_rows
     assert incremental["fetched_row_count"] == len(second.price_tickers)
     assert incremental["fetch_window_count"] == 1
-    assert incremental["fetch_windows"][0]["start"] == "2026-05-01"
+    assert incremental["fetch_windows"][0]["start"] == "2026-04-29"
+    assert incremental["history_rebase_check"] == {
+        "overlap_rows": 20,
+        "adj_close_rel_tolerance": 0.10,
+    }
+    assert incremental["history_rebases"] == []
 
 
 def test_download_daily_data_adds_auxiliary_tickers_to_primary_publication(
@@ -353,10 +360,14 @@ def test_download_daily_data_adds_auxiliary_tickers_to_primary_publication(
         auxiliary_history_start=date(2026, 4, 21),
     )
 
+    # DATA-034: each cached ticker re-reads its last 20 cached rows (GOOGL and BRK.B have only
+    # 11, so they re-read from their first cached row); new rows still end at 2026-05-01.
     assert [(call.start, call.end) for call in primary_provider.calls[2:]] == [
-        (date(2026, 5, 1), date(2026, 5, 1)),
+        (date(2026, 4, 2), date(2026, 5, 1)),
+        (date(2026, 4, 11), date(2026, 5, 1)),
+        (date(2026, 4, 20), date(2026, 5, 1)),
     ]
-    assert {"GOOGL", "BRK.B"} <= set(primary_provider.calls[2].tickers)
+    assert sorted(primary_provider.calls[4].tickers) == ["BRK.B", "GOOGL"]
     assert second.price_rows == first.price_rows + len(second.price_tickers)
 
 
@@ -470,9 +481,10 @@ def test_download_relative_output_root_bootstraps_then_reuses_portable_predecess
     assert second.prices_path.is_absolute()
     assert first.prices_path.parent == absolute_output
     assert second.prices_path.parent == absolute_output
+    # DATA-034: the second run re-reads the cached rows before the new tail.
     assert [(call.start, call.end) for call in provider.calls] == [
         (date(2026, 4, 29), date(2026, 4, 30)),
-        (date(2026, 5, 1), date(2026, 5, 1)),
+        (date(2026, 4, 29), date(2026, 5, 1)),
     ]
     transaction = _download_transaction(second)
     predecessor = _transaction_source(
@@ -556,8 +568,9 @@ def test_download_legacy_bootstrap_binds_exact_cache_bytes_and_secondary_tail(
         rate_provider=FakeRateProvider(),
     )
 
+    # DATA-034: the primary re-reads the imported rows; the secondary fetches only the tail.
     assert [(call.start, call.end) for call in primary_provider.calls] == [
-        (date(2026, 4, 30), date(2026, 4, 30))
+        (date(2026, 4, 28), date(2026, 4, 30))
     ]
     assert [(call.start, call.end) for call in secondary_provider.calls] == [
         (date(2026, 4, 30), date(2026, 4, 30))
@@ -672,8 +685,9 @@ def test_download_canonical_provider_switch_binds_predecessor_and_new_tail(
         rate_provider=FakeRateProvider(),
     )
 
+    # DATA-034: the new provider re-reads the predecessor's rows to check their basis.
     assert [(call.start, call.end) for call in new_provider.calls] == [
-        (date(2026, 4, 30), date(2026, 4, 30))
+        (date(2026, 4, 28), date(2026, 4, 30))
     ]
     transaction = _download_transaction(second)
     allocations = _assert_exact_source_partition(
