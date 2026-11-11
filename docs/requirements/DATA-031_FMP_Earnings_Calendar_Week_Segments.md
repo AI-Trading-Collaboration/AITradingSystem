@@ -1,6 +1,6 @@
 # DATA-031：FMP 财报日历按周分段取
 
-状态：IN_PROGRESS（2026-11-01）。`production_effect=none`；`broker_action=none`。
+状态：DONE（2026-11-10）。`production_effect=none`；`broker_action=none`。
 
 关联：DATA-003（FMP 估值和预期按时点留档）、DATA-024（可变数据源缓存 12 小时有效期，`earnings-calendar` 在列）、DATA-030（上一次换包）、OPS-086（日报发布包）、TRADING-2565（研究自动循环第 7 期章程 `research/_loop/charter_p7.md` 第 3.1 题、第 5.1 节）；任务记录 `tasks/DATA-031.yaml`。
 
@@ -69,3 +69,10 @@ FMP `stable/earnings-calendar` 一次最多回 4000 行（推断：缓存里 9 �
 - 换包：照 DATA-030（2026-10-30）那次换一次日报发布包。叫 Baker 时只叫一次，写清哪一步在等他、他点了以后马上跑什么、日报停的日子只会变少，并请他在 FMP 控制台看一眼套餐的每分钟、每天请求上限（改完每次采集是 102 + 14 + 2K 次，K 是再切次数，一般 0，高峰周 1–2；日历最多 60 次）。
 - 第一天核对：换包后第一次日报跑完，在电脑上只读核一次：当天原始 payload 里 `segments` 约 14 段，没有一段 `rows` ≥ 4000，没有 truncated、failed、request_cap、unavailable；挑两家下一季财报在窗口里的公司（例如 MSFT、META），日历里有它们的日期。
 - 回退：第一天要是因为日历或这次的代码 FAIL，当天请 Baker 换回上一个包。
+
+## 9. 进展
+
+- 2026-11-01：需求和验收测试写好，DATA-031-01 交 pi；16:21 JST 发布到 main `ad4f11fc`。
+- 2026-11-04：换包并进 DATA-033 的发布包，叫 Baker 一次。
+- 2026-11-07：发布包 `20261103-ad63dc839` 23:00 JST 换上（电脑 11-04 到 11-07 离线，比原定晚了三天）。
+- 2026-11-10：换包后第一个生产日（as_of 2026-11-09）只读核对通过：14 段，单段最多 2603 行，没有再切，没有 truncated、failed、request_cap、unavailable；MSFT、META 下一季的日期 2027-01-27 在日历里。当天日报停在 `validate_data`（SOXX 拆股，另有修复），和日历代码无关，没有回退。卡关 DONE。

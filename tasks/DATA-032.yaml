@@ -2,8 +2,8 @@ schema_version: task.v1
 id: DATA-032
 area: 数据工程/每天存一份全窗口的 FMP 财报日历，观察名单以外的股票也有日期
 priority: P1
-status: IN_PROGRESS
-next_owner: Claude（审 DATA-032-03，和 DATA-031 一起做新发布包）
-next_step: DATA-032-03 发布后和 DATA-031 一起做新发布包，要 Baker 打授权句换包；换包后第一个生产日只读核一次：当天 raw 目录里正好一份全窗口日历，头能读，row_count 几千到一万多，AAPL 和 QQQ 头 5 大在里面，记下 GOOG/GOOGL 叫什么和文件大小
+status: DONE
+next_owner: operations owner（日常按运维手册第 9 节读调度摘要）
+next_step: DONE（2026-11-10）：DATA-032-03 在 main 62a93062（2026-11-01 19:02 JST），和 DATA-031 一起随发布包 20261103-ad63dc839 在 2026-11-07 23:00 JST 换上；2026-11-10 12:00 JST（as_of 2026-11-09）只读核对通过：raw 目录里正好一份全窗口日历，头、row_count、rows_sha256 对得上，8878 行，124,783 字节，窗口 2026-11-02..2027-02-07，没有出错、跳过或截断的段；AAPL（2026-11-02、2027-02-04）、MSFT 和 META（2027-01-27）在里面，GOOG、GOOGL 两个代码都在（2027-02-03）
 acceptance: fetch-fmp-forward 在 raw 目录根上写一份 fmp_earnings_calendar_full_<token>.jsonl.gz（gzip mtime 0；头一行 schema、窗口、segments、row_cap、row_count、rows_sha256，后面每行一条合并后的记录，不按名单筛）；空日历也写；写失败只记 WARNING fmp_forward_pit_earnings_calendar_full_write_failed，raw 照写；每股 payload 加载和 PIT manifest 看不见它；投影不读、只数份数；load_fmp_earnings_calendar_full 核 schema、日期、行、row_count、rows_sha256；采集复用：新 state 带这个文件复用，之后删改或给旧日子加这个文件都是 SOURCE_STATE_INVALID；daily_input_capture.py、命令参数、source_revision 不变；PR 套件通过
-notes: production_effect=none；broker_action=none；owner_decision:TRADING-2565:2026-11-01:research_loop_p7（第 7 期章程第 5.1 节的第二张卡）；需求文档 docs/requirements/DATA-032_FMP_Earnings_Calendar_Full_Window.md；起因：DATA-031 合并后的日历只给 17 只观察名单留行，第 3.4 题要的 AAPL 拿不到日期；读法：这个目录只读，不许给旧日子补写，一个目录正好一份，没有文件算缺
+notes: production_effect=none；broker_action=none；owner_decision:TRADING-2565:2026-11-01:research_loop_p7（第 7 期章程第 5.1 节的第二张卡）；需求文档 docs/requirements/DATA-032_FMP_Earnings_Calendar_Full_Window.md；起因：DATA-031 合并后的日历只给 17 只观察名单留行，第 3.4 题要的 AAPL 拿不到日期；读法：这个目录只读，不许给旧日子补写，一个目录正好一份，没有文件算缺；2026-11-10：DONE，见 next_step
