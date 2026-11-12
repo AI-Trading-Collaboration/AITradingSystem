@@ -196,6 +196,11 @@ lines:
             cards:
               - TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING
               - TRADING-2567
+          - text: 期中加：财报冲击表在 QQQ 2011 年以后读一次，判 not_holds
+            state: done
+            date: "2026-11-13"
+            note: Baker 11-10 选「两个都做」、11-13 签读这段数据；QQQ 最差 5% 的 199 天里 23 天是前 5 大权重股财报后第一天，倍数 1.83，没到 2（26 天才到）；季内打乱 p 0.002，挪开 1 天、5 天回到 1 左右，集中在那一天本身，不是财报季（2004–2010 那张反过来）；躲开的代价测不出为正；families.md 日历季节一行记一句；那两条按财报日程降仓的账本线留不留交 11-27 续期卡
+            cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
           - text: 第 7 期续期卡
             state: todo
             date: "2026-11-27"
