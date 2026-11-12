@@ -355,6 +355,14 @@ windows:
   # next closing-price entry or structure shift. The span was already seen history for both
   # families, so the third read loses no unseen QQQ history; the forward ledger stays the only
   # unseen test.
+  # Baker then chose a fourth read, by another family (TRADING-2565-129 and TRADING-2565-130,
+  # owner_decision:TRADING-2565:2026-11-10:earnings_shock_after_2010):
+  # research_data/earnings_events.py takes the 8-K lists of the US issuers among QQQ's ten largest
+  # holdings and the trust's annual holdings documents up to the QQQ snapshot's last close
+  # (config/research/research_earnings_after_2010.yaml, no stock prices), and the earnings-shock
+  # print-only table (TRADING-2565-99's rules, unchanged) reads QQQ's daily returns here once. It is
+  # the first read of this span for the earnings-calendar family; once read, that family has no
+  # unseen QQQ history after 2010 either, and the forward ledger stays the only unseen test.
   qqq_after_2010_owner_print:
     start: 2011-01-03
     end: latest

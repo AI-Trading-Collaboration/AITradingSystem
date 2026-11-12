@@ -1,0 +1,76 @@
+# Earnings event intake for reading the earnings-shock print-only table once on QQQ after 2010
+# (TRADING-2565-129). Owner decision: owner_decision:TRADING-2565:2026-11-10:earnings_shock_after_2010
+# (Baker chose "do both" on 2026-11-10 21:30 JST; the earnings item said the read is queued by the
+# research loop and he signs once before it reads this span). Read by
+# src/ai_trading_system/research_data/earnings_events.py only; nothing here feeds the daily run or
+# production.
+#
+# Window: the registered one-time window qqq_after_2010_owner_print (2011-01-03 to the QQQ
+# long-history snapshot's last close). data_end is that last close of qlh-20261013 (2026-10-12),
+# written here so the fetch keeps no filing after the span the table reads; the intake refuses a
+# data_end later than the latest checked QQQ snapshot. Filings start 2010-10-01 because the
+# 2010-09-30 holdings list applies to events from 2010-10-01; events before 2011-01-03 fall outside
+# the read. No stock prices: QQQ signal research uses no other instrument's data (Baker,
+# 2026-11-02), so there is no price_start and no issuer has an FMP ticker.
+schema_version: research_earnings.v1
+filing_start: 2010-10-01
+data_end: 2026-10-12
+window_id: qqq_after_2010_owner_print
+owner_decision: owner_decision:TRADING-2565:2026-11-10:earnings_shock_after_2010
+
+# The US issuers among the ten largest QQQ holdings at any September 30 from 2010 to 2025 (the QQQ
+# trust's annual schedules of investments, share classes merged by issuer). entity_pattern must
+# match the submissions name or one of its former names, case-insensitive; a mismatch stops the
+# fetch before anything is written. Every CIK, name and former name was printed by a read-only
+# probe (2026-11-11) before this file was written. Google Inc. filed under 1288776 to 2015 and
+# Alphabet Inc. under 1652044 from 2015-10; Broadcom is in the list only from 2022, when only
+# Broadcom Inc. (1730168) filed; Mondelez was Kraft Foods Inc. until 2012-10.
+issuers:
+  - {id: AAPL, ciks: [320193], entity_pattern: "^apple", fmp_ticker: null}
+  - {id: MSFT, ciks: [789019], entity_pattern: "^microsoft", fmp_ticker: null}
+  - {id: GOOG, ciks: [1288776, 1652044], entity_pattern: "^(google|alphabet)", fmp_ticker: null}
+  - {id: AMZN, ciks: [1018724], entity_pattern: "^amazon", fmp_ticker: null}
+  - {id: QCOM, ciks: [804328], entity_pattern: "^qualcomm", fmp_ticker: null}
+  - {id: ORCL, ciks: [1341439], entity_pattern: "^oracle corp", fmp_ticker: null}
+  - {id: INTC, ciks: [50863], entity_pattern: "^intel corp", fmp_ticker: null}
+  - {id: CSCO, ciks: [858877], entity_pattern: "^cisco systems", fmp_ticker: null}
+  - {id: GILD, ciks: [882095], entity_pattern: "^gilead", fmp_ticker: null}
+  - {id: META, ciks: [1326801], entity_pattern: "^(meta platforms|facebook)", fmp_ticker: null}
+  - {id: TSLA, ciks: [1318605], entity_pattern: "^tesla", fmp_ticker: null}
+  - {id: NVDA, ciks: [1045810], entity_pattern: "^nvidia", fmp_ticker: null}
+  - {id: AVGO, ciks: [1730168], entity_pattern: "^broadcom", fmp_ticker: null}
+  - {id: AMGN, ciks: [318154], entity_pattern: "^amgen", fmp_ticker: null}
+  - {id: CMCSA, ciks: [1166691], entity_pattern: "^comcast corp", fmp_ticker: null}
+  - {id: MDLZ, ciks: [1103982], entity_pattern: "^(mondelez|kraft foods)", fmp_ticker: null}
+  - {id: KHC, ciks: [1637459], entity_pattern: "^kraft heinz", fmp_ticker: null}
+  - {id: CELG, ciks: [816284], entity_pattern: "^celgene", fmp_ticker: null}
+  - {id: NFLX, ciks: [1065280], entity_pattern: "^netflix", fmp_ticker: null}
+  - {id: PEP, ciks: [77476], entity_pattern: "^pepsico", fmp_ticker: null}
+  - {id: ADBE, ciks: [796343], entity_pattern: "^adobe", fmp_ticker: null}
+  - {id: PYPL, ciks: [1633917], entity_pattern: "^paypal", fmp_ticker: null}
+  - {id: COST, ciks: [909832], entity_pattern: "^costco", fmp_ticker: null}
+  - {id: PLTR, ciks: [1321655], entity_pattern: "^palantir", fmp_ticker: null}
+
+# Foreign private issuers in the top ten file no 8-K; they are skipped, not replaced.
+foreign:
+  - {id: TEVA, foreign: true}
+
+# The QQQ trust's schedule of investments at each September 30 (CIK 1067839), the first annual
+# report holding it; kept byte for byte. The 2010 document is the one the 2003-2010 table read.
+holdings_documents:
+  - {fiscal_year: 2010, filing_date: 2010-12-30, accession: 0001104659-10-064790, document: a10-18275_1n30b2.htm, form: N-30B-2}
+  - {fiscal_year: 2011, filing_date: 2012-01-20, accession: 0001104659-12-003105, document: a11-28102_1n30b2.htm, form: N-30B-2}
+  - {fiscal_year: 2012, filing_date: 2013-01-28, accession: 0001104659-13-005075, document: a12-24340_1n30b2.htm, form: N-30B-2}
+  - {fiscal_year: 2013, filing_date: 2014-01-17, accession: 0001104659-14-003107, document: a13-21957_1n30b2.htm, form: N-30B-2}
+  - {fiscal_year: 2014, filing_date: 2015-01-15, accession: 0001104659-15-002429, document: a14-24967_1n30b2.htm, form: N-30B-2}
+  - {fiscal_year: 2015, filing_date: 2016-01-06, accession: 0001193125-16-422287, document: d95463dn30b2.htm, form: N-30B-2}
+  - {fiscal_year: 2016, filing_date: 2016-12-29, accession: 0001193125-16-806695, document: d272217dn30b2.htm, form: N-30B-2}
+  - {fiscal_year: 2017, filing_date: 2018-01-03, accession: 0001193125-18-001208, document: d432220dn30b2.htm, form: N-30B-2}
+  - {fiscal_year: 2018, filing_date: 2018-12-21, accession: 0001193125-18-355790, document: d638310dn30b2.htm, form: N-30B-2}
+  - {fiscal_year: 2019, filing_date: 2019-12-20, accession: 0001193125-19-320290, document: d813945dn30b2.htm, form: N-30B-2}
+  - {fiscal_year: 2020, filing_date: 2020-12-23, accession: 0001193125-20-326183, document: d75380dn30b2.htm, form: N-30B-2}
+  - {fiscal_year: 2021, filing_date: 2021-12-29, accession: 0001193125-21-368691, document: d211991dn30b2.htm, form: N-30B-2}
+  - {fiscal_year: 2022, filing_date: 2022-12-29, accession: 0001193125-22-313828, document: d385116dn30b2.htm, form: N-30B-2}
+  - {fiscal_year: 2023, filing_date: 2023-12-28, accession: 0001193125-23-304771, document: d538532dn30b2.htm, form: N-30B-2}
+  - {fiscal_year: 2024, filing_date: 2024-12-27, accession: 0001193125-24-285734, document: d876223dn30b2.htm, form: N-30B-2}
+  - {fiscal_year: 2025, filing_date: 2025-10-24, accession: 0001193125-25-249697, document: d29525dn30b2.htm, form: N-30B-2}

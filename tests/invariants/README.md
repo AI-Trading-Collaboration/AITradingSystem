@@ -22,6 +22,7 @@ caught, or a recorded mutation of the guarded code that makes the test fail.
 | G3 P1 portfolio ruler | A fixed mix holding a reserve other than cash is judged by the portfolio ruler: a cash reserve gives every number zero, the geometric difference is exactly the reserve's own excess plus the rebalancing return, rebalancing earns on an independent reserve and loses on a correlated one, the quiet-period excess removes a constant carry and nothing else, the declines are the fixed 10% rule's of each development window, the gate changes only for reserve configurations (the timing rules stay word for word, a window the ruler does not name records no_ruler), and the plans, the probes' gate copies and the verdicts of earlier records stay as they were (TRADING-2565-39, invariants 59–63) | `test_research_portfolio_invariants.py` |
 | G2/G3 Treasury from 1929 | The ten-year par bond priced from Shiller's monthly long-term rate earns its coupon and reprices on yields only: a constant yield compounds to (1 + y/12)^12 − 1 a year, each month is the par-bond move from last month's yield plus a twelfth of it, spread over the month's dates; no date sees a later month and a month without both yields is empty; `treasury_10y` is the pre-batch formula to the bit, the gate maps only it to the 1962 window and the new reserve lands on the windows the portfolio ruler names; the stand-in check's use rule and T0008's configurations are fixed before any run (TRADING-2565-40, invariants 64–67) | `test_research_shiller_treasury_invariants.py` |
 | G1/G2 earnings event intake | The earnings intake stays inside QQQ's development window: a spec cannot end after 2010-12-31, and a snapshot holds only 8-K and 8-K/A rows filed from filing_start to data_end, prices from price_start to data_end and the QQQ trust's holdings documents byte for byte; every CIK must name its issuer and every request must work, or nothing is written; the id is the manifest's content address; the check fails a changed byte, a filing outside the window, a repeated accession, another form, an unparsed results 8-K time, a missing holdings document or marker and a bad price, and load_snapshot reads only a checked, unchanged snapshot; the SEC User-Agent is sent after a pause and never stored or printed (TRADING-2565-98, invariants 71–73) | `test_research_earnings_events_invariants.py` |
+| G1/G2 earnings intake after 2010 | 财报事件入口只经登记的一次性窗口读 QQQ 2011 年以后：写了窗口的配置要写 `qqq_after_2010_owner_print` 和决定号、不取价格、终点在 2010 年以后；取数以前和核对时，窗口要登记成从 2011-01-03 到最新收盘、每个决定读一次的只印窗口，决定号要在 TRADING-2565 需求文档里，终点不能晚于最新检查过的 QQQ 长历史快照的最后一个收盘，不然不请求、不写、核对失败；终点以后的申报不进文件，价格源不建、不调用，一家的两个 CIK 都算、各自要对上名字；没写窗口的配置照旧，快照逐字不变；配置写明 24 家公司、TEVA、16 份持仓文件和窗口（TRADING-2565-129，不变量 74–75） | `test_research_earnings_after_2010_invariants.py` |
 
 Existing tests that already guard the same guarantees and stay in the suite (not duplicated here):
 
@@ -336,3 +337,20 @@ TRADING-2565-91 证据表里「不是月末的日期也收」那一项现在是�
 | 配置：Oracle 用旧 CIK 777676；`data_end` 写成 2011-01-03；给 Dell 一个 FMP 代码；少一份持仓文件 | `test_the_settings_file_names_the_issuers_and_documents` | 各 1 failed |
 
 第一版 45 项测试上，复盘线程提出两处没盖到的：真文件里「September 30,」和年份可能断在两行、HTML 用 `&#160;`，标记规整不对时 C 区会误报；解析出错时 pandas 和 `int()` 的错误信息带原值。补了两份持仓文件的写法和三个坏例子（价格不是数、日子不是日期、CIK 不是数）以后，对应的 6 项都抓到，最后 54 项整套重跑全部抓到。变异脚本和逐项结果在项目文件 `knowledge/claude/runs/TRADING-2565-98/draft/`。这些是数据入口正确性证据，不是投资结论。
+
+## TRADING-2565-129 变异证据（2026-11-12）
+
+新的不变量 74–75 在 `test_research_earnings_after_2010_invariants.py`（31 项）。代码由 pi 写；测试先写，每项只在循环线程的参考实现（不进仓库）上临时变异，跑新文件和 `test_research_earnings_events_invariants.py`（共 79 项），随后还原；验收文件未改。29 项全部被抓到。
+
+| 变异 | 失败的验收测试（举例） | 结果 |
+|---|---|---|
+| 写了窗口的配置可以不写决定号、可以有 `price_start`、可以给 FMP 代码、终点可以不过 2010 年、起点可以晚于终点；决定号不按格式 | `test_a_window_spec_names_its_window_and_decision_and_asks_for_no_price` | 各 1–2 failed |
+| 没写窗口的配置可以写决定号；它的快照清单多出空的窗口字段 | `test_a_spec_without_a_window_keeps_its_old_rules`、`test_a_spec_without_a_window_fetches_the_same_snapshot_as_before` | 各 1 failed |
+| 不核登记表这一段，或只漏核起点、终点、角色、读法中的一样 | `test_a_window_read_needs_the_registered_window_the_decision_and_the_qqq_close` | 1–4 failed |
+| 不在需求文档里找决定号；按子串找（更长的决定号也算） | 同上、`test_the_check_fails_a_window_snapshot_once_its_window_no_longer_holds` | 1–3 failed |
+| QQQ 快照不看检查状态、不核是哪一份；放过晚于最后收盘的终点；终点等于最后收盘也拒绝；最后收盘读成第一天 | 同上、`test_the_window_snapshot_keeps_the_span_and_no_price`、`test_the_real_window_and_decision_are_registered` | 1–5 failed |
+| 取数前不核窗口；核对时不核窗口，或窗口不对也不判失败 | 同上、`test_the_check_fails_a_window_snapshot_once_its_window_no_longer_holds` | 1–13 failed |
+| 命令总建价格源；不认 `--spec`；`fetch.json` 对每份配置都写 FMP | `test_the_fetch_command_reads_the_named_settings_and_builds_no_price_source`、`test_the_window_snapshot_keeps_the_span_and_no_price` | 各 1 failed |
+| 留 `data_end` 以后的申报；一家只取第一个 CIK；第二个 CIK 不核名字 | `test_the_window_snapshot_keeps_the_span_and_no_price`、`test_both_ciks_of_one_issuer_count_and_each_must_name_it` 等 | 1–8 failed |
+
+没写窗口的配置用这批以前的代码（main aa65cd8a）取同一份合成数据得到的内容地址写死在测试里，新代码要得到同一个。变异脚本和逐项结果在项目文件 `knowledge/claude/runs/TRADING-2565-129/draft/`。这些是数据入口正确性证据，不是投资结论。

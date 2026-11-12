@@ -2,8 +2,11 @@
 
 The period 6 earnings-shock print-only table reads three inputs: seventeen issuers' 8-K lists,
 eight annual QQQ trust holdings documents as raw bytes, and adjusted closes for FMP tickers.
-Everything stops at QQQ's development window: filings and prices after data_end are discarded
-in memory and never written. Never print data rows or send snapshots to external models.
+Specs without a window stop at QQQ's development window. Specs naming the registered one-time
+qqq_after_2010_owner_print window (TRADING-2565-129) read no prices and stop at data_end, which
+must not exceed the latest checked QQQ long-history snapshot's last close. Filings and prices
+after data_end are discarded in memory and never written. Never print data rows or send
+snapshots to external models.
 Readers use load_snapshot. Parsing holdings rows belongs to the printing module, not this intake.
 """
 
@@ -27,16 +30,31 @@ import numpy as np
 import pandas as pd
 import requests
 import typer
+import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data.market_data import PriceDataProvider
 from ai_trading_system.external_request_cache import sanitize_diagnostic_text
-from ai_trading_system.paths import state_dir
+from ai_trading_system.paths import join_root, state_dir
 from ai_trading_system.research_data import qqq_long_history as qlh
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_SPEC_PATH = PROJECT_ROOT / "config" / "research" / "research_earnings.yaml"
+# The owner-approved after-2010 intake has separate settings; the development default stays intact.
+AFTER_2010_SPEC_PATH = PROJECT_ROOT / "config" / "research" / "research_earnings_after_2010.yaml"
+# Only this registered one-time owner print may extend the intake beyond development.
+AFTER_2010_WINDOW = "qqq_after_2010_owner_print"
+# The registered span, role and read policy are an authorization invariant, not tuning parameters.
+AFTER_2010_ENTRY = ("2011-01-03", "latest", "owner_print_only", "once_per_owner_decision")
+# Resolve the window registry under the supplied code root.
+WINDOW_REGISTRY = Path("config") / "research" / "research_window_registry.yaml"
+# The intake requires an owner decision recorded in the bench requirements.
+DECISION_REQUIREMENTS = Path("docs") / "requirements" / "TRADING-2565_Research_Bench.md"
+# Only the latest QQQ snapshot's check supplies the permitted last close.
+QQQ_SNAPSHOT_PARTS = ("data", "raw", "research", "qqq_long_history")
+# Decision identifiers follow the same protocol as the shipping gate.
+DECISION_PATTERN = r"^owner_decision:[A-Za-z0-9_.-]+:\d{4}-\d{2}-\d{2}:[A-Za-z0-9_.-]+$"
 SUBMISSIONS_URL = "https://data.sec.gov/submissions/"
 ARCHIVES_URL = "https://www.sec.gov/Archives/edgar/data/"
 # The QQQ trust files the annual holdings documents.
@@ -45,7 +63,7 @@ SEC_USER_AGENT_ENV = "SEC_USER_AGENT"
 # SEC fair access permits ten requests/second; one per quarter-second stays well below that.
 SEC_PAUSE_SECONDS = 0.25
 SEC_TIMEOUT_SECONDS = 60
-# QQQ development ends here; 2011-2021 is validation and must not enter these snapshots.
+# 2011-2021 is validation and enters snapshots only through the one-time window below.
 QQQ_DEVELOPMENT_END = date(2010, 12, 31)
 FILING_FORMS = frozenset({"8-K", "8-K/A"})
 FILING_COLUMNS = ("cik", "accessionNumber", "form", "filingDate", "acceptanceDateTime", "items")
@@ -97,15 +115,30 @@ class EarningsSpec(_Strict):
     schema_version: Literal["research_earnings.v1"]
     filing_start: date
     data_end: date
-    price_start: date
+    price_start: date | None = None
+    window_id: Literal["qqq_after_2010_owner_print"] | None = None
+    owner_decision: str | None = Field(default=None, pattern=DECISION_PATTERN)
     issuers: tuple[IssuerSpec, ...] = Field(min_length=1)
     foreign: tuple[ForeignIssuer, ...] = ()
     holdings_documents: tuple[HoldingsDocument, ...] = Field(min_length=1)
 
     @model_validator(mode="after")
     def validate_window_and_identifiers(self) -> Self:
-        if not self.filing_start <= self.price_start <= self.data_end <= QQQ_DEVELOPMENT_END:
-            raise ValueError("earnings window must stay inside QQQ development")
+        if self.window_id is None:
+            if (
+                self.owner_decision is not None
+                or self.price_start is None
+                or not self.filing_start <= self.price_start <= self.data_end <= QQQ_DEVELOPMENT_END
+            ):
+                raise ValueError("earnings window must stay inside QQQ development")
+        elif (
+            self.owner_decision is None
+            or self.price_start is not None
+            or any(issuer.fmp_ticker is not None for issuer in self.issuers)
+            or self.filing_start > self.data_end
+            or self.data_end <= QQQ_DEVELOPMENT_END
+        ):
+            raise ValueError("earnings owner window requires a decision and no prices")
         identifiers = [issuer.id for issuer in self.issuers] + [
             issuer.id for issuer in self.foreign
         ]
@@ -123,6 +156,44 @@ class EarningsSpec(_Strict):
 
 def load_spec(path: Path = DEFAULT_SPEC_PATH) -> EarningsSpec:
     return EarningsSpec.model_validate(safe_load_yaml_path(path))
+
+
+def window_record(spec: EarningsSpec, root: Path) -> dict[str, str] | None:
+    """Validate the one-time authorization without reading any QQQ data payloads."""
+
+    if spec.window_id is None:
+        return None
+    try:
+        entry = safe_load_yaml_path(join_root(root, WINDOW_REGISTRY))["windows"][spec.window_id]
+        if (str(entry["start"]), str(entry["end"]), entry["role"], entry["read_policy"]) != (
+            AFTER_2010_ENTRY
+        ):
+            raise ValueError
+        decision = spec.owner_decision
+        requirements = join_root(root, DECISION_REQUIREMENTS).read_text(encoding="utf-8")
+        if (
+            decision is None
+            or re.search(re.escape(decision) + r"(?![A-Za-z0-9_])", requirements) is None
+        ):
+            raise ValueError
+        snapshots = state_dir(root, *QQQ_SNAPSHOT_PARTS)
+        snapshot_id = (snapshots / "LATEST").read_text(encoding="utf-8").strip()
+        if re.fullmatch(r"qlh-[A-Za-z0-9_-]+", snapshot_id) is None:
+            raise ValueError
+        check = json.loads((snapshots / snapshot_id / "check.json").read_bytes())
+        if check["status"] not in {"PASS", "WARN"} or check["snapshot_id"] != snapshot_id:
+            raise ValueError
+        last_close = date.fromisoformat(check["calendar"]["last_date"])
+        if spec.data_end > last_close:
+            raise ValueError
+    except (OSError, KeyError, TypeError, ValueError, AttributeError, yaml.YAMLError):
+        raise ValueError(f"invalid earnings window: {spec.window_id}") from None
+    return {
+        "window_id": spec.window_id,
+        "owner_decision": decision,
+        "data_end": spec.data_end.isoformat(),
+        "qqq_last_close": last_close.isoformat(),
+    }
 
 
 @dataclass(frozen=True)
@@ -195,10 +266,17 @@ def fetch_snapshot(
     root: Path,
     *,
     sec_get: Callable[[str], bytes],
-    price_provider: PriceDataProvider,
+    price_provider: PriceDataProvider | None,
 ) -> str:
     """Prepare all requests and payloads in memory before creating any snapshot files."""
 
+    window_record(spec, root)
+    if (
+        spec.price_start is not None
+        and any(issuer.fmp_ticker is not None for issuer in spec.issuers)
+        and price_provider is None
+    ):
+        raise ValueError("earnings prices require a price provider")
     entities: list[dict[str, Any]] = []
     filing_rows: list[dict[str, Any]] = []
     for issuer in spec.issuers:
@@ -226,8 +304,10 @@ def fetch_snapshot(
         payloads[_holdings_name(document)] = sec_get(url)
     price_frames: list[pd.DataFrame] = []
     for issuer in spec.issuers:
-        if issuer.fmp_ticker is None:
+        if spec.price_start is None or issuer.fmp_ticker is None:
             continue
+        if price_provider is None:
+            raise ValueError("earnings prices require a price provider")
         requests_ = qlh.etf_reference_requests(issuer.fmp_ticker, spec.price_start, spec.data_end)
         rows = qlh._download_reference(price_provider, requests_)
         rows = rows.loc[
@@ -257,7 +337,10 @@ def fetch_snapshot(
         files.append(entry)
     manifest = {
         "schema_version": SNAPSHOT_SCHEMA_VERSION,
-        "spec": spec.model_dump(mode="json"),
+        "spec": spec.model_dump(
+            mode="json",
+            exclude={"window_id", "owner_decision"} if spec.window_id is None else set(),
+        ),
         "entities": entities,
         "files": files,
     }
@@ -273,7 +356,17 @@ def fetch_snapshot(
                     "source_class": "primary",
                     "endpoint": f"{ARCHIVES_URL}{HOLDINGS_CIK}/",
                 },
-                {"name": "fmp_adjusted_close", "source_class": "paid-vendor", "endpoint": "FMP"},
+                *(
+                    [
+                        {
+                            "name": "fmp_adjusted_close",
+                            "source_class": "paid-vendor",
+                            "endpoint": "FMP",
+                        }
+                    ]
+                    if spec.price_start is not None
+                    else []
+                ),
             ],
         }
     )
@@ -437,7 +530,11 @@ def _prices_summary(frame: pd.DataFrame, spec: EarningsSpec, expected_rows: int)
         "nonpositive": int((~(frame["adj_close"] > 0)).sum()),
         "duplicates": int(frame.duplicated(["ticker", "date"]).sum()),
         "after_data_end": int((frame["date"] > pd.Timestamp(spec.data_end)).sum()),
-        "before_price_start": int((frame["date"] < pd.Timestamp(spec.price_start)).sum()),
+        "before_price_start": (
+            int((frame["date"] < pd.Timestamp(spec.price_start)).sum())
+            if spec.price_start is not None
+            else 0
+        ),
         "unknown_tickers": int(frame.loc[~frame["ticker"].isin(configured), "ticker"].nunique()),
         "tickers": tickers,
     }
@@ -462,6 +559,12 @@ def check_snapshot(root: Path, snapshot_id: str) -> dict[str, Any]:
         failed.add("manifest")
     else:
         spec = EarningsSpec.model_validate(manifest["spec"])
+        if spec.window_id is not None:
+            try:
+                report["window"] = window_record(spec, root)
+            except ValueError:
+                report["window"] = {"window_id": spec.window_id}
+                failed.add("window")
         payloads: dict[str, bytes] = {}
         entries = {entry["name"]: entry for entry in manifest["files"]}
         for name, entry in entries.items():
@@ -606,7 +709,12 @@ RootOption = Annotated[Path, typer.Option(help="代码根目录；状态路径�
 
 
 @app.command("fetch")
-def fetch_command(root: RootOption = PROJECT_ROOT) -> None:
+def fetch_command(
+    root: RootOption = PROJECT_ROOT,
+    spec: Annotated[
+        Path, typer.Option(help="财报事件配置路径；相对路径基于代码根目录。")
+    ] = DEFAULT_SPEC_PATH,
+) -> None:
     """下载批准来源；只输出汇总。"""
 
     agent = os.environ.get(SEC_USER_AGENT_ENV, "").strip()
@@ -614,8 +722,12 @@ def fetch_command(root: RootOption = PROJECT_ROOT) -> None:
         typer.echo("下载失败：SEC_USER_AGENT 没有设置")
         raise typer.Exit(code=1)
     try:
+        settings = load_spec(join_root(root, spec))
         fetch_snapshot(
-            load_spec(), root, sec_get=sec_getter(agent), price_provider=price_provider_factory()
+            settings,
+            root,
+            sec_get=sec_getter(agent),
+            price_provider=price_provider_factory() if settings.price_start is not None else None,
         )
     except Exception as exc:
         text = sanitize_diagnostic_text(f"{type(exc).__name__}: {exc}", extra_secrets=(agent,))
