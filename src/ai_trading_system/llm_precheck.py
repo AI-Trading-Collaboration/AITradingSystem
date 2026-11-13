@@ -56,6 +56,13 @@ DEFAULT_OPENAI_HTTP_CLIENT: OpenAIHttpClient = "requests"
 _SUPPORTED_OPENAI_REASONING_EFFORTS = {"none", "minimal", "low", "medium", "high", "xhigh"}
 _SUPPORTED_OPENAI_HTTP_CLIENTS = {"requests", "urllib"}
 _OPENAI_RETRYABLE_STATUS_CODES = {408, 409, 425, 429}
+# Wait before each retry (DATA-035). On 2026-11-11 all three attempts of a daily precheck failed
+# within about 15 s on the PC's proxy, so retries without a wait all land in the same short outage.
+# The n-th retry waits OPENAI_RETRY_WAIT_SECONDS[n - 1]; past the end of the tuple the last value
+# repeats. With the profiles' max_retries of 2 the attempts span about four minutes.
+OPENAI_RETRY_WAIT_SECONDS: tuple[float, ...] = (60.0, 180.0)
+# Tests replace this (or pass ``sleep=``) so that a retry does not really wait.
+_retry_sleep: Callable[[float], None] = time.sleep
 
 ContentSentLevel = Literal["metadata_only", "short_excerpt", "summary_only", "full_text"]
 SourceType = Literal["primary_source", "paid_vendor", "manual_input", "public_convenience"]
@@ -1325,6 +1332,12 @@ def _resolve_openai_http_client(
     return _post_json_requests, "requests"
 
 
+def _openai_retry_wait_seconds(attempt: int) -> float:
+    """Seconds to wait after failed attempt ``attempt`` (1-based) before the next one."""
+    index = min(attempt, len(OPENAI_RETRY_WAIT_SECONDS)) - 1
+    return OPENAI_RETRY_WAIT_SECONDS[index]
+
+
 def _post_openai_json_with_retries(
     *,
     post_json: HttpPostJson,
@@ -1336,7 +1349,9 @@ def _post_openai_json_with_retries(
     precheck_id: str,
     input_checksum_sha256: str,
     max_retries: int = DEFAULT_OPENAI_MAX_RETRIES,
+    sleep: Callable[[float], None] | None = None,
 ) -> _OpenAIRequestResult:
+    wait = sleep if sleep is not None else _retry_sleep
     max_attempts = max_retries + 1
     endpoint_host = urllib.parse.urlparse(endpoint).netloc
     payload_bytes = len(json.dumps(payload, ensure_ascii=False).encode("utf-8"))
@@ -1374,10 +1389,13 @@ def _post_openai_json_with_retries(
                     "retryable": attempt < max_attempts,
                 }
             )
+            if attempt < max_attempts:
+                diagnostic["retry_wait_seconds"] = _openai_retry_wait_seconds(attempt)
             attempt_diagnostics.append(diagnostic)
             audit_attempts.append(dict(diagnostic))
             failure = f"{type(exc).__name__}: {exc}"
             if attempt < max_attempts:
+                wait(diagnostic["retry_wait_seconds"])
                 continue
             diagnostics = _openai_transport_diagnostics(
                 attempts=attempt_diagnostics,
@@ -1412,6 +1430,8 @@ def _post_openai_json_with_retries(
                 ),
             }
         )
+        if diagnostic["retryable"]:
+            diagnostic["retry_wait_seconds"] = _openai_retry_wait_seconds(attempt)
         attempt_diagnostics.append(diagnostic)
         audit_attempts.append(
             {
@@ -1420,7 +1440,8 @@ def _post_openai_json_with_retries(
                 "response_body": response.body,
             }
         )
-        if _is_retryable_http_status(response.status_code) and attempt < max_attempts:
+        if diagnostic["retryable"]:
+            wait(diagnostic["retry_wait_seconds"])
             continue
         if response.status_code >= 400:
             diagnostics = _openai_transport_diagnostics(
@@ -1544,8 +1565,8 @@ def _render_issue_diagnostics(issues: tuple[LlmPrecheckIssue, ...]) -> list[str]
                 f"### {issue.code} / {issue.precheck_id or ''}",
                 "",
                 "| Attempt | Client request id | Endpoint | Payload bytes | HTTP | "
-                "Client | OpenAI request | Exception | Retryable | Elapsed |",
-                "|---:|---|---|---:|---:|---|---|---|---|---:|",
+                "Client | OpenAI request | Exception | Retryable | Elapsed | Wait before retry |",
+                "|---:|---|---|---:|---:|---|---|---|---|---:|---:|",
             ]
         )
         for attempt in attempts:
@@ -1562,7 +1583,8 @@ def _render_issue_diagnostics(issues: tuple[LlmPrecheckIssue, ...]) -> list[str]
                 f"{_escape_markdown_table(str(attempt.get('openai_request_id') or ''))} | "
                 f"{_escape_markdown_table(_attempt_exception_label(attempt))} | "
                 f"{attempt.get('retryable', '')} | "
-                f"{attempt.get('elapsed_seconds', '')} |"
+                f"{attempt.get('elapsed_seconds', '')} | "
+                f"{attempt.get('retry_wait_seconds', '')} |"
             )
         final_attempt = diagnostics.get("final_attempt")
         if isinstance(final_attempt, Mapping) and final_attempt.get("input_checksum_sha256"):

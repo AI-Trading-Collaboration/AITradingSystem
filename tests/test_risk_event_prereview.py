@@ -14,6 +14,7 @@ import yaml
 from typer.main import get_command
 from typer.testing import CliRunner
 
+from ai_trading_system import llm_precheck
 from ai_trading_system.cli import app
 from ai_trading_system.config import (
     DataSourceConfig,
@@ -47,6 +48,14 @@ from ai_trading_system.risk_event_prereview import (
     run_openai_risk_event_prereview_for_official_candidates,
     write_risk_event_prereview_queue,
 )
+
+
+@pytest.fixture(autouse=True)
+def retry_waits(monkeypatch: pytest.MonkeyPatch) -> list[float]:
+    """A retry waits 60 s, then 180 s (DATA-035); record the waits instead of sleeping."""
+    waits: list[float] = []
+    monkeypatch.setattr(llm_precheck, "_retry_sleep", waits.append)
+    return waits
 
 
 def test_import_risk_event_prereview_csv_writes_pending_llm_queue(
@@ -678,6 +687,7 @@ def test_precheck_triaged_official_candidates_cli_filters_high_priority_bucket(
 
 def test_official_candidates_auto_precheck_reports_openai_timeout(
     tmp_path: Path,
+    retry_waits: list[float],
 ) -> None:
     call_count = 0
 
@@ -730,9 +740,14 @@ def test_official_candidates_auto_precheck_reports_openai_timeout(
         "custom",
         "custom",
     ]
+    assert retry_waits == [60.0, 180.0]
+    assert [
+        attempt.get("retry_wait_seconds") for attempt in error_issue.diagnostics["attempts"]
+    ] == [60.0, 180.0, None]
     markdown = render_risk_event_prereview_import_report(report)
     assert "## 请求诊断" in markdown
     assert "Client request id" in markdown
+    assert "| Elapsed | Wait before retry |" in markdown
     assert "custom" in markdown
     assert "TEST_ONLY_NON_PROVIDER_SECRET" not in markdown
 

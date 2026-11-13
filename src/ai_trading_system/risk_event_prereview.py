@@ -1128,8 +1128,8 @@ def _render_issue_diagnostics(issues: tuple[RiskEventPreReviewIssue, ...]) -> li
                 f"### {issue.code} / {issue.precheck_id or ''}",
                 "",
                 "| Attempt | Client request id | Endpoint | Payload bytes | HTTP | "
-                "Client | OpenAI request | Exception | Retryable | Elapsed |",
-                "|---:|---|---|---:|---:|---|---|---|---|---:|",
+                "Client | OpenAI request | Exception | Retryable | Elapsed | Wait before retry |",
+                "|---:|---|---|---:|---:|---|---|---|---|---:|---:|",
             ]
         )
         for attempt in attempts:
@@ -1146,7 +1146,8 @@ def _render_issue_diagnostics(issues: tuple[RiskEventPreReviewIssue, ...]) -> li
                 f"{_escape_markdown_table(str(attempt.get('openai_request_id') or ''))} | "
                 f"{_escape_markdown_table(_attempt_exception_label(attempt))} | "
                 f"{attempt.get('retryable', '')} | "
-                f"{attempt.get('elapsed_seconds', '')} |"
+                f"{attempt.get('elapsed_seconds', '')} | "
+                f"{attempt.get('retry_wait_seconds', '')} |"
             )
         final_attempt = diagnostics.get("final_attempt")
         if isinstance(final_attempt, Mapping) and final_attempt.get("input_checksum_sha256"):

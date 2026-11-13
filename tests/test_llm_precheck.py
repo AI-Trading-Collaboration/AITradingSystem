@@ -6,6 +6,7 @@ from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+import pytest
 import yaml
 from typer.testing import CliRunner
 
@@ -30,6 +31,14 @@ from ai_trading_system.llm_precheck import (
     run_openai_claim_precheck,
     write_llm_claim_prereview_queue,
 )
+
+
+@pytest.fixture(autouse=True)
+def retry_waits(monkeypatch: pytest.MonkeyPatch) -> list[float]:
+    """A retry waits 60 s, then 180 s (DATA-035); record the waits instead of sleeping."""
+    waits: list[float] = []
+    monkeypatch.setattr(llm_precheck_module, "_retry_sleep", waits.append)
+    return waits
 
 
 def test_llm_claim_precheck_fails_closed_without_provider_permission(
@@ -437,6 +446,7 @@ def test_llm_claim_precheck_writes_pending_review_queue_without_source_text(
 
 def test_llm_claim_precheck_retries_retryable_http_error_before_success(
     tmp_path: Path,
+    retry_waits: list[float],
 ) -> None:
     packet = _packet(content_text="Official release says export controls changed.")
     captured_timeout: list[float] = []
@@ -487,10 +497,15 @@ def test_llm_claim_precheck_retries_retryable_http_error_before_success(
     assert attempts[0]["client_request_id"].startswith("aits-llm-precheck-")
     assert attempts[1]["client_request_id"].endswith("-retry-2")
     assert [attempt["http_status"] for attempt in attempts] == [520, 502, 200]
+    assert retry_waits == [60.0, 180.0]
+    assert [attempt.get("retry_wait_seconds") for attempt in attempts] == [60.0, 180.0, None]
     assert retry_issue.diagnostics["final_attempt"]["input_checksum_sha256"]
 
 
-def test_llm_claim_precheck_fails_after_retry_exhaustion(tmp_path: Path) -> None:
+def test_llm_claim_precheck_fails_after_retry_exhaustion(
+    tmp_path: Path,
+    retry_waits: list[float],
+) -> None:
     packet = _packet(content_text="Official release says export controls changed.")
     call_count = 0
 
@@ -533,6 +548,7 @@ def test_llm_claim_precheck_fails_after_retry_exhaustion(tmp_path: Path) -> None
         issue for issue in report.issues if issue.code == "openai_responses_api_error"
     )
     assert "已重试 2 次" in error_issue.message
+    assert retry_waits == [60.0, 180.0]
     assert error_issue.diagnostics["attempt_count"] == 3
     assert [attempt["http_status"] for attempt in error_issue.diagnostics["attempts"]] == [
         520,
