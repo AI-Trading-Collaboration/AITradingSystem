@@ -305,7 +305,7 @@ def test_the_new_window_is_registered_for_this_read_only() -> None:
     assert entry["end"] == "latest"
     assert entry["role"] == "owner_print_only"
     assert entry["question_types"] == []
-    assert entry["assets"] == ["QQQ"]
+    assert entry["assets"] == ["QQQ", "CASH_DTB3", "NDX_RETURN"]
     assert entry["exact_or_proxy"] == "exact"
     assert entry["data_quality_contract"] == "qqq_long_history_snapshot_check"
     assert entry["data_spec"] == "config/research/qqq_long_history.yaml"
