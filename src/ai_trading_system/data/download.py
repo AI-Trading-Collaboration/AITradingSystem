@@ -70,9 +70,12 @@ _CANONICAL_PREDECESSOR_REUSE = "CANONICAL_PREDECESSOR_REUSE"
 _LEGACY_LOCAL_CACHE_IMPORT = "LEGACY_LOCAL_CACHE_IMPORT"
 
 # DATA-034: re-read cached adjusted closes before extending the tail, replacing stale
-# histories instead of mixing adjustment bases. The owner-selected overlap and split-sized
-# tolerance, bounded request chunks and fail-closed coverage rule are specified in
-# docs/requirements/DATA-034_Split_History_Refetch.md, section 3.1.
+# histories instead of mixing adjustment bases (docs/requirements/DATA-034_Split_History_Refetch.md,
+# section 3.1). The 20-row overlap is the owner's choice
+# (owner_decision:DATA-034:2026-11-10:split_history_refetch). A 10% adj_close difference sits above
+# dividend adjustments (usually under 2%) and below the smallest split (5-for-4, 20%). 1200 calendar
+# days per request stays inside the provider's per-request date range. A refetch that misses any
+# cached date stops before anything is published.
 PRICE_HISTORY_REBASE_OVERLAP_ROWS = 20
 PRICE_HISTORY_REBASE_ADJ_CLOSE_REL_TOLERANCE = 0.10
 PRICE_HISTORY_REBASE_CHUNK_CALENDAR_DAYS = 1200

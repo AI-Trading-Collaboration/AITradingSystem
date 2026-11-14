@@ -2,8 +2,8 @@ schema_version: task.v1
 id: DATA-035
 area: 数据工程/OpenAI 预审重试前先等待
 priority: P1
-status: IN_PROGRESS
-next_owner: Claude（审 DATA-035-01，接着打新发布包）
-next_step: DATA-035-01 发布后从 main 打新发布包，Baker 打两句授权换包（目标 2026-11-14 11:30 JST 以前）；换包后第一次日报 score_daily PASS 后收尾
+status: DONE
+next_owner: operations owner（日常按运维手册第 9 节读调度摘要）
+next_step: DONE（2026-11-14）：DATA-035-01 在 main b760b662（2026-11-13 14:25 JST），随发布包 20261113-b760b662c 在 2026-11-13 19:34 JST 换上；2026-11-14 12:00 JST 的日报（as_of 2026-11-13）全部通过，OpenAI 预审 10 条请求第一次就成功（生产上还没遇到要等的重试，等待由测试覆盖）；as_of 2026-11-10、2026-11-12 记为已知缺口
 acceptance: OpenAI 预审的连接错误和可重试 HTTP 状态在第 n 次重试前等 OPENAI_RETRY_WAIT_SECONDS[n-1]（60、180 秒，超出重复最后一个），最后一次尝试后和不可重试的状态不等；每次尝试的诊断和审计记录有 retry_wait_seconds，报告的请求诊断表有 Wait before retry 一列；max_retries、超时、候选上限和失败语义不变；换包后第一次日报 score_daily PASS，或预审仍失败时报告显示 60、180 秒等待；PR 套件通过
-notes: production_effect=none；broker_action=none；需求文档 docs/requirements/DATA-035_OpenAI_Precheck_Retry_Wait.md；起因：2026-11-11 17:30 JST 补跑（as_of 2026-11-10，发布包 20261110-3d5511e46）在 score_daily 的风险事件 OpenAI 预审停下，2 条请求各 3 次尝试都是连接被重置或 SSL EOF，约 15 秒内用完（电脑到 OpenAI 的代理线路短暂断开）；Claude 2026-11-11 发卡片，Baker 2026-11-13 13:57 JST 选「今晚加重试并换包」
+notes: production_effect=none；broker_action=none；需求文档 docs/requirements/DATA-035_OpenAI_Precheck_Retry_Wait.md；起因：2026-11-11 17:30 JST 补跑（as_of 2026-11-10，发布包 20261110-3d5511e46）在 score_daily 的风险事件 OpenAI 预审停下，2 条请求各 3 次尝试都是连接被重置或 SSL EOF，约 15 秒内用完（电脑到 OpenAI 的代理线路短暂断开）；Claude 2026-11-11 发卡片，Baker 2026-11-13 13:57 JST 选「今晚加重试并换包」；2026-11-13 12:00 JST 的日报（as_of 2026-11-12）又停在同一处；2026-11-14：owner_decision:DATA-035:2026-11-14:as_of_2026_11_10_and_2026_11_12_gap（as_of 2026-11-10、2026-11-12 记为已知缺口）；DONE，见 next_step
