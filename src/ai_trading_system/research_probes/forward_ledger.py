@@ -969,8 +969,9 @@ def append_command(
     ] = DEFAULT_LEDGER_DIR,
 ) -> None:
     folder = _folder_day(_date(through))
+    provenance = git_provenance(PROJECT_ROOT)
     try:
-        rows = append(ledger_dir, daily_root, folder, provenance=git_provenance(PROJECT_ROOT))
+        rows = append(ledger_dir, daily_root, folder, provenance=provenance)
         total = len(read_ledger(ledger_dir))
     except ForwardLedgerError as exc:
         typer.echo(f"forward_ledger: 拒绝追加：{exc}")
@@ -999,6 +1000,11 @@ def append_command(
         )
     else:
         typer.echo(f"forward_ledger: 没有新的交易日，共 {total} 行")
+    # The added lines (TRADING-2565-135) follow the main ledger and never block it.
+    from ai_trading_system.research_probes import forward_added
+
+    if not forward_added.after_append(ledger_dir, daily_root, provenance, typer.echo):
+        raise typer.Exit(code=1)
 
 
 @app.command("weekly")
@@ -1015,6 +1021,10 @@ def weekly_command(
         typer.echo(f"forward_ledger: {exc}")
         raise typer.Exit(code=1) from None
     typer.echo(f"forward_ledger: 周汇总已写 {path}")
+    from ai_trading_system.research_probes import forward_added
+
+    if not forward_added.after_weekly(ledger_dir, typer.echo):
+        raise typer.Exit(code=1)
 
 
 @app.command("check")
@@ -1041,6 +1051,10 @@ def check_command(
     typer.echo(f"forward_ledger: 账本完好，{len(rows)} 行（{span}）")
     if rows:
         typer.echo(f"forward_ledger: {offsets_line(rows)}")
+    from ai_trading_system.research_probes import forward_added
+
+    if not forward_added.after_check(ledger_dir, selected_day, daily_root, typer.echo):
+        raise typer.Exit(code=1)
 
 
 def main() -> None:
