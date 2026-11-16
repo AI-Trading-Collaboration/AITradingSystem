@@ -152,6 +152,14 @@ def ledger_dir(tmp_path: Path) -> Path:
     return path
 
 
+@pytest.fixture(autouse=True)
+def _frozen_line_after_these_files(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The frozen line (TRADING-2565-137) starts after these synthetic files end: no rows here."""
+    from ai_trading_system.research_probes import forward_frozen
+
+    monkeypatch.setattr(forward_frozen, "FROZEN_START", date(2027, 1, 4))
+
+
 @pytest.fixture()
 def started(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(fa, "ADDED_START", START)

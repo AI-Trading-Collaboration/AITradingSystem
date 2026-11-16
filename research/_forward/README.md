@@ -76,9 +76,44 @@
 - 净值归零以后，周汇总那一节不印两个累计对数差（对数在 −1 没有定义），只印归零的日子。
 - 2026-11-19 以后的周五追加批同时提交 `added_lines.jsonl`，研究会话把它原样打印给循环线程，同主账本。
 
+## 冻结的线（第 7 期 5.7，TRADING-2565-137）
+
+第 7 期章程第 5.7 节：同回撤总账表（TRADING-2565-134，`owner_decision:TRADING-2565:2026-11-10:same_drawdown_table`）照跑前写死的挑法挑出 `x2_s5_under_ladder`（TRADING-2565-126 的规则：X2 出场、分四档买回、结构转变带 L 止损），Baker 2026-11-16 15:20 JST 在冻结卡上选「冻，只记账」。规则原样冻进账本，只记账，不进日报、不动仓位。新文件 `frozen_lines.jsonl`（`forward_frozen.v1`），主账本 `ledger.jsonl`、`added_lines.jsonl` 和它们的模式一字不动。模块 `src/ai_trading_system/research_probes/forward_frozen.py`；`forward_ledger` 的 `append`、`check`、`weekly` 三个命令末尾在加的线之后各调它一次。
+
+- 起点 2026-11-23（`FROZEN_START`）：第一行就是那一天，以前的日子不记、不回填。每行挂主账本同一天那一行：`ledger_seq`、`ledger_sha256`、`qqq_tr`、`price_file` 照抄。
+- 用哪份收盘：第 t 行用主账本第 t 行记的价格文件里 QQQ 的 `adj_close`，从 2024-01-02（`WALK_FROM`）到 t，一个交易日都不能缺；t 以后的收盘不用。那份撑不起（文件不在、读不了、缺一个交易日）时，用主账本 t 以后第一个撑得起的那一行的价格文件，同样截到 t，`rule_price_file` 记实际用的那份、`notes` 注明；t 以后还没有撑得起的，就停在 t，下一次 `append` 有了再补。
+- 规则照原模块调用（`structure_shift_ladder.walk_ladder`，`exit_under` 的 X2、`v0_entries`、`shifts`），不另写；从锚点 2025-05-12（表在那天回到 X 买满）满仓起走。最后一个收盘响的出场（X2 或 L）当天就记；X2 和 L 同一个收盘响时记 X2。
+- 时序：收盘 t 的决定在 t+1 收盘调。卖出和表同一个收盘（表也是出场响的下一个收盘卖），买进比表晚一个收盘（表在决定的那个收盘买）。目标：出场响是 0，买满是 1，只有分档成交时是规则不扣成本的 QQQ 份额 `rule_frac`。两次调仓之间 w 按 w(1 + q) ÷ (1 + w q) 漂，0 和 1 不漂；q 空时那一行收益空、之后 w 空到下一次调仓。收益 = w × q，空仓记 0（不拿 SGOV），不扣成本。第一行从锚点按同一规则模拟到起点；以后的行接着写过的行，不重算。
+- 两道核对，过了才写：A，截到表的快照末 2026-10-12 走出来的买卖要和表印的那一笔一模一样（2026-03-20 X2、03-23 卖、04-13 结构转变买满，没有分档，L 在 03-30），锚点那一档的比值和回到 X 的那天也要对上，锚点以前不能有信号；B，已写的行（和这一次前面刚算出的行）的决定重走以后不变，第一行的调仓也不变。任何一道不过，冻结的线这一次一行都不写、退出 1，主账本和加的线照写。核对 A 不过不在包里预先放宽，停下交人定。
+- 字段：
+
+| 字段 | 含义 |
+|---|---|
+| `schema_version` | `forward_frozen.v1` |
+| `seq`、`date` | 行号（1 起）和日子 |
+| `ledger_seq`、`ledger_sha256`、`qqq_tr`、`price_file` | 主账本同一天那一行的行号、字节摘要、QQQ 收益和价格文件 |
+| `rule_price_file` | 规则实际走的那份价格文件：一般就是 `price_file`，撑不起时是主账本 t 以后第一个撑得起的那一行的 |
+| `sgov_tr` | 同一份价格文件（`price_file`）里 SGOV 当天的收益（没有就空），只给周汇总印 |
+| `line` | `x2_s5_under_ladder` |
+| `rule_actions` | 这个收盘规则的决定：`fire`（X2 或 L）、`fill`（档位和份额）、`full`（怎么买满，结构转变时带 L 那天） |
+| `rule_frac` | 这个收盘以后规则不扣成本的 QQQ 份额 |
+| `trade_frozen`、`exp_frozen`、`ret_frozen` | 这个收盘调到多少（没有调仓是空）、当天持有的敞口 w、当天的收益 |
+| `phase`、`sale_date`、`filled_levels`、`close_vs_x` | `in`（满仓）、`fired`（出场响了，下一个收盘卖）、`out`（卖了，等买回）；`out` 时卖出那天、已成交的档、离 X 多少 |
+| `high_date`、`close_vs_high`、`floor_date`、`close_vs_floor`、`close_vs_line` | 满仓时 X2 最高那天和离最高多少、L 那天和离 L 多少；离 200 日线多少 |
+| `notes` | 空缺的原因、用了别的价格文件 |
+| `code_commit`、`code_modified`、`prev_sha256` | 同主账本 |
+
+- 读坏不挡主账本和加的线；新文件允许落后主账本。退出 1 时，`forward_ledger:` 那几行都正常、只有 `forward_added:` 或 `forward_frozen:` 报错，就是主账本已经写好：照常提交，把报错的那几行报给循环线程。
+- `check` 另核新文件的链、行号、从起点起和主账本逐行对上、中间没有缺、键、`rule_price_file`、行内等式和状态的前后衔接（容差 1e-12），坏行只印行号和原因、不抛；`check --daily-root` 再用最后一行的 `rule_price_file` 跑核对 A、B；`check --day <日期> --daily-root` 读那一行记的 `rule_price_file`，核它是那一行或主账本更晚一行的价格文件、撑得起、重走出来的决定和状态和写着的一样，`sgov_tr` 和重读自己那份的一样；那一行自己那份现在也撑得起、或写着空的 `sgov_tr` 现在读得出数时，只印一句提示。
+- 起点以前 `append` 和 `check --daily-root` 不读价格、不核 A，返回成功。
+- `python -m ai_trading_system.research_probes.forward_frozen guard --daily-root <日报状态根>`：只读，用主账本最后一行的价格文件（或 `--price-file`）跑核对 A，印锚点以后规则的每个决定和现在的状态；过了退出 0，不过退出 1。
+- `weekly` 在原来各节后面加「冻结的线」一节：冻结的线（账本口径）、同期买入持有、同期 F0001、同期固定 0.8 的交易日、缺收益、累计、最大回撤、平均敞口；现在的状态；起点以来规则的每个决定和账本的每次调仓；空仓那部分拿 SGOV 时的累计、调仓次数、换手和按表的 0.05% 算的成本（只印）；表里印过的最深回撤两行；「冻结线落后主账本 N 行」。还没有行时只印「冻结的线自 2026-11-23 起记，还没有行。」
+- 前瞻记录 F0010（`../_loop/forward_records.md`「冻结的线」）。
+- 2026-11-23 以后的周五追加批同时提交 `frozen_lines.jsonl`，研究会话把它原样打印给循环线程，同主账本。
+
 ## 什么时候、谁做
 
-- 每周五研究会话在电脑上跑（和周五摘要同一次，不新增定时任务）：`append --through <最近一次跑完的日报的 as_of 日期> --daily-root <日报状态根>`，`weekly --daily-root <日报状态根>`，`check`，`pytest tests/test_research_forward_ledger.py tests/test_research_forward_added.py -k committed`；提交 `ledger.jsonl`、`weekly.md` 和（2026-11-19 以后）`added_lines.jsonl`（A 区）并发布。追加批是 A 区，门不跑测试，所以那两条测试（核入库的账本、周汇总盖住每一行）在提交前跑；循环线程在云端核行和指纹时，在套好的 tree 上再跑同一条，过了才回「可以发布」（2026-10-23 起，第 6 期第 3.3 节）。第一次从 2026-10-12 回填。要不要改成每天自动，跑两周以后再定。
+- 每周五研究会话在电脑上跑（和周五摘要同一次，不新增定时任务）：`append --through <最近一次跑完的日报的 as_of 日期> --daily-root <日报状态根>`，`weekly --daily-root <日报状态根>`，`check`，`pytest tests/test_research_forward_ledger.py tests/test_research_forward_added.py tests/test_research_forward_frozen.py -k committed`；提交 `ledger.jsonl`、`weekly.md`、（2026-11-19 以后）`added_lines.jsonl` 和（2026-11-23 以后）`frozen_lines.jsonl`（A 区）并发布。退出 1 时照上面「冻结的线」那一节读。追加批是 A 区，门不跑测试，所以那两条测试（核入库的账本、周汇总盖住每一行）在提交前跑；循环线程在云端核行和指纹时，在套好的 tree 上再跑同一条，过了才回「可以发布」（2026-10-23 起，第 6 期第 3.3 节）。第一次从 2026-10-12 回填。要不要改成每天自动，跑两周以后再定。
 - 周汇总 `weekly.md`：自 2026-10-12（含回填）和自 2026-10-21（前瞻）两段，各线的累计收益、最大回撤、平均敞口，日报模型和 F0001 各自的对照（同平均敞口的固定敞口），F0001 对它的累计对数差（前瞻那段是「研究的实际收益」，即 F0008 第 2 行的读数；满 252 个交易日另印几何年化差），和按周的收益；给了 `--daily-root` 再印 QQQ 月末总收益离运行最高（`research_bench.segments` 的划段规则，只印现在的状态：开段或未开段）和现金按 SGOV 的一组（只印）。周五摘要引一行。描述，不判。
 - 核对：前瞻记录 F0001 和 F0005（`../_loop/forward_records.md`）在 QQQ 按同一规则划出下一个完整慢熊段或长牛段时逐条核，记对错和记分表第 3 节的四列；中间每季度在周五摘要印一行描述，不判。同一配置连续两次慢熊段核对为对之前，不拿它开题或改日报。
 
