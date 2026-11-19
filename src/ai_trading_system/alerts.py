@@ -12,6 +12,10 @@ from ai_trading_system.pipeline_health import (
     PipelineHealthSeverity,
 )
 from ai_trading_system.scoring.daily import DailyScoreReport, PreviousDailyScoreSnapshot
+from ai_trading_system.scoring.position_model import (
+    GATE_EFFECT_INFO_ONLY,
+    POSITION_POLICY_FULL_EXPOSURE_DEFAULT,
+)
 
 AlertCategory = Literal["data_system", "investment_risk"]
 AlertSeverity = Literal["info", "warning", "high", "critical"]
@@ -291,10 +295,18 @@ def build_daily_alert_report(
             _alert(
                 as_of=as_of,
                 category="investment_risk",
-                severity=_gate_severity(gate.max_position),
+                severity=(
+                    "info"
+                    if gate.effect == GATE_EFFECT_INFO_ONLY
+                    else _gate_severity(gate.max_position)
+                ),
                 source="position_gate",
                 code=f"position_gate_{gate.gate_id}",
-                title=f"{gate.label} 触发仓位上限",
+                title=(
+                    f"{gate.label} 触发（只提示，不压仓）"
+                    if gate.effect == GATE_EFFECT_INFO_ONLY
+                    else f"{gate.label} 触发仓位上限"
+                ),
                 trigger_condition=(f"gate_id={gate.gate_id}；max_position={gate.max_position:.0%}"),
                 clear_condition="对应 gate 不再触发，或 max_position 不低于当前最终区间上限。",
                 message=gate.reason,
@@ -309,6 +321,15 @@ def build_daily_alert_report(
         if previous_score_snapshot is not None
         else None
     )
+    cap_drop_title = "最终 AI 仓位上限大幅下降"
+    if report.position_policy_mode == POSITION_POLICY_FULL_EXPOSURE_DEFAULT:
+        current_max = report.recommendation.gated_risk_asset_band.max_position
+        previous_max = (
+            previous_score_snapshot.gated_or_final_risk_asset_ai_max
+            if previous_score_snapshot is not None
+            else None
+        )
+        cap_drop_title = "按原规则：AI 仓位上限大幅下降"
     if previous_max is not None and previous_max - current_max >= position_drop_threshold:
         add(
             _alert(
@@ -317,7 +338,7 @@ def build_daily_alert_report(
                 severity="high",
                 source="score-daily",
                 code="position_cap_drop",
-                title="最终 AI 仓位上限大幅下降",
+                title=cap_drop_title,
                 trigger_condition=(
                     f"previous_max={previous_max:.0%}；current_max={current_max:.0%}；"
                     f"drop={previous_max - current_max:.0%}"

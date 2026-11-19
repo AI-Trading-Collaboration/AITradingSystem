@@ -31,6 +31,14 @@ threshold_rationale_map:
     intended_effect: "在数据质量、feature warning、manual review 缺口和低置信模块出现时降低置信度或收紧建议仓位上限。"
     validation: "tests/test_daily_scoring.py 覆盖 confidence penalty、cap band 和日报 gate 输出；tests/test_config.py 覆盖配置加载；GOV-005 audit 校验本 rationale map。"
     review_condition: "需要用 forward outcome、data quality report 和人工复核记录确认扣分强度后才能调整。"
+  position_policy:
+    target_path: position_policy
+    status: production
+    owner: project_owner
+    rationale: "owner_decision:TRADING-2572:2026-11-19:full_exposure_default：Baker 2026-11-19 定目标为收益最大、回撤不深于 QQQ 同期最大回撤；按这个目标没测过的压仓规则都是代价，生产日报的最终仓位默认满仓 1.0，分数映射和各道仓位闸门照算照写，只作提示。"
+    intended_effect: "生产 score-daily 的 final_risk_asset_ai_band 和总资产区间为 1.0；gated_* 字段和 position_gates（effect=info_only）保留按原规则算出的区间；回测、回填仍按 gated_min。"
+    validation: "tests/test_trading2572_full_exposure_default.py 覆盖两种模式、回放取当天模式、执行建议、预警、规则卡和账本读快照；tests/test_config.py 覆盖加载；GOV-005 audit 校验本 rationale map。"
+    review_condition: "出现同回撤下胜过 QQQ 持有的前瞻证据，或 Baker 改目标时复核；改回原行为把 mode 设为 gated_min。"
   source_type_confidence:
     target_path: source_type_confidence
     status: pilot
@@ -283,6 +291,10 @@ placeholders:
 
 position_change:
   minimum_action_delta: 0.05
+
+position_policy:
+  mode: full_exposure_default
+  owner_decision: owner_decision:TRADING-2572:2026-11-19:full_exposure_default
 
 position_gates:
   valuation:

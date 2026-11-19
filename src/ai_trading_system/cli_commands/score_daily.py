@@ -233,9 +233,11 @@ from ai_trading_system.scoring.daily import (
     build_weight_calibration_context,
     default_daily_score_report_path,
     load_previous_daily_score_snapshot,
+    position_policy_change_note,
     write_daily_score_report,
     write_scores_csv,
 )
+from ai_trading_system.scoring.position_model import validate_position_policy_mode
 from ai_trading_system.thesis import (
     DEFAULT_TRADE_THESES_DIR,
     ThesisReviewReport,
@@ -470,6 +472,16 @@ def _resolve_official_policy_precheck_evidence(
 @score_daily_app.callback(invoke_without_command=True)
 def score_daily(
     ctx: typer.Context = None,
+    position_policy_mode: Annotated[
+        str | None,
+        typer.Option(
+            "--position-policy-mode",
+            help=(
+                "仓位方式：full_exposure_default 或 gated_min；"
+                "不填时读 scoring_rules.yaml 的 position_policy.mode。"
+            ),
+        ),
+    ] = None,
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
@@ -1516,6 +1528,9 @@ def score_daily(
             weight_calibration_application,
             DEFAULT_EFFECTIVE_WEIGHTS_PATH,
         )
+    resolved = validate_position_policy_mode(
+        position_policy_mode or scoring_rules.position_policy.mode
+    )
     score_report = build_daily_score_report(
         feature_set=feature_set,
         data_quality_report=data_quality_report,
@@ -1531,6 +1546,12 @@ def score_daily(
         valuation_review_report=valuation_review_report,
         risk_event_occurrence_review_report=risk_event_occurrence_review_report,
         weight_calibration=weight_calibration_application,
+        position_policy_mode=resolved,
+        position_policy_owner_decision=(
+            scoring_rules.position_policy.owner_decision
+            if resolved == scoring_rules.position_policy.mode
+            else None
+        ),
     )
     previous_score_snapshot = load_previous_daily_score_snapshot(scores_path, score_date)
     daily_alert_report = build_daily_alert_report(
@@ -1561,8 +1582,9 @@ def score_daily(
         ),
         previous_band=previous_execution_band,
         confidence_level=score_report.confidence_assessment.level,
+        # Full-exposure gates only inform: they neither block additions nor request manual review.
         triggered_gate_ids=tuple(
-            gate.gate_id for gate in score_report.recommendation.triggered_position_gates
+            gate.gate_id for gate in score_report.recommendation.capping_position_gates
         ),
         report_status=score_report.status,
     )
@@ -1571,6 +1593,9 @@ def score_daily(
         validation_status=execution_policy_report.status,
         validation_report_path=execution_policy_report_output,
     )
+    note = position_policy_change_note(score_report, previous_score_snapshot)
+    if note:
+        execution_advisory_section = f"{execution_advisory_section.rstrip()}\n- {note}\n"
     scores_output = write_scores_csv(score_report, scores_path)
     daily_indicator_weight_trace = build_daily_indicator_weight_trace(
         score_report,

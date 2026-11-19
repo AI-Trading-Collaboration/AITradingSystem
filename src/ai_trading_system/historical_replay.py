@@ -76,6 +76,7 @@ from ai_trading_system.risk_events import (
     load_risk_event_occurrence_store,
 )
 from ai_trading_system.scoring.daily import default_daily_score_report_path
+from ai_trading_system.scoring.position_model import POSITION_POLICY_GATED_MIN
 from ai_trading_system.secret_hygiene import default_secret_scan_report_path
 from ai_trading_system.thesis import TradeThesisStore, load_trade_thesis_store
 from ai_trading_system.trade_review import (
@@ -1129,6 +1130,34 @@ def _run_replay_commands(
     return tuple(results)
 
 
+def _production_snapshot_date(path: Path) -> date | None:
+    try:
+        return date.fromisoformat(path.stem.removeprefix("decision_snapshot_"))
+    except ValueError:
+        return None
+
+
+def production_position_policy_mode(snapshot_dir: Path, as_of: date) -> str:
+    """Read the latest readable production snapshot visible on the replay date."""
+    candidates = [
+        (snapshot_date, path)
+        for path in snapshot_dir.glob("decision_snapshot_*.json")
+        if (snapshot_date := _production_snapshot_date(path)) is not None and snapshot_date <= as_of
+    ]
+    for _, path in sorted(candidates, reverse=True):
+        try:
+            snapshot = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            continue
+        positions = snapshot.get("positions") if isinstance(snapshot, dict) else None
+        policy = positions.get("position_policy") if isinstance(positions, dict) else None
+        mode = policy.get("mode") if isinstance(policy, dict) else None
+        if isinstance(mode, str) and mode.strip():
+            return mode
+        return POSITION_POLICY_GATED_MIN
+    return POSITION_POLICY_GATED_MIN
+
+
 def _score_daily_command(
     project_root: Path,
     paths: ReplayPaths,
@@ -1181,6 +1210,10 @@ def _score_daily_command(
         "replay",
         "--prediction-production-effect",
         "none",
+        "--position-policy-mode",
+        production_position_policy_mode(
+            state_dir(project_root, "data") / "processed" / "decision_snapshots", as_of
+        ),
         "--sec-fundamentals-path",
         str(paths.data_processed_dir / f"sec_fundamentals_{as_of.isoformat()}.csv"),
         "--sec-fundamental-features-path",

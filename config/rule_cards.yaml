@@ -48,7 +48,6 @@ cards:
     version: v1
     owner: system_review
     applies_to:
-      - score-daily
       - backtest
     source_config_paths:
       - config/scoring_rules.yaml
@@ -56,6 +55,8 @@ cards:
     description: >
       将评分仓位、组合限制、风险预算、风险事件、估值拥挤、thesis 状态
       和数据置信度取最严格上限，形成最终风险资产内 AI 仓位区间。
+      生产日报（score-daily）自 TRADING-2572 起按 position_policy.full_exposure_default.v1
+      满仓为底，这里的闸门在生产日报里只提示、不压仓；结果写在 gated_* 字段。
     production_since: 2026-05-04
     retired_at:
     linked_rule_experiment: ""
@@ -81,6 +82,47 @@ cards:
       - 风险预算基础版只使用 VIX 压力、真实组合集中度和 ETF beta 覆盖阈值，不做完整协方差、流动性或税费预算。
     last_reviewed_at: 2026-05-04
     next_review_due: 2026-06-04
+
+  - rule_id: position_policy.full_exposure_default.v1
+    rule_name: 生产日报满仓为底
+    rule_type: position_gate
+    status: production
+    version: v1
+    owner: project_owner
+    applies_to:
+      - score-daily
+    source_config_paths:
+      - config/scoring_rules.yaml
+    description: >
+      生产日报的最终风险资产内 AI 仓位和总资产区间默认 1.0；分数映射和各道仓位闸门
+      照算照写（position_gates 的 effect=info_only，gated_* 字段），不压仓位，
+      也不进执行建议的禁止新增或人工复核。回测、回填仍按 gated_min。
+    production_since: 2026-11-19
+    retired_at:
+    linked_rule_experiment: ""
+    approval:
+      approval_status: approved
+      approved_by: project_owner
+      approved_at: 2026-11-19
+      rationale: >-
+        owner_decision:TRADING-2572:2026-11-19:full_exposure_default：Baker 定目标为收益最大、
+        回撤不深于 QQQ 同期最大回撤，并选「满仓为底，闸门只提示」。
+    validation:
+      validation_status: baseline_tested
+      validation_refs:
+        - tests/test_trading2572_full_exposure_default.py
+        - tests/test_daily_scoring.py
+      sample_limitations:
+        - 满仓的回撤就是 QQQ 的回撤；没有测过的压仓规则都不再压仓。
+    rollback:
+      procedure: 把 config/scoring_rules.yaml 的 position_policy.mode 改回 gated_min，重跑日报测试。
+      trigger_conditions:
+        - Baker 改目标或撤回 owner_decision:TRADING-2572:2026-11-19:full_exposure_default。
+        - 生产日报最终仓位不是 1.0，或 gated_* 字段缺失。
+    known_limitations:
+      - 执行建议和预警只把闸门列作提示；低置信度转人工复核照旧。
+    last_reviewed_at: 2026-11-19
+    next_review_due: 2027-02-19
 
   - rule_id: source_policy.risk_and_evidence.v1
     rule_name: 证据来源与自动评分资格规则

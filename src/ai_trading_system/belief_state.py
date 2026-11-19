@@ -158,6 +158,7 @@ def render_belief_state_summary(
             f"{_format_band_record(position_boundary['total_asset_ai_band'])}；"
             "置信度调整后 "
             f"{_format_band_record(position_boundary['confidence_adjusted_band'])}。"
+            f"{_position_policy_summary(position_boundary)}"
         ),
         (
             "- 多维置信度："
@@ -171,6 +172,17 @@ def render_belief_state_summary(
         f"- 主要限制：{_limitation_summary(belief_state['limitations'])}",
     ]
     return "\n".join(lines) + "\n"
+
+
+def _position_policy_summary(position_boundary: dict[str, Any]) -> str:
+    policy = position_boundary.get("position_policy", {})
+    gated = position_boundary.get("gated_risk_asset_ai_band")
+    if policy.get("mode") != "full_exposure_default" or not gated:
+        return ""
+    return (
+        "满仓 1.0（默认）；按原规则会给 "
+        f"{gated['min_position']:.0%}-{gated['max_position']:.0%}，只提示。"
+    )
 
 
 def _market_state_record(report: DailyScoreReport) -> dict[str, Any]:
@@ -347,6 +359,12 @@ def _position_boundary_record(report: DailyScoreReport) -> dict[str, Any]:
             "reasons": list(report.macro_risk_asset_budget.reasons),
         },
         "total_asset_ai_band": _band_record(recommendation.total_asset_ai_band),
+        "gated_risk_asset_ai_band": _band_record(recommendation.gated_risk_asset_band),
+        "gated_total_asset_ai_band": _band_record(recommendation.gated_total_asset_band),
+        "position_policy": {
+            "mode": recommendation.position_policy_mode,
+            "owner_decision": report.position_policy_owner_decision,
+        },
         "minimum_action_delta": report.minimum_action_delta,
         "limiting_gates": [
             {
@@ -354,6 +372,7 @@ def _position_boundary_record(report: DailyScoreReport) -> dict[str, Any]:
                 "label": gate.label,
                 "max_position": gate.max_position,
                 "triggered": gate.triggered,
+                "effect": gate.effect,
                 "reason": gate.reason,
                 "reference": f"position_gate:{gate.gate_id}",
             }

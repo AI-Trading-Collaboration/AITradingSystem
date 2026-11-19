@@ -71,6 +71,12 @@ def build_decision_snapshot(
                 "reasons": list(report.macro_risk_asset_budget.reasons),
             },
             "total_asset_ai_band": _band_record(recommendation.total_asset_ai_band),
+            "gated_risk_asset_ai_band": _band_record(recommendation.gated_risk_asset_band),
+            "gated_total_asset_ai_band": _band_record(recommendation.gated_total_asset_band),
+            "position_policy": {
+                "mode": recommendation.position_policy_mode,
+                "owner_decision": report.position_policy_owner_decision,
+            },
             "minimum_action_delta": report.minimum_action_delta,
             "position_gates": [
                 {
@@ -79,6 +85,7 @@ def build_decision_snapshot(
                     "source": gate.source,
                     "max_position": gate.max_position,
                     "triggered": gate.triggered,
+                    "effect": gate.effect,
                     "reason": gate.reason,
                 }
                 for gate in recommendation.position_gates

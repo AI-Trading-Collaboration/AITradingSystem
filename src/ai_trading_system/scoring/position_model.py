@@ -1,7 +1,16 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from typing import Literal
+
+PositionPolicyMode = Literal["gated_min", "full_exposure_default"]
+POSITION_POLICY_GATED_MIN: PositionPolicyMode = "gated_min"
+POSITION_POLICY_FULL_EXPOSURE_DEFAULT: PositionPolicyMode = "full_exposure_default"
+POSITION_POLICY_MODES = (POSITION_POLICY_GATED_MIN, POSITION_POLICY_FULL_EXPOSURE_DEFAULT)
+GATE_EFFECT_CAP = "cap"
+GATE_EFFECT_INFO_ONLY = "info_only"
+FULL_EXPOSURE_LABEL = "满仓（默认）"
 
 
 @dataclass(frozen=True)
@@ -38,6 +47,7 @@ class PositionGate:
     gate_class: str = "hard_cap"
     target_effect: str = "max_position_cap"
     execution_effect: str = "final_position_limit"
+    effect: str = GATE_EFFECT_CAP
 
 
 @dataclass(frozen=True)
@@ -50,6 +60,9 @@ class PositionRecommendation:
     label: str
     components: tuple[ModuleScore, ...]
     position_gates: tuple[PositionGate, ...]
+    position_policy_mode: PositionPolicyMode = POSITION_POLICY_GATED_MIN
+    gated_risk_asset_ai_band: PositionBand | None = None
+    gated_total_asset_ai_band: PositionBand | None = None
 
     @property
     def min_position(self) -> float:
@@ -62,6 +75,55 @@ class PositionRecommendation:
     @property
     def triggered_position_gates(self) -> tuple[PositionGate, ...]:
         return tuple(gate for gate in self.position_gates if gate.triggered)
+
+    @property
+    def capping_position_gates(self) -> tuple[PositionGate, ...]:
+        return tuple(
+            gate
+            for gate in self.position_gates
+            if gate.triggered and gate.effect == GATE_EFFECT_CAP
+        )
+
+    @property
+    def gated_risk_asset_band(self) -> PositionBand:
+        return self.gated_risk_asset_ai_band or self.risk_asset_ai_band
+
+    @property
+    def gated_total_asset_band(self) -> PositionBand:
+        return self.gated_total_asset_ai_band or self.total_asset_ai_band
+
+
+def validate_position_policy_mode(mode: str) -> PositionPolicyMode:
+    if mode == POSITION_POLICY_GATED_MIN:
+        return POSITION_POLICY_GATED_MIN
+    if mode == POSITION_POLICY_FULL_EXPOSURE_DEFAULT:
+        return POSITION_POLICY_FULL_EXPOSURE_DEFAULT
+    raise ValueError(f"未知仓位方式：{mode}")
+
+
+def apply_position_policy(
+    recommendation: PositionRecommendation, mode: str
+) -> PositionRecommendation:
+    policy_mode = validate_position_policy_mode(mode)
+    result = replace(
+        recommendation,
+        position_policy_mode=policy_mode,
+        gated_risk_asset_ai_band=recommendation.risk_asset_ai_band,
+        gated_total_asset_ai_band=recommendation.total_asset_ai_band,
+    )
+    if policy_mode == POSITION_POLICY_GATED_MIN:
+        return result
+    full_band = PositionBand(1.0, 1.0, FULL_EXPOSURE_LABEL)
+    return replace(
+        result,
+        risk_asset_ai_band=full_band,
+        total_asset_ai_band=full_band,
+        total_risk_asset_band=PositionBand(1.0, 1.0, "总风险资产（满仓）"),
+        label=FULL_EXPOSURE_LABEL,
+        position_gates=tuple(
+            replace(gate, effect=GATE_EFFECT_INFO_ONLY) for gate in result.position_gates
+        ),
+    )
 
 
 class WeightedScoreModel:

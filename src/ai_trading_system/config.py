@@ -1020,6 +1020,13 @@ class PositionGateRulesConfig(BaseModel):
     )
 
 
+class PositionPolicyConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    mode: Literal["gated_min", "full_exposure_default"] = "gated_min"
+    owner_decision: str | None = None
+
+
 class ScoringRulesConfig(BaseModel):
     policy_metadata: ScoringPolicyMetadataConfig = Field(
         default_factory=ScoringPolicyMetadataConfig
@@ -1043,6 +1050,7 @@ class ScoringRulesConfig(BaseModel):
     placeholders: dict[str, PlaceholderScoreConfig]
     position_change: PositionChangeConfig
     position_gates: PositionGateRulesConfig = Field(default_factory=PositionGateRulesConfig)
+    position_policy: PositionPolicyConfig = Field(default_factory=PositionPolicyConfig)
     source_type_confidence: SourceTypeConfidenceConfig = Field(
         default_factory=SourceTypeConfidenceConfig
     )

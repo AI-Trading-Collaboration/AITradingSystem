@@ -34,12 +34,18 @@ from ai_trading_system.scoring.macro_budget import (
 )
 from ai_trading_system.scoring.position_gates import build_position_gates
 from ai_trading_system.scoring.position_model import (
+    GATE_EFFECT_INFO_ONLY,
+    POSITION_POLICY_FULL_EXPOSURE_DEFAULT,
+    POSITION_POLICY_GATED_MIN,
     ModuleScore,
     PositionBand,
     PositionBandRule,
     PositionGate,
+    PositionPolicyMode,
     PositionRecommendation,
     WeightedScoreModel,
+    apply_position_policy,
+    validate_position_policy_mode,
 )
 from ai_trading_system.valuation import ValuationReviewReport
 from ai_trading_system.weight_calibration import CalibrationApplication
@@ -198,6 +204,19 @@ class PreviousDailyScoreSnapshot:
     total_asset_ai_min: float | None
     total_asset_ai_max: float | None
     triggered_position_gates: str | None
+    gated_risk_asset_ai_min: float | None = None
+    gated_risk_asset_ai_max: float | None = None
+    position_policy_mode: str | None = None
+
+    @property
+    def effective_position_policy_mode(self) -> str:
+        return self.position_policy_mode or POSITION_POLICY_GATED_MIN
+
+    @property
+    def gated_or_final_risk_asset_ai_max(self) -> float | None:
+        if self.gated_risk_asset_ai_max is not None:
+            return self.gated_risk_asset_ai_max
+        return self.final_risk_asset_ai_max
 
 
 @dataclass(frozen=True)
@@ -219,6 +238,11 @@ class DailyScoreReport:
     valuation_review_report: ValuationReviewReport | None = None
     risk_event_occurrence_review_report: RiskEventOccurrenceReviewReport | None = None
     review_summary: DailyReviewSummary | None = None
+    position_policy_owner_decision: str | None = None
+
+    @property
+    def position_policy_mode(self) -> PositionPolicyMode:
+        return self.recommendation.position_policy_mode
 
     @property
     def status(self) -> str:
@@ -342,7 +366,11 @@ def build_daily_score_report(
     valuation_review_report: ValuationReviewReport | None = None,
     risk_event_occurrence_review_report: RiskEventOccurrenceReviewReport | None = None,
     weight_calibration: CalibrationApplication | None = None,
+    position_policy_mode: str = POSITION_POLICY_GATED_MIN,
+    position_policy_owner_decision: str | None = None,
 ) -> DailyScoreReport:
+    # Backtests and backfills share production rules, so policy mode is parameter-only here.
+    policy_mode = validate_position_policy_mode(position_policy_mode)
     if fundamental_feature_report is not None and not fundamental_feature_report.passed:
         raise ValueError("SEC 基本面特征报告未通过，不能进入每日评分")
     if valuation_review_report is not None and not valuation_review_report.validation_report.passed:
@@ -463,11 +491,14 @@ def build_daily_score_report(
         )
         if gate is not None
     )
-    recommendation = score_model.recommend(
-        module_scores,
-        total_risk_asset_min=adjusted_total_risk_asset_min,
-        total_risk_asset_max=adjusted_total_risk_asset_max,
-        position_gates=position_gates,
+    recommendation = apply_position_policy(
+        score_model.recommend(
+            module_scores,
+            total_risk_asset_min=adjusted_total_risk_asset_min,
+            total_risk_asset_max=adjusted_total_risk_asset_max,
+            position_gates=position_gates,
+        ),
+        policy_mode,
     )
     return DailyScoreReport(
         as_of=feature_set.as_of,
@@ -487,6 +518,11 @@ def build_daily_score_report(
         valuation_review_report=valuation_review_report,
         risk_event_occurrence_review_report=risk_event_occurrence_review_report,
         review_summary=review_summary,
+        position_policy_owner_decision=(
+            position_policy_owner_decision
+            if policy_mode == POSITION_POLICY_FULL_EXPOSURE_DEFAULT
+            else None
+        ),
     )
 
 
@@ -565,6 +601,13 @@ def write_scores_csv(report: DailyScoreReport, output_path: Path) -> Path:
                 "macro_risk_asset_budget_reasons": "；".join(
                     report.macro_risk_asset_budget.reasons
                 ),
+                "gated_risk_asset_ai_min": (
+                    report.recommendation.gated_risk_asset_band.min_position
+                ),
+                "gated_risk_asset_ai_max": (
+                    report.recommendation.gated_risk_asset_band.max_position
+                ),
+                "position_policy_mode": report.position_policy_mode,
                 "triggered_position_gates": _triggered_position_gate_summary(report),
                 "reason": (
                     f"最终仓位区间：{report.recommendation.label}；"
@@ -633,6 +676,9 @@ def load_previous_daily_score_snapshot(
         total_asset_ai_min=_row_float_or_none(latest, "total_asset_ai_min"),
         total_asset_ai_max=_row_float_or_none(latest, "total_asset_ai_max"),
         triggered_position_gates=_row_str_or_none(latest, "triggered_position_gates"),
+        gated_risk_asset_ai_min=_row_float_or_none(latest, "gated_risk_asset_ai_min"),
+        gated_risk_asset_ai_max=_row_float_or_none(latest, "gated_risk_asset_ai_max"),
+        position_policy_mode=_row_str_or_none(latest, "position_policy_mode"),
     )
 
 
@@ -777,18 +823,21 @@ def render_daily_score_report(
             "- 最终 AI 仓位（股票风险资产内）："
             f"{recommendation.risk_asset_ai_band.min_position:.0%}-"
             f"{recommendation.risk_asset_ai_band.max_position:.0%}"
+            f"{_full_exposure_note(report, recommendation.gated_risk_asset_band)}"
         ),
         f"- 置信度主要限制：{_confidence_reason_summary(confidence)}",
         (
             "- 股票/风险资产预算（总资产内）："
             f"{recommendation.total_risk_asset_band.min_position:.0%}-"
             f"{recommendation.total_risk_asset_band.max_position:.0%}"
+            f"{_full_exposure_budget_note(report)}"
         ),
         f"- 宏观风险资产预算状态：{_macro_budget_summary(report)}",
         (
             "- AI 仓位（总资产内）："
             f"{recommendation.total_asset_ai_band.min_position:.0%}-"
             f"{recommendation.total_asset_ai_band.max_position:.0%}"
+            f"{_full_exposure_note(report, recommendation.gated_total_asset_band)}"
         ),
         f"- 最小操作变化阈值：{report.minimum_action_delta:.0%}",
         "",
@@ -1175,9 +1224,17 @@ def render_daily_conclusion_card(
             f"{report.recommendation.model_risk_asset_ai_band.max_position:.0%} |"
         ),
         (
-            "| 风险闸门后最终仓位 | "
+            f"| {'最终仓位（满仓为底）' if _is_full_exposure(report) else '风险闸门后最终仓位'} | "
             f"{report.recommendation.risk_asset_ai_band.min_position:.0%}-"
             f"{report.recommendation.risk_asset_ai_band.max_position:.0%} |"
+        ),
+        *(
+            [
+                "| 按原规则仓位（只提示） | "
+                f"{_band_text(report.recommendation.gated_risk_asset_band)} |"
+            ]
+            if _is_full_exposure(report)
+            else []
         ),
         f"| 总风险资产预算 | {_escape_markdown_table(_macro_budget_summary(report))} |",
         f"| 执行动作 | {_escape_markdown_table(action)} |",
@@ -1434,6 +1491,16 @@ def render_base_signal_risk_caps_section(
         "",
         "### Risk Caps",
         "",
+        *(
+            [
+                "- 满仓为底：下面的闸门只提示，不压仓；按原规则 binding 是 "
+                f"{_gate_list_summary(_gated_binding_position_gates(report))}，"
+                f"最终仓位会是 {_band_text(report.recommendation.gated_risk_asset_band)}。",
+                "",
+            ]
+            if _is_full_exposure(report)
+            else []
+        ),
         "| Gate | Class | Target effect | Triggered | Max | Source | Reason |",
         "|---|---|---|---|---:|---|---|",
     ]
@@ -1478,11 +1545,13 @@ def render_base_signal_risk_caps_section(
                 "- Final risk-asset AI position："
                 f"{report.recommendation.risk_asset_ai_band.min_position:.0%}-"
                 f"{report.recommendation.risk_asset_ai_band.max_position:.0%}"
+                f"{_full_exposure_note(report, report.recommendation.gated_risk_asset_band)}"
             ),
             (
                 "- Total-asset AI position："
                 f"{report.recommendation.total_asset_ai_band.min_position:.0%}-"
                 f"{report.recommendation.total_asset_ai_band.max_position:.0%}"
+                f"{_full_exposure_note(report, report.recommendation.gated_total_asset_band)}"
             ),
             f"- Execution action：{action_label} (`{action_id}`)",
             "",
@@ -1511,6 +1580,11 @@ def render_base_signal_risk_caps_section(
 def render_daily_review_questions_section(report: DailyScoreReport) -> str:
     binding = _binding_gate_summary(report)
     binding_sources = _binding_gate_source_summary(report)
+    review_entry = (
+        "满仓为底，没有 binding gate；先检查评分输入，再看按原规则的闸门来源和原因（只提示）"
+        if _is_full_exposure(report)
+        else "优先检查 binding gate 的来源和原因"
+    )
     lines = [
         "## 如何复核今天的结果",
         "",
@@ -1534,7 +1608,7 @@ def render_daily_review_questions_section(report: DailyScoreReport) -> str:
         ),
         (
             "| 如果不同意这个结论，应先检查哪里？ | "
-            f"优先检查 binding gate 的来源和原因；当前 Main Invalidator："
+            f"{review_entry}；当前 Main Invalidator："
             f"{_escape_markdown_table(_daily_main_invalidator(report))} |"
         ),
         (
@@ -1997,13 +2071,45 @@ def _optional_score_label(value: float | None) -> str:
     return f"{float(value):.1f}"
 
 
-def _daily_posture_label(report: DailyScoreReport) -> str:
-    policy = report.daily_conclusion_policy
-    non_score_gates = [
+def _is_full_exposure(report: DailyScoreReport) -> bool:
+    return report.position_policy_mode == POSITION_POLICY_FULL_EXPOSURE_DEFAULT
+
+
+def _band_text(band: PositionBand) -> str:
+    return f"{band.min_position:.0%}-{band.max_position:.0%}"
+
+
+def _full_exposure_note(report: DailyScoreReport, gated_band: PositionBand) -> str:
+    if not _is_full_exposure(report):
+        return ""
+    return f"（满仓为底，闸门只提示；按原规则会给 {_band_text(gated_band)}）"
+
+
+def _full_exposure_budget_note(report: DailyScoreReport) -> str:
+    return _full_exposure_note(
+        report, report.macro_risk_asset_budget.adjusted_total_risk_asset_band
+    )
+
+
+def _capping_gates(report: DailyScoreReport) -> tuple[PositionGate, ...]:
+    return tuple(
+        gate
+        for gate in report.recommendation.capping_position_gates
+        if gate.gate_id != "score_model"
+    )
+
+
+def _info_only_gates(report: DailyScoreReport) -> tuple[PositionGate, ...]:
+    return tuple(
         gate
         for gate in report.recommendation.triggered_position_gates
-        if gate.gate_id != "score_model"
-    ]
+        if gate.gate_id != "score_model" and gate.effect == GATE_EFFECT_INFO_ONLY
+    )
+
+
+def _daily_posture_label(report: DailyScoreReport) -> str:
+    policy = report.daily_conclusion_policy
+    non_score_gates = _capping_gates(report)
     if report.review_summary and report.review_summary.has_failures:
         return "人工复核"
     if report.confidence_assessment.level == "low":
@@ -2086,8 +2192,8 @@ def _effective_weight_summary(report: DailyScoreReport) -> str:
     )
 
 
-def _binding_position_gates(report: DailyScoreReport) -> tuple[PositionGate, ...]:
-    final_max = report.recommendation.risk_asset_ai_band.max_position
+def _gated_binding_position_gates(report: DailyScoreReport) -> tuple[PositionGate, ...]:
+    final_max = report.recommendation.gated_risk_asset_band.max_position
     binding = tuple(
         gate
         for gate in report.recommendation.position_gates
@@ -2098,14 +2204,30 @@ def _binding_position_gates(report: DailyScoreReport) -> tuple[PositionGate, ...
     return (min(report.recommendation.position_gates, key=lambda gate: gate.max_position),)
 
 
+def _binding_position_gates(report: DailyScoreReport) -> tuple[PositionGate, ...]:
+    if _is_full_exposure(report):
+        return ()
+    return _gated_binding_position_gates(report)
+
+
+def _gate_list_summary(gates: tuple[PositionGate, ...]) -> str:
+    return "、".join(f"{gate.label} (`{gate.gate_id}`) {gate.max_position:.0%}" for gate in gates)
+
+
 def _binding_gate_summary(report: DailyScoreReport) -> str:
-    return "、".join(
-        f"{gate.label} (`{gate.gate_id}`) {gate.max_position:.0%}"
-        for gate in _binding_position_gates(report)
-    )
+    if _is_full_exposure(report):
+        gated = _gate_list_summary(_gated_binding_position_gates(report))
+        return f"无（满仓为底，闸门只提示；按原规则：{gated}）"
+    return _gate_list_summary(_binding_position_gates(report))
 
 
 def _binding_gate_source_summary(report: DailyScoreReport) -> str:
+    if _is_full_exposure(report):
+        decision = report.position_policy_owner_decision or "无决定号"
+        sources = "；".join(
+            f"{gate.label}: {gate.source}" for gate in _gated_binding_position_gates(report)
+        )
+        return f"config/scoring_rules.yaml:position_policy（{decision}）；按原规则：{sources}"
     return "；".join(f"{gate.label}: {gate.source}" for gate in _binding_position_gates(report))
 
 
@@ -2137,10 +2259,12 @@ def _daily_main_conclusion(report: DailyScoreReport, posture: str) -> str:
         report.recommendation.risk_asset_ai_band.min_position,
         report.recommendation.risk_asset_ai_band.max_position,
     )
+    position_label = "最终 AI 仓位" if _is_full_exposure(report) else "风险闸门后最终 AI 仓位"
+    note = _full_exposure_note(report, report.recommendation.gated_risk_asset_band)
     return (
         f"{posture}：市场吸引力为 {report.recommendation.total_score:.1f} 分，"
         f"判断置信度为 {_confidence_level_label(report.confidence_assessment.level)}，"
-        f"风险闸门后最终 AI 仓位为 {final_band}；"
+        f"{position_label}为 {final_band}{note}；"
         f"{_action_constraint_summary(report)}"
     )
 
@@ -2174,14 +2298,17 @@ def _daily_largest_limitation(report: DailyScoreReport) -> str:
         return "人工复核摘要存在错误，日报结论不能作为完整仓位复核依据。"
     if report.review_summary and report.review_summary.has_warnings:
         return "人工复核摘要存在警告，thesis、风险、估值或交易复盘需要人工确认。"
-    triggered = [
-        gate
-        for gate in report.recommendation.triggered_position_gates
-        if gate.gate_id != "score_model"
-    ]
+    triggered = _capping_gates(report)
     if triggered:
         gate = min(triggered, key=lambda item: item.max_position)
         return f"{gate.label} 将最终仓位上限压到 {gate.max_position:.0%}：{gate.reason}"
+    informative = _info_only_gates(report)
+    if informative:
+        gate = min(informative, key=lambda item: item.max_position)
+        return (
+            f"{gate.label} 按原规则会把上限压到 {gate.max_position:.0%}"
+            f"（只提示，不压仓）：{gate.reason}"
+        )
     if report.confidence_assessment.level != "high":
         return _confidence_reason_summary(report.confidence_assessment)
     limited_components = [
@@ -2211,11 +2338,7 @@ def _daily_main_invalidator(report: DailyScoreReport) -> str:
         return "市场或宏观数据质量门禁失败会直接推翻当日趋势判断。"
     if report.review_summary and report.review_summary.has_failures:
         return "人工复核摘要存在错误；修复前不能把日报解释为完整结论。"
-    triggered = [
-        gate
-        for gate in report.recommendation.triggered_position_gates
-        if gate.gate_id != "score_model"
-    ]
+    triggered = _capping_gates(report)
     if triggered:
         gate = min(triggered, key=lambda item: item.max_position)
         return (
@@ -2258,6 +2381,15 @@ def _valuation_confidence_summary(report: ValuationReviewReport) -> str:
     return "；".join(f"{key}={count}" for key, count in sorted(counts.items()))
 
 
+def position_policy_change_note(
+    report: DailyScoreReport, previous: PreviousDailyScoreSnapshot | None
+) -> str:
+    if previous is None or previous.effective_position_policy_mode == report.position_policy_mode:
+        return ""
+    decision = report.position_policy_owner_decision or "无决定号"
+    return f"仓位政策变更（{decision}），不是信号。"
+
+
 def _position_change_summary(
     report: DailyScoreReport,
     previous: PreviousDailyScoreSnapshot | None,
@@ -2275,6 +2407,7 @@ def _position_change_summary(
         return (
             f"上一条评分记录为 {previous.as_of.isoformat()}，但缺少结构化仓位列；"
             f"本期最终 AI 仓位（股票风险资产内）为 {current_band}。"
+            f"{position_policy_change_note(report, previous)}"
         )
 
     previous_band = _format_position_range(
@@ -2302,6 +2435,7 @@ def _position_change_summary(
         f"{report.as_of.isoformat()} {current_band}；"
         f"总分变化 {score_delta}，置信度变化 {confidence_delta}，"
         f"仓位边界变化 {band_delta}。"
+        f"{position_policy_change_note(report, previous)}"
     )
 
 
@@ -2455,16 +2589,19 @@ def _judgement_type(report: DailyScoreReport) -> str:
 def _action_constraint_summary(report: DailyScoreReport) -> str:
     if report.review_summary and report.review_summary.has_failures:
         return "存在人工复核失败项；日报结论仅可作为研究输入，需先修复复核问题。"
-    triggered = [
-        gate
-        for gate in report.recommendation.triggered_position_gates
-        if gate.gate_id != "score_model"
-    ]
+    triggered = _capping_gates(report)
     if triggered:
         gate_text = "、".join(f"{gate.label} 上限 {gate.max_position:.0%}" for gate in triggered)
         return f"不主动加仓；最终仓位不得超过已触发闸门中的最严格上限（{gate_text}）。"
     if report.confidence_assessment.level == "low":
         return "判断置信度为低；即使总分支持当前区间，也应等待数据或人工复核补强。"
+    informative = _info_only_gates(report)
+    if informative:
+        gate_text = "、".join(f"{gate.label} 上限 {gate.max_position:.0%}" for gate in informative)
+        gated = _band_text(report.recommendation.gated_risk_asset_band)
+        return (
+            f"满仓为底，已触发的闸门只提示、不压仓（{gate_text}）；按原规则最终仓位会是 {gated}。"
+        )
     return (
         "未触发额外硬闸门；任何主动调整仍需超过"
         f"最小操作变化阈值 {report.minimum_action_delta:.0%}。"
@@ -2474,11 +2611,7 @@ def _action_constraint_summary(report: DailyScoreReport) -> str:
 def _add_condition_summary(report: DailyScoreReport) -> str:
     policy = report.daily_conclusion_policy
     conditions: list[str] = []
-    triggered = [
-        gate.label
-        for gate in report.recommendation.triggered_position_gates
-        if gate.gate_id != "score_model"
-    ]
+    triggered = [gate.label for gate in _capping_gates(report)]
     if triggered:
         conditions.append(f"已触发仓位闸门解除或上限不再低于模型区间（{', '.join(triggered)}）")
     low_components = [
@@ -2505,7 +2638,11 @@ def _reduce_condition_summary(report: DailyScoreReport) -> str:
     conditions = [
         "综合分跌破当前仓位区间下沿，或趋势/风险情绪任一核心模块降至 "
         f"{policy.core_module_reduction_score_below:.0f} 分以下",
-        "新增 L3 或可评分 active 风险事件，导致 position_gate 上限低于当前最终区间",
+        (
+            "新增 L3 或可评分 active 风险事件（满仓为底下闸门只提示；按原规则会压低上限）"
+            if _is_full_exposure(report)
+            else "新增 L3 或可评分 active 风险事件，导致 position_gate 上限低于当前最终区间"
+        ),
         "thesis 进入 challenged/invalidated 或人工复核失败",
         "基本面硬数据恶化，同时估值仍处高位或数据置信度下降",
     ]
@@ -2515,7 +2652,7 @@ def _reduce_condition_summary(report: DailyScoreReport) -> str:
 def _watch_condition_summary(report: DailyScoreReport) -> str:
     if report.confidence_assessment.level == "low":
         return "总分未明显恶化但置信度不足，优先观察数据补齐、人工复核和风险事件状态。"
-    if report.recommendation.triggered_position_gates:
+    if report.recommendation.capping_position_gates:
         return "总分维持当前区间但闸门未解除，保持按最终上限复核，不把模型区间当作可执行区间。"
     return "总分、置信度和闸门均未越过触发条件时，维持当前区间并复核新增证据。"
 

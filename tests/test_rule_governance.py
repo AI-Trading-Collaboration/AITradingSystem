@@ -20,7 +20,7 @@ from ai_trading_system.rule_governance import (
 def test_default_rule_cards_validate_as_baseline_registry() -> None:
     report = validate_rule_card_store(
         load_rule_card_store(),
-        as_of=date(2026, 5, 4),
+        as_of=date(2026, 11, 20),
     )
     markdown = render_rule_governance_report(report)
 
