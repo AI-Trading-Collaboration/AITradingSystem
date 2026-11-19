@@ -14,6 +14,10 @@ from ai_trading_system.backtest.daily import BacktestRegimeContext, DailyBacktes
 from ai_trading_system.core.provenance import provenance_block
 from ai_trading_system.data.quality import DataFileSummary, DataQualityReport
 from ai_trading_system.scoring.daily import DailyScoreReport
+from ai_trading_system.scoring.position_model import (
+    POSITION_POLICY_FULL_EXPOSURE_DEFAULT,
+    PositionBand,
+)
 
 TraceRecord = dict[str, Any]
 
@@ -289,13 +293,16 @@ def build_daily_score_trace_bundle(
             "statement": (
                 "最终 AI 仓位为 "
                 f"{report.recommendation.risk_asset_ai_band.min_position:.0%}-"
-                f"{report.recommendation.risk_asset_ai_band.max_position:.0%}，"
+                f"{report.recommendation.risk_asset_ai_band.max_position:.0%}"
+                f"{_full_exposure_claim_note(report)}，"
                 "宏观调整后总风险资产预算为 "
                 f"{report.recommendation.total_risk_asset_band.min_position:.0%}-"
-                f"{report.recommendation.total_risk_asset_band.max_position:.0%}，"
+                f"{report.recommendation.total_risk_asset_band.max_position:.0%}"
+                f"{_full_exposure_budget_claim_note(report)}，"
                 "总资产内 AI 仓位为 "
                 f"{report.recommendation.total_asset_ai_band.min_position:.0%}-"
-                f"{report.recommendation.total_asset_ai_band.max_position:.0%}，"
+                f"{report.recommendation.total_asset_ai_band.max_position:.0%}"
+                f"{_full_exposure_total_claim_note(report)}，"
                 f"仓位状态为 {report.recommendation.label}。"
             ),
             "report_section": "顶部摘要 / 宏观风险资产预算 / 仓位闸门",
@@ -1065,3 +1072,27 @@ def _record_id(record_type: str, record: TraceRecord) -> str:
 
 def _escape_markdown_table(value: str) -> str:
     return value.replace("\n", " ").replace("|", "\\|")
+
+
+def _old_rule_note(report: DailyScoreReport, old_rule_band: PositionBand) -> str:
+    if report.recommendation.position_policy_mode != POSITION_POLICY_FULL_EXPOSURE_DEFAULT:
+        return ""
+    return (
+        "（满仓为底，闸门只提示；按原规则会给 "
+        f"{old_rule_band.min_position:.0%}-{old_rule_band.max_position:.0%}）"
+    )
+
+
+def _full_exposure_claim_note(report: DailyScoreReport) -> str:
+    return _old_rule_note(report, report.recommendation.gated_risk_asset_band)
+
+
+def _full_exposure_budget_claim_note(report: DailyScoreReport) -> str:
+    return _old_rule_note(report, report.macro_risk_asset_budget.adjusted_total_risk_asset_band)
+
+
+def _full_exposure_total_claim_note(report: DailyScoreReport) -> str:
+    if report.recommendation.position_policy_mode != POSITION_POLICY_FULL_EXPOSURE_DEFAULT:
+        return ""
+    band = report.recommendation.gated_total_asset_band
+    return f"（按原规则会给 {band.min_position:.0%}-{band.max_position:.0%}）"

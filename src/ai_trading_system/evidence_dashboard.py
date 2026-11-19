@@ -9,6 +9,8 @@ from html import escape
 from pathlib import Path
 from typing import Any, cast
 
+from ai_trading_system.position_policy_view import full_exposure_note, is_full_exposure
+
 TraceRecord = dict[str, Any]
 SCHEMA_VERSION = 1
 REPORT_TYPE = "evidence_dashboard"
@@ -888,7 +890,9 @@ def _state_table(report: EvidenceDashboardReport) -> str:
         ("Valuation", _state_summary(belief, report.decision_snapshot, "valuation_state")),
         (
             "仓位边界",
-            _position_boundary_summary(report.decision_snapshot, belief),
+            _position_boundary_summary(
+                report.decision_snapshot, belief, report.conclusion_card.get("总风险资产预算")
+            ),
         ),
     ]
     return _key_value_table(rows)
@@ -1751,7 +1755,9 @@ def _confidence_summary(snapshot: TraceRecord) -> str:
 
 def _final_position_summary(snapshot: TraceRecord) -> str:
     positions = _mapping(snapshot.get("positions"))
-    return _format_band_record(positions.get("final_risk_asset_ai_band"))
+    return _format_band_record(positions.get("final_risk_asset_ai_band")) + full_exposure_note(
+        positions
+    )
 
 
 def _total_risk_asset_budget_summary(snapshot: TraceRecord) -> str:
@@ -1759,16 +1765,27 @@ def _total_risk_asset_budget_summary(snapshot: TraceRecord) -> str:
     return _format_band_record(positions.get("final_total_risk_asset_band"))
 
 
-def _position_boundary_summary(snapshot: TraceRecord, belief: Mapping[str, Any]) -> str:
+def _position_boundary_summary(
+    snapshot: TraceRecord,
+    belief: Mapping[str, Any],
+    total_risk_asset_budget: str | None = None,
+) -> str:
     positions = _mapping(snapshot.get("positions"))
     final_band = _format_band_record(positions.get("final_risk_asset_ai_band"))
     total_band = _format_band_record(positions.get("final_total_risk_asset_band"))
     belief_boundary = _mapping(belief.get("position_boundary"))
     belief_limitations = _record_text(belief_boundary, "summary", "")
-    parts = [f"最终 AI {final_band}", f"总风险资产 {total_band}"]
+    parts = [
+        f"最终 AI {final_band}{full_exposure_note(positions)}",
+        f"总风险资产 {total_band}{_full_exposure_budget_note(positions, total_risk_asset_budget)}",
+    ]
     if belief_limitations:
         parts.append(belief_limitations)
     return "；".join(parts)
+
+
+def _full_exposure_budget_note(positions: Mapping[str, Any], budget: str | None) -> str:
+    return f"（按原规则会给 {budget}）" if is_full_exposure(positions) and budget else ""
 
 
 def _format_band_record(value: object) -> str:
@@ -1893,6 +1910,10 @@ def _sparkline(values: Sequence[str]) -> str:
     return "".join(chars)
 
 
+def _info_only_suffix(gate: Mapping[str, Any]) -> str:
+    return "（只提示，不压仓）" if gate.get("effect") == "info_only" else ""
+
+
 def _triggered_gate_summary(snapshot: TraceRecord) -> str:
     gates = _list_mappings(_mapping(snapshot.get("positions")).get("position_gates"))
     triggered = [gate for gate in gates if gate.get("triggered") is True]
@@ -1901,7 +1922,7 @@ def _triggered_gate_summary(snapshot: TraceRecord) -> str:
     return "；".join(
         (
             f"{_record_text(gate, 'label', _record_text(gate, 'gate_id', 'gate'))}"
-            f" 上限 {_format_percent(gate.get('max_position'))}: "
+            f" 上限 {_format_percent(gate.get('max_position'))}{_info_only_suffix(gate)}: "
             f"{_record_text(gate, 'reason', '')}"
         )
         for gate in triggered
@@ -1918,7 +1939,7 @@ def _triggered_constraint_summaries(snapshot: TraceRecord) -> tuple[str, ...]:
     return tuple(
         (
             f"{_record_text(gate, 'label', _record_text(gate, 'gate_id', 'gate'))}"
-            f" 上限 {_format_percent(gate.get('max_position'))}: "
+            f" 上限 {_format_percent(gate.get('max_position'))}{_info_only_suffix(gate)}: "
             f"{_record_text(gate, 'reason', '')}"
         )
         for gate in triggered

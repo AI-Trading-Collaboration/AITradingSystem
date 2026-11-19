@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -10,6 +11,12 @@ import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.paths import state_dir
+from ai_trading_system.position_policy_view import (
+    gated_band_record,
+    is_full_exposure,
+    position_policy_mode,
+    snapshot_positions,
+)
 
 SCHEMA_VERSION = 1
 DEFAULT_DECISION_CAUSAL_CHAIN_PATH = (
@@ -122,7 +129,8 @@ def render_decision_causal_chain_report(
             f"{_quality_summary(signal.get('quality', {}))} | "
             f"{_format_delta(signal['score_delta'])} | "
             f"{_format_delta(signal['confidence_delta'])} | "
-            f"{_format_delta(signal['position_delta']['final_max_delta'])} | "
+            f"{_format_delta(signal['position_delta']['final_max_delta'])}"
+            f"{_policy_change_suffix(signal['position_delta'])} | "
             f"{_gate_summary(signal['triggered_gates'])} | "
             f"{len(post['linked_outcome_windows'])} 个窗口 |"
         )
@@ -301,7 +309,7 @@ def _confidence_delta(snapshot: dict[str, Any], previous: dict[str, Any] | None)
 def _position_delta(snapshot: dict[str, Any], previous: dict[str, Any] | None) -> dict[str, Any]:
     current = _final_band(snapshot)
     prior = _final_band(previous) if previous is not None else None
-    return {
+    result = {
         "final_min": current.get("min_position"),
         "final_max": current.get("max_position"),
         "previous_final_min": None if prior is None else prior.get("min_position"),
@@ -319,6 +327,39 @@ def _position_delta(snapshot: dict[str, Any], previous: dict[str, Any] | None) -
             - _optional_float(prior.get("max_position"))
         ),
     }
+    result.update(_position_policy_delta(snapshot, previous))
+    return result
+
+
+def _position_policy_delta(
+    snapshot: Mapping[str, Any], previous: Mapping[str, Any] | None
+) -> dict[str, Any]:
+    positions = snapshot_positions(snapshot)
+    previous_positions = snapshot_positions(previous)
+    if not (is_full_exposure(positions) or is_full_exposure(previous_positions)):
+        return {}
+    mode = position_policy_mode(positions)
+    previous_mode = position_policy_mode(previous_positions) if previous is not None else None
+    gated_max = _optional_float(gated_band_record(positions).get("max_position"))
+    previous_max = (
+        _optional_float(gated_band_record(previous_positions).get("max_position"))
+        if previous is not None
+        else None
+    )
+    return {
+        "position_policy_mode": mode,
+        "previous_position_policy_mode": previous_mode,
+        "position_policy_changed": previous is not None and mode != previous_mode,
+        "gated_max": gated_max,
+        "previous_gated_max": previous_max,
+        "gated_max_delta": None if previous_max is None else gated_max - previous_max,
+    }
+
+
+def _policy_change_suffix(position_delta: Mapping[str, Any]) -> str:
+    if position_delta.get("position_policy_changed") is True:
+        return "（仓位政策变更，不是信号）"
+    return ""
 
 
 def _triggered_gates(snapshot: dict[str, Any]) -> list[dict[str, Any]]:

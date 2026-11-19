@@ -7,6 +7,12 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.position_policy_view import (
+    binding_reference_max,
+    gated_band_record,
+    is_full_exposure,
+    position_policy_mode,
+)
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SCHEMA_VERSION = 1
@@ -150,7 +156,9 @@ def _build_metrics(
     confidence_band = _mapping(positions.get("confidence_adjusted_risk_asset_ai_band"))
     macro_budget = _mapping(positions.get("macro_risk_asset_budget"))
     component_inputs = _component_inputs(components)
-    binding_gate = _binding_gate(gates, _float_or_none(final_band.get("max_position")))
+    # In full-exposure mode the final band is policy 1.0, not the minimum gate cap.
+    binding_gate = _binding_gate(gates, binding_reference_max(positions))
+    policy_inputs = _position_policy_inputs(positions)
 
     return {
         "overall_score": _metric_record(
@@ -297,6 +305,7 @@ def _build_metrics(
                     for gate in gates
                 ],
                 "binding_gate": binding_gate,
+                **policy_inputs,
             },
             source_artifacts=_source_refs(
                 source_artifacts,
@@ -308,7 +317,10 @@ def _build_metrics(
             registry,
             "final_position_band",
             value=_band_value(final_band),
-            input_values={"final_risk_asset_ai_band": _band_value(final_band)},
+            input_values={
+                "final_risk_asset_ai_band": _band_value(final_band),
+                **policy_inputs,
+            },
             source_artifacts=_source_refs(
                 source_artifacts,
                 "decision_snapshot",
@@ -333,6 +345,16 @@ def _build_metrics(
             source_artifacts,
             "not_present_in_decision_snapshot",
         ),
+    }
+
+
+def _position_policy_inputs(positions: Mapping[str, Any]) -> dict[str, Any]:
+    if not is_full_exposure(positions):
+        return {}
+    return {
+        "position_policy_mode": position_policy_mode(positions),
+        "gated_risk_asset_ai_band": _band_value(gated_band_record(positions)),
+        "binding_basis": "gated_risk_asset_ai_band",
     }
 
 

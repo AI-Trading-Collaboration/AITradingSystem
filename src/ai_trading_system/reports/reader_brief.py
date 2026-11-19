@@ -15,6 +15,13 @@ from ai_trading_system.paths import glob_root, join_root, state_dir
 from ai_trading_system.platform.reporting.reader_brief_native import (
     project_data_quality_pit_safety,
 )
+from ai_trading_system.position_policy_view import (
+    POSITION_POLICY_FULL_EXPOSURE_DEFAULT,
+    binding_reference_max,
+    full_exposure_note,
+    is_full_exposure,
+    position_policy_mode,
+)
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
     load_report_registry,
@@ -920,7 +927,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("总风险资产预算", decision.get("total_risk_asset_budget")),
                     ("判断置信度", decision.get("confidence")),
                     ("Data Gate", decision.get("data_gate")),
-                    ("最大限制", decision.get("binding_gate_label")),
+                    ("最大限制", _binding_display(decision)),
                     ("人工复核", decision.get("manual_review_required")),
                     (
                         "交易边界",
@@ -3382,6 +3389,23 @@ def _run_context(
     }
 
 
+def _position_policy_fields(positions: Mapping[str, Any]) -> dict[str, Any]:
+    if not is_full_exposure(positions):
+        return {}
+    return {"position_policy_mode": position_policy_mode(positions)}
+
+
+def _decision_is_full_exposure(decision: Mapping[str, Any]) -> bool:
+    return _text(decision.get("position_policy_mode")) == POSITION_POLICY_FULL_EXPOSURE_DEFAULT
+
+
+def _binding_display(decision: Mapping[str, Any]) -> Any:
+    label = decision.get("binding_gate_label")
+    if _decision_is_full_exposure(decision) and label != "UNKNOWN":
+        return f"{label}（按原规则，只提示）"
+    return label
+
+
 def _executive_decision(
     *,
     snapshot: Mapping[str, Any],
@@ -3407,12 +3431,13 @@ def _executive_decision(
     manual_required = any(_text(item.get("status")) not in {"", "PASS"} for item in manual_items)
     action_lower = action.lower()
     manual_required = manual_required or "manual" in action_lower or "人工复核" in action
+    final_position = _text(investment.get("position_band"), _format_band(final_band))
+    note = full_exposure_note(positions)
+    if note and note not in final_position:
+        final_position += note
     return {
         "action": action,
-        "final_risk_asset_ai_position": _text(
-            investment.get("position_band"),
-            _format_band(final_band),
-        ),
+        "final_risk_asset_ai_position": final_position,
         "total_risk_asset_budget": _text(
             evidence_decision.get("total_risk_asset_budget"),
             _format_band(total_band),
@@ -3428,6 +3453,7 @@ def _executive_decision(
         "manual_review_required": manual_required,
         "not_trade_instruction": True,
         "production_effect": PRODUCTION_EFFECT,
+        **_position_policy_fields(positions),
     }
 
 
@@ -3538,6 +3564,8 @@ def _score_to_position_funnel(
     positions = _mapping(snapshot.get("positions"))
     scores = _mapping(snapshot.get("scores"))
     binding_gate = _binding_gate_from_snapshot(snapshot)
+    final_note = full_exposure_note(positions)
+    gate_suffix = "（按原规则，只提示）" if final_note and binding_gate else ""
     steps = [
         _funnel_step(
             "component_score",
@@ -3587,7 +3615,7 @@ def _score_to_position_funnel(
             _binding_gate_value(binding_gate),
             "decision_snapshot.positions.position_gates",
             source_inputs,
-            display_value=_binding_gate_value(binding_gate),
+            display_value=_binding_gate_value(binding_gate) + gate_suffix,
         ),
         _funnel_step(
             "final_position_band",
@@ -3595,7 +3623,8 @@ def _score_to_position_funnel(
             _format_band(_mapping(positions.get("final_risk_asset_ai_band"))),
             "decision_snapshot.positions.final_risk_asset_ai_band",
             source_inputs,
-            display_value=_format_band(_mapping(positions.get("final_risk_asset_ai_band"))),
+            display_value=_format_band(_mapping(positions.get("final_risk_asset_ai_band")))
+            + final_note,
         ),
     ]
     return {"status": "AVAILABLE", "steps": steps}
@@ -3687,7 +3716,11 @@ def _contribution_summary(
             else (_text(largest_drag[0]) if largest_drag else "MISSING")
         ),
         "binding_gate_vs_score_explanation": (
-            f"最终仓位 {final_position} 由 binding gate={binding_gate} 约束；"
+            f"最终仓位 {final_position} 是仓位政策（满仓为底），闸门只提示；"
+            f"按原规则 binding gate={binding_gate}。"
+            "Reader Brief 不把综合分数自动解读为可执行仓位。"
+            if _decision_is_full_exposure(decision) and binding_gate and binding_gate != "UNKNOWN"
+            else f"最终仓位 {final_position} 由 binding gate={binding_gate} 约束；"
             "Reader Brief 不把综合分数自动解读为可执行仓位。"
             if binding_gate and binding_gate != "UNKNOWN"
             else (
@@ -10089,7 +10122,10 @@ def _narrative_executive_summary(
         "main_positive_drivers": positives,
         "main_negative_drivers": negatives,
         "binding_constraint": (
-            f"最终仓位受 {binding} 约束。{_text(decision.get('binding_gate_reason'))}"
+            f"满仓为底，闸门只提示；按原规则 {binding} 会压住上限。"
+            f"{_text(decision.get('binding_gate_reason'))}"
+            if _decision_is_full_exposure(decision)
+            else f"最终仓位受 {binding} 约束。{_text(decision.get('binding_gate_reason'))}"
         ),
         "manual_review_summary": (
             f"当前有 {manual_count} 个复核项，其中 critical={critical_count}；"
@@ -10281,7 +10317,9 @@ def _action_checklist(
         _checklist_item(
             1,
             (
-                f"不新增 AI 风险资产仓位；除非人工确认 {binding_gate} gate 可解除。"
+                f"满仓为底，闸门只提示；复核按原规则 binding={binding_gate} 的原因，不据此减仓。"
+                if _decision_is_full_exposure(decision)
+                else f"不新增 AI 风险资产仓位；除非人工确认 {binding_gate} gate 可解除。"
                 if binding_gate != "UNKNOWN"
                 else "不新增 AI 风险资产仓位；先确认当前最大约束。"
             ),
@@ -10292,7 +10330,11 @@ def _action_checklist(
         _checklist_item(
             2,
             f"保持并复核现有 AI 仓位上限 {position}。",
-            "最终仓位来自 score、confidence 和 gate 后的受限结果。",
+            (
+                "最终仓位是仓位政策（满仓为底）；score、confidence 和 gate 照算，只提示。"
+                if _decision_is_full_exposure(decision)
+                else "最终仓位来自 score、confidence 和 gate 后的受限结果。"
+            ),
             "today_decision",
             _text(decision.get("data_gate"), data_gate_status),
         ),
@@ -10392,6 +10434,14 @@ def _score_change_narrative(
     binding = _text(decision.get("binding_gate_label"), "UNKNOWN")
     if position_delta is None:
         position_sentence = "最终仓位变化缺少上一期可比字段。"
+    elif _decision_is_full_exposure(decision):
+        position_sentence = (
+            "最终仓位是仓位政策（满仓为底），没有变化"
+            if abs(position_delta) < 1e-9
+            else f"最终仓位上限变化 {_format_signed_number(position_delta, digits=2)}，"
+            "来自仓位政策（满仓为底），不是信号"
+        )
+        position_sentence += f"；按原规则 binding={binding}，只提示。"
     elif abs(position_delta) < 1e-9:
         position_sentence = f"仓位没有提升，主要因为 {binding} 仍是最终约束。"
     else:
@@ -11870,9 +11920,8 @@ def _binding_gate_from_calculation(payload: Mapping[str, Any]) -> dict[str, Any]
 
 def _binding_gate_from_snapshot(snapshot: Mapping[str, Any]) -> dict[str, Any] | None:
     positions = _mapping(snapshot.get("positions"))
-    final_max = _float_or_none(
-        _mapping(positions.get("final_risk_asset_ai_band")).get("max_position")
-    )
+    # In full-exposure mode the final band is policy 1.0, not the minimum gate cap.
+    final_max = binding_reference_max(positions)
     if final_max is None:
         return None
     for gate in _records(positions.get("position_gates")):
@@ -12243,7 +12292,7 @@ def _top_summary_cards(
         },
         {
             "label": "Binding Gate",
-            "value": _text(decision.get("binding_gate_label"), "UNKNOWN"),
+            "value": _text(_binding_display(decision), "UNKNOWN"),
             "detail": _text(decision.get("binding_gate_reason"), "打开 gate ladder 查看约束来源。"),
             "badge": "binding gate",
             "class": "summary-card--binding",
@@ -12465,7 +12514,7 @@ def _funnel_flow(records: list[dict[str, Any]], decision: Mapping[str, Any]) -> 
         node_classes = "funnel-node" + (" binding" if is_binding else "")
         value = _text(record.get("current_value"), "MISSING")
         detail = (
-            _text(decision.get("binding_gate_label"), "UNKNOWN")
+            _text(_binding_display(decision), "UNKNOWN")
             if is_binding
             else _text(record.get("source_field"), metric_id)
         )

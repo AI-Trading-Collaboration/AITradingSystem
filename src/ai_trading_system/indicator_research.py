@@ -852,7 +852,8 @@ def build_daily_indicator_weight_trace(
         raise IndicatorResearchError("daily score components must have positive total weight")
 
     model_band = report.recommendation.model_risk_asset_ai_band
-    final_band = report.recommendation.risk_asset_ai_band
+    # In full-exposure mode the final band is policy 1.0 and gates only inform.
+    final_band = report.recommendation.gated_risk_asset_band
     portfolio_band = report.recommendation.total_asset_ai_band
     rows: list[dict[str, Any]] = []
 
@@ -10853,9 +10854,10 @@ def _daily_trace_stage_snapshot(report: Any) -> dict[str, Any]:
             "min_position": report.recommendation.model_risk_asset_ai_band.min_position,
             "max_position": report.recommendation.model_risk_asset_ai_band.max_position,
         },
+        # In full-exposure mode the final band is policy 1.0 and gates only inform.
         "post_all_constraints_target": {
-            "min_position": report.recommendation.risk_asset_ai_band.min_position,
-            "max_position": report.recommendation.risk_asset_ai_band.max_position,
+            "min_position": report.recommendation.gated_risk_asset_band.min_position,
+            "max_position": report.recommendation.gated_risk_asset_band.max_position,
         },
         "final_research_weight": {
             "min_position": report.recommendation.total_asset_ai_band.min_position,
@@ -10870,7 +10872,8 @@ def _daily_non_component_trace_rows(
 ) -> list[dict[str, Any]]:
     as_of_text = report.as_of.isoformat()
     model_max = report.recommendation.model_risk_asset_ai_band.max_position
-    final_max = report.recommendation.risk_asset_ai_band.max_position
+    # In full-exposure mode the final band is policy 1.0 and gates only inform.
+    final_max = report.recommendation.gated_risk_asset_band.max_position
     portfolio_max = report.recommendation.total_asset_ai_band.max_position
     rows: list[dict[str, Any]] = []
     for indicator_id, component_id, raw_value, normalized_score, reason_code in (

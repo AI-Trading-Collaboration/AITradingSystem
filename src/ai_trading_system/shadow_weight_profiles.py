@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.paths import state_dir
+from ai_trading_system.position_policy_view import gated_band_record, snapshot_positions
 from ai_trading_system.shadow.lineage import (
     git_commit_sha as _git_commit_sha,
 )
@@ -972,9 +973,7 @@ def build_shadow_weight_profile_run_report(
     production_model_band = _dict_value(
         (snapshot.get("positions") or {}).get("model_risk_asset_ai_band")
     )
-    production_final_band = _dict_value(
-        (snapshot.get("positions") or {}).get("final_risk_asset_ai_band")
-    )
+    production_final_band = _dict_value(dict(gated_band_record(snapshot_positions(snapshot))))
     if gate_manifest_path is None:
         gate_manifest = None
         gate_profiles = (_production_observed_gate_profile(),)
@@ -2239,7 +2238,7 @@ def _evaluate_search_trial(
     )
     for signal_date, _path, snapshot in snapshots:
         production_position = _band_midpoint(
-            _dict_value((snapshot.get("positions") or {}).get("final_risk_asset_ai_band"))
+            _dict_value(dict(gated_band_record(snapshot_positions(snapshot))))
         )
         component_scores = _component_scores(snapshot)
         shadow_score = sum(
@@ -2511,7 +2510,7 @@ def _build_position_change_rows(
     previous_candidate = 0.0
     for signal_date, _path, snapshot in snapshots:
         production_position = _band_midpoint(
-            _dict_value((snapshot.get("positions") or {}).get("final_risk_asset_ai_band"))
+            _dict_value(dict(gated_band_record(snapshot_positions(snapshot))))
         )
         production_gate_cap, production_gate_sources = _gate_cap(snapshot)
         _ = production_gate_cap

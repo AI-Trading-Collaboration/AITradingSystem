@@ -7,6 +7,14 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.data_foundation import PRIMARY_RESEARCH_START
+from ai_trading_system.position_policy_view import (
+    POSITION_POLICY_FULL_EXPOSURE_DEFAULT,
+    binding_reference_max,
+    gated_band_record,
+    is_full_exposure,
+    position_policy_mode,
+    snapshot_positions,
+)
 
 SCHEMA_VERSION = 1
 REPORT_TYPE = "score_change_attribution"
@@ -232,7 +240,10 @@ def render_score_change_attribution_markdown(payload: Mapping[str, Any]) -> str:
                 f" level {_text(confidence.get('previous_level'), 'UNKNOWN')} -> "
                 f"{_text(confidence.get('current_level'), 'UNKNOWN')}"
             ),
-            f"- Final AI position max：{final_position_delta}",
+            (
+                f"- Final AI position max：{final_position_delta}"
+                f"{_position_policy_line_note(position)}"
+            ),
             (
                 "- Data Gate："
                 f"{_text(data_quality.get('previous_market_data_status'), 'UNKNOWN')} -> "
@@ -243,6 +254,7 @@ def render_score_change_attribution_markdown(payload: Mapping[str, Any]) -> str:
                 f"{_text(_mapping(payload.get('binding_gate_previous')).get('gate_id'), 'UNKNOWN')}"
                 " -> "
                 f"{_text(_mapping(payload.get('binding_gate_current')).get('gate_id'), 'UNKNOWN')}"
+                f"{_binding_policy_note(position)}"
             ),
             (
                 "- Manual review count："
@@ -595,7 +607,54 @@ def _position_attribution(
             _float_or_none(current_final.get("max_position")),
             _float_or_none(previous_final.get("max_position")),
         ),
+        **_position_policy_attribution(current, previous),
     }
+
+
+def _position_policy_attribution(
+    current: Mapping[str, Any], previous: Mapping[str, Any]
+) -> dict[str, Any]:
+    current_positions = snapshot_positions(current)
+    previous_positions = snapshot_positions(previous)
+    if not (is_full_exposure(current_positions) or is_full_exposure(previous_positions)):
+        return {}
+    current_mode = position_policy_mode(current_positions)
+    previous_mode = position_policy_mode(previous_positions)
+    current_max = _float_or_none(gated_band_record(current_positions).get("max_position"))
+    previous_max = _float_or_none(gated_band_record(previous_positions).get("max_position"))
+    return {
+        "current_position_policy_mode": current_mode,
+        "previous_position_policy_mode": previous_mode,
+        "position_policy_changed": current_mode != previous_mode,
+        "current_gated_max": current_max,
+        "previous_gated_max": previous_max,
+        "gated_max_delta": _delta(current_max, previous_max),
+    }
+
+
+def _position_policy_line_note(position: Mapping[str, Any]) -> str:
+    if "current_position_policy_mode" not in position:
+        return ""
+    bands = (
+        f"按原规则 {_format_percent(position.get('previous_gated_max'))} -> "
+        f"{_format_percent(position.get('current_gated_max'))}"
+    )
+    if position.get("position_policy_changed") is True:
+        return (
+            f"（仓位政策变更：{position.get('previous_position_policy_mode')} -> "
+            f"{position.get('current_position_policy_mode')}，不是信号；{bands}）"
+        )
+    return f"（满仓为底，闸门只提示；{bands}）"
+
+
+def _binding_policy_note(position: Mapping[str, Any]) -> str:
+    if position.get("current_position_policy_mode") == POSITION_POLICY_FULL_EXPOSURE_DEFAULT:
+        return "（按原规则，只提示）"
+    return ""
+
+
+def _policy_change_reason(position: Mapping[str, Any]) -> str:
+    return "（仓位政策变更，不是信号）" if position.get("position_policy_changed") is True else ""
 
 
 def _data_quality_attribution(
@@ -825,11 +884,7 @@ def _gate_index(snapshot: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
 
 
 def _binding_gate_id(snapshot: Mapping[str, Any]) -> str:
-    final_max = _float_or_none(
-        _mapping(_mapping(snapshot.get("positions")).get("final_risk_asset_ai_band")).get(
-            "max_position"
-        )
-    )
+    final_max = binding_reference_max(snapshot_positions(snapshot))
     if final_max is None:
         return ""
     for gate in _records(_mapping(snapshot.get("positions")).get("position_gates")):
@@ -1099,15 +1154,17 @@ def _final_position_sentence(payload: Mapping[str, Any]) -> str:
     previous = _mapping(payload.get("final_position_previous"))
     delta = _mapping(payload.get("final_position_delta"))
     max_delta = _float_or_none(delta.get("max_delta"))
+    policy_reason = _policy_change_reason(_mapping(payload.get("position_attribution")))
     if max_delta in {None, 0}:
         return (
             "最终仓位上限未发生变化："
-            f"{_format_percent(previous.get('max'))} -> {_format_percent(current.get('max'))}。"
+            f"{_format_percent(previous.get('max'))} -> {_format_percent(current.get('max'))}"
+            f"{policy_reason}。"
         )
     return (
         "最终仓位上限发生变化："
         f"{_format_percent(previous.get('max'))} -> {_format_percent(current.get('max'))} "
-        f"({_format_optional_number(max_delta)})。"
+        f"({_format_optional_number(max_delta)}){policy_reason}。"
     )
 
 
