@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2572_FULL_EXPOSURE_DEFAULT
+area: 日报 / 仓位满仓为底，闸门只提示
+priority: P1
+status: IN_PROGRESS
+next_owner: pi（TRADING-2572-01 核心行为，C 区；-02 报告文字，B 区）
+next_step: TRADING-2572-01：pi 照 brief 改评分、快照、执行建议、预警、回放和规则卡；Baker 运行 approve.ps1 后发布；-02 改报告文字；两批都发布、2026-11-20 13:00 JST 稳定性判定以后换发布包
+acceptance: 见 docs/requirements/TRADING-2572_Full_Exposure_Default.md 第 5 节：生产日报最终仓位 1.0，gated_* 字段和闸门 effect=info_only 照写；回测、回填和 --position-policy-mode gated_min 行为不变；回放取第 D 天生产的模式；验收测试和整套测试过
+notes: broker_action=none；requirement=docs/requirements/TRADING-2572_Full_Exposure_Default.md；owner_decision:TRADING-2572:2026-11-19:full_exposure_default（Baker 2026-11-19 定目标收益最大、回撤不深于 QQQ 同期最大回撤，17:31:36 JST 选「满仓为底，闸门只提示」）；总资产口径另有一张卡（推荐也满仓 1.0）；不改闸门参数，只改闸门对最终仓位的作用，遮蔽审计用日报成绩单（80 天里估值闸门起作用 56 天、最终上限低于模型上限 78 天），indicator_research_registry 的 status 不改

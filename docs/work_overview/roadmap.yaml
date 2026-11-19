@@ -2,7 +2,7 @@
 # 发布一张卡的改动时，在同一个提交里改它支撑的里程碑（勾掉就把 state 改成 done、date 写完成那天），并把 updated 改成当天；
 # 新开一张卡就把它挂到一个里程碑下，并在 cards 里给它一个中文名。加段、改段、改目标要 Baker 同意。
 schema_version: work_roadmap.v1
-updated: "2026-11-16"
+updated: "2026-11-19"
 # 卡的中文名：页面上只写中文名，卡号放在细节里。
 cards:
   TRADING-2567: QQQ 研究计划
@@ -12,6 +12,7 @@ cards:
   TRADING-2569_JUDGMENT_EVALUATION: 判断评估
   TRADING-2570_RESEARCH_FORWARD_RECHECK: 前向复查
   TRADING-2571_QQQ_MA200_FORWARD_RECORD: 200 日线信号前向记录
+  TRADING-2572_FULL_EXPOSURE_DEFAULT: 日报满仓为底
   GOV-008_RESEARCH_FIRST_GOVERNANCE_REFACTOR: 研究优先的治理迁移
   GOV-009: 旧研究清点和清理
   OPS-082_DETERMINISTIC_WINDOWS_SCHEDULER: 日报计划任务
@@ -207,6 +208,11 @@ lines:
             date: "2026-11-16"
             note: Baker 11-10 选「两个都做」、11-16 签读纳指 100 1986–1999 和 QQQ 2011 年以后；同回撤下每年多或少（纳指 1987–1999 / QQQ 1999–2010 / QQQ 2011 以后）F0001 −0.47 / −0.22 / +1.95，结构转变 −0.85 / +6.07 / −7.66，加分批买回 −0.90 / +8.00 / −6.90；照跑前写死的挑法挑分批买回那条，Baker 11-16 选「冻，只记账」，进前瞻账本另走一批（TRADING-2565-137）；families.md 经典趋势、价格路径两行各记一句
             cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
+          - text: 按 11-19 的新目标（收益最大、回撤不深于 QQQ 同期），日报仓位改成满仓为底，闸门只提示
+            state: now
+            date: "2026-11-26"
+            note: Baker 11-19 定目标后选「落地满仓，选股先估」，查清日报多数日子 0.40 是估值闸门（17 只核心股任一只自身历史分位到 90 就压到 0.40）；17:31 JST 选「满仓为底，闸门只提示」；-01 核心行为（C 区）、-02 报告文字，两批发布、11-20 稳定性判定以后换发布包；前瞻账本加满仓行另走一批
+            cards: [TRADING-2572_FULL_EXPOSURE_DEFAULT]
           - text: 第 7 期续期卡
             state: todo
             date: "2026-11-27"
