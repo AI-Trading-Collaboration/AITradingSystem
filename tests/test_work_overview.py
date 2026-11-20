@@ -1,9 +1,10 @@
-"""Acceptance tests for the work overview generator (DEVX-034, runs 02 to 04).
+"""Acceptance tests for the work overview generator (DEVX-034, runs 02 to 06).
 
 Written before the implementation. The requirement is docs/requirements/DEVX-034_Work_Overview.md,
-sections 8 and 9. The fixture is a small git repository (task cards, the roadmap file and two
+sections 8 to 10. The fixture is a small git repository (task cards, the roadmap file and two
 research records), a production state root (scheduler summaries, report quality gates, and files
-the generator must never read) and a release directory (current.json, deploy_log.jsonl).
+the generator must never read), a release directory (current.json, deploy_log.jsonl) and a copy of
+the dev report's index.csv next to the repository. Every number in the copy is made up.
 """
 
 from __future__ import annotations
@@ -17,6 +18,7 @@ import re
 import socket
 import subprocess
 import sys
+from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
 from types import ModuleType
@@ -31,7 +33,13 @@ from ai_trading_system.work_overview import (
     ACTIVE_STATUSES,
     BLOCKER_LABELS,
     CALENDAR_DAYS,
+    CHANGE_PERCENT,
     CHECKED_DAYS,
+    DEV_REPORT_DAYS,
+    DEV_REPORT_DEFAULT,
+    DEV_REPORT_FIELDS,
+    DEV_REPORT_WEEK_FIELDS,
+    DEV_REPORT_WEEKS,
     MILESTONE_STATES,
     ROADMAP_PATH,
     SCHEMA_VERSION,
@@ -633,6 +641,208 @@ def _daily(tmp_path: Path, source_commit: str) -> Path:
     return daily
 
 
+# The dev report's index.csv as it stands since 2026-10-14: 29 columns, one row per day. The
+# generator uses DEV_REPORT_FIELDS and ignores the rest; the unused cells carry sentinels.
+INDEX_COLUMNS = (
+    "date",
+    "window_start_utc",
+    "window_end_utc",
+    "publishes",
+    "publishes_c",
+    "cards_done",
+    "pi_attempts",
+    "pi_fix",
+    "pi_abnormal",
+    "pi_minutes",
+    "gate_minutes",
+    "claude_cost",
+    "claude_cost_estimated",
+    "claude_output_tokens",
+    "claude_cost_per_publish",
+    "pi_cloud_output",
+    "pi_cloud_cost_est",
+    "pi_local_output",
+    "baker_messages",
+    "baker_decisions",
+    "baker_mechanical",
+    "baker_waits",
+    "baker_wait_median",
+    "baker_wait_max",
+    "baker_actions",
+    "baker_changed_yes",
+    "baker_protocol",
+    "stalls",
+    "stall_hours",
+)
+UNUSED_SENTINELS = {
+    "window_start_utc": "2026-01-02T03:04:05Z",
+    "window_end_utc": "2026-01-02T03:04:06Z",
+    "claude_output_tokens": "987654321",
+    "pi_cloud_output": "876543219",
+    "pi_cloud_cost_est": "7654.32",
+    "pi_local_output": "765432198",
+    "baker_messages": "654321987",
+    "baker_changed_yes": "543219876",
+    "baker_protocol": "432198765",
+}
+
+
+def _report_row(day: str, **values: str) -> dict[str, str]:
+    row = {column: "0" for column in INDEX_COLUMNS}
+    row.update(UNUSED_SENTINELS)
+    row.update(
+        date=day,
+        gate_minutes="0.0",
+        claude_cost="0.0",
+        stall_hours="0.0",
+        claude_cost_per_publish="",
+        baker_wait_median="",
+        baker_wait_max="",
+    )
+    row.update(values)
+    return row
+
+
+def _report_rows() -> list[dict[str, str]]:
+    """Four weeks before TODAY: 09-27..10-03 empty, 10-04..10-10 two rows, 10-11..10-17 six rows
+    (10-15 missing), 10-18..10-24 seven rows; rows dated TODAY or later are ignored."""
+    rows = [
+        _report_row(
+            "2026-10-06", publishes="2", claude_cost="30.0", claude_cost_per_publish="15.0"
+        ),
+        _report_row(
+            "2026-10-08", publishes="1", claude_cost="10.0", claude_cost_per_publish="10.0"
+        ),
+    ]
+    for day, wait in (
+        ("11", "30"),
+        ("12", "60"),
+        ("13", "90"),
+        ("14", "45"),
+        ("16", "15"),
+        ("17", "120"),
+    ):
+        rows.append(
+            _report_row(
+                f"2026-10-{day}",
+                publishes="1",
+                cards_done="1" if day in ("11", "13", "17") else "0",
+                pi_attempts="1",
+                pi_minutes="10",
+                gate_minutes="2.5",
+                claude_cost="20.0",
+                claude_cost_per_publish="20.0",
+                baker_actions="4",
+                baker_decisions="1",
+                baker_mechanical="3",
+                baker_waits="1",
+                baker_wait_median=wait,
+                baker_wait_max=wait,
+                stalls="1" if day == "16" else "0",
+                stall_hours="5.5" if day == "16" else "0.0",
+            )
+        )
+    rows += [
+        _report_row("2026-10-18", claude_cost="5.25", claude_cost_estimated="1"),
+        _report_row(
+            "2026-10-19",
+            claude_cost="4.75",
+            claude_cost_estimated="1",
+            baker_actions="1",
+            baker_decisions="1",
+        ),
+        _report_row(
+            "2026-10-20",
+            publishes="3",
+            cards_done="1",
+            pi_attempts="4",
+            pi_fix="1",
+            pi_minutes="30",
+            gate_minutes="6.5",
+            claude_cost="60.0",
+            claude_cost_per_publish="20.0",
+            baker_actions="3",
+            baker_decisions="2",
+            baker_mechanical="1",
+            baker_waits="1",
+            baker_wait_median="200",
+            baker_wait_max="200",
+        ),
+        _report_row(
+            "2026-10-21",
+            publishes="2",
+            publishes_c="1",
+            pi_attempts="2",
+            pi_minutes="15",
+            claude_cost="40.0",
+            claude_cost_per_publish="20.0",
+            baker_actions="2",
+            baker_decisions="1",
+            baker_mechanical="1",
+            baker_waits="1",
+            baker_wait_median="50",
+            baker_wait_max="50",
+        ),
+        _report_row(
+            "2026-10-22",
+            publishes="2",
+            cards_done="1",
+            pi_attempts="3",
+            pi_fix="1",
+            pi_minutes="20",
+            gate_minutes="5.5",
+            claude_cost="30.5",
+            claude_cost_per_publish="15.25",
+            baker_actions="2",
+            baker_decisions="2",
+        ),
+        _report_row(
+            "2026-10-23",
+            publishes="1",
+            pi_attempts="1",
+            pi_minutes="5",
+            claude_cost="20.0",
+            claude_cost_per_publish="20.0",
+            baker_actions="1",
+            baker_decisions="1",
+        ),
+        _report_row(
+            "2026-10-24",
+            publishes="2",
+            cards_done="1",
+            pi_attempts="2",
+            pi_minutes="10",
+            gate_minutes="4.0",
+            claude_cost="35.5",
+            claude_cost_per_publish="17.75",
+            baker_actions="1",
+            baker_decisions="1",
+        ),
+        _report_row("2026-10-25", publishes="99", claude_cost="999.0"),
+        _report_row("2026-10-26", publishes="98", claude_cost="998.0"),
+    ]
+    return rows
+
+
+def _csv_text(
+    rows: list[dict[str, str]],
+    columns: Sequence[str] = INDEX_COLUMNS,
+    *,
+    newline: str = "\n",
+    bom: bool = False,
+) -> str:
+    lines = [",".join(columns)]
+    lines += [",".join(row.get(column, "") for column in columns) for row in rows]
+    return ("\ufeff" if bom else "") + newline.join(lines) + newline
+
+
+def _copy(path: Path, rows: list[dict[str, str]] | None = None, **options: Any) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    text = _csv_text(_report_rows() if rows is None else rows, **options)
+    path.write_bytes(text.encode("utf-8"))
+    return path
+
+
 @pytest.fixture
 def world(tmp_path: Path) -> dict[str, Any]:
     repo, first, second = _repo(tmp_path)
@@ -642,6 +852,7 @@ def world(tmp_path: Path) -> dict[str, Any]:
         "second": second,
         "state": _state(tmp_path),
         "daily": _daily(tmp_path, first),
+        "copy": _copy(tmp_path / "aits-dev-report" / "index.csv"),
     }
 
 
@@ -649,6 +860,7 @@ def _build(world: dict[str, Any], **changes: Any) -> dict[str, Any]:
     options: dict[str, Any] = {
         "state_root": world["state"],
         "daily_root": world["daily"],
+        "dev_report": world["copy"],
         "today": TODAY,
     }
     options.update(changes)
@@ -756,7 +968,7 @@ def test_top_level_and_source(world: dict[str, Any]) -> None:
         "commit": world["second"],
         "commit_time": "2026-10-22T23:30:00+00:00",
     }
-    assert model["collaboration"]["status"] == "later"
+    assert model["collaboration"]["status"] == "ok"
     problems = model["problems"]
     assert len(problems) == 2
     assert "路线图：在办的卡 ORPHAN-1 不在任何里程碑里" in problems
@@ -1324,7 +1536,8 @@ def _snapshot(*roots: Path) -> dict[str, bytes]:
 
 
 def test_main_writes_only_the_output(world: dict[str, Any], tmp_path: Path) -> None:
-    before = _snapshot(world["repo"], world["state"], world["daily"])
+    inputs = (world["repo"], world["state"], world["daily"], world["copy"].parent)
+    before = _snapshot(*inputs)
     out = tmp_path / "app" / "work" / "work.json"
     code = main(
         [
@@ -1341,7 +1554,7 @@ def test_main_writes_only_the_output(world: dict[str, Any], tmp_path: Path) -> N
         ]
     )
     assert code == 0
-    assert _snapshot(world["repo"], world["state"], world["daily"]) == before
+    assert _snapshot(*inputs) == before
     assert sorted(path.name for path in out.parent.iterdir()) == ["work.json"]
 
 
@@ -1594,12 +1807,12 @@ def test_asks_and_events(world: dict[str, Any]) -> None:
 
 def test_roadmap_lines_stages_and_milestones(world: dict[str, Any]) -> None:
     roadmap = _build(world)["roadmap"]
-    assert set(roadmap) == {"status", "error", "updated", "lines", "checked"}
+    assert set(roadmap) == {"status", "error", "updated", "lines", "checked", "flow"}
     assert roadmap["status"] == "ok" and roadmap["error"] is None
     assert roadmap["updated"] == "2026-10-25"
     lines = roadmap["lines"]
     assert [line["id"] for line in lines] == ["research", "daily_run", "display"]
-    line_keys = {"id", "kind", "title", "goal", "layers", "counts", "current", "stages"}
+    line_keys = {"id", "kind", "title", "goal", "layers", "counts", "current", "stages", "progress"}
     assert all(set(line) == line_keys for line in lines)
     research, daily_run, display = lines
     assert (research["kind"], daily_run["kind"]) == ("research", "engineering")
@@ -1694,7 +1907,15 @@ def test_dates_without_quotes_are_read_as_days(world: dict[str, Any]) -> None:
     lines[1]["stages"][1]["milestones"][0]["date"] = date(2026, 10, 24)
     lines[1]["stages"][0]["done_on"] = date(2026, 10, 19)
     _write(repo / ROADMAP_PATH, _roadmap(updated=date(2026, 10, 25), lines=lines))
-    _git(repo, "commit", "-q", "-am", "DEVX-1: dates without quotes")
+    # Dated TODAY, so the commit falls in neither week of roadmap.flow.
+    _git(
+        repo,
+        "commit",
+        "-q",
+        "-am",
+        "DEVX-1: dates without quotes",
+        when="2026-10-25T09:00:00+09:00",
+    )
     assert "updated: 2026-10-25\n" in (repo / ROADMAP_PATH).read_text(encoding="utf-8")
     model = _build(world)
     assert model["roadmap"] == quoted
@@ -1949,3 +2170,449 @@ def test_the_committed_roadmap_is_readable_and_names_its_cards() -> None:
     for line in roadmap["lines"]:
         assert sum(stage["state"] == "now" for stage in line["stages"]) <= 1, line["id"]
     assert not (PROJECT_ROOT / "docs" / "work_overview" / "mainlines.yaml").exists()
+
+
+# ---- collaboration from the dev report copy, line progress (run 06) -----------------------------
+
+WEEK_KEYS = {"start", "end", "days", *DEV_REPORT_WEEK_FIELDS}
+DAY_KEYS = {"date", "missing", *DEV_REPORT_FIELDS}
+CHANGE_KEYS = {"this", "prev", "pct", "direction"}
+
+
+def test_dev_report_constants() -> None:
+    assert DEV_REPORT_DEFAULT == "aits-dev-report/index.csv"
+    assert DEV_REPORT_DAYS == 14
+    assert DEV_REPORT_WEEKS == 4
+    assert CHANGE_PERCENT == 30
+    assert DEV_REPORT_FIELDS == (
+        "publishes",
+        "publishes_c",
+        "cards_done",
+        "pi_attempts",
+        "pi_fix",
+        "pi_abnormal",
+        "pi_minutes",
+        "gate_minutes",
+        "claude_cost",
+        "claude_cost_estimated",
+        "claude_cost_per_publish",
+        "baker_decisions",
+        "baker_mechanical",
+        "baker_waits",
+        "baker_wait_median",
+        "baker_wait_max",
+        "baker_actions",
+        "stalls",
+        "stall_hours",
+    )
+    assert DEV_REPORT_WEEK_FIELDS == tuple(
+        field for field in DEV_REPORT_FIELDS if field != "baker_wait_median"
+    )
+    assert set(DEV_REPORT_FIELDS) <= set(INDEX_COLUMNS)
+
+
+def test_collaboration_block(world: dict[str, Any]) -> None:
+    block = _build(world)["collaboration"]
+    assert set(block) == {"status", "error", "note", "copy", "latest", "days", "weeks", "change"}
+    assert (block["status"], block["error"], block["note"]) == ("ok", None, None)
+    # Rows dated TODAY (10-25) or later are not counted.
+    assert block["copy"] == {
+        "rows": 15,
+        "first": "2026-10-06",
+        "last": "2026-10-24",
+        "stale": False,
+    }
+    latest = block["latest"]
+    assert set(latest) == DAY_KEYS
+    assert (latest["date"], latest["missing"]) == ("2026-10-24", False)
+    assert (latest["publishes"], latest["claude_cost"], latest["claude_cost_per_publish"]) == (
+        2,
+        35.5,
+        17.75,
+    )
+    assert (latest["pi_attempts"], latest["pi_minutes"], latest["pi_fix"]) == (2, 10, 0)
+    assert (latest["baker_actions"], latest["baker_decisions"], latest["baker_mechanical"]) == (
+        1,
+        1,
+        0,
+    )
+    assert latest["baker_wait_median"] is None and latest["baker_wait_max"] is None
+    assert (latest["stalls"], latest["stall_hours"]) == (0, 0.0)
+
+
+def test_collaboration_days(world: dict[str, Any]) -> None:
+    days = _build(world)["collaboration"]["days"]
+    # The 14 days before TODAY, oldest first.
+    assert [day["date"] for day in days] == [f"2026-10-{n}" for n in range(11, 25)]
+    assert all(set(day) == DAY_KEYS for day in days)
+    missing = [day["date"] for day in days if day["missing"]]
+    assert missing == ["2026-10-15"]
+    assert all(days[4][field] is None for field in DEV_REPORT_FIELDS)
+    assert days[0]["baker_wait_max"] == 30 and days[0]["cards_done"] == 1
+    assert days[5]["stall_hours"] == 5.5 and days[5]["stalls"] == 1
+    assert days[7]["claude_cost_estimated"] == 1
+    assert days[13] == _build(world)["collaboration"]["latest"]
+
+
+def test_collaboration_weeks(world: dict[str, Any]) -> None:
+    weeks = _build(world)["collaboration"]["weeks"]
+    assert all(set(week) == WEEK_KEYS for week in weeks)
+    # Four seven-day weeks ending the day before TODAY, oldest first.
+    assert [(week["start"], week["end"], week["days"]) for week in weeks] == [
+        ("2026-09-27", "2026-10-03", 0),
+        ("2026-10-04", "2026-10-10", 2),
+        ("2026-10-11", "2026-10-17", 6),
+        ("2026-10-18", "2026-10-24", 7),
+    ]
+    assert all(weeks[0][field] is None for field in DEV_REPORT_WEEK_FIELDS)
+    early = weeks[1]
+    assert (early["publishes"], early["claude_cost"], early["claude_cost_per_publish"]) == (
+        3,
+        40.0,
+        13.33,
+    )
+    assert early["baker_wait_max"] is None  # every cell empty
+    assert early["baker_actions"] == 0 and early["stall_hours"] == 0.0
+    prev = {field: weeks[2][field] for field in DEV_REPORT_WEEK_FIELDS}
+    assert prev == {
+        "publishes": 6,
+        "publishes_c": 0,
+        "cards_done": 3,
+        "pi_attempts": 6,
+        "pi_fix": 0,
+        "pi_abnormal": 0,
+        "pi_minutes": 60,
+        "gate_minutes": 15.0,
+        "claude_cost": 120.0,
+        "claude_cost_estimated": 0,
+        "claude_cost_per_publish": 20.0,
+        "baker_decisions": 6,
+        "baker_mechanical": 18,
+        "baker_waits": 6,
+        "baker_wait_max": 120,
+        "baker_actions": 24,
+        "stalls": 1,
+        "stall_hours": 5.5,
+    }
+    this = {field: weeks[3][field] for field in DEV_REPORT_WEEK_FIELDS}
+    assert this == {
+        "publishes": 10,
+        "publishes_c": 1,
+        "cards_done": 3,
+        "pi_attempts": 12,
+        "pi_fix": 2,
+        "pi_abnormal": 0,
+        "pi_minutes": 80,
+        "gate_minutes": 16.0,
+        "claude_cost": 196.0,
+        "claude_cost_estimated": 2,
+        "claude_cost_per_publish": 19.6,
+        "baker_decisions": 8,
+        "baker_mechanical": 2,
+        "baker_waits": 2,
+        "baker_wait_max": 200,
+        "baker_actions": 10,
+        "stalls": 0,
+        "stall_hours": 0.0,
+    }
+
+
+def test_collaboration_change(world: dict[str, Any]) -> None:
+    change = _build(world)["collaboration"]["change"]
+    assert set(change) == set(DEV_REPORT_WEEK_FIELDS)
+    assert all(set(entry) == CHANGE_KEYS for entry in change.values())
+    assert change["publishes"] == {"this": 10, "prev": 6, "pct": 67, "direction": "more"}
+    assert change["claude_cost"] == {"this": 196.0, "prev": 120.0, "pct": 63, "direction": "more"}
+    assert change["claude_cost_per_publish"] == {
+        "this": 19.6,
+        "prev": 20.0,
+        "pct": -2,
+        "direction": "flat",
+    }
+    assert change["baker_actions"] == {"this": 10, "prev": 24, "pct": -58, "direction": "less"}
+    assert {field: (entry["pct"], entry["direction"]) for field, entry in change.items()} == {
+        "publishes": (67, "more"),
+        "publishes_c": (None, None),  # last week was 0
+        "cards_done": (0, "flat"),
+        "pi_attempts": (100, "more"),
+        "pi_fix": (None, None),
+        "pi_abnormal": (None, None),
+        "pi_minutes": (33, "more"),
+        "gate_minutes": (7, "flat"),
+        "claude_cost": (63, "more"),
+        "claude_cost_estimated": (None, None),
+        "claude_cost_per_publish": (-2, "flat"),
+        "baker_decisions": (33, "more"),
+        "baker_mechanical": (-89, "less"),
+        "baker_waits": (-67, "less"),
+        "baker_wait_max": (67, "more"),
+        "baker_actions": (-58, "less"),
+        "stalls": (-100, "less"),
+        "stall_hours": (-100, "less"),
+    }
+
+
+def test_week_sums_keep_two_decimals(world: dict[str, Any]) -> None:
+    rows = [
+        _report_row("2026-10-22", claude_cost="0.1", stall_hours="1.25"),
+        _report_row("2026-10-23", claude_cost="0.2", stall_hours="1.01"),
+        _report_row("2026-10-24", claude_cost="0.004", publishes="3"),
+    ]
+    _copy(world["copy"], rows)
+    week = _build(world)["collaboration"]["weeks"][3]
+    assert (week["claude_cost"], week["stall_hours"], week["claude_cost_per_publish"]) == (
+        0.3,
+        2.26,
+        0.1,
+    )
+    assert "0.30000000000000004" not in dumps(_build(world))
+
+
+@pytest.mark.parametrize(
+    ("this", "prev", "pct", "direction"),
+    [
+        ("13", "10", 30, "more"),
+        ("7", "10", -30, "less"),
+        ("129", "100", 29, "flat"),
+        ("71", "100", -29, "flat"),
+        ("5", "0", None, None),
+        ("", "4", None, None),
+    ],
+)
+def test_change_threshold(
+    world: dict[str, Any], this: str, prev: str, pct: int | None, direction: str | None
+) -> None:
+    rows = [_report_row("2026-10-17", publishes=prev), _report_row("2026-10-24", publishes=this)]
+    _copy(world["copy"], rows)
+    entry = _build(world)["collaboration"]["change"]["publishes"]
+    assert (entry["pct"], entry["direction"]) == (pct, direction)
+
+
+def test_copy_formats_that_read_the_same(world: dict[str, Any]) -> None:
+    expected = _build(world)["collaboration"]
+    columns = [*reversed(INDEX_COLUMNS), "a_column_added_later"]
+    rows = [{**row, "a_column_added_later": "1"} for row in _report_rows()]
+    _copy(world["copy"], rows, columns=columns, newline="\r\n", bom=True)
+    assert _build(world)["collaboration"] == expected
+
+
+def test_copy_cells_that_cannot_be_read(world: dict[str, Any]) -> None:
+    rows = _report_rows()
+    rows.insert(0, _report_row("10/22", publishes="7"))
+    rows.insert(1, _report_row("20261019", publishes="7"))  # a day, but not YYYY-MM-DD
+    for row in rows:
+        if row["date"] == "2026-10-22":
+            row["gate_minutes"] = "n/a"
+    rows.append(_report_row("2026-10-24", publishes="5"))
+    _copy(world["copy"], rows)
+    model = _build(world)
+    block = model["collaboration"]
+    assert block["status"] == "ok"
+    assert "开发日报副本：第 1 行的日子读不懂" in model["problems"]
+    assert "开发日报副本：第 2 行的日子读不懂" in model["problems"]
+    assert "开发日报副本：2026-10-22 的 gate_minutes 不是数字" in model["problems"]
+    assert "开发日报副本：2026-10-24 出现了不止一次" in model["problems"]
+    assert block["days"][11]["gate_minutes"] is None
+    # 10-20 has 6.5, 10-22 cannot be read, and the second 10-24 row (0.0) replaced the first.
+    assert block["weeks"][3]["gate_minutes"] == 6.5
+    assert block["latest"]["publishes"] == 5  # the later row wins
+    assert block["copy"]["rows"] == 15
+
+
+def test_copy_missing_columns_is_unreadable(world: dict[str, Any]) -> None:
+    columns = [c for c in INDEX_COLUMNS if c not in ("date", "claude_cost", "stalls")]
+    _copy(world["copy"], columns=columns)
+    model = _build(world)
+    block = model["collaboration"]
+    assert block["status"] == "unreadable"
+    assert block["error"] == "读不到：开发日报副本（ValueError: 少了列 date、claude_cost、stalls）"
+    assert (
+        "开发日报副本: 读不到（ValueError: 少了列 date、claude_cost、stalls）" in model["problems"]
+    )
+    assert model["roadmap"]["status"] == "ok" and model["daily"]["status"] == "ok"
+
+
+def test_copy_with_no_rows(world: dict[str, Any]) -> None:
+    _copy(world["copy"], [])
+    model = _build(world)
+    block = model["collaboration"]
+    assert block["status"] == "ok"
+    assert block["copy"] == {"rows": 0, "first": None, "last": None, "stale": True}
+    assert block["latest"] is None
+    assert len(block["days"]) == 14 and all(day["missing"] for day in block["days"])
+    assert [week["days"] for week in block["weeks"]] == [0, 0, 0, 0]
+    assert all(entry["pct"] is None for entry in block["change"].values())
+    assert "开发日报副本：没有数据" in model["problems"]
+
+
+def test_copy_that_stopped_is_stale(world: dict[str, Any]) -> None:
+    # Rows dated before --today count, so on 10-28 the 10-25 and 10-26 rows are in.
+    fresh = _build(world, today=date(2026, 10, 28))
+    assert fresh["collaboration"]["copy"]["last"] == "2026-10-26"
+    assert fresh["collaboration"]["copy"]["stale"] is False  # two days back is not stale
+    assert not any(problem.startswith("开发日报副本") for problem in fresh["problems"])
+    model = _build(world, today=date(2026, 10, 29))
+    block = model["collaboration"]
+    assert block["copy"]["stale"] is True and block["copy"]["last"] == "2026-10-26"
+    assert "开发日报副本停在 2026-10-26" in model["problems"]
+    assert block["latest"]["date"] == "2026-10-26"
+    assert [day["missing"] for day in block["days"][-3:]] == [False, True, True]
+
+
+def test_copy_missing_or_not_given(world: dict[str, Any], tmp_path: Path) -> None:
+    gone = _build(world, dev_report=tmp_path / "nowhere" / "index.csv")
+    block = gone["collaboration"]
+    assert block["status"] == "unreadable"
+    assert block["error"].startswith("读不到：开发日报副本（FileNotFoundError")
+    assert any(
+        problem.startswith("开发日报副本: 读不到（FileNotFoundError")
+        for problem in gone["problems"]
+    )
+    assert "nowhere" not in dumps(gone)
+    assert gone["roadmap"]["status"] == "ok" and gone["daily"]["status"] == "ok"
+    none = _build(world, dev_report=None)
+    assert none["collaboration"] == {"status": "unreadable", "error": "读不到：没有给 --dev-report"}
+    assert "开发日报副本: 读不到（没有给 --dev-report）" in none["problems"]
+
+
+def test_copy_columns_not_used_stay_out(world: dict[str, Any]) -> None:
+    text = dumps(_build(world))
+    for value in UNUSED_SENTINELS.values():
+        assert value not in text, value
+    assert str(world["copy"].parent) not in text
+    assert "999.0" not in text and "998.0" not in text
+
+
+def test_reads_only_index_csv_next_to_the_repo(
+    world: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    folder = world["copy"].parent.resolve()
+    _write(folder / "pi-2026-10-24.json", '{"secret": "SENTINEL-PI-RUNS"}\n')
+    opened: list[str] = []
+    real_open = builtins.open
+
+    def spy(file: Any, *args: Any, **kwargs: Any) -> Any:
+        if isinstance(file, str | os.PathLike):
+            path = Path(file).resolve()
+            if path.is_relative_to(folder):
+                opened.append(path.relative_to(folder).as_posix())
+        return real_open(file, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "open", spy)
+    monkeypatch.setattr(io, "open", spy)
+    _build(world)
+    assert opened and set(opened) == {"index.csv"}
+
+
+def test_main_reads_the_copy_next_to_the_repo_by_default(
+    world: dict[str, Any], tmp_path: Path
+) -> None:
+    base = ["--repo", str(world["repo"]), "--today", "2026-10-25"]
+    out = tmp_path / "out" / "work.json"
+    assert main([*base, "--out", str(out)]) == 0
+    model = json.loads(out.read_text(encoding="utf-8"))
+    assert model["collaboration"] == _build(world)["collaboration"]
+    other = _copy(tmp_path / "elsewhere" / "index.csv", [_report_row("2026-10-23", publishes="4")])
+    assert main([*base, "--dev-report", str(other), "--out", str(out)]) == 0
+    model = json.loads(out.read_text(encoding="utf-8"))
+    assert model["collaboration"]["latest"]["publishes"] == 4
+    world["copy"].unlink()
+    assert main([*base, "--out", str(out)]) == 0
+    model = json.loads(out.read_text(encoding="utf-8"))
+    assert model["collaboration"]["status"] == "unreadable"
+
+
+MILESTONE_COUNT_KEYS = set(MILESTONE_STATES)
+
+
+def test_line_progress_and_flow(world: dict[str, Any]) -> None:
+    roadmap = _build(world)["roadmap"]
+    research, daily_run, display = roadmap["lines"]
+    for line in roadmap["lines"]:
+        assert set(line["progress"]) == {"milestones", "commits", "last_commit"}
+        assert set(line["progress"]["milestones"]) == MILESTONE_COUNT_KEYS
+    assert research["progress"] == {
+        "milestones": {"done": 1, "now": 1, "waiting": 0, "todo": 1, "deferred": 0},
+        "commits": {"this_week": 0, "last_week": 0},
+        "last_commit": None,
+    }
+    # OPS-1 on 10-20 and OPS-2 on 10-23 (JST) both belong to daily_run.
+    assert daily_run["progress"] == {
+        "milestones": {"done": 2, "now": 1, "waiting": 1, "todo": 1, "deferred": 0},
+        "commits": {"this_week": 2, "last_week": 0},
+        "last_commit": "2026-10-23",
+    }
+    assert display["progress"]["milestones"] == {
+        "done": 1,
+        "now": 0,
+        "waiting": 0,
+        "todo": 1,
+        "deferred": 1,
+    }
+    assert roadmap["flow"] == {
+        "this_week": {
+            "start": "2026-10-18",
+            "end": "2026-10-24",
+            "research": 0,
+            "engineering": 2,
+            "off_roadmap": 0,
+        },
+        "last_week": {
+            "start": "2026-10-11",
+            "end": "2026-10-17",
+            "research": 0,
+            "engineering": 0,
+            "off_roadmap": 0,
+        },
+    }
+
+
+def _commit(repo: Path, title: str, when: str) -> None:
+    note = repo / "notes" / f"{len(list((repo / 'notes').glob('*.txt'))) + 1:02d}.txt"
+    _write(note, f"{title}\n")
+    _git(repo, "add", "-A", when=when)
+    _git(repo, "commit", "-q", "-m", title, when=when)
+
+
+def test_commits_go_to_the_first_line_that_lists_their_card(world: dict[str, Any]) -> None:
+    repo = world["repo"]
+    (repo / "notes").mkdir()
+    lines = _lines()
+    lines[2]["stages"][1]["milestones"][0]["cards"] = ["WAIT-1", "TRADING-1", "TRADING-1-B"]
+    _write(repo / "tasks" / "TRADING-1-B.yaml", _card("TRADING-1-B", "PROPOSED", "Claude"))
+    _write(repo / ROADMAP_PATH, _roadmap(cards={**NAMES, "TRADING-1-B": "长卡号"}, lines=lines))
+    _commit(repo, "DEVX-9: the roadmap lists TRADING-1 twice", "2026-10-12T09:00:00+09:00")
+    _commit(repo, "TRADING-1: records", "2026-10-15T09:00:00+09:00")
+    _commit(repo, "README tweak", "2026-10-16T09:00:00+09:00")
+    _commit(repo, "OPS-2: late in UTC", "2026-10-17T23:30:00+00:00")  # 10-18 in JST
+    _git(repo, "switch", "-q", "-c", "side")
+    _commit(repo, "TRADING-1: side work", "2026-10-19T09:00:00+09:00")
+    _git(repo, "switch", "-q", "main")
+    when = "2026-10-21T09:00:00+09:00"
+    _git(repo, "merge", "-q", "--no-ff", "-m", "DEVX-9: merge side", "side", when=when)
+    _commit(repo, "TRADING-10: there is no such card", "2026-10-21T10:00:00+09:00")
+    # The longer card id wins over TRADING-1, which it starts with.
+    _commit(repo, "TRADING-1-B: a longer card id", "2026-10-21T11:00:00+09:00")
+    _commit(repo, "ORPHAN-1: a card on no milestone", "2026-10-22T09:00:00+09:00")
+    _commit(repo, "DONE-1: closing", "2026-10-24T23:30:00+09:00")
+    _commit(repo, "WAIT-1: today", "2026-10-25T10:00:00+09:00")
+    roadmap = _build(world)["roadmap"]
+    progress = {line["id"]: line["progress"] for line in roadmap["lines"]}
+    # TRADING-1 is listed by research and by display; research comes first in the file.
+    assert progress["research"]["commits"] == {"this_week": 0, "last_week": 1}
+    assert progress["research"]["last_commit"] == "2026-10-15"  # the side branch is not main's
+    assert progress["daily_run"]["commits"] == {"this_week": 3, "last_week": 0}
+    assert progress["daily_run"]["last_commit"] == "2026-10-23"
+    assert progress["display"]["commits"] == {"this_week": 2, "last_week": 0}
+    assert progress["display"]["last_commit"] == "2026-10-25"  # today counts as the last commit
+    flow = roadmap["flow"]
+    assert {key: flow["this_week"][key] for key in ("research", "engineering", "off_roadmap")} == {
+        "research": 0,
+        "engineering": 5,
+        "off_roadmap": 3,
+    }
+    assert {key: flow["last_week"][key] for key in ("research", "engineering", "off_roadmap")} == {
+        "research": 1,
+        "engineering": 0,
+        "off_roadmap": 2,
+    }

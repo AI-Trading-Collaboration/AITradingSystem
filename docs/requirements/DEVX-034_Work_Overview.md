@@ -75,7 +75,7 @@ owner_decision:DEVX-034:2026-10-25:work_overview_private —— owner（Baker）
 
 1. **第 2 步：生成器第 1 版（DEVX-034-02，B 区）**。Claude 写需求和验收测试，pi 写代码，走 pi 队列。内容是等 Baker 的（卡片 next_owner 里写着 Baker 的在办卡）、工程按主线分组、生产日报最近 14 天日历（每天过没过、用时、有没有 17:30 补跑）和研究汇总（调用 `research_site`，不经网络）。只出 `work.json`，不出 `work.html`：页面由学习 App 用自己的样式画（Baker 2026-10-25 01:26 JST：「主页已经重新设计了，对应的入口也暴露出来了到时候你可以直接接入到这个网页的分页中」）。日报那块读状态根 `outputs/run_control/scheduler/` 下每次调用的摘要，不读 `outputs/run_control/daily/states/`：摘要里有窗口、开始和结束时间、发布包号和自动重试的结果，状态文件里没有。详见第 8 节。
 2. **第 3 步：接入学习 App**（LearningSystem 仓库）。由学习 App 那边的工程 coordinator 按那边的规矩做：App 后端调用生成器、提供 `work.json`，研究页加一张总览卡和一个子页面。Baker 2026-10-25 03:10 JST：「好的，我们这些工作以及反馈等做完后统一转给学习app的工程coordinator把」。约定见第 8.4 节。
-3. **第 2 版**（用一两周再定）：每天的开发日报在电脑上留一份 `index.csv` 副本，接进来做协作与成本那块，加主线进度和趋势。
+3. **第 2 版**（用一两周再定）：每天的开发日报在电脑上留一份 `index.csv` 副本，接进来做协作与成本那块，加主线进度和趋势。2026-11-20 Baker 同意开，需求见第 10 节（DEVX-034-06）。
 
 要守的规则：
 
@@ -92,6 +92,7 @@ owner_decision:DEVX-034:2026-10-25:work_overview_private —— owner（Baker）
 - 第 2 步：主线文件里的卡都存在、规则 1–2 的违反写进 `work.json`；生成器只读、不联网、不写生产和运行副本，读不到的块写“读不到”；`work.json` 不含日报正文、价格和供应商原始数据；同样的输入生成逐字节相同的输出；`tests/test_work_overview.py` 和全套 PR 测试通过。
 - 第 3 步按 LearningSystem 仓库自己的验收。
 - 第 4 批（DEVX-034-04）：仓库里的路线图满足第 4 节的格式，里程碑里的卡都存在并有中文名，每条线最多一段写着现在；`work.json` 仍是 `work_overview.v1`，只加字段；`tests/test_work_overview.py` 和全套 PR 测试通过。
+- 第 2 版（DEVX-034-06）：协作块读开发日报副本，读不到或格式不对只影响这一块，副本停了能看出来；主线进度和改动去向从 `--ref` 的提交标题算；`work.json` 仍是 `work_overview.v1`，只加字段；仓库里没有成本和等待时间的真实数字；`tests/test_work_overview.py` 和全套 PR 测试通过。
 
 ## 7. 进展
 
@@ -100,6 +101,7 @@ owner_decision:DEVX-034:2026-10-25:work_overview_private —— owner（Baker）
 - 2026-10-25：DEVX-034-03：任务卡的 `updated` 只给输出里的卡问 git，原因里不带路径和命令行（第 8.1 节）；验收测试加 3 条。
 - 2026-10-25：第 1 版在电脑上只读跑通（9.3 秒，六块都读到，问题 0 条），学习 App 接上。Baker 觉得页面太底层，定了先讲路线图（第 9.1 节）。DEVX-034-04：路线图文件取代主线文件，每张卡配中文名，要 Baker 做的和在等的事分开，日报每天写原因和连续出报告的天数，列出最近 7 天勾掉的里程碑（第 4、9 节）。
 - 2026-10-29：第 1 版收尾。DEVX-034-04 在 main 上（`f86e5929`），学习 App 按改版说明重画了页面，2026-10-26 对着说明核对过；路线图展示线第 1 段标完成（2026-10-26），本卡转 BASELINE_DONE。第 2 版（第 5 节第 3 条，展示线第 2 段）还没开，日报运行稳定以后由 Baker 定。
+- 2026-11-20：Baker 在决定卡上选「开第 2 版」（先写需求给他看，再交 pi 写），确认了需求（第 10 节）。DEVX-034-06：协作块、主线进度和改动去向；路线图展示线第 2 段转现在，生成器那个里程碑勾掉；DEVX-027（改动去向的占比）并进来，改 DROPPED。
 
 ## 8. 第 2 步：生成器第 1 版（DEVX-034-02）
 
@@ -134,7 +136,7 @@ owner_decision:DEVX-034:2026-10-25:work_overview_private —— owner（Baker）
 - `engineering`：主线文件的 `updated`；每条主线的 `id`、`title`、`goal`、`milestone`、它的卡和各状态的张数；`research_cards`；第 4 节规则的违反：`unassigned`（在办却不在任何主线和研究卡里的卡）、`duplicates`（出现不止一次的卡号）、`missing`（没有这张卡）；全部卡按状态的张数 `totals`；最近 10 个提交 `recent`（12 位提交号、JST 日子、标题）。违反也写进 `problems`：「主线文件：没有卡 X」「主线文件：X 出现了不止一次」「主线文件：在办的卡 X 不在任何主线里」。主线文件读不到时只有这一块读不到，`waiting` 照常。
 - `daily`：最近 14 天（`--today` 往前 13 天到当天，按调度那天的 JST 日子）每天一行：`result`、`as_of`、`minutes`、`release_id` 和当天每次调用（`name` 是文件名里的 PRIMARY、RESCUE、PRIMARY_2 这些；`window`、`as_of`、`status`（摘要的 `cli_status`）、`blocker`、开始和结束时间、`minutes`、`release_id`、`exit_code`、`retry`（数据源失败自动重试的结果）、失败的步骤 id、失败的数据源 id）。一天的 `result`：调用按开始时间排，第一个 `PASS` 是 PRIMARY 窗口的为 `PASS`，是 RESCUE 窗口的为 `RESCUED`（17:30 补跑过了）；全部是 `RUN_CONTROL_ALREADY_COMPLETE` 为 `NO_NEW_DAY`（周日、周一没有新的美股交易日）；有调用但没有过的为 `FAILED`；没有摘要为 `NO_RUN`。`minutes` 和 `release_id`、`as_of` 取过了的那次，没过时取最后一次（`minutes` 这时为空）。`counts` 是五种结论的天数。`release`：`current.json` 的发布包号、源提交、激活时间、上一个发布包，`commits_behind`（`--ref` 比源提交多几个提交，仓库里找不到源提交时为空），最近 5 条部署记录。`quality_gate`：最新那天的 `as_of`、结论、阻断和警告的条数。
 - `research`：`research_site.collect` 的 `summary`，当期章程的期号、路径、期限和方向，前瞻账本的行数和起止日，前瞻核对的条数和待核数，家族表各状态的个数。别的研究内容看研究进展页。
-- `collaboration`：`{"status": "later"}`，第 2 版接开发日报副本。
+- `collaboration`：第 1 版是 `{"status": "later"}`；第 2 版接开发日报副本，见第 10 节。
 - `problems`：读不到的文件和违反主线规则的地方，每条一句。
 
 ### 8.4 学习 App 怎么接
@@ -196,3 +198,53 @@ owner_decision:DEVX-034:2026-10-25:roadmap_first —— 路线图按草稿的阶
 ### 9.5 学习 App 那边
 
 页面怎么改由学习 App 那边按自己的规矩做，本仓库只给数据。改版说明由 Claude 写好交给 Baker 转过去：先讲路线图，再讲卡；要 Baker 做的和在等的事分开；日报一句话结论，加上每天的原因。
+
+## 10. 第 2 版：协作块和主线进度（DEVX-034-06）
+
+写于 2026-11-20。验收测试 `tests/test_work_overview.py`（run 06 那一节，以及为它改的几条老测试）是规格。给 Baker 看的需求在 claude.ai 的私有文档「工作总览第 2 版：协作块需求」，那里用真实数字举了例；本节和测试只用编的数字。
+
+### 10.1 owner 决定
+
+Baker 2026-11-20 15:25 JST 在「收尾工作总览第 1 版并评估日报稳定性」线程的决定卡上选「开第 2 版」，选项原文：
+
+> 开路线图第 2 段：协作块（开发日报的副本放进总览的私有页），先写需求给你看，再交 pi 写
+
+需求文档给他看过后，他 2026-11-20 16:55 JST 在决定卡「确认工作总览第 2 版按这份需求做吗？」上选「照这份做」（另一项是「先改再定」）。
+
+### 10.2 副本从哪来
+
+- 开发日报（云端线程「每日开发报告」，每天 07:53 JST）写完 `index.csv` 以后，用它已经在用的电脑文件夹把整份写到仓库旁边的 `aits-dev-report/index.csv`（电脑上是 `D:\Work\aits-dev-report\index.csv`）：先写同目录的临时文件再改名。电脑连不上那天跳过，第二天整份重写就补齐了。
+- `index.csv` 每天一行，`date` 是窗口开始那天的 JST 日子（约前一天 08:00 到当天 08:00），2026-10-14 起 29 列。副本里有成本和 Baker 的等待时间：只进私有的 `work.json`，不进仓库，测试用编的数字。
+- 命令行加 `--dev-report <副本>`；不给时读 `--repo` 的上一级目录下的 `aits-dev-report/index.csv`（`DEV_REPORT_DEFAULT`），所以学习 App 的调用不用改。Python 接口 `build` 加 `dev_report`，为空时这块读不到（「没有给 --dev-report」）。
+
+### 10.3 读副本
+
+- UTF-8，开头有没有 BOM、行尾是 LF 还是 CRLF、列的顺序、多出来的列都不影响结果。
+- 只用 `date` 和 `DEV_REPORT_FIELDS` 的 19 列：发布（publishes、publishes_c、cards_done）、pi（pi_attempts、pi_fix、pi_abnormal、pi_minutes、gate_minutes）、Claude 标价（claude_cost、claude_cost_estimated、claude_cost_per_publish）、Baker（baker_decisions、baker_mechanical、baker_waits、baker_wait_median、baker_wait_max、baker_actions）和停着的事（stalls、stall_hours）。窗口时间、令牌数、pi 自估价、消息数这些列不读、不进输出。
+- 少了要用的列：整块读不到，原因写「少了列 X、Y」（按 `date` 和上面的顺序）。
+- 一行的日子不是 YYYY-MM-DD：跳过这行，问题写「开发日报副本：第 N 行的日子读不懂」（N 从第一行数据数起）。日子在 `--today` 当天或以后的行不算（用旧的 `--today` 重算时结果不变）。
+- 单元格：空的为空；整数照整数，小数照小数；别的写空，问题写「开发日报副本：<日子> 的 <列> 不是数字」。同一天出现两次，用后面那行，问题写「开发日报副本：<日子> 出现了不止一次」。
+- 一行数据都没有，问题写「开发日报副本：没有数据」；最后一天早于 `--today` 前两天（副本停了），问题写「开发日报副本停在 <日子>」，数字照常给。
+- 读不到（文件不在、少列、编码不对）只影响这一块：`{"status": "unreadable", "error": "读不到：开发日报副本（...）"}`，原因同时进 `problems`；别的块、日报和退出码不受影响。原因里不带路径。
+
+### 10.4 collaboration 块
+
+仍是 `work_overview.v1`：`status` 从 `later` 变成 `ok`，`error` 和 `note` 为空，加下面这些字段。
+
+- `copy`：`rows`（算进来的天数）、`first`、`last`、`stale`。
+- `latest`：最后一天，和 `days` 的每一行一样：`date`、`missing` 和 19 个数。没有数据时为空。
+- `days`：`--today` 前 14 天（`DEV_REPORT_DAYS`），旧的在前；副本里没有的那天 `missing` 为真，19 个数都为空。
+- `weeks`：到 `--today` 前一天为止的 4 个 7 天（`DEV_REPORT_WEEKS`），旧的在前。每周是 `start`、`end`、`days`（这 7 天里有几天数据）和 `DEV_REPORT_WEEK_FIELDS` 的 18 个数（19 个去掉 `baker_wait_median`）：把不空的格子相加（小数保留两位）；`baker_wait_max` 取最大；`claude_cost_per_publish` 是这周花费合计除以发布合计（保留两位，发布为 0 时为空）；一周没有数据，或某一列这周的格子全空，为空。
+- `change`：最后一周对前一周，18 个数各是 `this`、`prev`、`pct`（变化的百分比，取整）和 `direction`：`pct` 不小于 `CHANGE_PERCENT`（30）为 `more`，不大于 −30 为 `less`，否则 `flat`；任一边为空或前一周为 0 时，`pct` 和 `direction` 都为空。30% 和开发日报周一第 8 节的门槛一样。
+
+### 10.5 主线进度和改动去向
+
+- 提交：`git log --first-parent <--ref>` 的每个提交，按提交者时间的 JST 日子。旁支上的提交不算。
+- 归卡：标题开头是哪张卡的卡号（任务卡 id 里第一个 `_` 之前的那段；长的先比，卡号后面紧跟的不能是字母或数字，所以 `TRADING-1` 不会认成 `TRADING-10`）。归线：路线图里第一条在里程碑里列了这张卡的线（按文件里的顺序）。认不出卡号的、卡不在任何里程碑里的，算「不在路线图上」。
+- 每条线加 `progress`：`milestones`（五种状态各几个里程碑）、`commits`（`this_week` 和 `last_week` 各几个提交；这周和上周同 `weeks` 的最后两周）、`last_commit`（这条线最新一个提交的 JST 日子，`--ref` 上的都算，包括今天；没有为空）。
+- `roadmap` 加 `flow`：`this_week` 和 `last_week` 各是 `start`、`end`、`research`、`engineering`（按线的 `kind`）和 `off_roadmap` 的提交数。这就是 DEVX-027 要的改动去向（投资研究和工作流各占多少），按路线图的线算；DEVX-027 并进来，改 DROPPED（它原验收里对 2026-10-01 至 10-10 的重算不做：那时的卡大多不在路线图上）。
+- 路线图读不到时 `roadmap` 整块读不到，这两样也没有；协作块照常。
+
+### 10.6 学习 App 那边
+
+页面怎么画由学习 App 那边按自己的规矩做。改版说明由 Claude 写好交给 Baker 转过去：总览的「协作与成本」卡写最近一天（发布、Claude 标价、pi 次数和分钟、返工、Baker 动手几次、停着的事）和一行比上周；协作与成本页放这周和上周、最近 14 天、最近 4 周；主线进度放每条线的里程碑、这周和上周的提交、最近一次提交，加上改动去向。

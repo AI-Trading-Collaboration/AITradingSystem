@@ -1,15 +1,18 @@
 """依据 owner_decision:DEVX-034:2026-10-25:work_overview_private 生成私有工作总览。
 
 只读仓库指定 ref 的已提交内容、生产状态根的调度摘要和报告质量门禁，
-以及发布包目录的 current.json 和 deploy_log.jsonl；只写 --out 一个文件，不联网。
+以及发布包目录的 current.json 和 deploy_log.jsonl、开发日报的 CSV 副本；
+只写 --out 一个文件，不联网。
 日报正文、价格和供应商原始数据不进输出；读不到的块写“读不到”，不让生成失败。
 """
 
 from __future__ import annotations
 
 import argparse
+import csv
 import io
 import json
+import math
 import os
 import re
 import subprocess
@@ -31,6 +34,34 @@ ROADMAP_SCHEMA = "work_roadmap.v1"
 # 展示协议：日历覆盖两周，勾掉的里程碑覆盖一周，不作投资判断。
 CALENDAR_DAYS = 14
 CHECKED_DAYS = 7
+DEV_REPORT_DEFAULT = "aits-dev-report/index.csv"
+# 私有总览的展示约定（需求第 10 节）：14 天、4 个七天窗口，30% 标变化方向。
+# 只描述协作记录，不作投资判断。
+DEV_REPORT_DAYS = 14
+DEV_REPORT_WEEKS = 4
+CHANGE_PERCENT = 30
+DEV_REPORT_FIELDS = (
+    "publishes",
+    "publishes_c",
+    "cards_done",
+    "pi_attempts",
+    "pi_fix",
+    "pi_abnormal",
+    "pi_minutes",
+    "gate_minutes",
+    "claude_cost",
+    "claude_cost_estimated",
+    "claude_cost_per_publish",
+    "baker_decisions",
+    "baker_mechanical",
+    "baker_waits",
+    "baker_wait_median",
+    "baker_wait_max",
+    "baker_actions",
+    "stalls",
+    "stall_hours",
+)
+DEV_REPORT_WEEK_FIELDS = tuple(field for field in DEV_REPORT_FIELDS if field != "baker_wait_median")
 STAGE_STATES = ("done", "now", "later", "deferred")
 MILESTONE_STATES = ("done", "now", "waiting", "todo", "deferred")
 BLOCKER_LABELS = {
@@ -364,6 +395,8 @@ def _roadmap(
     today: date,
     cards: dict[str, dict[str, Any]],
     shown: Callable[[str], dict[str, Any]],
+    repo: Path,
+    commit: str,
 ) -> dict[str, Any]:
     lines = []
     checked = []
@@ -427,7 +460,72 @@ def _roadmap(
         updated=raw["updated"],
         lines=lines,
         checked=sorted(checked, key=lambda entry: entry["date"], reverse=True),
+        flow=_line_progress(lines, cards, today, repo, commit),
     )
+
+
+def _week_ranges(today: date) -> list[tuple[str, str]]:
+    # 协议中的周固定为七天，不对齐自然周；协作块和路线图共用边界。
+    return [
+        (
+            (today - timedelta(days=7 * offset)).isoformat(),
+            (today - timedelta(days=7 * (offset - 1) + 1)).isoformat(),
+        )
+        for offset in reversed(range(1, DEV_REPORT_WEEKS + 1))
+    ]
+
+
+def _line_progress(
+    lines: list[dict[str, Any]],
+    cards: dict[str, dict[str, Any]],
+    today: date,
+    repo: Path,
+    commit: str,
+) -> dict[str, Any]:
+    ranges = _week_ranges(today)
+    flow: dict[str, dict[str, Any]] = {
+        key: {"start": start, "end": end, "research": 0, "engineering": 0, "off_roadmap": 0}
+        for key, (start, end) in zip(("this_week", "last_week"), reversed(ranges[-2:]), strict=True)
+    }
+    owners: dict[str, dict[str, Any]] = {}
+    for line in lines:
+        milestones = [item for stage in line["stages"] for item in stage["milestones"]]
+        counts = Counter(item["state"] for item in milestones)
+        line["progress"] = {
+            "milestones": {state: counts[state] for state in MILESTONE_STATES},
+            "commits": {"this_week": 0, "last_week": 0},
+            "last_commit": None,
+        }
+        for item in milestones:
+            for card in item["cards"]:
+                owners.setdefault(card["id"], line)
+    prefixes = sorted(
+        ((card_id.split("_", 1)[0], card_id) for card_id in cards),
+        key=lambda pair: (-len(pair[0]), pair[1]),
+    )
+    history = _git_text(repo, "log", "--first-parent", "--format=%cI%x1f%s", commit)
+    for row in history.splitlines():
+        timestamp, subject = row.split("\x1f", 1)
+        day = _jst_day(timestamp)
+        owner = None
+        for prefix, card_id in prefixes:
+            if subject.startswith(prefix) and (
+                len(subject) == len(prefix) or not subject[len(prefix)].isalnum()
+            ):
+                owner = owners.get(card_id)
+                break
+        if owner is not None:
+            progress = owner["progress"]
+            last = progress["last_commit"]
+            if last is None or day > last:
+                progress["last_commit"] = day
+        for key, week in flow.items():
+            if week["start"] <= day <= week["end"]:
+                category = owner["kind"] if owner is not None else "off_roadmap"
+                week[category] += 1
+                if owner is not None:
+                    owner["progress"]["commits"][key] += 1
+    return flow
 
 
 def _events(roadmap: dict[str, Any]) -> list[dict[str, Any]] | None:
@@ -611,7 +709,9 @@ def _repository(
             roadmap = _unreadable(ROADMAP_PATH)
             engineering = _unreadable(ROADMAP_PATH)
             if raw is not None:
-                roadmap = _guard("路线图", problems, lambda: _roadmap(raw, today, cards, shown))
+                roadmap = _guard(
+                    "路线图", problems, lambda: _roadmap(raw, today, cards, shown, repo, commit)
+                )
                 engineering = _guard(
                     "工程",
                     problems,
@@ -807,11 +907,114 @@ def _release(
     )
 
 
+def _report_number(
+    value: str | None, day: str, field: str, problems: list[str]
+) -> int | float | None:
+    if value is None or not value.strip():
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        try:
+            number = float(value)
+            if math.isfinite(number):
+                return number
+        except ValueError:
+            pass
+    problems.append(f"开发日报副本：{day} 的 {field} 不是数字")
+    return None
+
+
+def _report_week(start: str, end: str, rows: Mapping[str, dict[str, Any]]) -> dict[str, Any]:
+    included = [row for day, row in rows.items() if start <= day <= end]
+    week: dict[str, Any] = {"start": start, "end": end, "days": len(included)}
+    for field in DEV_REPORT_WEEK_FIELDS:
+        values = [row[field] for row in included if row[field] is not None]
+        week[field] = (
+            (max(values) if field == "baker_wait_max" else round(sum(values), 2))
+            if values
+            else None
+        )
+    cost, publishes = week["claude_cost"], week["publishes"]
+    week["claude_cost_per_publish"] = (
+        round(cost / publishes, 2) if cost is not None and publishes else None
+    )
+    return week
+
+
+def _report_change(this: int | float | None, prev: int | float | None) -> dict[str, Any]:
+    pct = round((this - prev) / prev * 100) if this is not None and prev else None
+    direction = None
+    if pct is not None:
+        direction = (
+            "more" if pct >= CHANGE_PERCENT else "less" if pct <= -CHANGE_PERCENT else "flat"
+        )
+    return {"this": this, "prev": prev, "pct": pct, "direction": direction}
+
+
+def _collaboration(copy: Path, today: date, problems: list[str]) -> dict[str, Any]:
+    rows: dict[str, dict[str, Any]] = {}
+    with copy.open(encoding="utf-8-sig", newline="") as stream:
+        reader = csv.DictReader(stream)
+        missing = [
+            field
+            for field in ("date", *DEV_REPORT_FIELDS)
+            if field not in (reader.fieldnames or [])
+        ]
+        if missing:
+            raise ValueError("少了列 " + "、".join(missing))
+        for index, raw in enumerate(reader, start=1):
+            try:
+                day = _day(raw.get("date"))
+            except ValueError:
+                problems.append(f"开发日报副本：第 {index} 行的日子读不懂")
+                continue
+            if day >= today.isoformat():
+                continue
+            if day in rows:
+                problems.append(f"开发日报副本：{day} 出现了不止一次")
+            rows[day] = {
+                "date": day,
+                "missing": False,
+                **{
+                    field: _report_number(raw.get(field), day, field, problems)
+                    for field in DEV_REPORT_FIELDS
+                },
+            }
+    rows = dict(sorted(rows.items()))
+    first = next(iter(rows), None)
+    last = next(reversed(rows), None)
+    stale = last is None or last < (today - timedelta(days=2)).isoformat()
+    if last is None:
+        problems.append("开发日报副本：没有数据")
+    elif stale:
+        problems.append(f"开发日报副本停在 {last}")
+    days = []
+    for offset in reversed(range(1, DEV_REPORT_DAYS + 1)):
+        day = (today - timedelta(days=offset)).isoformat()
+        days.append(
+            rows.get(day, {"date": day, "missing": True, **dict.fromkeys(DEV_REPORT_FIELDS)})
+        )
+    weeks = [_report_week(start, end, rows) for start, end in _week_ranges(today)]
+    return _ok(
+        note=None,
+        copy={"rows": len(rows), "first": first, "last": last, "stale": stale},
+        latest=rows[last] if last is not None else None,
+        days=days,
+        weeks=weeks,
+        change={
+            field: _report_change(weeks[-1][field], weeks[-2][field])
+            for field in DEV_REPORT_WEEK_FIELDS
+        },
+    )
+
+
 def build(
     repo: Path,
     *,
     state_root: Path | None = None,
     daily_root: Path | None = None,
+    dev_report: Path | None = None,
     today: date,
     ref: str = "main",
 ) -> dict[str, Any]:
@@ -835,6 +1038,13 @@ def build(
             "发布包", problems, lambda: _release(daily_root, repo, source["commit"], problems)
         )
     daily.update(release=release, quality_gate=quality)
+    if dev_report is None:
+        collaboration = _unreadable("没有给 --dev-report")
+        problems.append("开发日报副本: 读不到（没有给 --dev-report）")
+    else:
+        collaboration = _guard(
+            "开发日报副本", problems, lambda: _collaboration(dev_report, today, problems)
+        )
     return {
         "schema_version": SCHEMA_VERSION,
         "today": today.isoformat(),
@@ -844,7 +1054,7 @@ def build(
         "engineering": engineering,
         "daily": daily,
         "research": research,
-        "collaboration": {"status": "later", "error": None, "note": "第 2 版接入（开发日报副本）"},
+        "collaboration": collaboration,
         "problems": problems,
     }
 
@@ -870,9 +1080,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--ref", default="main")
     parser.add_argument("--state-root", type=Path)
     parser.add_argument("--daily-root", type=Path)
+    parser.add_argument("--dev-report", type=Path)
     parser.add_argument("--today", type=date.fromisoformat, default=datetime.now(JST).date())
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
+    repo = args.repo.resolve()
+    dev_report = (
+        args.dev_report if args.dev_report is not None else repo.parent / DEV_REPORT_DEFAULT
+    )
     out = args.out.resolve()
     if any(
         out.is_relative_to(root.resolve())
@@ -885,9 +1100,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         return 2
     model = build(
-        args.repo,
+        repo,
         state_root=args.state_root,
         daily_root=args.daily_root,
+        dev_report=dev_report,
         today=args.today,
         ref=args.ref,
     )
