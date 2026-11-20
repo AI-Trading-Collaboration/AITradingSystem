@@ -857,12 +857,17 @@ FORWARD_GAP = (
     "研究的实际收益（F0008 第 2 行的读数，描述，不判）：F0001 对同平均敞口固定的累计对数差 "
     "+0.00 点（2 个交易日）；对固定 0.8 -0.27 点。不满一年，不印年化。"
 )
+# TRADING-2572: each table ends with the full-exposure row (exposure 1.0, the ledger's QQQ returns).
+FULL_ROW = "| 满仓 1.0（= QQQ 持有，自 {} 起） | {} |"
+NO_SNAPSHOTS = "没有读快照（`weekly` 没给 `--daily-root`），不分段。"
 # Old lines are matched greedily, so each added block's blank line is listed after it.
 ADDED_WITHOUT_CAPTURE = [
     MATCHED_ROW.format("4 | 0 | +1.46% | -1.50% | 0.75"),
+    FULL_ROW.format("2026-10-12", "4 | 0 | +1.93% | -2.00% | 1.00"),
     BACKFILL_GAP,
     "",
     MATCHED_ROW.format("2 | 0 | +0.48% | -1.00% | 0.50"),
+    FULL_ROW.format("2026-10-21", "2 | 0 | +0.94% | -2.00% | 1.00"),
     FORWARD_GAP,
     "",
     "## QQQ 离运行最高（月末总收益，划段规则）",
@@ -872,6 +877,10 @@ ADDED_WITHOUT_CAPTURE = [
     "## 现金按 SGOV（只印，不是判的口径）",
     "",
     NO_PRICES,
+    "",
+    "## 日报线换包前后（自 2026-10-12）",
+    "",
+    NO_SNAPSHOTS,
     "",
 ]
 
@@ -914,15 +923,26 @@ def test_weekly_without_prices_keeps_every_old_line_and_only_adds() -> None:
             added.append(line)
     assert position == len(old)
     assert added == ADDED_WITHOUT_CAPTURE
-    # Each table gains its row last, then a blank line and the reading.
-    for row, gap in (
-        (MATCHED_ROW.format("4 | 0 | +1.46% | -1.50% | 0.75"), BACKFILL_GAP),
-        (MATCHED_ROW.format("2 | 0 | +0.48% | -1.00% | 0.50"), FORWARD_GAP),
+    # Each table gains the F0001 matched row and then the full-exposure row (TRADING-2572) last,
+    # then a blank line and the reading.
+    for row, full, gap in (
+        (
+            MATCHED_ROW.format("4 | 0 | +1.46% | -1.50% | 0.75"),
+            ADDED_WITHOUT_CAPTURE[1],
+            BACKFILL_GAP,
+        ),
+        (
+            MATCHED_ROW.format("2 | 0 | +0.48% | -1.00% | 0.50"),
+            ADDED_WITHOUT_CAPTURE[5],
+            FORWARD_GAP,
+        ),
     ):
         at = new.index(row)
         assert new[at - 1].startswith("| 同平均敞口的固定（日报模型的对照） |")
-        assert new[at + 1 : at + 4] == ["", gap, ""]
+        assert new[at + 1 : at + 5] == [full, "", gap, ""]
     assert new.index("## QQQ 离运行最高（月末总收益，划段规则）") < new.index("## 按周")
+    # The segments close the main ledger's part (TRADING-2572).
+    assert new.index("## 按周") < new.index("## 日报线换包前后（自 2026-10-12）")
 
 
 def test_summarize_adds_f0001_matched_line() -> None:

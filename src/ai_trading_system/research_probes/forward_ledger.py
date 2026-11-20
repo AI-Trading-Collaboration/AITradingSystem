@@ -9,6 +9,7 @@ eligibility, alter daily outputs or authorize production or broker actions.
 weekly 给了日报状态根目录时只读账本最后一行的价格捕获文件，印 QQQ 离运行最高
 （只印现在的状态，记录起点以前的价格只用来定运行最高和划段）和现金按 SGOV 的一组，
 都只印，不改账本的行和判的口径。
+周汇总另印同窗口的满仓对照，并按日报线 t+2 持有的快照模式分开换包前后。
 """
 
 from __future__ import annotations
@@ -77,6 +78,14 @@ SNAPSHOT_REL = "data/processed/decision_snapshots/decision_snapshot_{day}.json"
 PRICES_REL = "data/raw/daily_input_capture/{day}/market_macro/prices_daily.csv"
 BAND_KEY = "final_risk_asset_ai_band"
 MODEL_BAND_KEY = "model_risk_asset_ai_band"
+POLICY_FULL = "full_exposure_default"
+POLICY_DECISION = "owner_decision:TRADING-2572:2026-11-19:full_exposure_default"
+FULL_LABEL = "满仓 1.0（= QQQ 持有，自 {since} 起）"
+BEFORE_LABEL = "日报模型（换包前，{span}）"
+AFTER_LABEL = "日报模型（换包后，{span}）"
+BEFORE_MATCHED_LABEL = "同平均敞口的固定（换包前日报模型的对照）"
+SEGMENT_TITLE = "## 日报线换包前后（自 {since}）"
+NO_SNAPSHOTS = "没有读快照（`weekly` 没给 `--daily-root`），不分段。"
 # Requirement's floating-point identity tolerance; it never judges a strategy's performance.
 TOLERANCE = 1e-12
 LINES = ("daily", "fixed", "overlay")
@@ -239,10 +248,54 @@ def read_prices(daily_root: Path, day: date) -> pd.Series | None:
 
 
 @dataclass(frozen=True)
+class PolicySwitch:
+    snapshot_day: str
+    first_row: str
+
+
+def read_policy_mode(daily_root: Path, day: date) -> str | None:
+    relative = SNAPSHOT_REL.format(day=day.isoformat())
+    try:
+        text = (daily_root / relative).read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return None
+    except (OSError, UnicodeError) as exc:
+        raise ForwardLedgerError(f"{relative}: {exc}") from exc
+    try:
+        snapshot = json.loads(text)
+    except ValueError as exc:
+        raise ForwardLedgerError(f"{relative}: {exc}") from exc
+    positions = snapshot.get("positions") if isinstance(snapshot, dict) else None
+    policy = positions.get("position_policy") if isinstance(positions, dict) else None
+    mode = policy.get("mode") if isinstance(policy, dict) else None
+    return mode if isinstance(mode, str) else ""
+
+
+def policy_switch(daily_root: Path, rows: Sequence[Mapping[str, Any]]) -> PolicySwitch | None:
+    if not rows:
+        return None
+    band_days = trading_days(HELD_FROM, date.fromisoformat(rows[-1]["date"]))
+    cache: dict[date, str | None] = {}
+    for row in rows:
+        position = band_days.index(date.fromisoformat(row["date"]))
+        # Match build_rows: a t close decision is held at t+2, falling back if absent.
+        for earlier in reversed(band_days[: max(0, position - 1)]):
+            if earlier not in cache:
+                cache[earlier] = read_policy_mode(daily_root, earlier)
+            mode = cache[earlier]
+            if mode is not None:
+                if mode == POLICY_FULL:
+                    return PolicySwitch(earlier.isoformat(), row["date"])
+                break
+    return None
+
+
+@dataclass(frozen=True)
 class Capture:
     file: str
     qqq: pd.Series
     cash: pd.Series
+    switch: PolicySwitch | None = None
 
 
 def read_weekly_capture(daily_root: Path, rows: Sequence[Mapping[str, Any]]) -> Capture | None:
@@ -257,7 +310,12 @@ def read_weekly_capture(daily_root: Path, rows: Sequence[Mapping[str, Any]]) -> 
     if qqq.empty:
         raise ForwardLedgerError(f"{relative}: no {TICKER} prices")
     cash = read_capture(daily_root, relative, CASH_TICKER)
-    return Capture(relative, qqq, pd.Series(dtype=float) if cash is None else cash)
+    return Capture(
+        relative,
+        qqq,
+        pd.Series(dtype=float) if cash is None else cash,
+        policy_switch(daily_root, rows),
+    )
 
 
 def cash_returns(cash: pd.Series, rows: Sequence[Mapping[str, Any]]) -> dict[str, float | None]:
@@ -694,6 +752,14 @@ def summarize(
     return result
 
 
+def full_summary(rows: Sequence[Mapping[str, Any]], since: date) -> dict[str, Any]:
+    selected = [row for row in rows if row["date"] >= since.isoformat()]
+    return _summary(
+        [None if row["qqq_tr"] is None else float(row["qqq_tr"]) for row in selected],
+        [1.0] * len(selected),
+    )
+
+
 def overlay_difference(
     rows: Sequence[Mapping[str, Any]],
     since: date,
@@ -878,6 +944,55 @@ def _exp(value: float | None, missing: str = "—") -> str:
     return missing if value is None else f"{value:.2f}"
 
 
+def _summary_row(label: str, summary: Mapping[str, Any]) -> str:
+    cumulative = _pct(summary["cumulative"]) if summary["days"] else "—"
+    drawdown = _pct(summary["max_drawdown"]) if summary["days"] else "—"
+    return (
+        f"| {label} | {summary['days']} | {summary['missing']} | "
+        f"{cumulative} | {drawdown} | {_exp(summary['mean_exposure'])} |"
+    )
+
+
+def render_segments(rows: Sequence[Mapping[str, Any]], capture: Capture | None) -> list[str]:
+    lines = ["", SEGMENT_TITLE.format(since=BACKFILL_START), ""]
+    if capture is None:
+        return [*lines, NO_SNAPSHOTS]
+    switch = capture.switch
+    rule = (
+        "判据：日报线持有的那份快照里 `positions.position_policy.mode` 是 "
+        f"`{POLICY_FULL}`（`{POLICY_DECISION}`）。"
+    )
+    if switch is None:
+        lines.append(rule + "日报线持有的快照还没有满仓的，全部是换包前。")
+    else:
+        lines.append(
+            rule + f"日报线 t+2 持有：第一份满仓快照 as_of {switch.snapshot_day}，"
+            f"持有它的第一行 {switch.first_row}，从这一行起是换包后。"
+        )
+    lines += [
+        "F0005 写的是换包前的日报模型，只读换包前那段，不改它的数；换包后的日报线就是满仓 1.0。",
+        "",
+        "| 线 | 交易日 | 缺收益 | 累计 | 最大回撤 | 平均敞口 |",
+        "|---|---|---|---|---|---|",
+    ]
+    before = [row for row in rows if switch is None or row["date"] < switch.first_row]
+    after = [row for row in rows if switch is not None and row["date"] >= switch.first_row]
+    for selected, label in ((before, BEFORE_LABEL), (after, AFTER_LABEL)):
+        span = f"{selected[0]['date']}..{selected[-1]['date']}" if selected else "还没有"
+        summary = _summary(
+            [_line_return(row, "daily", None) for row in selected],
+            [_exposure(row, "daily") for row in selected],
+        )
+        lines.append(_summary_row(label.format(span=span), summary))
+        if label == BEFORE_LABEL:
+            matched, mean = _matched(selected, "daily")
+            control = _summary(
+                [_cash_return(row, mean, None) for row in matched], [mean] * len(matched)
+            )
+            lines.append(_summary_row(BEFORE_MATCHED_LABEL, control))
+    return lines
+
+
 def render_weekly(rows: Sequence[Mapping[str, Any]], capture: Capture | None = None) -> str:
     backfill_end = _folder_day(FORWARD_START - timedelta(days=1))
     lines = [
@@ -904,12 +1019,8 @@ def render_weekly(rows: Sequence[Mapping[str, Any]], capture: Capture | None = N
                 "|---|---|---|---|---|---|",
             ]
             for key, summary in summarize(rows, since).items():
-                cumulative = _pct(summary["cumulative"]) if summary["days"] else "—"
-                drawdown = _pct(summary["max_drawdown"]) if summary["days"] else "—"
-                lines.append(
-                    f"| {LABELS[key]} | {summary['days']} | {summary['missing']} | "
-                    f"{cumulative} | {drawdown} | {_exp(summary['mean_exposure'])} |"
-                )
+                lines.append(_summary_row(LABELS[key], summary))
+            lines.append(_summary_row(FULL_LABEL.format(since=since), full_summary(rows, since)))
             prefix = REAL_RETURN if since == FORWARD_START else ""
             lines += ["", prefix + difference_line(overlay_difference(rows, since))]
         lines += render_drawdown(capture)
@@ -934,6 +1045,7 @@ def render_weekly(rows: Sequence[Mapping[str, Any]], capture: Capture | None = N
                 f"{_exp(summary_by_line['daily']['mean_exposure'])} | "
                 f"{_exp(summary_by_line['overlay']['mean_exposure'])} |"
             )
+        lines += render_segments(rows, capture)
     return "\n".join([*lines, "", "production_effect=none；broker_action=none。", ""])
 
 
