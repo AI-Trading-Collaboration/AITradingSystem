@@ -1,0 +1,77 @@
+# Three Nasdaq-100 option-strategy indices for the QQQ options index first look (TRADING-2567-41).
+# Owner decision: owner_decision:TRADING-2567:2026-11-22:option_index_first_look (Baker reopened
+# the QQQ options direction on 2026-11-22 02:34 JST and chose the index first look at 02:44 JST).
+# Read by src/ai_trading_system/research_data/option_indices.py only; nothing here feeds the daily
+# run or production. The indices are built only from the Nasdaq-100 total return index and listed
+# NDX options, which the owner decision reads as QQQ's own options.
+#
+# Sources were fixed by a read-only probe on Baker's computer (2026-11-21 17:54Z), which printed
+# status, dates and row counts only: every index is free from 2009 only. BXN comes from Cboe's
+# history file (Nasdaq's additional-data file is 403). NQTRI and NQCLRI come from Nasdaq's
+# additional-data files through 2021-08-20, then from FRED from 2021-08-23; the two parts meet
+# with no common day, and FRED marks a closed day with ".". FRED's BXN copy, from 2021-04-09, is
+# only a cross-check. Snapshots stay in the local data root: no redistribution (Nasdaq's copyright)
+# and no external model. The methodology documents are kept with the snapshot when they download;
+# the options thread reads the launch dates and back-test notes there, not the code.
+schema_version: research_option_indices.v1
+owner_decision: owner_decision:TRADING-2567:2026-11-22:option_index_first_look
+qlh_snapshot: qlh-20261013-0b0df53cb1a2
+redistribution_allowed: false
+external_llm_allowed: false
+indices:
+  - id: BXN
+    name: Cboe NASDAQ-100 BuyWrite Index
+    first_date: 2009-09-18
+    base_100_on_first_date: false
+    sources:
+      - name: bxn_cboe
+        url: https://cdn.cboe.com/api/global/us_indices/daily_prices/BXN_History.csv
+        date_column: DATE
+        value_column: BXN
+    crosscheck:
+      name: bxn_fred
+      url: https://fred.stlouisfed.org/graph/fredgraph.csv?id=NASDAQBXN
+      date_column: observation_date
+      value_column: NASDAQBXN
+      closed_marker: "."
+    documents:
+      - name: methodology_bxn
+        url: https://indexes.nasdaq.com/docs/BXN_Methodology.pdf
+  - id: NQTRI
+    name: Nasdaq-100 Quarterly Protective Put 90 Index
+    first_date: 2009-06-19
+    base_100_on_first_date: true
+    sources:
+      - name: nqtri_nasdaq
+        url: https://indexes.nasdaq.com/docs/AdditionalData_NQTRI.csv
+        date_column: Date
+        value_column: NQTRI
+        through_date: 2021-08-20
+      - name: nqtri_fred
+        url: https://fred.stlouisfed.org/graph/fredgraph.csv?id=NASDAQNQTRI
+        date_column: observation_date
+        value_column: NASDAQNQTRI
+        from_date: 2021-08-23
+        closed_marker: "."
+    documents:
+      - name: methodology_nqtri
+        url: https://indexes.nasdaq.com/docs/methodology_NQTRI.pdf
+  - id: NQCLRI
+    name: Nasdaq-100 Quarterly Collar 95-110 Index
+    first_date: 2009-06-19
+    base_100_on_first_date: true
+    sources:
+      - name: nqclri_nasdaq
+        url: https://indexes.nasdaq.com/docs/AdditionalData_NQCLRI.csv
+        date_column: Date
+        value_column: NQCLRI
+        through_date: 2021-08-20
+      - name: nqclri_fred
+        url: https://fred.stlouisfed.org/graph/fredgraph.csv?id=NASDAQNQCLRI
+        date_column: observation_date
+        value_column: NASDAQNQCLRI
+        from_date: 2021-08-23
+        closed_marker: "."
+    documents:
+      - name: methodology_nqclri
+        url: https://indexes.nasdaq.com/docs/methodology_NQCLRI.pdf

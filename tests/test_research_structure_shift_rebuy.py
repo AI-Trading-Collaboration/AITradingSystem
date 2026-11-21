@@ -326,6 +326,7 @@ def test_the_windows_and_the_policy_are_unchanged() -> None:
         "period_7_charter_one_time_exception",
         "after_this_read_2011_onward_is_seen_history_for_the_entry_timing_and_exit_families",
         "qqq_adjusted_close_on_the_snapshot_calendar",
+        "ndx_option_indices_read_as_qqq_own_options_per_owner_decision",
     ]
     ndx = windows["ndx_price_1986_1999"]
     assert (str(ndx["start"]), str(ndx["end"]), ndx["role"], ndx["read_policy"]) == (

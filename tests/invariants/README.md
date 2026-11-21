@@ -23,6 +23,7 @@ caught, or a recorded mutation of the guarded code that makes the test fail.
 | G2/G3 Treasury from 1929 | The ten-year par bond priced from Shiller's monthly long-term rate earns its coupon and reprices on yields only: a constant yield compounds to (1 + y/12)^12 − 1 a year, each month is the par-bond move from last month's yield plus a twelfth of it, spread over the month's dates; no date sees a later month and a month without both yields is empty; `treasury_10y` is the pre-batch formula to the bit, the gate maps only it to the 1962 window and the new reserve lands on the windows the portfolio ruler names; the stand-in check's use rule and T0008's configurations are fixed before any run (TRADING-2565-40, invariants 64–67) | `test_research_shiller_treasury_invariants.py` |
 | G1/G2 earnings event intake | The earnings intake stays inside QQQ's development window: a spec cannot end after 2010-12-31, and a snapshot holds only 8-K and 8-K/A rows filed from filing_start to data_end, prices from price_start to data_end and the QQQ trust's holdings documents byte for byte; every CIK must name its issuer and every request must work, or nothing is written; the id is the manifest's content address; the check fails a changed byte, a filing outside the window, a repeated accession, another form, an unparsed results 8-K time, a missing holdings document or marker and a bad price, and load_snapshot reads only a checked, unchanged snapshot; the SEC User-Agent is sent after a pause and never stored or printed (TRADING-2565-98, invariants 71–73) | `test_research_earnings_events_invariants.py` |
 | G1/G2 earnings intake after 2010 | 财报事件入口只经登记的一次性窗口读 QQQ 2011 年以后：写了窗口的配置要写 `qqq_after_2010_owner_print` 和决定号、不取价格、终点在 2010 年以后；取数以前和核对时，窗口要登记成从 2011-01-03 到最新收盘、每个决定读一次的只印窗口，决定号要在 TRADING-2565 需求文档里，终点不能晚于最新检查过的 QQQ 长历史快照的最后一个收盘，不然不请求、不写、核对失败；终点以后的申报不进文件，价格源不建、不调用，一家的两个 CIK 都算、各自要对上名字；没写窗口的配置照旧，快照逐字不变；配置写明 24 家公司、TEVA、16 份持仓文件和窗口（TRADING-2565-129，不变量 74–75） | `test_research_earnings_after_2010_invariants.py` |
+| G1/G2 option index intake | 纳指 100 期权策略指数的入口：规格写死三条指数和来源（BXN 取 Cboe，FRED 副本只核对；NQTRI、NQCLRI 2021-08-20 及以前取 Nasdaq、2021-08-23 起取 FRED，"." 是休市日），不外传、不给外部模型，别的形状一律拒绝；文件按表头名读，错误只说文件和行、不说格子；需求文档里有决定号、每个数据文件都下载并解析成功才写快照，方法文件失败只记下、警告；快照号是清单的内容地址；检查在全序列上判、不修，只写标签、个数、日期和 PASS/WARN/FAIL：首日晚、日期重复或乱序、非正数、单日超过 25%、超过 5 天的缺口（2001-09-10..09-17 除外）、早于 QQQ 快照结束、接缝第二段不从下一个交易日开始或接缝那天和纳指 100 全收益差超过 1.5%、改过的字节、坏的清单都失败；交易日上的休市标记、不在 QQQ 日历上的日子、基期不是 100、核对副本差超过 1e-4、缺方法文件都警告；`load_snapshot` 只读检查过、没改过的快照，按规格的日子拼两段（TRADING-2567-41，不变量 76–78） | `test_research_option_indices_invariants.py` |
 
 Existing tests that already guard the same guarantees and stay in the suite (not duplicated here):
 
@@ -354,3 +355,20 @@ TRADING-2565-91 证据表里「不是月末的日期也收」那一项现在是�
 | 留 `data_end` 以后的申报；一家只取第一个 CIK；第二个 CIK 不核名字 | `test_the_window_snapshot_keeps_the_span_and_no_price`、`test_both_ciks_of_one_issuer_count_and_each_must_name_it` 等 | 1–8 failed |
 
 没写窗口的配置用这批以前的代码（main aa65cd8a）取同一份合成数据得到的内容地址写死在测试里，新代码要得到同一个。变异脚本和逐项结果在项目文件 `knowledge/claude/runs/TRADING-2565-129/draft/`。这些是数据入口正确性证据，不是投资结论。
+
+## TRADING-2567-41 变异证据（2026-11-22）
+
+新的不变量 76–78 在 `test_research_option_indices_invariants.py`（70 项）。代码由 pi 写；测试先写，每项只在期权线程打包时的参考实现（不进仓库）上临时变异，跑新文件，随后还原；验收文件未改。17 项全部被抓到。
+
+| 变异 | 失败的验收测试（举例） | 结果 |
+|---|---|---|
+| 接缝那天的收益差不查；不查第二段是不是从下一个交易日开始 | `test_the_seam_checks_the_next_trading_day_and_the_seam_day_return` | 各 1 failed |
+| 2001-09 的已知休市也算缺口；首日宽限放到 30 天；单日上限放到 50%；早于 QQQ 快照结束不判失败 | `test_the_known_2001_closure_is_not_a_gap`、`test_each_data_fault_fails_the_check` | 各 1 failed |
+| 决定号按子串找（更长的决定号也算） | `test_the_fetch_needs_the_decision_in_the_requirements` | 1 failed |
+| 交易日上的休市标记不警告；核对副本容差放到 1e-2；基期不查 | `test_each_warning_warns_without_failing` | 各 1 failed |
+| `load_snapshot` 不看检查状态 | `test_each_data_fault_fails_the_check` | 1 failed |
+| 第一段不在 2021-08-20 截断；FRED 的 "." 读成 0 | `test_the_parts_are_cut_at_the_spec_dates_even_when_the_files_overlap`、`test_files_are_read_by_header_name_in_file_order` | 各 1 failed |
+| 方法文件失败整次失败；解析以前先写文件 | `test_a_failed_document_is_recorded_and_warned_not_fatal`、`test_a_fetch_writes_nothing_unless_every_data_file_works` | 各 1 failed |
+| 错误信息带出格子；快照号不含规格 | `test_a_bad_file_names_the_file_and_row_never_the_cell`、`test_a_failed_document_is_recorded_and_warned_not_fatal` | 各 1 failed |
+
+打印模块 `research_probes/option_index_table.py`（B 区）的 44 项验收测试在 `tests/test_research_option_index_table.py`，另做的 17 项变异（期权腿成本按收益乘、不乘腿数、换仓日不往前取、回撤比较反了、稳健格换 L* 或用主算的腿成本、检查时在 Q 段自检、不写读取记录、判定不看稳健、hold 不跨缺日复利、上线后一行晚一天、成本敏感性沿用主算的 L*、不查上界、Q 段不自检、beta 对照扣成本、去掉第二次运行的拒绝、BXN 的 P 段从 2009-06-22 起）也都被抓到。变异脚本和逐项结果在项目文件 `knowledge/claude/runs/TRADING-2567-41/draft/`。这些是数据入口和打印模块正确性的证据，不是投资结论。

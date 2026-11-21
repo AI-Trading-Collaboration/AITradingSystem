@@ -149,6 +149,13 @@ windows:
   # develop on the first window, read the second once per preregistered question, then check
   # consistency on exact_three_asset_validated and confirm on the forward record. Roles per question
   # type are in primary_research_window_policy.yaml (question_windows).
+  # The QQQ options index first look (TRADING-2567-41,
+  # owner_decision:TRADING-2567:2026-11-22:option_index_first_look) prints only the 2009-2010 part
+  # of three Nasdaq-100 option-strategy indices here (BXN from 2009-09-18, NQTRI and NQCLRI from
+  # 2009-06-19; none is free earlier): research_data/option_indices.py keeps them in a local
+  # snapshot and research_probes/option_index_table.py prints them against this window's Nasdaq-100
+  # total return and DTB3 columns, so the window lists NDX_OPTION_INDEX_BXN, NDX_OPTION_INDEX_NQTRI
+  # and NDX_OPTION_INDEX_NQCLRI. Print only: no question type, trial gate or screen uses them.
   qqq_long_history_development:
     start: 1999-03-10
     end: 2010-12-31
@@ -157,7 +164,8 @@ windows:
     actual_portfolio_start: 1999-03-10
     role: development
     question_types: [qqq_direction]
-    assets: [QQQ_PROXY_NDX_TR, CASH_DTB3, SYNTHETIC_2X, SYNTHETIC_3X]
+    assets: [QQQ_PROXY_NDX_TR, CASH_DTB3, SYNTHETIC_2X, SYNTHETIC_3X, NDX_OPTION_INDEX_BXN,
+             NDX_OPTION_INDEX_NQTRI, NDX_OPTION_INDEX_NQCLRI]
     exact_or_proxy: proxy
     data_quality_contract: qqq_long_history_snapshot_check
     data_source: fred_qqq_long_history_research
@@ -385,6 +393,16 @@ windows:
   # lists CASH_DTB3 and NDX_RETURN. The span was already seen history for all four lines (F0001
   # through its validation and consistency reads), so this read loses no unseen QQQ history; the
   # forward ledger stays the only unseen test.
+  # Baker then chose a sixth read, by another family (TRADING-2567-41,
+  # owner_decision:TRADING-2567:2026-11-22:option_index_first_look):
+  # research_probes/option_index_table.py levers or de-levers three Nasdaq-100 option-strategy
+  # indices (BXN, NQTRI and NQCLRI, from the local snapshot research_data/option_indices.py keeps)
+  # to the drawdown of the snapshot's Nasdaq-100 total return (ndx_tr_return, XNDX), with the DTB3
+  # cash column, and judges each over 2011 onward and its two halves, so the window lists
+  # NDX_TR_RETURN and the three NDX_OPTION_INDEX assets. The indices are built only from XNDX and
+  # listed NDX options, which the owner decision reads as QQQ's own options (caveat below). QQQ
+  # after 2010 was already seen history for every family; once read, the three indices' values
+  # after 2010 are seen history too, and the forward ledger stays the only unseen test.
   qqq_after_2010_owner_print:
     start: 2011-01-03
     end: latest
@@ -393,7 +411,8 @@ windows:
     actual_portfolio_start: 2011-01-03
     role: owner_print_only
     question_types: []
-    assets: [QQQ, CASH_DTB3, NDX_RETURN]
+    assets: [QQQ, CASH_DTB3, NDX_RETURN, NDX_TR_RETURN, NDX_OPTION_INDEX_BXN,
+             NDX_OPTION_INDEX_NQTRI, NDX_OPTION_INDEX_NQCLRI]
     exact_or_proxy: exact
     data_quality_contract: qqq_long_history_snapshot_check
     data_source: fred_qqq_long_history_research
@@ -417,6 +436,7 @@ windows:
       - period_7_charter_one_time_exception
       - after_this_read_2011_onward_is_seen_history_for_the_entry_timing_and_exit_families
       - qqq_adjusted_close_on_the_snapshot_calendar
+      - ndx_option_indices_read_as_qqq_own_options_per_owner_decision
 safety_boundary:
   research_only: true
   actual_path_required: true

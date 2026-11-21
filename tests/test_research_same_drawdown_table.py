@@ -8,8 +8,11 @@ after the read; owner decision same_drawdown_table). Synthetic data only; no sna
 from __future__ import annotations
 
 import ast
+import atexit
 import json
 import math
+import shutil
+import tempfile
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -41,6 +44,15 @@ LOADED = load_settings()
 ROOT_DIR = lg.research_root(LOADED)
 MODULE = PROJECT_ROOT / "src" / "ai_trading_system" / "research_probes" / "same_drawdown_table.py"
 REGISTRY = PROJECT_ROOT / "config" / "research" / "research_window_registry.yaml"
+# The assets TRADING-2567-41 added for the options index first look (owner decision
+# option_index_first_look): the window after 2010 lists all four, the development window the
+# three indices.
+OPTION_INDEX_READ = [
+    "NDX_TR_RETURN",
+    "NDX_OPTION_INDEX_BXN",
+    "NDX_OPTION_INDEX_NQTRI",
+    "NDX_OPTION_INDEX_NQCLRI",
+]
 REQUIREMENTS = PROJECT_ROOT / "docs" / "requirements" / "TRADING-2565_Research_Bench.md"
 SYSTEM_FLOW = PROJECT_ROOT / "docs" / "system_flow.md"
 COARSE_F = tuple(round(i / 10, 1) for i in range(11))
@@ -204,7 +216,7 @@ def test_the_two_windows_list_the_added_columns_and_keep_the_rest() -> None:
     windows = _windows()
     ndx, qqq = windows["ndx_price_1986_1999"], windows["qqq_after_2010_owner_print"]
     assert ndx["assets"] == ["NDX_PRICE_INDEX", "CASH_DTB3"]
-    assert qqq["assets"] == ["QQQ", "CASH_DTB3", "NDX_RETURN"]
+    assert qqq["assets"] == [*sd.QQQ_ASSETS, *OPTION_INDEX_READ]
     assert (str(ndx["start"]), str(ndx["end"]), ndx["role"], ndx["read_policy"]) == (
         "1986-01-02",
         "1999-03-09",
@@ -226,6 +238,7 @@ def test_the_two_windows_list_the_added_columns_and_keep_the_rest() -> None:
         "CASH_DTB3",
         "SYNTHETIC_2X",
         "SYNTHETIC_3X",
+        *OPTION_INDEX_READ[1:],
     ]
 
 
@@ -279,8 +292,19 @@ def _loaded_with(tmp_path: Path, changes: dict[str, dict[str, Any]]) -> LoadedSe
     return LoadedSettings(settings=settings, root=tmp_path, sha256=LOADED.sha256)
 
 
+# The registry as it stood at this table's one read: TRADING-2567-41 (the options index first
+# look) later listed four more assets on qqq_after_2010_owner_print, which this module refuses.
+_AT_READ_DIR = Path(tempfile.mkdtemp(prefix="same_drawdown_registry_"))
+atexit.register(shutil.rmtree, _AT_READ_DIR, True)
+LOADED_AT_READ = _loaded_with(
+    _AT_READ_DIR, {"qqq_after_2010_owner_print": {"assets": list(sd.QQQ_ASSETS)}}
+)
+
+
 def test_the_registered_windows_carry_the_read_columns() -> None:
-    windows = sd.registered_windows(LOADED)
+    with pytest.raises(ValueError, match="窗口 qqq_after_2010_owner_print 的登记和本表不一致"):
+        sd.registered_windows(LOADED)
+    windows = sd.registered_windows(LOADED_AT_READ)
     assert windows["ndx"]["window_id"] == "ndx_price_1986_1999"
     assert windows["qqq"]["window_id"] == "qqq_after_2010_owner_print"
     assert windows["ndx"]["columns"] == ["ndx_price", "cash_return"]
@@ -1156,7 +1180,7 @@ def _inputs(windows: dict[str, Any] | None = None) -> sd.Inputs:
         {},
         pd.DataFrame(),
         {},
-        windows or sd.registered_windows(LOADED),
+        windows or sd.registered_windows(LOADED_AT_READ),
         PROJECT_ROOT,
     )
 
