@@ -261,21 +261,26 @@ NOTES_P6_20 = (
     "ext_step 跟着改；开正式题仍要问 Baker。production_effect="
     "none；broker_action=none"
 )
-NEXT_OWNER = (
-    "Claude（研究自动循环第 6 期：第 20 节起菜单内自选目标；"
-    "下一道 QQQ 正式题等 11-20 续期卡或候选过试跑门）"
+# The step after the QQQ options index first look decision (TRADING-2567-40).
+NOTES_OPTION_INDEX = (
+    "；2026-11-22：Baker 重开 QQQ 期权方向，在卡上选「先做指数初看」"
+    "（owner_decision:TRADING-2567:2026-11-22:option_index_first_look，TRADING-2567-40 "
+    "记）：三条纳指 100 期权策略指数（BXN、NQTRI、NQCLRI）加杠杆或降"
+    "杠杆到 XNDX 的最大回撤比年化，2009–2010 只印，2011 年以后读一次"
+    "以前 Baker 签一句；数据入口和打印模块是 TRADING-2567-41（C 区）。"
+    "next_owner 和 next_step 跟着改。production_effect=none；broker_action=none"
 )
+NEXT_OWNER = "Claude（期权线程：QQQ 期权指数初看；读 2011 年以后之前 Baker 签一句）"
 NEXT_STEP = (
-    "第五题 QQQ-Q5 已结束（2026-10-21，`research/QQQ-Q5/decision.md`，台账第 27 条），"
-    "之后没有开着的 QQQ 题。"
-    "研究自动循环第 6 期（`research/_loop/charter_p6.md`，到 2026-11-20）只记账，"
-    "前瞻账本每周五照记；"
-    "第 13、14 节的两个检验力探针（TRADING-2565-61、-63）都是 below_50，不开题。"
-    "第 20 节（2026-10-27 签，owner_decision:TRADING-2565:2026-10-27:loop_self_select_signed）"
-    "起菜单内的方向过两道线就自己开、自己关"
-    "（数据每月 ≤ 100 美元、花费每周 ≤ 250 美元），开正式题仍要问 Baker。"
-    "下一道正式题等 2026-11-20 的续期卡，或研究自动循环有候选过试跑门再问 Baker。"
-    "详见 `docs/requirements/TRADING-2567_QQQ_Research_Program_1999_Window.md`"
+    "QQQ 期权叠加初看（owner_decision:TRADING-2567:2026-11-22:option_index_first_l"
+    "ook，TRADING-2567-40 记）：TRADING-2567-41（C 区）加数据入口 `research_d"
+    "ata/option_indices.py` 和规格、窗口登记表两处、打印模块 `research_pr"
+    "obes/option_index_table.py`，Baker 运行一次 approve.ps1 以后发布；电脑上"
+    "下载一次、检查一次、表 check 一次，Baker 签一句以后 run 一次，"
+    "结果和三条判定给 Baker，复盘线程填五列，记录批单独发。研究"
+    "自动循环第 7 期（到 2026-11-27）只记账照旧，前瞻账本每周五照记"
+    "，续期卡那天出。详见 `docs/requirements/TRADING-2567_QQQ_Research_Program_"
+    "1999_Window.md`"
 )
 
 
@@ -289,7 +294,9 @@ def test_the_research_readme_lists_the_fifth_question() -> None:
 def test_the_task_card_notes_are_only_appended() -> None:
     card = yaml.safe_load(CARD.read_text(encoding="utf-8"))
     assert card["notes"].count(NOTES_TAIL) == 1 and card["notes"].count(NOTES_CLOSE) == 1
-    assert card["notes"].endswith(NOTES_TAIL + NOTES_CLOSE + NOTES_REVIEW + NOTES_P6_20)
+    assert card["notes"].endswith(
+        NOTES_TAIL + NOTES_CLOSE + NOTES_REVIEW + NOTES_P6_20 + NOTES_OPTION_INDEX
+    )
     assert card["notes"].split(NOTES_TAIL)[0].endswith("broker_action=none")
     assert "qqq_q4_prereg" in card["notes"].split(NOTES_TAIL)[0]
     assert (card["next_owner"], card["next_step"]) == (NEXT_OWNER, NEXT_STEP)
@@ -297,3 +304,4 @@ def test_the_task_card_notes_are_only_appended() -> None:
     register = REGISTER.read_text(encoding="utf-8")
     assert NOTES_TAIL in register and NOTES_CLOSE in register and NEXT_STEP in register
     assert NOTES_REVIEW in register and NOTES_P6_20 in register
+    assert NOTES_OPTION_INDEX in register
