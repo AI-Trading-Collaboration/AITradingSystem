@@ -65,9 +65,9 @@ def test_a_root_is_not_a_prefix_match_on_characters(state: Path, tmp_path: Path)
 @pytest.mark.parametrize(
     "recorded",
     [
-        r"D:\Work\AITradingSystem\outputs\sec_pit_evaluation\x.csv",
-        "D:/Work/AITradingSystem/outputs/sec_pit_evaluation/x.csv",
-        r"d:\work\aitradingsystem\Outputs\sec_pit_evaluation\x.csv",
+        r"D:\Dev\AITradingSystem\outputs\sec_pit_evaluation\x.csv",
+        "D:/Dev/AITradingSystem/outputs/sec_pit_evaluation/x.csv",
+        r"d:\dev\aitradingsystem\Outputs\sec_pit_evaluation\x.csv",
         r"\\server\share\AITradingSystem\outputs\sec_pit_evaluation\x.csv",
         "/home/jack/AITradingSystem/outputs/sec_pit_evaluation/x.csv",
     ],
@@ -125,7 +125,7 @@ def test_a_summary_that_names_a_development_checkout_reads_the_state_copy(
     default = home / "sec_pit_feature_effectiveness_2026-06-01.csv"
 
     for recorded in (
-        r"D:\Work\AITradingSystem\outputs\sec_pit_evaluation\sec_pit_feature_effectiveness_2026-05-26.csv",
+        r"D:\Dev\AITradingSystem\outputs\sec_pit_evaluation\sec_pit_feature_effectiveness_2026-05-26.csv",
         "/home/jack/AITradingSystem/outputs/sec_pit_evaluation/sec_pit_feature_effectiveness_2026-05-26.csv",
     ):
         found = observe._artifact_path(_summary(effect_csv=recorded), "effect_csv", default, home)
@@ -206,7 +206,7 @@ def test_the_dashboard_reads_the_state_snapshots_for_a_windows_recorded_path(
     _snapshot(state / "data" / "processed" / "decision_snapshots", "2026-05-04", {"valuation": 0.4})
     project = tmp_path / "code"
     project.mkdir()
-    recorded = r"D:\Work\AITradingSystem\data\processed\decision_snapshots"
+    recorded = r"D:\Dev\AITradingSystem\data\processed\decision_snapshots"
 
     observed = dashboard._production_gate_cap_observations(_manifest(recorded), project)
 
