@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2575_QQQ_MULTI_ASSET_DIVERSIFICATION
+area: 研究 / QQQ 多资产低相关分散提夏普再配平（2-B为主+2-A补齐与一致性核验）
+priority: P2
+status: BASELINE_DONE
+next_owner: Agent + Project Owner（推送开发诊断后起草 2011-2021 一次性预注册验证方案）
+next_step: 开发窗口 pass_dev_screen 与 2-A/2-B 重叠一致性门禁推上 main；下一步写死 2011-2021 预注册规则（固定 L=1.50x Return Stacking 三盾与趋势过滤双盾）经 owner 确认后一次性读验证窗口
+acceptance: 见 docs/requirements/TRADING-2575_QQQ_Multi_Asset_Diversification_Dev_Probe.md：严格截止 2010-12-31，不拉不读 2011+；完成 GLD/GCUSD、IEF/DGS10、TLT/DGS20 重叠区一致性 fail-closed 检查；输出纯 2-B(2004-2010) 与拼接全开发(1999-2010) 两套 1x 与同回撤配平 L*(含5%高息压力)解剖表，合成测试与任务检查全过
+notes: production_effect=none；broker_action=none；requirement=docs/requirements/TRADING-2575_QQQ_Multi_Asset_Diversification_Dev_Probe.md；只读开发窗口不读 2011+；以 2-B(FMP ETF) 为主、2-A(FRED+GCUSD)补足前段并验重叠一致性；2026-11-23：完成 1998-2010 快照拉取与开发窗口诊断（零 2011+ 读取）：2-A/2-B 重叠一致性全部 PASS（GLD/GCUSD 周相关 0.984/差-0.52pp，IEF/DGS10 日相关 0.958/差+0.54pp，TLT/DGS20 日相关 0.963/差-0.30pp）；判定 pass_dev_screen（qqq70_gold30、qqq60_ief20_gold20、qqq60_trend_shield40、qqq70_cta_lo30 过关），须在未读过的 2011-2021 黄金熊市与 2022+ 高息段做预注册检验
