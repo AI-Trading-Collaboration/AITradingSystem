@@ -1,0 +1,9 @@
+schema_version: task.v1
+id: TRADING-2574_QQQ_OPTION_CONVEXITY_PROXY
+area: 研究 / QQQ 期权正凸性结构 VXN+BS 代理开发窗口诊断
+priority: P2
+status: DONE
+next_owner: 无（开发窗口止损关闭）
+next_step: 已完成并经 owner 确认按 kill_dev_screen 止损关闭，不购买付费期权数据；Collar 真实偏度与牛市检验交由 TRADING-2567-41 的 NQCLRI，后续转向路径 2 低相关分散资产提夏普再配平
+acceptance: 见 docs/requirements/TRADING-2574_QQQ_Option_Convexity_Proxy_Dev_Probe.md：只读纯 QQQ 2001-2010 开发窗口（机械截断 2010-12-31），覆盖 3M/6M ATM Call、6M 85% ITM Call、90% Put、95-110 Collar 及同回撤配平与 sigma_scale 0.9/1.0/1.1 敏感度，通过合成验收测试（含 Put-Call Parity 与截断不变量）及 tasks/work_overview 检查
+notes: production_effect=none；broker_action=none；requirement=docs/requirements/TRADING-2574_QQQ_Option_Convexity_Proxy_Dev_Probe.md；只读开发窗口不读 2011+；与 TRADING-2567-41 互补（覆盖 2001-2010 与 Call 正凸性替代）；临时基线参数在本次诊断结束由 owner 审阅后退出；2026-11-23：完成纯 QQQ 2001-02-28..2010-12-31 开发窗口代理诊断（机械截断 2010-12-31，零 2011+ 读取），判定 kill_dev_screen：call_3m_atm(-1.49%)、call_6m_atm(1.40%)、call_6m_itm85(2.94%/悲观1.74%)、put90_3m(1.11%)均未过止损线，collar_95_110_3m(4.88%/DD-26.23%/SR 0.30)最接近 F0001(5.00%)但存在平坦 BS 未计偏度局限
