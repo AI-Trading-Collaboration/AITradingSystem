@@ -13,6 +13,7 @@ cards:
   TRADING-2570_RESEARCH_FORWARD_RECHECK: 前向复查
   TRADING-2571_QQQ_MA200_FORWARD_RECORD: 200 日线信号前向记录
   TRADING-2572_FULL_EXPOSURE_DEFAULT: 日报满仓为底
+  TRADING-2573_QQQ_ASYM_VXN_LEVERAGE: QQQ 非对称波动门低倍择时杠杆（开发诊断）
   GOV-008_RESEARCH_FIRST_GOVERNANCE_REFACTOR: 研究优先的治理迁移
   GOV-009: 旧研究清点和清理
   OPS-082_DETERMINISTIC_WINDOWS_SCHEDULER: 日报计划任务
@@ -213,6 +214,11 @@ lines:
             date: "2026-11-26"
             note: Baker 11-19 定目标后选「落地满仓，选股先估」，查清日报多数日子 0.40 是估值闸门（17 只核心股任一只自身历史分位到 90 就压到 0.40）；17:31 JST 选「满仓为底，闸门只提示」；-01 核心行为（C 区）、-02 报告文字，两批发布、11-20 稳定性判定以后换发布包；前瞻账本加满仓行另走一批
             cards: [TRADING-2572_FULL_EXPOSURE_DEFAULT]
+          - text: QQQ 纯开发窗口诊断：F0001 月频底仓加 VXN 波动门周频去杠杆（1.3x / 1.5x，方案 A 融资口径）
+            state: done
+            date: "2026-11-22"
+            note: 纯 QQQ 2001-02-28..2010-12-31 开发窗口（机械截断 2010-12-31，零 2011+ 读取）判定 kill_dev_screen：周频 VXN 去杠杆虽压住 2008 危机入场回撤，但低 VXN 开杠杆在牛市造成高位加杠杆、回调低位去杠杆的反向择时，所有 VXN 门配置（4.22%–4.66%）均跑输 1x F0001（5.00%）；Owner 确认止损关闭，不调参、不读验证窗口
+            cards: [TRADING-2573_QQQ_ASYM_VXN_LEVERAGE]
           - text: 期中加：QQQ 期权叠加初看，三条纳指 100 期权指数的同回撤表读一次
             state: now
             date: "2026-11-27"
