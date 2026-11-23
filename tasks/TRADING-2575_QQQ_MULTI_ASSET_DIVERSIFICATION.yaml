@@ -2,8 +2,8 @@ schema_version: task.v1
 id: TRADING-2575_QQQ_MULTI_ASSET_DIVERSIFICATION
 area: 研究 / QQQ 多资产低相关分散提夏普再配平（2-B为主+2-A补齐与一致性核验）
 priority: P2
-status: BASELINE_DONE
-next_owner: Agent + Project Owner（推送开发诊断后起草 2011-2021 一次性预注册验证方案）
-next_step: 开发窗口 pass_dev_screen 与 2-A/2-B 重叠一致性门禁推上 main；下一步写死 2011-2021 预注册规则（固定 L=1.50x Return Stacking 三盾与趋势过滤双盾）经 owner 确认后一次性读验证窗口
+status: DONE
+next_owner: 无（2011–2021 一次性验证 fail_validation 收题）
+next_step: 已完成：2011–2021 一次性验证判定 fail_validation，按 owner_decision:TRADING-2575:2026-11-23:publish_validation_record 发布记录并收题；不调参、不重读 2011–2021、不读 2021-02-22+；家族表与负结果补记在 11-27 续期处理
 acceptance: 见 docs/requirements/TRADING-2575_QQQ_Multi_Asset_Diversification_Dev_Probe.md：严格截止 2010-12-31，不拉不读 2011+；完成 GLD/GCUSD、IEF/DGS10、TLT/DGS20 重叠区一致性 fail-closed 检查；输出纯 2-B(2004-2010) 与拼接全开发(1999-2010) 两套 1x 与同回撤配平 L*(含5%高息压力)解剖表，合成测试与任务检查全过
-notes: production_effect=none；broker_action=none；requirement=docs/requirements/TRADING-2575_QQQ_Multi_Asset_Diversification_Dev_Probe.md；只读开发窗口不读 2011+；以 2-B(FMP ETF) 为主、2-A(FRED+GCUSD)补足前段并验重叠一致性；2026-11-23：完成 1998-2010 快照拉取与开发窗口诊断（零 2011+ 读取）：2-A/2-B 重叠一致性全部 PASS（GLD/GCUSD 周相关 0.984/差-0.52pp，IEF/DGS10 日相关 0.958/差+0.54pp，TLT/DGS20 日相关 0.963/差-0.30pp）；判定 pass_dev_screen（qqq70_gold30、qqq60_ief20_gold20、qqq60_trend_shield40、qqq70_cta_lo30 过关），须在未读过的 2011-2021 黄金熊市与 2022+ 高息段做预注册检验
+notes: production_effect=none；broker_action=none；requirement=docs/requirements/TRADING-2575_QQQ_Multi_Asset_Diversification_Dev_Probe.md；只读开发窗口不读 2011+；以 2-B(FMP ETF) 为主、2-A(FRED+GCUSD)补足前段并验重叠一致性；2026-11-23：完成 1998-2010 快照拉取与开发窗口诊断（零 2011+ 读取）：2-A/2-B 重叠一致性全部 PASS（GLD/GCUSD 周相关 0.984/差-0.52pp，IEF/DGS10 日相关 0.958/差+0.54pp，TLT/DGS20 日相关 0.963/差-0.30pp）；判定 pass_dev_screen（qqq70_gold30、qqq60_ief20_gold20、qqq60_trend_shield40、qqq70_cta_lo30 过关），须在未读过的 2011-2021 黄金熊市与 2022+ 高息段做预注册检验；2026-11-23：完成 2011-01-03..2021-02-19 一次性预注册验证（100%真实ETF，2550交易日0缺失，2010开发重叠最大日差0.000000，零2021-02-22+读取），判定 fail_validation：stack_static_1.5（20.15%/-0.54pp，DD -26.25%/+2.30pp，SR 1.09 vs 1.03，5%高息18.15%）与 stack_trend_1.5（19.86%/-0.83pp，DD -26.25%/+2.30pp，SR 1.08，5%高息18.61%）均通过回撤与夏普判据但小幅未过主算>=Hold底线，严格按预注册收题不调参。；2026-11-23：owner_decision:TRADING-2575:2026-11-23:publish_validation_record（Baker 14:38 JST 选「发布验证记录并切回 main」），验证记录按原样发布、任务 DONE；过程偏差：预注册与验证模块在读窗口前约 1 分钟于本地写成，没有先上 main（需求文档第 8 节）；QQQ 2011+ 是看过的历史，这次读数不是盲测

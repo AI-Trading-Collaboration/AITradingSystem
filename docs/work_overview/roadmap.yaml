@@ -231,6 +231,11 @@ lines:
             date: "2026-11-23"
             note: 以 2-B(FMP 真实 ETF GLD/IEF/TLT) 为主、2-A(FRED+GCUSD) 补齐前段，严格截断 2010-12-31 零 2011+ 读取；三组重叠一致性全 PASS（GLD/GCUSD 周相关 0.984/差-0.52pp，IEF/DGS10 日相关 0.958/差+0.54pp，TLT/DGS20 日相关 0.963/差-0.30pp）；判定 pass_dev_screen（qqq70_gold30、qqq60_ief20_gold20、qqq60_trend_shield40、qqq70_cta_lo30 过关），下一步起草 2011–2021 一次性验证预注册
             cards: [TRADING-2575_QQQ_MULTI_ASSET_DIVERSIFICATION]
+          - text: QQQ 路径 2 一次性 2011–2021 验证窗口检验（100% 真实 ETF，固定 L=1.50x Return Stacking 三盾与趋势双盾）
+            state: done
+            date: "2026-11-23"
+            note: 已完成 100% 真实 ETF（GLD/IEF/QQQ，硬截止 2021-02-19，2010 重叠最大日差 0.000000，零 2021-02-22+ 读取）一次性验证，判定 fail_validation：在 QQQ 年化 20.69% 超级牛市 + 黄金熊市（1.85%、DD -45.56%）下，stack_static_1.5（20.15% / DD -26.25% / SR 1.09）与 stack_trend_1.5（19.86% / DD -26.25% / SR 1.08）回撤浅 2.30 点且夏普高于 Hold（1.03），但主算年化分别小幅落后 -0.54 / -0.83 点（5% 高息落后 -2.54 / -2.08 点）未过收益底线；严格按预注册收题，不调参重读、不碰 2021-02-22+，待 Owner 审阅后发布关闭
+            cards: [TRADING-2575_QQQ_MULTI_ASSET_DIVERSIFICATION]
           - text: 期中加：QQQ 期权叠加初看，三条纳指 100 期权指数的同回撤表读一次
             state: now
             date: "2026-11-27"
