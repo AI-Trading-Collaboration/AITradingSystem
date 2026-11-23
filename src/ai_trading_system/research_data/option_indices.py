@@ -138,6 +138,23 @@ def all_sources(spec: OptionIndexSpec) -> tuple[SourceSpec, ...]:
     return tuple(s for index in spec.indices for s in index_sources(index))
 
 
+# Fixed English month abbreviations keep CSV dates independent of the system locale.
+_ENGLISH_MONTHS = (
+    "jan",
+    "feb",
+    "mar",
+    "apr",
+    "may",
+    "jun",
+    "jul",
+    "aug",
+    "sep",
+    "oct",
+    "nov",
+    "dec",
+)
+
+
 def parse_csv(payload: bytes, source: SourceSpec) -> pd.DataFrame:
     name = source.name
     try:
@@ -166,13 +183,19 @@ def parse_csv(payload: bytes, source: SourceSpec) -> pd.DataFrame:
                 day = date.fromisoformat(token)
             elif re.fullmatch(r"\d{1,2}/\d{1,2}/\d{4}", token):
                 day = datetime.strptime(token, "%m/%d/%Y").date()
+            elif re.fullmatch(r"\d{1,2}/\d{1,2}/\d{2}", token):
+                day = datetime.strptime(token, "%m/%d/%y").date()
+            elif match := re.fullmatch(r"(\d{1,2})-([A-Za-z]{3})-(\d{4})", token):
+                day = date(
+                    int(match[3]), _ENGLISH_MONTHS.index(match[2].lower()) + 1, int(match[1])
+                )
             else:
                 raise ValueError
         except ValueError:
             raise ValueError(f"{name}: row {number} has an unreadable date") from None
         token = row[vi].strip()
         try:
-            if source.closed_marker is not None and token == source.closed_marker:
+            if source.closed_marker is not None and token in (source.closed_marker, ""):
                 value = float("nan")
             else:
                 value = float(token.replace(",", ""))

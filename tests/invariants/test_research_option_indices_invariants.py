@@ -7,10 +7,12 @@ below is synthetic; no test reads a real snapshot or downloads anything.
 
 76. The spec fixes the three indices and their sources: BXN from Cboe's history file with FRED's
     copy as a cross-check only; NQTRI and NQCLRI from Nasdaq's files through 2021-08-20, then from
-    FRED from 2021-08-23, with FRED's "." as a closed day; no redistribution and no external model.
-    A spec that names other indices, overlaps or leaves open the two parts, or repeats a name is
-    refused. Files are read by their header names, ISO or month/day/year dates, quoted thousands
-    separators and a byte-order mark; an error names the file and the row, never the cell.
+    FRED from 2021-08-23, where "." or an empty value is a closed day (TRADING-2567-42: FRED's
+    current file leaves a closed day empty); no redistribution and no external model. A spec that
+    names other indices, overlaps or leaves open the two parts, or repeats a name is refused.
+    Files are read by their header names, quoted thousands separators, a byte-order mark and the
+    four date forms the read-only probe parsed (YYYY-MM-DD, M/D/YYYY, M/D/YY and D-Mon-YYYY with
+    an English month in any case); an error names the file and the row, never the cell.
 77. A snapshot is written only when the owner decision stands in the TRADING-2567 requirements
     and every data file downloads and parses; a methodology document that fails is recorded and
     warned, never fatal. The id is the content address of the manifest, so the same bytes give
@@ -54,9 +56,24 @@ FRED = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={}"
 # BXN starts near this level so that a leaked value would be easy to see in any output.
 LEAK_BASE = 4321.8765
 SPLIT = {"NQTRI": ("nqtri_nasdaq", "nqtri_fred"), "NQCLRI": ("nqclri_nasdaq", "nqclri_fred")}
+MONTH_NAMES = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+FRED_NAMES = ("bxn_fred", "nqtri_fred", "nqclri_fred")
 
 
 # --- a synthetic world -----------------------------------------------------------------------
+
+
+def _shown(day: date, style: str) -> str:
+    """A date as a source file writes it, in one of the four forms the read-only probe parsed."""
+    if style == "iso":
+        return day.isoformat()
+    if style == "us":
+        return day.strftime("%m/%d/%Y")
+    if style == "us2":
+        return day.strftime("%m/%d/%y")
+    if style == "mon":
+        return f"{day.day:02d}-{MONTH_NAMES[day.month - 1]}-{day.year}"
+    raise ValueError(style)
 
 
 @dataclass
@@ -77,8 +94,7 @@ class World:
             style = self.styles[source.name]
             lines = [f"{source.date_column},{source.value_column}"]
             for day, text in self.rows[source.name]:
-                shown = day.isoformat() if style == "iso" else day.strftime("%m/%d/%Y")
-                lines.append(f"{shown},{text}")
+                lines.append(f"{_shown(day, style)},{text}")
             out[source.url] = ("\n".join(lines) + "\n").encode("utf-8")
         for index in self.spec.indices:
             for document in index.documents:
@@ -358,6 +374,14 @@ def test_files_are_read_by_header_name_in_file_order() -> None:
         (b"observation_date,V\n2021-08-23,1.0\n2021-08-24,98765.4321x\n", "row 3"),
         (b"observation_date,V\n2021-08-23,inf\n", "row 2"),
         (b"observation_date,V\n2021-08-23,NA98765.4321\n", "row 2"),
+        (b"observation_date,V\n2021-08-23,NA\n", "row 2"),
+        (b"observation_date,V\n2021-08-23,..\n", "row 2"),
+        (b"observation_date,V\n2021-08-23,#N/A\n", "row 2"),
+        (b"observation_date,V\n2021/08/23,98765.4321\n", "row 2"),
+        (b"observation_date,V\n23.08.2021,98765.4321\n", "row 2"),
+        (b"observation_date,V\n23-Aug-21,98765.4321\n", "row 2"),
+        (b"observation_date,V\n23-Agu-2021,98765.4321\n", "row 2"),
+        (b"observation_date,V\n08/23/202,98765.4321\n", "row 2"),
         (b"observation_date,V\n2021-08-23\n", "row 2"),
         (b"observation_date,V\n", "row"),
         ("observation_date,V\n2021-08-23,98765é".encode("latin-1"), "UTF-8"),
@@ -375,6 +399,56 @@ def test_a_closed_marker_is_a_value_error_in_a_file_without_one() -> None:
     plain = _source(closed_marker=None, date_column="Date", value_column="NQTRI")
     with pytest.raises(ValueError, match="row 2"):
         oi.parse_csv(b"Date,NQTRI\n08/20/2021,.\n", plain)
+
+
+def test_a_closed_day_is_a_dot_or_an_empty_value_in_a_file_with_a_marker() -> None:
+    # TRADING-2567-42: FRED's current file leaves a closed day empty; "." still reads as closed.
+    payload = (
+        b"observation_date,V\n2021-08-23,100\n2021-08-24,\n2021-08-25,.\n"
+        b'2021-08-26, \n2021-08-27,""\n2021-08-30,101.5\n'
+    )
+    frame = oi.parse_csv(payload, _source())
+    assert [d.date() for d in frame["date"]] == [
+        date(2021, 8, 23),
+        date(2021, 8, 24),
+        date(2021, 8, 25),
+        date(2021, 8, 26),
+        date(2021, 8, 27),
+        date(2021, 8, 30),
+    ]
+    values = frame["value"].to_numpy()
+    assert values[0] == 100.0 and values[5] == 101.5
+    assert np.isnan(values[1:5]).all()
+
+
+@pytest.mark.parametrize("cell", ["", " ", '""'])
+def test_an_empty_value_is_an_error_in_a_file_without_a_marker(cell: str) -> None:
+    plain = _source(closed_marker=None, date_column="Date", value_column="NQTRI")
+    with pytest.raises(ValueError, match="row 3"):
+        oi.parse_csv(f"Date,NQTRI\n08/19/2021,100\n08/20/2021,{cell}\n".encode(), plain)
+
+
+def test_dates_are_read_in_the_four_forms_the_probe_parsed() -> None:
+    # The read-only probe parsed every dated row with YYYY-MM-DD, M/D/YYYY, M/D/YY or D-Mon-YYYY;
+    # it did not print which form each file uses, so all four are read (TRADING-2567-42).
+    payload = (
+        b"Date,NQTRI\n06/19/2009,100\n6/22/2009,101\n06/23/09,102\n6/24/09,103\n"
+        b"25-Jun-2009,104\n26-JUN-2009,105\n29-jun-2009,106\n2009-06-30,107\n1-Jul-2009,108\n"
+    )
+    plain = _source(closed_marker=None, date_column="Date", value_column="NQTRI")
+    frame = oi.parse_csv(payload, plain)
+    assert [d.date() for d in frame["date"]] == [
+        date(2009, 6, 19),
+        date(2009, 6, 22),
+        date(2009, 6, 23),
+        date(2009, 6, 24),
+        date(2009, 6, 25),
+        date(2009, 6, 26),
+        date(2009, 6, 29),
+        date(2009, 6, 30),
+        date(2009, 7, 1),
+    ]
+    assert frame["value"].tolist() == [100.0 + i for i in range(9)]
 
 
 # --- 77: fetch -----------------------------------------------------------------------------
@@ -512,6 +586,28 @@ def test_a_clean_snapshot_passes_and_loads_spliced(tmp_path: Path) -> None:
         assert [d.date() for d in series.index] == [d for d, _ in expected]
         assert series.to_numpy().tolist() == [v for _, v in expected]
         assert series.index.is_monotonic_increasing and not series.index.has_duplicates
+
+
+def test_empty_fred_closed_days_and_other_date_forms_give_the_same_check(tmp_path: Path) -> None:
+    # TRADING-2567-42: the same world with FRED's closed days left empty and the Cboe and Nasdaq
+    # dates in the probe's other forms checks and loads exactly like the world written with ".".
+    dotted = make_world()
+    expected = _check(tmp_path / "dot", dotted)
+    world = make_world()
+    for name in FRED_NAMES:
+        assert any(t == "." for _, t in world.rows[name])
+        world.rows[name] = [(d, "" if t == "." else t) for d, t in world.rows[name]]
+    world.styles.update(bxn_cboe="us2", nqtri_nasdaq="mon", nqclri_nasdaq="us2")
+    report = _check(tmp_path / "empty", world)
+    assert (report["status"], report["failed"], report["warned"]) == ("PASS", [], [])
+    assert report["snapshot_id"] != expected["snapshot_id"]
+    assert {k: v for k, v in report.items() if k != "snapshot_id"} == {
+        k: v for k, v in expected.items() if k != "snapshot_id"
+    }
+    first = oi.load_snapshot(tmp_path / "dot", expected["snapshot_id"])
+    second = oi.load_snapshot(tmp_path / "empty", report["snapshot_id"])
+    for index_id in oi.INDEX_IDS:
+        pd.testing.assert_series_equal(first.levels[index_id], second.levels[index_id])
 
 
 def test_the_parts_are_cut_at_the_spec_dates_even_when_the_files_overlap(tmp_path: Path) -> None:
