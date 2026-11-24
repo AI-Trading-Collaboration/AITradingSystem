@@ -157,11 +157,15 @@ _ENGLISH_MONTHS = (
 
 def parse_csv(payload: bytes, source: SourceSpec) -> pd.DataFrame:
     name = source.name
+    payload = payload.removeprefix(b"\xef\xbb\xbf")
     try:
-        text = payload.decode("utf-8-sig")
+        text = payload.decode("utf-8")
     except UnicodeDecodeError:
-        raise ValueError(f"{name}: not UTF-8 text") from None
-    rows = csv.reader(io.StringIO(text))
+        try:
+            text = payload.decode("cp1252")
+        except UnicodeDecodeError:
+            text = payload.decode("latin-1")
+    rows = csv.reader(io.StringIO(text), skipinitialspace=True)
     header: list[str] | None = None
     dates: list[date] = []
     values: list[float] = []
@@ -169,7 +173,7 @@ def parse_csv(payload: bytes, source: SourceSpec) -> pd.DataFrame:
         if not row or not any(cell.strip() for cell in row):
             continue
         if header is None:
-            header = row
+            header = [cell.strip() for cell in row]
             for column in (source.date_column, source.value_column):
                 if column not in header:
                     raise ValueError(f"{name}: the header has no column {column}")
@@ -179,8 +183,8 @@ def parse_csv(payload: bytes, source: SourceSpec) -> pd.DataFrame:
             raise ValueError(f"{name}: row {number} is short")
         try:
             token = row[di].strip()
-            if re.fullmatch(r"\d{4}-\d{2}-\d{2}", token):
-                day = date.fromisoformat(token)
+            if re.fullmatch(r"\d{4}-\d{1,2}-\d{1,2}", token):
+                day = datetime.strptime(token, "%Y-%m-%d").date()
             elif re.fullmatch(r"\d{1,2}/\d{1,2}/\d{4}", token):
                 day = datetime.strptime(token, "%m/%d/%Y").date()
             elif re.fullmatch(r"\d{1,2}/\d{1,2}/\d{2}", token):

@@ -12,7 +12,10 @@ below is synthetic; no test reads a real snapshot or downloads anything.
     names other indices, overlaps or leaves open the two parts, or repeats a name is refused.
     Files are read by their header names, quoted thousands separators, a byte-order mark and the
     four date forms the read-only probe parsed (YYYY-MM-DD, M/D/YYYY, M/D/YY and D-Mon-YYYY with
-    an English month in any case); an error names the file and the row, never the cell.
+    an English month in any case, month and day in one or two digits); an error names the file
+    and the row, never the cell. A file is read as UTF-8, else as Windows-1252, else as Latin-1,
+    with header names trimmed and spaces after a comma skipped (TRADING-2567-43: Nasdaq's file is
+    not UTF-8); the snapshot keeps the downloaded bytes and the check reads them the same way.
 77. A snapshot is written only when the owner decision stands in the TRADING-2567 requirements
     and every data file downloads and parses; a methodology document that fails is recorded and
     warned, never fatal. The id is the content address of the manifest, so the same bytes give
@@ -384,7 +387,20 @@ def test_files_are_read_by_header_name_in_file_order() -> None:
         (b"observation_date,V\n08/23/202,98765.4321\n", "row 2"),
         (b"observation_date,V\n2021-08-23\n", "row 2"),
         (b"observation_date,V\n", "row"),
-        ("observation_date,V\n2021-08-23,98765é".encode("latin-1"), "UTF-8"),
+        # TRADING-2567-43: a file that is not UTF-8 is read as Windows-1252, else as Latin-1, and
+        # its header names, dates and values are still checked exactly.
+        pytest.param(
+            "observation_date,V\n2021-08-23,98765é".encode("latin-1"), "row 2", id="e-acute"
+        ),
+        pytest.param(b"observation_date,V\xae\n2021-08-23,98765.4321\n", "column", id="header-r"),
+        pytest.param(b"observation_date,V\n2021-08-23,98765\xae\n", "row 2", id="value-r"),
+        pytest.param(b"observation_date,V\n2021-08-23,98\xa0765.4321\n", "row 2", id="value-nbsp"),
+        pytest.param(b"observation_date,V\n2021\x9608\x9623,98765.4321\n", "row 2", id="date-dash"),
+        pytest.param(b"observation_date,V\n2021-08-23,98765.4321\x85\n", "row 2", id="value-dots"),
+        pytest.param(b"observation_date,V\n2021-08-23,98765.4321\x81\n", "row 2", id="value-x81"),
+        pytest.param(
+            "observation_date,V\n2021-08-23,98765.4321\n".encode("utf-16"), "column", id="utf-16"
+        ),
     ],
 )
 def test_a_bad_file_names_the_file_and_row_never_the_cell(payload: bytes, words: str) -> None:
@@ -449,6 +465,55 @@ def test_dates_are_read_in_the_four_forms_the_probe_parsed() -> None:
         date(2009, 7, 1),
     ]
     assert frame["value"].tolist() == [100.0 + i for i in range(9)]
+
+
+def test_a_file_that_is_not_utf8_is_read_as_windows_1252_then_latin_1() -> None:
+    # TRADING-2567-43: the second fetch stopped at "nqtri_nasdaq: not UTF-8 text" (2026-11-24). The
+    # probe read that file as Latin-1 and found a header and a dated, numeric value on every row, so
+    # the bytes that are not UTF-8 sit around the cells it read or in a column it did not read.
+    plain = _source(closed_marker=None, date_column="Date", value_column="NQTRI")
+    expected = [date(2009, 6, 19), date(2009, 6, 22), date(2009, 6, 23)]
+    payloads = [
+        # Windows-1252: a no-break space around a header name and a value, quotes, a dash, a mark.
+        b"Date\xa0,NQTRI ,Note \x96 Nasdaq\xae\r\n06/19/2009,100,\x93a\x94\r\n"
+        b"06/22/2009,\xa0101.25\xa0,caf\xe9\r\n06/23/2009,102,\x80\r\n",
+        # A byte Windows-1252 leaves undefined: the file is read as Latin-1.
+        b"Date,NQTRI,Note\n06/19/2009,100,\x81\n06/22/2009,101.25,\x9d\n06/23/2009,102,\xff\n",
+        # A byte-order mark goes whatever the encoding turns out to be.
+        b"\xef\xbb\xbfDate,NQTRI,Note\n06/19/2009,100,\x93\n06/22/2009,101.25,\n06/23/2009,102,\n",
+        # UTF-8 stays UTF-8: its no-break space (two bytes) is trimmed like a space.
+        "Date,NQTRI\u00a0,Note \u2013\n06/19/2009,100,\u00e9\n06/22/2009,\u00a0101.25\u00a0,\n"
+        "06/23/2009,102,\n".encode(),
+    ]
+    for payload in payloads:
+        frame = oi.parse_csv(payload, plain)
+        assert [d.date() for d in frame["date"]] == expected
+        assert frame["value"].tolist() == [100.0, 101.25, 102.0]
+
+
+def test_spaces_after_commas_and_iso_dates_without_zeros_are_read() -> None:
+    # TRADING-2567-43: read cells as the probe did, which split on commas, trimmed each cell and
+    # parsed YYYY-M-D; a quoted value after ", " stays one cell.
+    plain = _source(closed_marker=None, date_column="Date", value_column="NQTRI")
+    payload = (
+        b'Date, NQTRI, Note\n06/19/2009, "1,234.5", x\n2009-6-22, 101\n2009-06-23 , 102 \n'
+        b"2009-7-1,103\n"
+    )
+    frame = oi.parse_csv(payload, plain)
+    assert [d.date() for d in frame["date"]] == [
+        date(2009, 6, 19),
+        date(2009, 6, 22),
+        date(2009, 6, 23),
+        date(2009, 7, 1),
+    ]
+    assert frame["value"].tolist() == [1234.5, 101.0, 102.0, 103.0]
+    for bad in (
+        b"Date,NQTRI\n2009-6-31,1\n",
+        b"Date,NQTRI\n2009-123-1,1\n",
+        b"Date,NQTRI\n09-6-1,1\n",
+    ):
+        with pytest.raises(ValueError, match="row 2"):
+            oi.parse_csv(bad, plain)
 
 
 # --- 77: fetch -----------------------------------------------------------------------------
@@ -606,6 +671,40 @@ def test_empty_fred_closed_days_and_other_date_forms_give_the_same_check(tmp_pat
     }
     first = oi.load_snapshot(tmp_path / "dot", expected["snapshot_id"])
     second = oi.load_snapshot(tmp_path / "empty", report["snapshot_id"])
+    for index_id in oi.INDEX_IDS:
+        pd.testing.assert_series_equal(first.levels[index_id], second.levels[index_id])
+
+
+def test_windows_1252_nasdaq_files_with_another_column_give_the_same_check(tmp_path: Path) -> None:
+    # TRADING-2567-43: the same world with both Nasdaq files written in Windows-1252, with CRLF
+    # lines, padded header names and a third column, checks and loads exactly like the UTF-8 one;
+    # the snapshot keeps the downloaded bytes.
+    plain = make_world()
+    expected = _check(tmp_path / "utf8", plain)
+    world = make_world()
+    payloads = world.payloads()
+    for name in ("nqtri_nasdaq", "nqclri_nasdaq"):
+        url = world.source(name).url
+        lines = payloads[url].decode("ascii").splitlines()
+        marked = [lines[0].replace(",", "\u00a0, ") + ",Note \u2013 Nasdaq\u00ae"]
+        marked += [f"{line},\u201c{i}\u201d" for i, line in enumerate(lines[1:])]
+        payloads[url] = ("\r\n".join(marked) + "\r\n").encode("cp1252")
+        with pytest.raises(UnicodeDecodeError):
+            payloads[url].decode("utf-8")
+    root = tmp_path / "cp1252"
+    _write_decision(root)
+    snapshot = oi.fetch_snapshot(world.spec, root, get=FakeGet(payloads))
+    directory = oi.snapshot_dir(root, snapshot)
+    for name in ("nqtri_nasdaq", "nqclri_nasdaq"):
+        assert (directory / f"raw/{name}.csv").read_bytes() == payloads[world.source(name).url]
+    report = oi.check_snapshot(root, snapshot, world.reference)
+    assert (report["status"], report["failed"], report["warned"]) == ("PASS", [], [])
+    assert report["snapshot_id"] != expected["snapshot_id"]
+    assert {k: v for k, v in report.items() if k != "snapshot_id"} == {
+        k: v for k, v in expected.items() if k != "snapshot_id"
+    }
+    first = oi.load_snapshot(tmp_path / "utf8", expected["snapshot_id"])
+    second = oi.load_snapshot(root, snapshot)
     for index_id in oi.INDEX_IDS:
         pd.testing.assert_series_equal(first.levels[index_id], second.levels[index_id])
 

@@ -10,11 +10,12 @@
 # history file (Nasdaq's additional-data file is 403). NQTRI and NQCLRI come from Nasdaq's
 # additional-data files through 2021-08-20, then from FRED from 2021-08-23; the two parts meet
 # with no common day, and FRED marks a closed day with "." or, in its current file, an empty value
-# (TRADING-2567-42 corrected this after the first fetch on 2026-11-23). FRED's BXN copy, from
-# 2021-04-09, is only a cross-check. Snapshots stay in the local data root: no redistribution
-# (Nasdaq's copyright) and no external model. The methodology documents are kept with the
-# snapshot when they download; the options thread reads the launch dates and back-test notes
-# there, not the code.
+# (TRADING-2567-42 corrected this after the first fetch on 2026-11-23). Nasdaq's file is not
+# UTF-8, so a file is read as UTF-8, else Windows-1252, else Latin-1 (TRADING-2567-43, after the
+# second fetch on 2026-11-24). FRED's BXN copy, from 2021-04-09, is only a cross-check. Snapshots
+# stay in the local data root: no redistribution (Nasdaq's copyright) and no external model. The
+# methodology documents are kept with the snapshot when they download; the options thread reads
+# the launch dates and back-test notes there, not the code.
 schema_version: research_option_indices.v1
 owner_decision: owner_decision:TRADING-2567:2026-11-22:option_index_first_look
 qlh_snapshot: qlh-20261013-0b0df53cb1a2
