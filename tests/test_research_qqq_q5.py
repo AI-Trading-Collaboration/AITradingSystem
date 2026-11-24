@@ -270,17 +270,22 @@ NOTES_OPTION_INDEX = (
     "以前 Baker 签一句；数据入口和打印模块是 TRADING-2567-41（C 区）。"
     "next_owner 和 next_step 跟着改。production_effect=none；broker_action=none"
 )
-NEXT_OWNER = "Claude（期权线程：QQQ 期权指数初看；读 2011 年以后之前 Baker 签一句）"
+# The step after the QQQ options index first look run (TRADING-2567-44).
+NOTES_OPTION_RESULT = (
+    "；2026-11-24：QQQ 期权指数初看跑了一次（Baker 签了读 QQQ 2011 年以后，TRADING-2567-44 记）："
+    "三条纳指 100 期权策略指数都 `not_holds`，照跑前写死的判定，期权叠加的方向收题，不搭 QuantCon"
+    "nect、不买数据；复盘线程评级 B、结论词「拒绝」。next_owner 和 next_step 跟着改。production_e"
+    "ffect=none；broker_action=none"
+)
+NEXT_OWNER = "Claude（研究自动循环第 7 期只记账；下一道 QQQ 题等 11-27 续期卡）"
 NEXT_STEP = (
-    "QQQ 期权叠加初看（owner_decision:TRADING-2567:2026-11-22:option_index_first_l"
-    "ook，TRADING-2567-40 记）：TRADING-2567-41（C 区）加数据入口 `research_d"
-    "ata/option_indices.py` 和规格、窗口登记表两处、打印模块 `research_pr"
-    "obes/option_index_table.py`，Baker 运行一次 approve.ps1 以后发布；电脑上"
-    "下载一次、检查一次、表 check 一次，Baker 签一句以后 run 一次，"
-    "结果和三条判定给 Baker，复盘线程填五列，记录批单独发。研究"
-    "自动循环第 7 期（到 2026-11-27）只记账照旧，前瞻账本每周五照记"
-    "，续期卡那天出。详见 `docs/requirements/TRADING-2567_QQQ_Research_Program_"
-    "1999_Window.md`"
+    "QQQ 期权叠加初看已结束（2026-11-24，owner_decision:TRADING-2567:2026-11-22:option_index_firs"
+    "t_look，TRADING-2567-44 记）：三条纳指 100 期权策略指数（BXN、NQTRI、NQCLRI）加到 XNDX 的最"
+    "大回撤以后，三段年化都低于买入持有，三条都 `not_holds`，期权叠加的方向收题，不搭 QuantConnec"
+    "t、不买数据；预期、五列和评级（B，「拒绝」）在 `research/scorecard.md`，读法在 `research/led"
+    "ger.md` 第 19 条。之后没有开着的 QQQ 题。研究自动循环第 7 期（`research/_loop/charter_p7.md`"
+    "，到 2026-11-27）只记账，前瞻账本每周五照记，下一道题等续期卡。详见 `docs/requirements/TRADI"
+    "NG-2567_QQQ_Research_Program_1999_Window.md`"
 )
 
 
@@ -295,7 +300,12 @@ def test_the_task_card_notes_are_only_appended() -> None:
     card = yaml.safe_load(CARD.read_text(encoding="utf-8"))
     assert card["notes"].count(NOTES_TAIL) == 1 and card["notes"].count(NOTES_CLOSE) == 1
     assert card["notes"].endswith(
-        NOTES_TAIL + NOTES_CLOSE + NOTES_REVIEW + NOTES_P6_20 + NOTES_OPTION_INDEX
+        NOTES_TAIL
+        + NOTES_CLOSE
+        + NOTES_REVIEW
+        + NOTES_P6_20
+        + NOTES_OPTION_INDEX
+        + NOTES_OPTION_RESULT
     )
     assert card["notes"].split(NOTES_TAIL)[0].endswith("broker_action=none")
     assert "qqq_q4_prereg" in card["notes"].split(NOTES_TAIL)[0]
@@ -304,4 +314,4 @@ def test_the_task_card_notes_are_only_appended() -> None:
     register = REGISTER.read_text(encoding="utf-8")
     assert NOTES_TAIL in register and NOTES_CLOSE in register and NEXT_STEP in register
     assert NOTES_REVIEW in register and NOTES_P6_20 in register
-    assert NOTES_OPTION_INDEX in register
+    assert NOTES_OPTION_INDEX in register and NOTES_OPTION_RESULT in register
