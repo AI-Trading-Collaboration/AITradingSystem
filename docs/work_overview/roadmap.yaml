@@ -195,9 +195,9 @@ lines:
             note: Baker 11-01 选现在出续期卡，照推荐签；12 题都按推荐
             cards: [TRADING-2567]
           - text: 第 7 期：只记账照旧，加五件事
-            state: now
+            state: done
             date: "2026-11-27"
-            note: 修财报日历采集并换一次日报包（DATA-031、DATA-032）；前瞻账本加只记账的线；F0001 破位表；QQQ 入场时机族第 0 步；第五次横读和小毛病；去掉每周花费上限
+            note: 财报日历采集修好上线；前瞻账本加 F0001 × 2 和总资产口径；F0001 破位表 QQQ 版印了；入场时机族第 0 步印完，11-19 新目标下 QQQ 择时族收题；第五次横读没做；11-27 签第 8 期时结束
             cards:
               - TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING
               - TRADING-2567
@@ -242,8 +242,18 @@ lines:
             note: Baker 11-22 重开期权方向、选「先做指数初看」，11-24 签读 QQQ 2011 年以后；BXN、NQTRI、NQCLRI 加到和买入持有一样深的最大回撤以后，2011–2026 每年少 9.12、4.02、6.46 点，前后两半也全负，期权腿成本取 0 也全负；加到同回撤以后敞口只有 0.84–0.89 倍，期权那部分本身也是负的，保护只在 2022 年起作用；照跑前写死的读法收题，不搭 QuantConnect、不买数据；复盘线程评 B「拒绝」
             cards: [TRADING-2567]
           - text: 第 7 期续期卡
-            state: todo
+            state: done
             date: "2026-11-27"
+            note: Baker 11-27 先选回撤尺子「三段各自比,最多深 5 点」，再选「照推荐签,四周」
+            cards: [TRADING-2567]
+          - text: 第 8 期：只记账，打闸门线和记账两个包
+            state: now
+            date: "2026-12-25"
+            note: 前瞻账本每周五照记；闸门线（提示）和日报仓位成绩单读 gated 键一个包；Gemini 循环外的探查和三句「记一句就停」随章程记账；回撤最多比 QQQ 同期深 5 点，三段各自比；不开新的回测题，不重算已有的表
+            cards: [TRADING-2565_RESEARCH_TRIAL_LEDGER_MULTIPLE_TESTING]
+          - text: 第 8 期续期卡
+            state: todo
+            date: "2026-12-25"
             cards: [TRADING-2567]
           - text: 下一次慢熊段核对：下一个完整慢熊段
             state: waiting

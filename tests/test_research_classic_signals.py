@@ -321,25 +321,19 @@ NOTES_TAIL = (
     "；2026-10-15：S4e 第一批真实筛选已跑完并发布为记录 S0001 到 S0004（main 71f00bc1）；"
     "S4f（TRADING-2565-11）第二题用的经典趋势信号"
 )
-# The card's current owner and step (TRADING-2565-136), checked against the register.
+# The card's current owner and step (TRADING-2565-141), checked against the register.
 NEXT_OWNER = "Claude（研究自动循环）"
 NEXT_STEP = (
-    "研究自动循环第 7 期（`research/_loop/charter_p7.md`，2026-11-01 起到 2026-11-27；"
-    "owner_decision:TRADING-2565:2026-11-01:research_loop_p7）：只记账照旧，加五件事："
-    "修财报日历采集（DATA-031 切段、DATA-032 全窗口日历，换一次日报包）、"
-    "前瞻账本加只记账的线（F0001 × 2、两条按财报日程降仓、总资产一列）、"
-    "F0001 的破位可不可信表、QQQ 入场时机族的第 0 步（只印次数）、第五次横读和小毛病；"
-    "期中加的财报冲击表在 QQQ 2011 年以后读了一次（TRADING-2565-130、-131，"
-    "owner_decision:TRADING-2565:2026-11-10:earnings_shock_after_2010），"
-    "判 `not_holds`（C 1.83，没到 2；集中在那一天本身），两条按财报日程降仓的账本线留不留交 11-27 续期卡；"
-    "期中加的三段同回撤总账表读了一次（TRADING-2565-134、-136，"
-    "owner_decision:TRADING-2565:2026-11-10:same_drawdown_table），"
-    "挑出加分批买回的结构转变线（同回撤最差一段 QQQ 2011 年以后每年少 6.90 点），"
-    "Baker 选「冻，只记账」，进前瞻账本另走一批；"
-    "去掉每周花费上限，每件事先报估计，花到 1.5 倍告诉 Baker；"
-    "第 6 期（`research/_loop/charter_p6.md`）第 21–25 节都印完，没有候选站住，第 26 节结束；"
+    "研究自动循环第 8 期（`research/_loop/charter_p8.md`，2026-11-27 起到 2026-12-25；"
+    "owner_decision:TRADING-2565:2026-11-27:research_loop_p8）：只记账："
     "前瞻记录台每周五照记（`weekly --daily-root`，提交前跑 `-k committed`），"
-    "F0001 和 F0008 到数时核；开正式题、读验证窗口、新供应商第一次付款要叫 Baker"
+    "冻结的阶梯线（F0010）11-23 起记；打两个记账的包：前瞻账本加「闸门线（提示）」、"
+    "日报仓位成绩单改读 gated 键（取下一个空号 F0011，从 as_of 2026-11-20 的快照补起），"
+    "Gemini 循环外的探查和三句「记一句就停」的记账（TRADING-2565-141，随章程发布）；"
+    "回撤尺子改成最多比 QQQ 同期深 5 个百分点，回测三段各自比、前瞻账本从各线起点比；"
+    "不开新的回测题，不读窗口，不重算已有的表；"
+    "第 7 期（`research/_loop/charter_p7.md`）第 14 节结束；F0001 和 F0008 到数时核；"
+    "开正式题、读验证窗口、新供应商第一次付款要叫 Baker"
 )
 
 
