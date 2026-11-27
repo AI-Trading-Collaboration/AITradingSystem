@@ -1,0 +1,3331 @@
+{
+ "attribution": {
+  "capped_days": 31,
+  "changes": [
+   {
+    "day": "2026-06-01",
+    "label": "valuation",
+    "reasons": {
+     "valuation": "估值分位"
+    }
+   },
+   {
+    "day": "2026-06-03",
+    "label": "无额外闸门",
+    "reasons": {
+     "score_model": "m"
+    }
+   },
+   {
+    "day": "2026-06-04",
+    "label": "valuation",
+    "reasons": {
+     "valuation": "估值分位"
+    }
+   },
+   {
+    "day": "2026-06-08",
+    "label": "无额外闸门",
+    "reasons": {
+     "score_model": "m"
+    }
+   },
+   {
+    "day": "2026-06-09",
+    "label": "valuation",
+    "reasons": {
+     "valuation": "估值分位"
+    }
+   },
+   {
+    "day": "2026-06-10",
+    "label": "无额外闸门",
+    "reasons": {
+     "score_model": "m"
+    }
+   },
+   {
+    "day": "2026-06-12",
+    "label": "valuation",
+    "reasons": {
+     "valuation": "估值分位"
+    }
+   },
+   {
+    "day": "2026-06-16",
+    "label": "无额外闸门",
+    "reasons": {
+     "score_model": "m"
+    }
+   },
+   {
+    "day": "2026-06-18",
+    "label": "valuation",
+    "reasons": {
+     "valuation": "估值分位"
+    }
+   },
+   {
+    "day": "2026-06-22",
+    "label": "无额外闸门",
+    "reasons": {
+     "score_model": "m"
+    }
+   },
+   {
+    "day": "2026-06-23",
+    "label": "valuation",
+    "reasons": {
+     "valuation": "估值分位"
+    }
+   },
+   {
+    "day": "2026-06-24",
+    "label": "无额外闸门",
+    "reasons": {
+     "score_model": "m"
+    }
+   },
+   {
+    "day": "2026-06-26",
+    "label": "valuation",
+    "reasons": {
+     "valuation": "估值分位"
+    }
+   },
+   {
+    "day": "2026-06-30",
+    "label": "无额外闸门",
+    "reasons": {
+     "score_model": "m"
+    }
+   },
+   {
+    "day": "2026-07-01",
+    "label": "valuation",
+    "reasons": {
+     "valuation": "估值分位"
+    }
+   },
+   {
+    "day": "2026-07-06",
+    "label": "无额外闸门",
+    "reasons": {
+     "score_model": "m"
+    }
+   },
+   {
+    "day": "2026-07-07",
+    "label": "valuation",
+    "reasons": {
+     "valuation": "估值分位"
+    }
+   },
+   {
+    "day": "2026-07-08",
+    "label": "无额外闸门",
+    "reasons": {
+     "score_model": "m"
+    }
+   },
+   {
+    "day": "2026-07-10",
+    "label": "valuation",
+    "reasons": {
+     "valuation": "估值分位"
+    }
+   },
+   {
+    "day": "2026-07-17",
+    "label": "无额外闸门",
+    "reasons": {
+     "score_model": "m"
+    }
+   },
+   {
+    "day": "2026-07-20",
+    "label": "valuation",
+    "reasons": {
+     "valuation": "估值分位"
+    }
+   },
+   {
+    "day": "2026-07-21",
+    "label": "无额外闸门",
+    "reasons": {
+     "score_model": "m"
+    }
+   },
+   {
+    "day": "2026-07-23",
+    "label": "valuation",
+    "reasons": {
+     "valuation": "估值分位"
+    }
+   },
+   {
+    "day": "2026-07-27",
+    "label": "无额外闸门",
+    "reasons": {
+     "score_model": "m"
+    }
+   },
+   {
+    "day": "2026-07-28",
+    "label": "valuation",
+    "reasons": {
+     "valuation": "估值分位"
+    }
+   },
+   {
+    "day": "2026-07-30",
+    "label": "无额外闸门",
+    "reasons": {
+     "score_model": "m"
+    }
+   },
+   {
+    "day": "2026-07-31",
+    "label": "valuation",
+    "reasons": {
+     "valuation": "估值分位"
+    }
+   },
+   {
+    "day": "2026-08-03",
+    "label": "无额外闸门",
+    "reasons": {
+     "score_model": "m"
+    }
+   },
+   {
+    "day": "2026-08-05",
+    "label": "valuation",
+    "reasons": {
+     "valuation": "估值分位"
+    }
+   },
+   {
+    "day": "2026-08-07",
+    "label": "无额外闸门",
+    "reasons": {
+     "score_model": "m"
+    }
+   },
+   {
+    "day": "2026-08-10",
+    "label": "valuation",
+    "reasons": {
+     "valuation": "估值分位"
+    }
+   },
+   {
+    "day": "2026-08-12",
+    "label": "无额外闸门",
+    "reasons": {
+     "score_model": "m"
+    }
+   },
+   {
+    "day": "2026-08-13",
+    "label": "valuation",
+    "reasons": {
+     "valuation": "估值分位"
+    }
+   },
+   {
+    "day": "2026-08-14",
+    "label": "无额外闸门",
+    "reasons": {
+     "score_model": "m"
+    }
+   },
+   {
+    "day": "2026-08-18",
+    "label": "valuation",
+    "reasons": {
+     "valuation": "估值分位"
+    }
+   },
+   {
+    "day": "2026-08-20",
+    "label": "无额外闸门",
+    "reasons": {
+     "score_model": "m"
+    }
+   },
+   {
+    "day": "2026-08-21",
+    "label": "valuation",
+    "reasons": {
+     "valuation": "估值分位"
+    }
+   },
+   {
+    "day": "2026-08-25",
+    "label": "无额外闸门",
+    "reasons": {
+     "score_model": "m"
+    }
+   },
+   {
+    "day": "2026-08-26",
+    "label": "valuation",
+    "reasons": {
+     "valuation": "估值分位"
+    }
+   },
+   {
+    "day": "2026-08-27",
+    "label": "无额外闸门",
+    "reasons": {
+     "score_model": "m"
+    }
+   }
+  ],
+  "components": {
+   "first": "2026-06-01",
+   "first_table": [
+    {
+     "component": "trend",
+     "product": 1375.0,
+     "score": 55.0,
+     "weight": 25.0
+    },
+    {
+     "component": "valuation",
+     "product": 500.0,
+     "score": 50.0,
+     "weight": 10.0
+    }
+   ],
+   "last": "2026-08-28",
+   "last_table": [
+    {
+     "component": "trend",
+     "product": 1375.0,
+     "score": 55.0,
+     "weight": 25.0
+    },
+    {
+     "component": "valuation",
+     "product": 500.0,
+     "score": 50.0,
+     "weight": 10.0
+    }
+   ],
+   "moves": [
+    {
+     "change": 0.0,
+     "component": "trend"
+    },
+    {
+     "change": 0.0,
+     "component": "valuation"
+    }
+   ]
+  },
+  "confidence": [
+   {
+    "binding": false,
+    "day": "2026-06-01",
+    "level": "medium",
+    "reasons": [
+     "数据新鲜"
+    ],
+    "score": 70.0
+   },
+   {
+    "binding": false,
+    "day": "2026-08-28",
+    "level": "medium",
+    "reasons": [
+     "数据新鲜"
+    ],
+    "score": 70.0
+   }
+  ],
+  "gate_days": {
+   "valuation": 31,
+   "无额外闸门": 27
+  },
+  "model_days": 58,
+  "rows": [
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 50.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "valuation": 0.4
+    },
+    "day": "2026-06-01",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.4
+    ],
+    "label": "valuation",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.4,
+     0.6
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 55.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 50.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "valuation": 0.4
+    },
+    "day": "2026-06-02",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.4
+    ],
+    "label": "valuation",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.4,
+     0.6
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 55.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 35.0,
+    "budget": [
+     0.5,
+     0.7
+    ],
+    "caps": {
+     "score_model": 0.4
+    },
+    "day": "2026-06-03",
+    "distance": 5.0,
+    "final": [
+     0.2,
+     0.4
+    ],
+    "label": "无额外闸门",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.2,
+     0.4
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 40.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 35.0,
+    "budget": [
+     0.5,
+     0.7
+    ],
+    "caps": {
+     "valuation": 0.3
+    },
+    "day": "2026-06-04",
+    "distance": 5.0,
+    "final": [
+     0.2,
+     0.3
+    ],
+    "label": "valuation",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.2,
+     0.4
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 40.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 65.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "valuation": 0.7
+    },
+    "day": "2026-06-05",
+    "distance": 5.0,
+    "final": [
+     0.6,
+     0.7
+    ],
+    "label": "valuation",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.6,
+     0.8
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 70.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 65.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "score_model": 0.8
+    },
+    "day": "2026-06-08",
+    "distance": 5.0,
+    "final": [
+     0.6,
+     0.8
+    ],
+    "label": "无额外闸门",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.6,
+     0.8
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 70.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 65.0,
+    "budget": [
+     0.35,
+     0.55
+    ],
+    "caps": {
+     "valuation": 0.4
+    },
+    "day": "2026-06-09",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.4
+    ],
+    "label": "valuation",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.6,
+     0.8
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 70.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 35.0,
+    "budget": [
+     0.35,
+     0.55
+    ],
+    "caps": {
+     "score_model": 0.2
+    },
+    "day": "2026-06-10",
+    "distance": -15.0,
+    "final": [
+     0.0,
+     0.2
+    ],
+    "label": "无额外闸门",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.0,
+     0.2
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 20.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 50.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "score_model": 0.6
+    },
+    "day": "2026-06-11",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.6
+    ],
+    "label": "无额外闸门",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.4,
+     0.6
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 55.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 50.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "valuation": 0.4
+    },
+    "day": "2026-06-12",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.4
+    ],
+    "label": "valuation",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.4,
+     0.6
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 55.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 50.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "valuation": 0.4
+    },
+    "day": "2026-06-15",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.4
+    ],
+    "label": "valuation",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.4,
+     0.6
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 55.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 35.0,
+    "budget": [
+     0.5,
+     0.7
+    ],
+    "caps": {
+     "score_model": 0.4
+    },
+    "day": "2026-06-16",
+    "distance": 5.0,
+    "final": [
+     0.2,
+     0.4
+    ],
+    "label": "无额外闸门",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.2,
+     0.4
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 40.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 65.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "valuation": 0.7
+    },
+    "day": "2026-06-18",
+    "distance": 5.0,
+    "final": [
+     0.6,
+     0.7
+    ],
+    "label": "valuation",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.6,
+     0.8
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 70.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 65.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "score_model": 0.8
+    },
+    "day": "2026-06-22",
+    "distance": 5.0,
+    "final": [
+     0.6,
+     0.8
+    ],
+    "label": "无额外闸门",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.6,
+     0.8
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 70.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 65.0,
+    "budget": [
+     0.35,
+     0.55
+    ],
+    "caps": {
+     "valuation": 0.4
+    },
+    "day": "2026-06-23",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.4
+    ],
+    "label": "valuation",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.6,
+     0.8
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 70.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 35.0,
+    "budget": [
+     0.35,
+     0.55
+    ],
+    "caps": {
+     "score_model": 0.2
+    },
+    "day": "2026-06-24",
+    "distance": -15.0,
+    "final": [
+     0.0,
+     0.2
+    ],
+    "label": "无额外闸门",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.0,
+     0.2
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 20.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 50.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "score_model": 0.6
+    },
+    "day": "2026-06-25",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.6
+    ],
+    "label": "无额外闸门",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.4,
+     0.6
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 55.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 50.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "valuation": 0.4
+    },
+    "day": "2026-06-26",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.4
+    ],
+    "label": "valuation",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.4,
+     0.6
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 55.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 50.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "valuation": 0.4
+    },
+    "day": "2026-06-29",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.4
+    ],
+    "label": "valuation",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.4,
+     0.6
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 55.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 35.0,
+    "budget": [
+     0.5,
+     0.7
+    ],
+    "caps": {
+     "score_model": 0.4
+    },
+    "day": "2026-06-30",
+    "distance": 5.0,
+    "final": [
+     0.2,
+     0.4
+    ],
+    "label": "无额外闸门",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.2,
+     0.4
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 40.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 35.0,
+    "budget": [
+     0.5,
+     0.7
+    ],
+    "caps": {
+     "valuation": 0.3
+    },
+    "day": "2026-07-01",
+    "distance": 5.0,
+    "final": [
+     0.2,
+     0.3
+    ],
+    "label": "valuation",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.2,
+     0.4
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 40.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 65.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "valuation": 0.7
+    },
+    "day": "2026-07-02",
+    "distance": 5.0,
+    "final": [
+     0.6,
+     0.7
+    ],
+    "label": "valuation",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.6,
+     0.8
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 70.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 65.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "score_model": 0.8
+    },
+    "day": "2026-07-06",
+    "distance": 5.0,
+    "final": [
+     0.6,
+     0.8
+    ],
+    "label": "无额外闸门",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.6,
+     0.8
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 70.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 65.0,
+    "budget": [
+     0.35,
+     0.55
+    ],
+    "caps": {
+     "valuation": 0.4
+    },
+    "day": "2026-07-07",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.4
+    ],
+    "label": "valuation",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.6,
+     0.8
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 70.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 35.0,
+    "budget": [
+     0.35,
+     0.55
+    ],
+    "caps": {
+     "score_model": 0.2
+    },
+    "day": "2026-07-08",
+    "distance": -15.0,
+    "final": [
+     0.0,
+     0.2
+    ],
+    "label": "无额外闸门",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.0,
+     0.2
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 20.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 50.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "score_model": 0.6
+    },
+    "day": "2026-07-09",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.6
+    ],
+    "label": "无额外闸门",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.4,
+     0.6
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 55.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 50.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "valuation": 0.4
+    },
+    "day": "2026-07-10",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.4
+    ],
+    "label": "valuation",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.4,
+     0.6
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 55.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 65.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "score_model": 0.8
+    },
+    "day": "2026-07-17",
+    "distance": 5.0,
+    "final": [
+     0.6,
+     0.8
+    ],
+    "label": "无额外闸门",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.6,
+     0.8
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 70.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 65.0,
+    "budget": [
+     0.35,
+     0.55
+    ],
+    "caps": {
+     "valuation": 0.4
+    },
+    "day": "2026-07-20",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.4
+    ],
+    "label": "valuation",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.6,
+     0.8
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 70.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 35.0,
+    "budget": [
+     0.35,
+     0.55
+    ],
+    "caps": {
+     "score_model": 0.2
+    },
+    "day": "2026-07-21",
+    "distance": -15.0,
+    "final": [
+     0.0,
+     0.2
+    ],
+    "label": "无额外闸门",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.0,
+     0.2
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 20.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 50.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "score_model": 0.6
+    },
+    "day": "2026-07-22",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.6
+    ],
+    "label": "无额外闸门",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.4,
+     0.6
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 55.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 50.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "valuation": 0.4
+    },
+    "day": "2026-07-23",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.4
+    ],
+    "label": "valuation",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.4,
+     0.6
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 55.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 50.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "valuation": 0.4
+    },
+    "day": "2026-07-24",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.4
+    ],
+    "label": "valuation",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.4,
+     0.6
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 55.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 35.0,
+    "budget": [
+     0.5,
+     0.7
+    ],
+    "caps": {
+     "score_model": 0.4
+    },
+    "day": "2026-07-27",
+    "distance": 5.0,
+    "final": [
+     0.2,
+     0.4
+    ],
+    "label": "无额外闸门",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.2,
+     0.4
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 40.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 35.0,
+    "budget": [
+     0.5,
+     0.7
+    ],
+    "caps": {
+     "valuation": 0.3
+    },
+    "day": "2026-07-28",
+    "distance": 5.0,
+    "final": [
+     0.2,
+     0.3
+    ],
+    "label": "valuation",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.2,
+     0.4
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 40.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 65.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "valuation": 0.7
+    },
+    "day": "2026-07-29",
+    "distance": 5.0,
+    "final": [
+     0.6,
+     0.7
+    ],
+    "label": "valuation",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.6,
+     0.8
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 70.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 65.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "score_model": 0.8
+    },
+    "day": "2026-07-30",
+    "distance": 5.0,
+    "final": [
+     0.6,
+     0.8
+    ],
+    "label": "无额外闸门",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.6,
+     0.8
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 70.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 65.0,
+    "budget": [
+     0.35,
+     0.55
+    ],
+    "caps": {
+     "valuation": 0.4
+    },
+    "day": "2026-07-31",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.4
+    ],
+    "label": "valuation",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.6,
+     0.8
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 70.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 35.0,
+    "budget": [
+     0.35,
+     0.55
+    ],
+    "caps": {
+     "score_model": 0.2
+    },
+    "day": "2026-08-03",
+    "distance": -15.0,
+    "final": [
+     0.0,
+     0.2
+    ],
+    "label": "无额外闸门",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.0,
+     0.2
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 20.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 50.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "score_model": 0.6
+    },
+    "day": "2026-08-04",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.6
+    ],
+    "label": "无额外闸门",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.4,
+     0.6
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 55.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 50.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "valuation": 0.4
+    },
+    "day": "2026-08-05",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.4
+    ],
+    "label": "valuation",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.4,
+     0.6
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 55.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 50.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "valuation": 0.4
+    },
+    "day": "2026-08-06",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.4
+    ],
+    "label": "valuation",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.4,
+     0.6
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 55.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 35.0,
+    "budget": [
+     0.5,
+     0.7
+    ],
+    "caps": {
+     "score_model": 0.4
+    },
+    "day": "2026-08-07",
+    "distance": 5.0,
+    "final": [
+     0.2,
+     0.4
+    ],
+    "label": "无额外闸门",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.2,
+     0.4
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 40.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 35.0,
+    "budget": [
+     0.5,
+     0.7
+    ],
+    "caps": {
+     "valuation": 0.3
+    },
+    "day": "2026-08-10",
+    "distance": 5.0,
+    "final": [
+     0.2,
+     0.3
+    ],
+    "label": "valuation",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.2,
+     0.4
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 40.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 65.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "valuation": 0.7
+    },
+    "day": "2026-08-11",
+    "distance": 5.0,
+    "final": [
+     0.6,
+     0.7
+    ],
+    "label": "valuation",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.6,
+     0.8
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 70.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 65.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "score_model": 0.8
+    },
+    "day": "2026-08-12",
+    "distance": 5.0,
+    "final": [
+     0.6,
+     0.8
+    ],
+    "label": "无额外闸门",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.6,
+     0.8
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 70.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 65.0,
+    "budget": [
+     0.35,
+     0.55
+    ],
+    "caps": {
+     "valuation": 0.4
+    },
+    "day": "2026-08-13",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.4
+    ],
+    "label": "valuation",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.6,
+     0.8
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 70.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 35.0,
+    "budget": [
+     0.35,
+     0.55
+    ],
+    "caps": {
+     "score_model": 0.2
+    },
+    "day": "2026-08-14",
+    "distance": -15.0,
+    "final": [
+     0.0,
+     0.2
+    ],
+    "label": "无额外闸门",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.0,
+     0.2
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 20.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 50.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "score_model": 0.6
+    },
+    "day": "2026-08-17",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.6
+    ],
+    "label": "无额外闸门",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.4,
+     0.6
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 55.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 50.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "valuation": 0.4
+    },
+    "day": "2026-08-18",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.4
+    ],
+    "label": "valuation",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.4,
+     0.6
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 55.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 50.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "valuation": 0.4
+    },
+    "day": "2026-08-19",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.4
+    ],
+    "label": "valuation",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.4,
+     0.6
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 55.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 35.0,
+    "budget": [
+     0.5,
+     0.7
+    ],
+    "caps": {
+     "score_model": 0.4
+    },
+    "day": "2026-08-20",
+    "distance": 5.0,
+    "final": [
+     0.2,
+     0.4
+    ],
+    "label": "无额外闸门",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.2,
+     0.4
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 40.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 35.0,
+    "budget": [
+     0.5,
+     0.7
+    ],
+    "caps": {
+     "valuation": 0.3
+    },
+    "day": "2026-08-21",
+    "distance": 5.0,
+    "final": [
+     0.2,
+     0.3
+    ],
+    "label": "valuation",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.2,
+     0.4
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 40.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 65.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "valuation": 0.7
+    },
+    "day": "2026-08-24",
+    "distance": 5.0,
+    "final": [
+     0.6,
+     0.7
+    ],
+    "label": "valuation",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.6,
+     0.8
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 70.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 65.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "score_model": 0.8
+    },
+    "day": "2026-08-25",
+    "distance": 5.0,
+    "final": [
+     0.6,
+     0.8
+    ],
+    "label": "无额外闸门",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.6,
+     0.8
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 70.0
+   },
+   {
+    "binding": [
+     "valuation"
+    ],
+    "boundary": 65.0,
+    "budget": [
+     0.35,
+     0.55
+    ],
+    "caps": {
+     "valuation": 0.4
+    },
+    "day": "2026-08-26",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.4
+    ],
+    "label": "valuation",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.6,
+     0.8
+    ],
+    "reasons": {
+     "valuation": "估值分位"
+    },
+    "root": 0,
+    "score": 70.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 35.0,
+    "budget": [
+     0.35,
+     0.55
+    ],
+    "caps": {
+     "score_model": 0.2
+    },
+    "day": "2026-08-27",
+    "distance": -15.0,
+    "final": [
+     0.0,
+     0.2
+    ],
+    "label": "无额外闸门",
+    "macro_level": "stress",
+    "mapping": "符合",
+    "model": [
+     0.0,
+     0.2
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 20.0
+   },
+   {
+    "binding": [
+     "score_model"
+    ],
+    "boundary": 50.0,
+    "budget": [
+     0.6,
+     0.8
+    ],
+    "caps": {
+     "score_model": 0.6
+    },
+    "day": "2026-08-28",
+    "distance": 5.0,
+    "final": [
+     0.4,
+     0.6
+    ],
+    "label": "无额外闸门",
+    "macro_level": "normal",
+    "mapping": "符合",
+    "model": [
+     0.4,
+     0.6
+    ],
+    "reasons": {
+     "score_model": "m"
+    },
+    "root": 0,
+    "score": 55.0
+   }
+  ],
+  "versions": [
+   {
+    "added": [
+     "r1@1"
+    ],
+    "day": "2026-06-01",
+    "gates": [
+     "score_model",
+     "valuation"
+    ],
+    "removed": [],
+    "rules": [
+     "r1@1"
+    ]
+   }
+  ]
+ },
+ "code": {
+  "code_modified": false,
+  "commit": "golden"
+ },
+ "config": {
+  "boundaries": [
+   35.0,
+   50.0,
+   65.0,
+   80.0
+  ],
+  "file": "<SCORING_RULES>",
+  "step": 0.05
+ },
+ "events": {
+  "down": {
+   "after_gap": 0,
+   "base": 0.8043478260869565,
+   "base_days": 46,
+   "counted": 22,
+   "events": 31,
+   "median": {
+    "20": 0.00883172743030114,
+    "5": 0.0003715630605303222
+   },
+   "non_overlapping": 3,
+   "not_full": 9,
+   "positive": 15,
+   "share": 0.6818181818181818
+  },
+  "rows": [
+   {
+    "after_gap": false,
+    "day": "2026-06-05",
+    "from": 0.4,
+    "index": 4,
+    "kind": "down",
+    "next_20": 0.008373530683780883,
+    "next_5": -0.015037485713932819,
+    "snapshots": [
+     "2026-06-02",
+     "2026-06-03"
+    ],
+    "to": 0.30000000000000004
+   },
+   {
+    "after_gap": false,
+    "day": "2026-06-08",
+    "from": 0.30000000000000004,
+    "index": 5,
+    "kind": "down",
+    "next_20": 0.023611897558838635,
+    "next_5": -0.004122124382538894,
+    "snapshots": [
+     "2026-06-03",
+     "2026-06-04"
+    ],
+    "to": 0.25
+   },
+   {
+    "after_gap": false,
+    "day": "2026-06-09",
+    "from": 0.25,
+    "index": 6,
+    "kind": "up",
+    "next_20": 0.009289924177653397,
+    "next_5": 0.0068259633968768,
+    "snapshots": [
+     "2026-06-04",
+     "2026-06-05"
+    ],
+    "to": 0.6499999999999999
+   },
+   {
+    "after_gap": false,
+    "day": "2026-06-10",
+    "from": 0.6499999999999999,
+    "index": 7,
+    "kind": "up",
+    "next_20": -0.0047196524028666476,
+    "next_5": -0.011142376224298034,
+    "snapshots": [
+     "2026-06-05",
+     "2026-06-08"
+    ],
+    "to": 0.7
+   },
+   {
+    "after_gap": false,
+    "day": "2026-06-11",
+    "from": 0.7,
+    "index": 8,
+    "kind": "down",
+    "next_20": 0.01039699929231963,
+    "next_5": -0.00012836866815124637,
+    "snapshots": [
+     "2026-06-08",
+     "2026-06-09"
+    ],
+    "to": 0.4
+   },
+   {
+    "after_gap": false,
+    "day": "2026-06-12",
+    "from": 0.4,
+    "index": 9,
+    "kind": "down",
+    "next_20": 0.025619935200112076,
+    "next_5": 0.010918826937332149,
+    "snapshots": [
+     "2026-06-09",
+     "2026-06-10"
+    ],
+    "to": 0.1
+   },
+   {
+    "after_gap": false,
+    "day": "2026-06-15",
+    "from": 0.1,
+    "index": 10,
+    "kind": "up",
+    "next_20": 0.011312761930446058,
+    "next_5": 0.021999045247100613,
+    "snapshots": [
+     "2026-06-10",
+     "2026-06-11"
+    ],
+    "to": 0.5
+   },
+   {
+    "after_gap": false,
+    "day": "2026-06-16",
+    "from": 0.5,
+    "index": 11,
+    "kind": "down",
+    "next_20": -0.002683262849100365,
+    "next_5": 0.0038140088549551976,
+    "snapshots": [
+     "2026-06-11",
+     "2026-06-12"
+    ],
+    "to": 0.4
+   },
+   {
+    "after_gap": false,
+    "day": "2026-06-18",
+    "from": 0.4,
+    "index": 13,
+    "kind": "down",
+    "next_20": 0.02762601151253774,
+    "next_5": 0.02614096271925148,
+    "snapshots": [
+     "2026-06-15",
+     "2026-06-16"
+    ],
+    "to": 0.30000000000000004
+   },
+   {
+    "after_gap": false,
+    "day": "2026-06-23",
+    "from": 0.30000000000000004,
+    "index": 15,
+    "kind": "up",
+    "next_20": -0.0006489477989028991,
+    "next_5": -0.010087679452034704,
+    "snapshots": [
+     "2026-06-16",
+     "2026-06-18"
+    ],
+    "to": 0.6499999999999999
+   },
+   {
+    "after_gap": false,
+    "day": "2026-06-24",
+    "from": 0.6499999999999999,
+    "index": 16,
+    "kind": "up",
+    "next_20": 0.014437873641220955,
+    "next_5": 0.0008714947891192981,
+    "snapshots": [
+     "2026-06-18",
+     "2026-06-22"
+    ],
+    "to": 0.7
+   },
+   {
+    "after_gap": false,
+    "day": "2026-06-25",
+    "from": 0.7,
+    "index": 17,
+    "kind": "down",
+    "next_20": 0.0002584305191000169,
+    "next_5": 0.011863494033453437,
+    "snapshots": [
+     "2026-06-22",
+     "2026-06-23"
+    ],
+    "to": 0.4
+   },
+   {
+    "after_gap": false,
+    "day": "2026-06-26",
+    "from": 0.4,
+    "index": 18,
+    "kind": "down",
+    "next_20": -0.013612031076568942,
+    "next_5": -0.006176861447275139,
+    "snapshots": [
+     "2026-06-23",
+     "2026-06-24"
+    ],
+    "to": 0.1
+   },
+   {
+    "after_gap": false,
+    "day": "2026-06-29",
+    "from": 0.1,
+    "index": 19,
+    "kind": "up",
+    "next_20": 0.0013544058379453272,
+    "next_5": 0.004881255611739688,
+    "snapshots": [
+     "2026-06-24",
+     "2026-06-25"
+    ],
+    "to": 0.5
+   },
+   {
+    "after_gap": false,
+    "day": "2026-06-30",
+    "from": 0.5,
+    "index": 20,
+    "kind": "down",
+    "next_20": 0.016425965227509165,
+    "next_5": 0.015972660199167432,
+    "snapshots": [
+     "2026-06-25",
+     "2026-06-26"
+    ],
+    "to": 0.4
+   },
+   {
+    "after_gap": false,
+    "day": "2026-07-02",
+    "from": 0.4,
+    "index": 22,
+    "kind": "down",
+    "next_20": -0.011595897496002538,
+    "next_5": -0.019967472194942437,
+    "snapshots": [
+     "2026-06-29",
+     "2026-06-30"
+    ],
+    "to": 0.30000000000000004
+   },
+   {
+    "after_gap": false,
+    "day": "2026-07-06",
+    "from": 0.30000000000000004,
+    "index": 23,
+    "kind": "down",
+    "next_20": 0.0033557579477321298,
+    "next_5": -0.00909579227702817,
+    "snapshots": [
+     "2026-06-30",
+     "2026-07-01"
+    ],
+    "to": 0.25
+   },
+   {
+    "after_gap": false,
+    "day": "2026-07-07",
+    "from": 0.25,
+    "index": 24,
+    "kind": "up",
+    "next_20": 0.018412116860317962,
+    "next_5": 0.0018085157308700417,
+    "snapshots": [
+     "2026-07-01",
+     "2026-07-02"
+    ],
+    "to": 0.6499999999999999
+   },
+   {
+    "after_gap": false,
+    "day": "2026-07-08",
+    "from": 0.6499999999999999,
+    "index": 25,
+    "kind": "up",
+    "next_20": 0.004261888955918058,
+    "next_5": -0.016088023851610234,
+    "snapshots": [
+     "2026-07-02",
+     "2026-07-06"
+    ],
+    "to": 0.7
+   },
+   {
+    "after_gap": false,
+    "day": "2026-07-09",
+    "from": 0.7,
+    "index": 26,
+    "kind": "down",
+    "next_20": 0.019530415546308078,
+    "next_5": -0.0051179937103582596,
+    "snapshots": [
+     "2026-07-06",
+     "2026-07-07"
+    ],
+    "to": 0.4
+   },
+   {
+    "after_gap": false,
+    "day": "2026-07-10",
+    "from": 0.4,
+    "index": 27,
+    "kind": "down",
+    "next_20": 0.03490640210785667,
+    "next_5": 0.005885125201542163,
+    "snapshots": [
+     "2026-07-07",
+     "2026-07-08"
+    ],
+    "to": 0.1
+   },
+   {
+    "after_gap": false,
+    "day": "2026-07-13",
+    "from": 0.1,
+    "index": 28,
+    "kind": "up",
+    "next_20": 0.020455285381206778,
+    "next_5": 0.016921167867420372,
+    "snapshots": [
+     "2026-07-08",
+     "2026-07-09"
+    ],
+    "to": 0.5
+   },
+   {
+    "after_gap": false,
+    "day": "2026-07-14",
+    "from": 0.5,
+    "index": 29,
+    "kind": "down",
+    "next_20": 0.006318758569925587,
+    "next_5": -0.0011914197253438674,
+    "snapshots": [
+     "2026-07-09",
+     "2026-07-10"
+    ],
+    "to": 0.4
+   },
+   {
+    "after_gap": true,
+    "day": "2026-07-21",
+    "from": 0.4,
+    "index": 34,
+    "kind": "up",
+    "next_20": 0.023611897558350803,
+    "next_5": -0.004122124383054815,
+    "snapshots": [
+     "2026-07-10",
+     "2026-07-17"
+    ],
+    "to": 0.7
+   },
+   {
+    "after_gap": false,
+    "day": "2026-07-22",
+    "from": 0.7,
+    "index": 35,
+    "kind": "down",
+    "next_20": 0.009289924176821396,
+    "next_5": 0.0068259633963934085,
+    "snapshots": [
+     "2026-07-17",
+     "2026-07-20"
+    ],
+    "to": 0.4
+   },
+   {
+    "after_gap": false,
+    "day": "2026-07-23",
+    "from": 0.4,
+    "index": 36,
+    "kind": "down",
+    "next_20": -0.004719652403070929,
+    "next_5": -0.011142376224072326,
+    "snapshots": [
+     "2026-07-20",
+     "2026-07-21"
+    ],
+    "to": 0.1
+   },
+   {
+    "after_gap": false,
+    "day": "2026-07-24",
+    "from": 0.1,
+    "index": 37,
+    "kind": "up",
+    "next_20": 0.010396999292226372,
+    "next_5": -0.00012836866802334868,
+    "snapshots": [
+     "2026-07-21",
+     "2026-07-22"
+    ],
+    "to": 0.5
+   },
+   {
+    "after_gap": false,
+    "day": "2026-07-27",
+    "from": 0.5,
+    "index": 38,
+    "kind": "down",
+    "next_20": 0.025619935199893362,
+    "next_5": 0.010918826936714865,
+    "snapshots": [
+     "2026-07-22",
+     "2026-07-23"
+    ],
+    "to": 0.4
+   },
+   {
+    "after_gap": false,
+    "day": "2026-07-29",
+    "from": 0.4,
+    "index": 40,
+    "kind": "down",
+    "next_20": -0.0026832628486203047,
+    "next_5": 0.003814008854848616,
+    "snapshots": [
+     "2026-07-24",
+     "2026-07-27"
+    ],
+    "to": 0.30000000000000004
+   },
+   {
+    "after_gap": false,
+    "day": "2026-07-30",
+    "from": 0.30000000000000004,
+    "index": 41,
+    "kind": "down",
+    "next_20": 0.012418444255256844,
+    "next_5": 0.014960742246211689,
+    "snapshots": [
+     "2026-07-27",
+     "2026-07-28"
+    ],
+    "to": 0.25
+   },
+   {
+    "after_gap": false,
+    "day": "2026-07-31",
+    "from": 0.25,
+    "index": 42,
+    "kind": "up",
+    "next_20": 0.027626011513163684,
+    "next_5": 0.02614096271954436,
+    "snapshots": [
+     "2026-07-28",
+     "2026-07-29"
+    ],
+    "to": 0.6499999999999999
+   },
+   {
+    "after_gap": false,
+    "day": "2026-08-03",
+    "from": 0.6499999999999999,
+    "index": 43,
+    "kind": "up",
+    "next_20": 0.013333577416642983,
+    "next_5": 0.007791531635440663,
+    "snapshots": [
+     "2026-07-29",
+     "2026-07-30"
+    ],
+    "to": 0.7
+   },
+   {
+    "after_gap": false,
+    "day": "2026-08-04",
+    "from": 0.7,
+    "index": 44,
+    "kind": "down",
+    "next_20": -0.0006489477992056569,
+    "next_5": -0.010087679452323806,
+    "snapshots": [
+     "2026-07-30",
+     "2026-07-31"
+    ],
+    "to": 0.4
+   },
+   {
+    "after_gap": false,
+    "day": "2026-08-05",
+    "from": 0.4,
+    "index": 45,
+    "kind": "down",
+    "next_20": 0.014437873641843124,
+    "next_5": 0.0008714947892118907,
+    "snapshots": [
+     "2026-07-31",
+     "2026-08-03"
+    ],
+    "to": 0.1
+   },
+   {
+    "after_gap": false,
+    "day": "2026-08-06",
+    "from": 0.1,
+    "index": 46,
+    "kind": "up",
+    "next_20": 0.0002584305197501635,
+    "next_5": 0.011863494033447441,
+    "snapshots": [
+     "2026-08-03",
+     "2026-08-04"
+    ],
+    "to": 0.5
+   },
+   {
+    "after_gap": false,
+    "day": "2026-08-07",
+    "from": 0.5,
+    "index": 47,
+    "kind": "down",
+    "next_20": -0.013612031076524977,
+    "next_5": -0.006176861447252602,
+    "snapshots": [
+     "2026-08-04",
+     "2026-08-05"
+    ],
+    "to": 0.4
+   },
+   {
+    "after_gap": false,
+    "day": "2026-08-11",
+    "from": 0.4,
+    "index": 49,
+    "kind": "down",
+    "next_20": null,
+    "next_5": 0.01597266019906085,
+    "snapshots": [
+     "2026-08-06",
+     "2026-08-07"
+    ],
+    "to": 0.30000000000000004
+   },
+   {
+    "after_gap": false,
+    "day": "2026-08-12",
+    "from": 0.30000000000000004,
+    "index": 50,
+    "kind": "down",
+    "next_20": null,
+    "next_5": -0.0022311103400871612,
+    "snapshots": [
+     "2026-08-07",
+     "2026-08-10"
+    ],
+    "to": 0.25
+   },
+   {
+    "after_gap": false,
+    "day": "2026-08-13",
+    "from": 0.25,
+    "index": 51,
+    "kind": "up",
+    "next_20": null,
+    "next_5": -0.019967472194949654,
+    "snapshots": [
+     "2026-08-10",
+     "2026-08-11"
+    ],
+    "to": 0.6499999999999999
+   },
+   {
+    "after_gap": false,
+    "day": "2026-08-14",
+    "from": 0.6499999999999999,
+    "index": 52,
+    "kind": "up",
+    "next_20": null,
+    "next_5": -0.009095792277551085,
+    "snapshots": [
+     "2026-08-11",
+     "2026-08-12"
+    ],
+    "to": 0.7
+   },
+   {
+    "after_gap": false,
+    "day": "2026-08-17",
+    "from": 0.7,
+    "index": 53,
+    "kind": "down",
+    "next_20": null,
+    "next_5": 0.0018085157313427747,
+    "snapshots": [
+     "2026-08-12",
+     "2026-08-13"
+    ],
+    "to": 0.4
+   },
+   {
+    "after_gap": false,
+    "day": "2026-08-18",
+    "from": 0.4,
+    "index": 54,
+    "kind": "down",
+    "next_20": null,
+    "next_5": -0.016088023851306255,
+    "snapshots": [
+     "2026-08-13",
+     "2026-08-14"
+    ],
+    "to": 0.1
+   },
+   {
+    "after_gap": false,
+    "day": "2026-08-19",
+    "from": 0.1,
+    "index": 55,
+    "kind": "up",
+    "next_20": null,
+    "next_5": -0.00511799370953725,
+    "snapshots": [
+     "2026-08-14",
+     "2026-08-17"
+    ],
+    "to": 0.5
+   },
+   {
+    "after_gap": false,
+    "day": "2026-08-20",
+    "from": 0.5,
+    "index": 56,
+    "kind": "down",
+    "next_20": null,
+    "next_5": 0.005885125201545494,
+    "snapshots": [
+     "2026-08-17",
+     "2026-08-18"
+    ],
+    "to": 0.4
+   },
+   {
+    "after_gap": false,
+    "day": "2026-08-24",
+    "from": 0.4,
+    "index": 58,
+    "kind": "down",
+    "next_20": null,
+    "next_5": -0.0011914197260977089,
+    "snapshots": [
+     "2026-08-19",
+     "2026-08-20"
+    ],
+    "to": 0.30000000000000004
+   },
+   {
+    "after_gap": false,
+    "day": "2026-08-25",
+    "from": 0.30000000000000004,
+    "index": 59,
+    "kind": "down",
+    "next_20": null,
+    "next_5": 0.009910939189977874,
+    "snapshots": [
+     "2026-08-20",
+     "2026-08-21"
+    ],
+    "to": 0.25
+   },
+   {
+    "after_gap": false,
+    "day": "2026-08-26",
+    "from": 0.25,
+    "index": 60,
+    "kind": "up",
+    "next_20": null,
+    "next_5": 0.021046685312011704,
+    "snapshots": [
+     "2026-08-21",
+     "2026-08-24"
+    ],
+    "to": 0.6499999999999999
+   },
+   {
+    "after_gap": false,
+    "day": "2026-08-27",
+    "from": 0.6499999999999999,
+    "index": 61,
+    "kind": "up",
+    "next_20": null,
+    "next_5": 0.0027701933316344185,
+    "snapshots": [
+     "2026-08-24",
+     "2026-08-25"
+    ],
+    "to": 0.7
+   },
+   {
+    "after_gap": false,
+    "day": "2026-08-28",
+    "from": 0.7,
+    "index": 62,
+    "kind": "down",
+    "next_20": null,
+    "next_5": -0.015037485713600196,
+    "snapshots": [
+     "2026-08-25",
+     "2026-08-26"
+    ],
+    "to": 0.4
+   },
+   {
+    "after_gap": false,
+    "day": "2026-08-31",
+    "from": 0.4,
+    "index": 63,
+    "kind": "down",
+    "next_20": null,
+    "next_5": null,
+    "snapshots": [
+     "2026-08-26",
+     "2026-08-27"
+    ],
+    "to": 0.1
+   },
+   {
+    "after_gap": false,
+    "day": "2026-09-01",
+    "from": 0.1,
+    "index": 64,
+    "kind": "up",
+    "next_20": null,
+    "next_5": null,
+    "snapshots": [
+     "2026-08-27",
+     "2026-08-28"
+    ],
+    "to": 0.5
+   }
+  ],
+  "up": {
+   "after_gap": 1,
+   "base": 0.8043478260869565,
+   "base_days": 46,
+   "counted": 13,
+   "events": 20,
+   "median": {
+    "20": 0.010396999292226372,
+    "5": 0.004881255611739688
+   },
+   "non_overlapping": 2,
+   "not_full": 6,
+   "positive": 11,
+   "share": 0.8461538461538461
+  }
+ },
+ "f0001_error": null,
+ "gaps": [
+  {
+   "days": 4,
+   "first": "2026-07-13",
+   "last": "2026-07-16"
+  },
+  {
+   "days": 4,
+   "first": "2026-08-31",
+   "last": "2026-09-03"
+  }
+ ],
+ "identity": {
+  "checked": 57,
+  "mismatch": [],
+  "unchecked": 1
+ },
+ "missing": {
+  "components": 0,
+  "confidence_level": 0,
+  "confidence_reasons": 0,
+  "confidence_score": 0,
+  "final_total_risk_asset_band": 0,
+  "macro_risk_asset_budget.level": 0,
+  "model_risk_asset_ai_band": 0,
+  "overall_score": 0,
+  "position_gates": 0,
+  "rule_versions.rules": 0,
+  "total_asset_ai_band": 1
+ },
+ "monthly": [
+  {
+   "f0001": 0.02374567376828301,
+   "final": 0.008629234576420647,
+   "final_exposure": 0.4131578947368421,
+   "fixed": 0.019101057097387495,
+   "model": 0.011592320928907773,
+   "month": "2026-06",
+   "total_asset": 0.005991508983399397,
+   "total_asset_exposure": 0.28777777777777774,
+   "total_risk": 0.016025954165137055
+  },
+  {
+   "f0001": 0.007435941689133618,
+   "final": 0.008446411155658775,
+   "final_exposure": 0.4090909090909091,
+   "fixed": 0.006070956036491368,
+   "model": 0.012654996522428935,
+   "month": "2026-07",
+   "total_asset": 0.006170321526365201,
+   "total_asset_exposure": 0.27454545454545454,
+   "total_risk": 0.009024103672364728
+  },
+  {
+   "f0001": 0.014169919597895759,
+   "final": 0.01613134200331077,
+   "final_exposure": 0.4095238095238095,
+   "fixed": 0.011196827007022752,
+   "model": 0.014438556666913597,
+   "month": "2026-08",
+   "total_asset": 0.012337508454455075,
+   "total_asset_exposure": 0.2692857142857143,
+   "total_risk": 0.013827586917424388
+  },
+  {
+   "f0001": -0.012597838298151918,
+   "final": -0.004130941951661266,
+   "final_exposure": 0.5,
+   "fixed": -0.0066393000170846365,
+   "model": -0.004130941951661266,
+   "month": "2026-09",
+   "total_asset": -0.002968031992557597,
+   "total_asset_exposure": 0.36000000000000004,
+   "total_risk": -0.0058006913855942616
+  }
+ ],
+ "overlaps": [],
+ "owner_decision": "owner_decision:TRADING-2565:2026-10-28:daily_band_scorecard",
+ "passes": {
+  "fresh": {
+   "sgov": {
+    "f0001": {
+     "changes": 2,
+     "days": 63,
+     "log": 0.02823946880140127,
+     "max_drawdown": -0.021785022786733665,
+     "mean_exposure": 0.8330250302596656,
+     "noise": 0.015812237564737708,
+     "turnover": 1.0346584631267135,
+     "units": 0.0542425279965321,
+     "versus_fixed": 0.0015127783902726538,
+     "versus_own": 0.0008576957387931017
+    },
+    "final": {
+     "changes": 50,
+     "days": 63,
+     "log": 0.0320541051470017,
+     "max_drawdown": -0.011424464671641266,
+     "mean_exposure": 0.41507936507936505,
+     "noise": 0.011607775308801301,
+     "turnover": 11.100000000000003,
+     "units": 1.1465335192509518,
+     "versus_fixed": 0.005327414735873087,
+     "versus_own": 0.013308703475474259
+    },
+    "fixed": {
+     "changes": 0,
+     "days": 63,
+     "log": 0.026726690411128615,
+     "max_drawdown": -0.01701608229762397,
+     "mean_exposure": 0.8,
+     "turnover": 0.0,
+     "versus_fixed": 0.0
+    },
+    "model": {
+     "changes": 26,
+     "days": 63,
+     "log": 0.03628877600027491,
+     "max_drawdown": -0.013567756467364078,
+     "mean_exposure": 0.48095238095238096,
+     "noise": 0.01300712455303655,
+     "turnover": 10.6,
+     "units": 1.240265848773142,
+     "versus_fixed": 0.009562085589146292,
+     "versus_own": 0.01613229237386985
+    },
+    "total_asset": {
+     "changes": 37,
+     "days": 62,
+     "log": 0.026476254896266982,
+     "max_drawdown": -0.007527781823481239,
+     "mean_exposure": 0.28056451612903227,
+     "noise": 0.008769343828292493,
+     "turnover": 8.05,
+     "units": 0.8588698262646377,
+     "versus_fixed": -0.009394111801506115,
+     "versus_own": 0.007531724810260446
+    },
+    "total_risk": {
+     "changes": 26,
+     "days": 63,
+     "log": 0.03227446711272922,
+     "max_drawdown": -0.012265802689987337,
+     "mean_exposure": 0.6253968253968254,
+     "turnover": 4.699999999999999,
+     "versus_fixed": 0.005547776701600608
+    }
+   },
+   "zero": {
+    "f0001": {
+     "changes": 2,
+     "days": 63,
+     "log": 0.02667286256111453,
+     "max_drawdown": -0.021785022786733665,
+     "mean_exposure": 0.8330250302596656,
+     "noise": 0.015812237564737708,
+     "turnover": 1.0346584631267135,
+     "units": 0.05446302963095778,
+     "versus_fixed": 0.0018269684021666246,
+     "versus_own": 0.0008611823630200535
+    },
+    "final": {
+     "changes": 50,
+     "days": 63,
+     "log": 0.026615178602661625,
+     "max_drawdown": -0.011519739199998713,
+     "mean_exposure": 0.41507936507936505,
+     "noise": 0.011607775308801301,
+     "turnover": 11.100000000000003,
+     "units": 1.1523310298839955,
+     "versus_fixed": 0.0017692844437137215,
+     "versus_own": 0.013375999676253018
+    },
+    "fixed": {
+     "changes": 0,
+     "days": 63,
+     "log": 0.024845894158947904,
+     "max_drawdown": -0.01739921064037231,
+     "mean_exposure": 0.8,
+     "turnover": 0.0,
+     "versus_fixed": 0.0
+    },
+    "model": {
+     "changes": 26,
+     "days": 63,
+     "log": 0.03148480981886846,
+     "max_drawdown": -0.013981092398425043,
+     "mean_exposure": 0.48095238095238096,
+     "noise": 0.01300712455303655,
+     "turnover": 10.6,
+     "units": 1.2465154308653348,
+     "versus_fixed": 0.006638915659920558,
+     "versus_own": 0.01621358146654743
+    },
+    "total_asset": {
+     "changes": 37,
+     "days": 62,
+     "log": 0.01980468861140317,
+     "max_drawdown": -0.0076654875999625505,
+     "mean_exposure": 0.28056451612903227,
+     "noise": 0.008769343828292493,
+     "turnover": 8.05,
+     "units": 0.8632522714078703,
+     "versus_fixed": -0.014203047340075912,
+     "versus_own": 0.007570155978530084
+    },
+    "total_risk": {
+     "changes": 26,
+     "days": 63,
+     "log": 0.028795445718134333,
+     "max_drawdown": -0.012687767257792304,
+     "mean_exposure": 0.6253968253968254,
+     "turnover": 4.699999999999999,
+     "versus_fixed": 0.003949551559186429
+    }
+   }
+  },
+  "full": {
+   "sgov": {
+    "f0001": {
+     "changes": 2,
+     "days": 65,
+     "log": 0.034320302997447205,
+     "max_drawdown": -0.019967472194942437,
+     "mean_exposure": 0.8381627216362912,
+     "noise": 0.016094393983052863,
+     "turnover": 1.0346584631267135,
+     "units": 0.1038815415048041,
+     "versus_fixed": 0.0026452995599802742,
+     "versus_own": 0.0016719104565451753
+    },
+    "final": {
+     "changes": 51,
+     "days": 65,
+     "log": 0.034709459884446806,
+     "max_drawdown": -0.011424464671641266,
+     "mean_exposure": 0.4146153846153846,
+     "noise": 0.011726424154054695,
+     "turnover": 11.400000000000006,
+     "units": 1.128585334043714,
+     "versus_fixed": 0.0030344564469798746,
+     "versus_own": 0.013234270321042095
+    },
+    "fixed": {
+     "changes": 0,
+     "days": 65,
+     "log": 0.03167500343746693,
+     "max_drawdown": -0.015854147185723755,
+     "mean_exposure": 0.8,
+     "turnover": 0.0,
+     "versus_fixed": 0.0
+    },
+    "model": {
+     "changes": 27,
+     "days": 65,
+     "log": 0.039520869317615684,
+     "max_drawdown": -0.013567756467364078,
+     "mean_exposure": 0.4815384615384615,
+     "noise": 0.013140490858569193,
+     "turnover": 10.799999999999999,
+     "units": 1.2348184489892446,
+     "versus_fixed": 0.007845865880148753,
+     "versus_own": 0.016226120540935758
+    },
+    "total_asset": {
+     "changes": 38,
+     "days": 64,
+     "log": 0.02843643541911555,
+     "max_drawdown": -0.007527781823481239,
+     "mean_exposure": 0.28054687500000003,
+     "noise": 0.008861519422258605,
+     "turnover": 8.27,
+     "units": 0.8496446977825739,
+     "versus_fixed": -0.012382244304995862,
+     "versus_own": 0.007529142991419321
+    },
+    "total_risk": {
+     "changes": 26,
+     "days": 65,
+     "log": 0.03665303575354298,
+     "max_drawdown": -0.01226580268998756,
+     "mean_exposure": 0.6276923076923077,
+     "turnover": 4.699999999999999,
+     "versus_fixed": 0.004978032316076048
+    }
+   },
+   "zero": {
+    "f0001": {
+     "changes": 2,
+     "days": 65,
+     "log": 0.032753696757160465,
+     "max_drawdown": -0.019967472194942437,
+     "mean_exposure": 0.8381627216362912,
+     "noise": 0.016094393983052863,
+     "turnover": 1.0346584631267135,
+     "units": 0.10434572827745918,
+     "versus_fixed": 0.003024156633343489,
+     "versus_own": 0.001679381261346008
+    },
+    "final": {
+     "changes": 51,
+     "days": 65,
+     "log": 0.02907604578372891,
+     "max_drawdown": -0.011519739199998713,
+     "mean_exposure": 0.4146153846153846,
+     "noise": 0.011726424154054695,
+     "turnover": 11.400000000000006,
+     "units": 1.1342917461410404,
+     "versus_fixed": -0.0006534943400880663,
+     "versus_own": 0.013301186129693172
+    },
+    "fixed": {
+     "changes": 0,
+     "days": 65,
+     "log": 0.029729540123816976,
+     "max_drawdown": -0.015979326044453512,
+     "mean_exposure": 0.8,
+     "turnover": 0.0,
+     "versus_fixed": 0.0
+    },
+    "model": {
+     "changes": 27,
+     "days": 65,
+     "log": 0.03455493216658903,
+     "max_drawdown": -0.013981092398425043,
+     "mean_exposure": 0.4815384615384615,
+     "noise": 0.013140490858569193,
+     "turnover": 10.799999999999999,
+     "units": 1.2410408360401204,
+     "versus_fixed": 0.0048253920427720545,
+     "versus_own": 0.01630788576109627
+    },
+    "total_asset": {
+     "changes": 38,
+     "days": 64,
+     "log": 0.021531306971662077,
+     "max_drawdown": -0.0076654875999625505,
+     "mean_exposure": 0.28054687500000003,
+     "noise": 0.008861519422258605,
+     "turnover": 8.27,
+     "units": 0.8539800523747609,
+     "versus_fixed": -0.01736007494468607,
+     "versus_own": 0.007567560820340364
+    },
+    "total_risk": {
+     "changes": 26,
+     "days": 65,
+     "log": 0.03307695336933189,
+     "max_drawdown": -0.012625351210815428,
+     "mean_exposure": 0.6276923076923077,
+     "turnover": 4.699999999999999,
+     "versus_fixed": 0.0033474132455149144
+    }
+   }
+  }
+ },
+ "prices": {
+  "cash": true,
+  "f0001_first_needed": "2025-04-29",
+  "file": "data/raw/daily_input_capture/2026-09-04/market_macro/prices_daily.csv",
+  "first": "2025-01-02",
+  "last": "2026-09-03",
+  "sha256": "9f2a4109cfb8d2ad7c880f5d30e6cb3e698131ec675fda6637913972c5a725a2"
+ },
+ "reading": {
+  "a": {
+   "final": false,
+   "holds": false,
+   "total_asset": false
+  },
+  "b": {
+   "above_base": false,
+   "holds": true
+  }
+ },
+ "roots": [
+  {
+   "files": 59,
+   "other_days": [],
+   "path": "<DAILY_ROOT>",
+   "used": 58
+  }
+ ],
+ "run_id": "TRADING-2565-80",
+ "unusable": [
+  {
+   "day": "2026-06-17",
+   "reason": "invalid JSON",
+   "root": 0
+  }
+ ],
+ "window": {
+  "days": 65,
+  "end": "2026-09-03",
+  "first_held": "2026-06-03",
+  "stale_days": 2,
+  "start": "2026-06-01"
+ }
+}

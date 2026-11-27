@@ -49,6 +49,8 @@ BAND_FIELDS = {
     "model": "model_risk_asset_ai_band",
     "total_risk": "final_total_risk_asset_band",
 }
+GATED_FIELDS = {FINAL: "gated_risk_asset_ai_band", "total_asset": "gated_total_asset_ai_band"}
+GATED_DECISION = "owner_decision:TRADING-2565:2026-11-27:research_loop_p8"
 FIELDS = (
     "model_risk_asset_ai_band",
     "total_asset_ai_band",
@@ -142,6 +144,7 @@ class Snapshot:
     components: tuple[Component, ...] | None
     rules: tuple[tuple[str, str], ...] | None
     missing: tuple[str, ...]
+    source: str = FINAL
 
 
 @dataclass(frozen=True)
@@ -204,11 +207,18 @@ def parse_snapshot(text: str, day: date, root: int, file: str) -> Snapshot:
     positions = record.get("positions")
     if not isinstance(positions, dict):
         raise ValueError("positions is not a dict")
-    bands = {key: _bounds(positions.get(field)) for key, field in BAND_FIELDS.items()}
+    gated = GATED_FIELDS[FINAL] in positions
+    fields = {**BAND_FIELDS, **GATED_FIELDS} if gated else BAND_FIELDS
+    bands = {key: _bounds(positions.get(field)) for key, field in fields.items()}
     if bands[FINAL] is None:
-        raise ValueError(
-            "final_risk_asset_ai_band: missing or invalid min_position or max_position"
-        )
+        raise ValueError(f"{fields[FINAL]}: missing or invalid min_position or max_position")
+    if gated:
+        risk, total = bands[FINAL], bands["total_asset"]
+        bands["total_risk"] = None
+        if risk is not None and total is not None and min(risk.low, risk.high) >= EPSILON:
+            low, high = total.low / risk.low, total.high / risk.high
+            if 0 <= low <= high + EPSILON and high <= 1 + EPSILON:
+                bands["total_risk"] = Bounds(low, high)
     scores = _dict(record.get("scores"))
     macro = _string(_dict(positions.get("macro_risk_asset_budget")).get("level"))
     raw_gates = positions.get("position_gates")
@@ -281,6 +291,7 @@ def parse_snapshot(text: str, day: date, root: int, file: str) -> Snapshot:
         components,
         rules,
         tuple(field for field in FIELDS if values[field] is None),
+        "gated" if gated else FINAL,
     )
 
 
@@ -563,6 +574,8 @@ def identity(snapshots: Mapping[date, Snapshot]) -> dict[str, Any]:
     checked, unchecked = 0, 0
     mismatch = []
     for day, snapshot in sorted(snapshots.items()):
+        if snapshot.source != FINAL:
+            continue
         final, total, budget = (snapshot.bands[key] for key in (FINAL, "total_asset", "total_risk"))
         if final is None or total is None or budget is None:
             unchecked += 1
@@ -916,7 +929,7 @@ def build(
     down = event_summary(event_rows, "down", returns, 2)
     up = event_summary(event_rows, "up", returns, 2)
     snapshots = {day: snapshot for day, snapshot in selection.snapshots.items() if day <= end}
-    return {
+    result = {
         "run_id": RUN_ID,
         "owner_decision": OWNER_DECISION,
         "code": dict(provenance or {}),
@@ -956,6 +969,20 @@ def build(
         "attribution": attribution(snapshots, rules.position_bands),
         "reading": reading(passes, down),
     }
+    gated = [snapshot for day, snapshot in sorted(snapshots.items()) if snapshot.source == "gated"]
+    if gated:
+        result["gated"] = {
+            "owner_decision": GATED_DECISION,
+            "snapshots": len(gated),
+            "first": gated[0].day.isoformat(),
+            "last": gated[-1].day.isoformat(),
+            "total_risk_missing": [
+                snapshot.day.isoformat()
+                for snapshot in gated
+                if snapshot.bands["total_risk"] is None
+            ],
+        }
+    return result
 
 
 def _fmt(value: Any, spec: str = ".3f") -> str:
@@ -1058,10 +1085,23 @@ def _render_inputs(result: Mapping[str, Any], lines: list[str]) -> None:
         "",
         f"核了 {check['checked']} 份，没法核 {check['unchecked']} 份，"
         f"不符 {len(check['mismatch'])} 份{mismatch}。",
-        "",
-        "### 各条线的假设",
-        "",
     ]
+    if "gated" in result:
+        gated = result["gated"]
+        missing_days = "、".join(gated["total_risk_missing"]) or "没有"
+        lines += [
+            "",
+            "### 换包以后读 gated 键",
+            "",
+            f"{gated['snapshots']} 份快照有 `gated_risk_asset_ai_band`"
+            f"（{gated['first']}..{gated['last']}），按 `{GATED_DECISION}` "
+            "第 3.4 节读按原规则算出的区间："
+            "第 1 条线读 `gated_risk_asset_ai_band`，第 2 条读 `gated_total_asset_ai_band`，"
+            "第 6 条按两者逐端相除推，"
+            f"闸门区间有一端是 0 的那天记缺（{missing_days}）。这些快照不进恒等核对。"
+            "别的快照照旧读最终区间。",
+        ]
+    lines += ["", "### 各条线的假设", ""]
     lines += [f"{i}. {LABELS[line]}：{ASSUMPTIONS[line]}" for i, line in enumerate(LINES, 1)]
     lines.append("- 同平均敞口的固定：敞口取那条线在同一组交集天上的平均敞口。")
 

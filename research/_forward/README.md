@@ -120,11 +120,41 @@ Baker 2026-11-19 选「满仓为底，闸门只提示」（`owner_decision:TRADI
 - `weekly --daily-root` 时在「按周」后面加「日报线换包前后（自 2026-10-12）」一节：判据、第一份满仓快照和换包后第一行的日子，一张表三行（交易日、缺收益、累计、最大回撤、平均敞口）：日报模型换包前；「同平均敞口的固定（换包前日报模型的对照）」，敞口取换包前那段日报模型有收益的行的平均持有敞口，算法同主表那条对照；日报模型换包后。还没有满仓快照时换包后那行是 0 个交易日。没给 `--daily-root` 时只印一句「不分段」。只读快照；快照读不了或不是 JSON 时报错、不写周汇总（同 `append` 读快照）。
 - F0005 写的是换包前的日报模型（按原规则压仓），前后分开读：核对时只读换包前那段，对照用上一条里换包前那段自己的同平均敞口固定，不改 F0005 的数；换包后的日报线就是满仓 1.0。两张主表里日报模型那行和它的同平均敞口对照跨了两段，平均敞口混了两种规则，只印。
 - 「加的线」里的「日报总资产口径」读快照的 `total_asset_ai_band`，满仓快照里它也是 1.0，所以从同一天（按计划 2026-11-24）起那一列也读到 1.0。
-- 以后要看按原规则的仓位，读快照的 `gated_risk_asset_ai_band`（「闸门线（提示）」，2026-11-27 续期卡第 4 项再定，这批不做）。
+- 按原规则的仓位从 2026-11-24 起由下一节「闸门线（提示）」记（TRADING-2565-142）。
+
+## 闸门线（提示）（第 8 期 3.4，TRADING-2565-142）
+
+第 8 期章程（`owner_decision:TRADING-2565:2026-11-27:research_loop_p8`，Baker 2026-11-27 17:06 JST 照推荐签）第 3.4 题、第 5.1 节：日报自 as_of 2026-11-20 起满仓为底（上一节），日报线从 2026-11-24 起读到 1.0；按原规则算出的区间记在快照的 `gated_risk_asset_ai_band`，这条线把它记下来，换包以后它是日报信号唯一的前向记录。只记账，不进日报、不动仓位。新文件 `gate_lines.jsonl`（`forward_gate.v1`），主账本 `ledger.jsonl`、`added_lines.jsonl`、`frozen_lines.jsonl` 和它们的模式一字不动。模块 `src/ai_trading_system/research_probes/forward_gate.py`；`forward_ledger` 的 `append`、`check`、`weekly` 三个命令末尾在冻结的线之后各调它一次。
+
+- 起点 2026-11-24（`GATE_START`）：主账本里持有 as_of 2026-11-20 那份快照的第一行（t+2），以前的日子不记、不回填。每行挂主账本同一天那一行：`ledger_seq`、`ledger_sha256`、`qqq_tr`、`price_file` 照抄。
+- 持有：第 d 行持有 d 前两个交易日或更早、最近一份存在的快照（找法同 `exp_daily_held`），最早只找到 2026-11-20（`GATE_HELD_FROM`：换包以前的快照没有 gated 键，不读）；一份都没有时快照各列空、注明「2026-11-20 起没有可持有的快照」。和主账本日报线持有的是同一份。
+- 读：那份快照 `positions.gated_risk_asset_ai_band` 的 `min_position`、`max_position`（0 到 1 的有限数、min ≤ max），中点就是当天的敞口，收益 = 中点 × `qqq_tr`；现金 0，不扣成本。0–0 也是合法的敞口 0，照记（成绩单那条要做除法的线才记缺）。`label` 是字符串就照记。不按 `position_policy.mode` 分支：`gated_min` 模式下 gated 区间等于最终区间，照读 gated 键。同一份快照的 `gated_total_asset_ai_band`（闸门总资产口径）、`position_policy.mode`，和同一价格文件里 SGOV 当天的收益只印。
+- 字段：
+
+| 字段 | 含义 |
+|---|---|
+| `schema_version` | `forward_gate.v1` |
+| `seq`、`date` | 行号（1 起）和日子 |
+| `ledger_seq`、`ledger_sha256`、`qqq_tr`、`price_file` | 主账本同一天那一行的行号、字节摘要、QQQ 收益和价格文件 |
+| `gate_snapshot_file` | 持有的那份快照（相对路径）；一份都没有时空 |
+| `policy_mode` | 那份快照的 `position_policy.mode`（只印） |
+| `gate_min`、`gate_max`、`gate_label` | 闸门区间和标签 |
+| `exp_gate_held`、`ret_gate` | 区间中点（当天持有的敞口）、中点 × `qqq_tr` |
+| `gate_total_min`、`gate_total_max`、`exp_gate_total_held`、`ret_gate_total` | 闸门总资产区间、中点、中点 × `qqq_tr`（只印） |
+| `sgov_tr` | 同一份价格文件里 SGOV 当天的收益（只印） |
+| `notes` | 空缺的原因 |
+| `code_commit`、`code_modified`、`prev_sha256` | 同主账本 |
+
+- 缺：快照读不了、不是 JSON 或 `positions` 不是对象时文件名照记、其余空；闸门区间缺或不合法时闸门几列空、总资产几列照读，总资产缺时只空它自己那几列；`qqq_tr` 空时敞口照记、收益空。闸门区间空的行 `notes` 一定不空。行写下以后不改，没有跨行的状态。
+- 读坏不挡主账本、加的线和冻结的线；新文件允许落后主账本，下一次 `append` 补齐；一次追加和分几次追加写出来的字节一样；主账本还没有 2026-11-24 以后的行时不建文件，印「闸门线自 2026-11-24 起记，还没有行」。退出 1 时只有 `forward_gate:` 报错，就是别的都写好了：照常提交，把报错的那几行报给循环线程。
+- `check` 另核新文件的链、行号、从起点起和主账本逐行对上、中间没有缺、键、快照路径是 2026-11-20 到前两个交易日之间的一份、行内等式（中点、收益，容差 1e-12），坏行只印行号和原因、不抛；`check --day <日期> --daily-root` 重找那天持有的快照，重读两组区间、标签、仓位方式和 SGOV，再核那份快照最终区间的中点等于主账本那一行的 `exp_daily_held`。
+- `weekly` 在冻结的线后面加「闸门线（提示）」一节：闸门线、同平均敞口的固定（闸门线的对照）、买入持有、日报线、固定 0.8、F0001、闸门总资产口径（只印）七行（交易日、缺收益、累计、最大回撤、平均敞口）；闸门线对同平均敞口固定和对买入持有的累计对数差（满 252 个有收益的交易日另印几何年化差）；现金按 SGOV（只印）；持有快照的仓位方式；闸门区间变了的日子（次数和最近 10 次）；「闸门线落后主账本 N 行」。还没有行时只印「闸门线自 2026-11-24 起记，还没有行。」和落后行数。这一节印的是自 2026-11-24 的全程，只作描述。
+- 前瞻记录 F0011（`../_loop/forward_records.md`「闸门线」）。F0005 照旧只读换包前那段；它的两行和 F0011 第 1、2 行是同一个预期，核对时只算一次，记在 F0011 名下，段完整以后从 `gate_lines.jsonl` 截那一段另算。
+- 日报仓位成绩单（`research_probes/daily_band_scorecard.py`）同一批改成快照有 `gated_risk_asset_ai_band` 键就读 gated 区间（`docs/system_flow.md`）。
 
 ## 什么时候、谁做
 
-- 每周五研究会话在电脑上跑（和周五摘要同一次，不新增定时任务）：`append --through <最近一次跑完的日报的 as_of 日期> --daily-root <日报状态根>`，`weekly --daily-root <日报状态根>`，`check`，`pytest tests/test_research_forward_ledger.py tests/test_research_forward_added.py tests/test_research_forward_frozen.py -k committed`；提交 `ledger.jsonl`、`weekly.md`、（2026-11-19 以后）`added_lines.jsonl` 和（2026-11-23 以后）`frozen_lines.jsonl`（A 区）并发布。退出 1 时照上面「冻结的线」那一节读。追加批是 A 区，门不跑测试，所以那两条测试（核入库的账本、周汇总盖住每一行）在提交前跑；循环线程在云端核行和指纹时，在套好的 tree 上再跑同一条，过了才回「可以发布」（2026-10-23 起，第 6 期第 3.3 节）。第一次从 2026-10-12 回填。要不要改成每天自动，跑两周以后再定。
+- 每周五研究会话在电脑上跑（和周五摘要同一次，不新增定时任务）：`append --through <最近一次跑完的日报的 as_of 日期> --daily-root <日报状态根>`，`weekly --daily-root <日报状态根>`，`check`，`pytest tests/test_research_forward_ledger.py tests/test_research_forward_added.py tests/test_research_forward_frozen.py tests/test_research_forward_gate.py -k committed`；提交 `ledger.jsonl`、`weekly.md`、（2026-11-19 以后）`added_lines.jsonl`、（2026-11-23 以后）`frozen_lines.jsonl` 和（2026-11-24 以后）`gate_lines.jsonl`（A 区）并发布。退出 1 时照上面「冻结的线」「闸门线（提示）」两节读。追加批是 A 区，门不跑测试，所以那两条测试（核入库的账本、周汇总盖住每一行）在提交前跑；循环线程在云端核行和指纹时，在套好的 tree 上再跑同一条，过了才回「可以发布」（2026-10-23 起，第 6 期第 3.3 节）。第一次从 2026-10-12 回填。要不要改成每天自动，跑两周以后再定。
 - 周汇总 `weekly.md`：自 2026-10-12（含回填）和自 2026-10-21（前瞻）两段，各线的累计收益、最大回撤、平均敞口，日报模型和 F0001 各自的对照（同平均敞口的固定敞口），F0001 对它的累计对数差（前瞻那段是「研究的实际收益」，即 F0008 第 2 行的读数；满 252 个交易日另印几何年化差），和按周的收益；给了 `--daily-root` 再印 QQQ 月末总收益离运行最高（`research_bench.segments` 的划段规则，只印现在的状态：开段或未开段）和现金按 SGOV 的一组（只印）；TRADING-2565-139 起两张主表各加满仓 1.0 一行，给了 `--daily-root` 再分日报线换包前后（上一节）。周五摘要引一行。描述，不判。
 - 核对：前瞻记录 F0001 和 F0005（`../_loop/forward_records.md`）在 QQQ 按同一规则划出下一个完整慢熊段或长牛段时逐条核，记对错和记分表第 3 节的四列；中间每季度在周五摘要印一行描述，不判。同一配置连续两次慢熊段核对为对之前，不拿它开题或改日报。
 

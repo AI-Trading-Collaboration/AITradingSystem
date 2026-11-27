@@ -1114,11 +1114,12 @@ def append_command(
         typer.echo(f"forward_ledger: 没有新的交易日，共 {total} 行")
     # The added lines (TRADING-2565-135) and the frozen line (TRADING-2565-137) follow the
     # main ledger and never block it or each other.
-    from ai_trading_system.research_probes import forward_added, forward_frozen
+    from ai_trading_system.research_probes import forward_added, forward_frozen, forward_gate
 
     added = forward_added.after_append(ledger_dir, daily_root, provenance, typer.echo)
     frozen = forward_frozen.after_append(ledger_dir, daily_root, provenance, typer.echo)
-    if not (added and frozen):
+    gate = forward_gate.after_append(ledger_dir, daily_root, provenance, typer.echo)
+    if not (added and frozen and gate):
         raise typer.Exit(code=1)
 
 
@@ -1136,11 +1137,12 @@ def weekly_command(
         typer.echo(f"forward_ledger: {exc}")
         raise typer.Exit(code=1) from None
     typer.echo(f"forward_ledger: 周汇总已写 {path}")
-    from ai_trading_system.research_probes import forward_added, forward_frozen
+    from ai_trading_system.research_probes import forward_added, forward_frozen, forward_gate
 
     added = forward_added.after_weekly(ledger_dir, typer.echo)
     frozen = forward_frozen.after_weekly(ledger_dir, typer.echo)
-    if not (added and frozen):
+    gate = forward_gate.after_weekly(ledger_dir, typer.echo)
+    if not (added and frozen and gate):
         raise typer.Exit(code=1)
 
 
@@ -1168,11 +1170,12 @@ def check_command(
     typer.echo(f"forward_ledger: 账本完好，{len(rows)} 行（{span}）")
     if rows:
         typer.echo(f"forward_ledger: {offsets_line(rows)}")
-    from ai_trading_system.research_probes import forward_added, forward_frozen
+    from ai_trading_system.research_probes import forward_added, forward_frozen, forward_gate
 
     added = forward_added.after_check(ledger_dir, selected_day, daily_root, typer.echo)
     frozen = forward_frozen.after_check(ledger_dir, selected_day, daily_root, typer.echo)
-    if not (added and frozen):
+    gate = forward_gate.after_check(ledger_dir, selected_day, daily_root, typer.echo)
+    if not (added and frozen and gate):
         raise typer.Exit(code=1)
 
 
